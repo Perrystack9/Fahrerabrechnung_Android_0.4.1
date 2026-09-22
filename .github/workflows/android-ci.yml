@@ -44,6 +44,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android SDK Platform 37 and Build Tools 36.0.0
         shell: bash
@@ -247,6 +249,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install compile SDK and regenerate verified wrapper if checkout predates wrapper commit
         shell: bash
