@@ -42,45 +42,11 @@ jobs:
         with:
           gradle-version: "9.6.1"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-
-      - name: Install Android SDK Platform 37 and Build Tools 36.0.0
-        shell: bash
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-${ANDROID_PLATFORM}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}"
-
-      - name: Verify toolchain
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          {
-            echo "=== java ==="
-            java -version
-            echo "=== gradle ==="
-            gradle --version
-            echo "=== sdkmanager ==="
-            sdkmanager --version
-            echo "=== installed Android packages ==="
-            sdkmanager --list_installed
-          } 2>&1 | tee ci-logs/toolchain.log
-          java -version 2>&1 | grep -Eq 'version "17\.|openjdk version "17\.'
-          gradle --version | grep -F "Gradle ${GRADLE_VERSION}"
-          test -d "${ANDROID_SDK_ROOT}/platforms/android-${ANDROID_PLATFORM}"
-          test -d "${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}"
-
       - name: Generate and verify official Gradle wrapper
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p ci-logs
           project_dir="$PWD"
           bootstrap_dir="$(mktemp -d)"
           printf 'rootProject.name = "wrapper-bootstrap"\n' > "${bootstrap_dir}/settings.gradle.kts"
@@ -124,6 +90,45 @@ jobs:
             git commit -m "build: commit official Gradle 9.6.1 wrapper"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: "15859902"
+          log-accepted-android-sdk-licenses: false
+          packages: platform-tools
+
+      - name: Install Android SDK Platform 37 and Build Tools 36.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          sdkmanager --list 2>&1 | tee ci-logs/sdk-packages.log
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" 2>&1 | tee ci-logs/sdk-install.log
+
+      - name: Verify toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          {
+            echo "=== java ==="
+            java -version
+            echo "=== gradle ==="
+            gradle --version
+            echo "=== sdkmanager ==="
+            sdkmanager --version
+            echo "=== installed Android packages ==="
+            sdkmanager --list_installed
+          } 2>&1 | tee ci-logs/toolchain.log
+          java -version 2>&1 | grep -Eq 'version "17\.|openjdk version "17\.'
+          gradle --version | grep -F "Gradle ${GRADLE_VERSION}"
+          test -d "${ANDROID_SDK_ROOT}/platforms/android-${ANDROID_PLATFORM}"
+          test -d "${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}"
 
       - name: Verify 0.4.1 project boundary
         shell: bash
@@ -250,6 +255,8 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
+          cmdline-tools-version: "15859902"
+          log-accepted-android-sdk-licenses: false
           packages: platform-tools
 
       - name: Install compile SDK and regenerate verified wrapper if checkout predates wrapper commit
