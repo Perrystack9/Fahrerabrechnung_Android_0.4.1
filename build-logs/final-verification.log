@@ -1,0 +1,23 @@
+Final verification: 2026-09-22T18:37:14Z
+Project-boundary static checks passed.
+
+Dependency diff versus prior delivered ZIP:
+--- /tmp/tmp.FyGNUOFScv	2026-09-22 18:37:00.998891903 +0000
++++ Fahrerabrechnung_Android_0.4.1/gradle/libs.versions.toml	2026-09-22 18:29:56.915161550 +0000
+@@ -2,7 +2,7 @@
+ agp = "9.4.0"
+ kotlin = "2.4.20"
+ ksp = "2.3.10"
+-hilt = "2.57.2"
++hilt = "2.60.1"
+ composeUi = "1.12.1"
+ material3 = "1.4.0"
+ activityCompose = "1.13.0"
+
+Wrapper files:
+total 12
+drwxr-sr-x 2 root oai_shared 4096 Sep 22 17:56 .
+drwxr-sr-x 3 root oai_shared 4096 Sep 22 18:06 ..
+-rw-r--r-- 1 root oai_shared  368 Sep 22 18:30 gradle-wrapper.properties
+
+APK files currently present:

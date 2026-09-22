@@ -1,0 +1,28 @@
+Verification timestamp: 2026-09-22T18:35:50Z
+--- java -version ---
+openjdk version "21.0.11" 2026-04-21
+OpenJDK Runtime Environment (build 21.0.11+10-1-deb13u2-Debian)
+OpenJDK 64-Bit Server VM (build 21.0.11+10-1-deb13u2-Debian, mixed mode, sharing)
+--- javac -version ---
+javac 21.0.11
+JAVA_HOME=<unset>
+ANDROID_HOME=<unset>
+ANDROID_SDK_ROOT=<unset>
+--- /usr/lib/jvm ---
+total 28
+drwxr-xr-x  4 root root  187 Jul 28 17:45 .
+drwxr-xr-x 61 root root 3693 Apr 17 22:50 ..
+-rw-r--r--  1 root root 1840 Apr 26 12:23 .java-1.21.0-openjdk-amd64.jinfo
+lrwxrwxrwx  1 root root   25 Aug  3  2024 default-java -> java-1.21.0-openjdk-amd64
+lrwxrwxrwx  1 root root   21 Jan 22  2026 java-1.21.0-openjdk-amd64 -> java-21-openjdk-amd64
+drwxr-xr-x  9 root root  176 Jul 28 17:45 java-21-openjdk-amd64
+drwxr-xr-x  2 root root   46 Jul 28 17:45 openjdk-21
+--- sdkmanager ---
+<missing>
+--- gradle ---
+<missing>
+--- wrapper dir ---
+total 12
+drwxr-sr-x 2 root oai_shared 4096 Sep 22 17:56 .
+drwxr-sr-x 3 root oai_shared 4096 Sep 22 18:06 ..
+-rw-r--r-- 1 root oai_shared  368 Sep 22 18:30 gradle-wrapper.properties

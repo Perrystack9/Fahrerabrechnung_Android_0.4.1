@@ -1,0 +1,11 @@
+--- /tmp/tmp.FyGNUOFScv	2026-09-22 18:37:00.998891903 +0000
++++ Fahrerabrechnung_Android_0.4.1/gradle/libs.versions.toml	2026-09-22 18:29:56.915161550 +0000
+@@ -2,7 +2,7 @@
+ agp = "9.4.0"
+ kotlin = "2.4.20"
+ ksp = "2.3.10"
+-hilt = "2.57.2"
++hilt = "2.60.1"
+ composeUi = "1.12.1"
+ material3 = "1.4.0"
+ activityCompose = "1.13.0"

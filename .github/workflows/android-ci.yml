@@ -1,0 +1,298 @@
+name: Android 0.4.1 CI Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-0.4.1-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GRADLE_VERSION: "9.6.1"
+  GRADLE_DIST_SHA256: "9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14"
+  GRADLE_WRAPPER_SHA256: "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7"
+  ANDROID_PLATFORM: "37"
+  ANDROID_BUILD_TOOLS: "36.0.0"
+
+jobs:
+  build-and-verify:
+    name: Build, test, lint and APK verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.6.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.1"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK Platform 37 and Build Tools 36.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}"
+
+      - name: Verify toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          {
+            echo "=== java ==="
+            java -version
+            echo "=== gradle ==="
+            gradle --version
+            echo "=== sdkmanager ==="
+            sdkmanager --version
+            echo "=== installed Android packages ==="
+            sdkmanager --list_installed
+          } 2>&1 | tee ci-logs/toolchain.log
+          java -version 2>&1 | grep -Eq 'version "17\.|openjdk version "17\.'
+          gradle --version | grep -F "Gradle ${GRADLE_VERSION}"
+          test -d "${ANDROID_SDK_ROOT}/platforms/android-${ANDROID_PLATFORM}"
+          test -d "${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}"
+
+      - name: Generate and verify official Gradle wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          project_dir="$PWD"
+          bootstrap_dir="$(mktemp -d)"
+          printf 'rootProject.name = "wrapper-bootstrap"\n' > "${bootstrap_dir}/settings.gradle.kts"
+          (cd "${bootstrap_dir}" && gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin)
+
+          mkdir -p gradle/wrapper
+          cp "${bootstrap_dir}/gradlew" gradlew
+          cp "${bootstrap_dir}/gradlew.bat" gradlew.bat
+          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
+          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.properties" gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          rm -rf "${bootstrap_dir}"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("gradle/wrapper/gradle-wrapper.properties")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          wanted = "distributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14"
+          lines = [line for line in lines if not line.startswith("distributionSha256Sum=")]
+          insert_at = next((i + 1 for i, line in enumerate(lines) if line.startswith("distributionUrl=")), len(lines))
+          lines.insert(insert_at, wanted)
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+          echo "${GRADLE_WRAPPER_SHA256}  gradle/wrapper/gradle-wrapper.jar" | sha256sum --check --strict
+          grep -F "distributionUrl=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" gradle/wrapper/gradle-wrapper.properties
+          grep -F "distributionSha256Sum=${GRADLE_DIST_SHA256}" gradle/wrapper/gradle-wrapper.properties
+          ./gradlew --version | tee ci-logs/wrapper-version.log
+          ./gradlew --version | grep -F "Gradle ${GRADLE_VERSION}"
+
+      - name: Commit official wrapper to project branch when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradlew gradlew.bat gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties
+          if git diff --cached --quiet; then
+            echo "Official Gradle wrapper already committed."
+          else
+            git commit -m "build: commit official Gradle 9.6.1 wrapper"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Verify 0.4.1 project boundary
+        shell: bash
+        run: ./scripts/verify_project_boundary.sh | tee ci-logs/project-boundary.log
+
+      - name: Run all required Gradle verification commands
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p ci-logs
+          : > ci-logs/required-command-status.tsv
+
+          run_required() {
+            local name="$1"
+            shift
+            echo "::group::${name}"
+            set +e
+            "$@" 2>&1 | tee "ci-logs/${name}.log"
+            local code=${PIPESTATUS[0]}
+            set -e
+            printf '%s\t%s\n' "$name" "$code" >> ci-logs/required-command-status.tsv
+            echo "exit=${code}"
+            echo "::endgroup::"
+          }
+
+          set -e
+          run_required help ./gradlew help --stacktrace
+          run_required build-dry-run ./gradlew build --dry-run --stacktrace
+          run_required test ./gradlew test --stacktrace
+          run_required lint ./gradlew lint --stacktrace
+          run_required assembleDebug ./gradlew assembleDebug --stacktrace
+          run_required assembleInternal ./gradlew assembleInternal --stacktrace
+
+          echo "Required command results:"
+          cat ci-logs/required-command-status.tsv
+
+          failed=0
+          while IFS=$'\t' read -r name code; do
+            if [ "$code" -ne 0 ]; then
+              echo "FAILED: $name (exit $code)" >&2
+              failed=1
+            fi
+          done < ci-logs/required-command-status.tsv
+          exit "$failed"
+
+      - name: Verify APK outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEBUG_APK=$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' | head -n 1)
+          INTERNAL_APK=$(find app/build/outputs/apk/internal -maxdepth 1 -type f -name '*.apk' | head -n 1)
+          test -n "$DEBUG_APK"
+          test -n "$INTERNAL_APK"
+          printf 'debug=%s\ninternal=%s\n' "$DEBUG_APK" "$INTERNAL_APK" | tee ci-logs/apk-paths.txt
+          sha256sum "$DEBUG_APK" "$INTERNAL_APK" | tee ci-logs/apk-sha256.txt
+
+      - name: Create source ZIP with committed wrapper and CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-artifacts
+          zip -qr ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip . \
+            -x '.git/*' '.gradle/*' '**/build/*' 'ci-artifacts/*'
+          sha256sum ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip > ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip.sha256
+
+      - name: Upload build logs and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-0.4.1-build-logs
+          if-no-files-found: warn
+          path: |
+            ci-logs/
+            **/build/reports/
+            data/schemas/
+
+      - name: Upload Debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fahrerabrechnung-0.4.1-debug-apk
+          if-no-files-found: error
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload Internal APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fahrerabrechnung-0.4.1-internal-apk
+          if-no-files-found: error
+          path: app/build/outputs/apk/internal/*.apk
+
+      - name: Upload complete verified project ZIP
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fahrerabrechnung-Android-0.4.1-project
+          if-no-files-found: error
+          path: |
+            ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip
+            ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip.sha256
+
+  instrumentation:
+    name: Room SQLCipher and Compose instrumentation
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.6.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.1"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install compile SDK and regenerate verified wrapper if checkout predates wrapper commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}"
+
+          bootstrap_dir="$(mktemp -d)"
+          printf 'rootProject.name = "wrapper-bootstrap"\n' > "${bootstrap_dir}/settings.gradle.kts"
+          (cd "${bootstrap_dir}" && gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin)
+          mkdir -p gradle/wrapper
+          cp "${bootstrap_dir}/gradlew" gradlew
+          cp "${bootstrap_dir}/gradlew.bat" gradlew.bat
+          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
+          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.properties" gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          rm -rf "${bootstrap_dir}"
+          echo "${GRADLE_WRAPPER_SHA256}  gradle/wrapper/gradle-wrapper.jar" | sha256sum --check --strict
+
+      - name: Run Room SQLCipher and Compose tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            mkdir -p ci-logs
+            set -o pipefail
+            ./gradlew :data:connectedDebugAndroidTest :app:connectedDebugAndroidTest --stacktrace 2>&1 | tee ci-logs/instrumentation.log
+
+      - name: Upload instrumentation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-0.4.1-instrumentation-results
+          if-no-files-found: warn
+          path: |
+            ci-logs/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+            data/build/reports/androidTests/
+            data/build/outputs/androidTest-results/

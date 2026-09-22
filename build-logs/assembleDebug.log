@@ -1,0 +1,3 @@
+$ ./gradlew assembleDebug
+ERROR: gradle-wrapper.jar is missing. The generation environment could not download binary build tooling.
+Install Gradle 9.6.x once and run: gradle wrapper --gradle-version 9.6.1

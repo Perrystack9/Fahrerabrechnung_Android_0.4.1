@@ -1,0 +1,3 @@
+RUN: ./gradlew assembleDebug
+Error: Unable to access jarfile /mnt/data/Fahrerabrechnung_Android_0.4.1/gradle/wrapper/gradle-wrapper.jar
+EXIT_CODE=1
