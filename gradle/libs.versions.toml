@@ -4,6 +4,7 @@ kotlin = "2.4.20"
 ksp = "2.3.10"
 hilt = "2.60.1"
 composeUi = "1.12.1"
+materialIcons = "1.7.8"
 material3 = "1.4.0"
 activityCompose = "1.13.0"
 lifecycle = "2.11.0"
@@ -31,7 +32,7 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "composeUi" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "composeUi" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "composeUi" }
-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "composeUi" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIcons" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
