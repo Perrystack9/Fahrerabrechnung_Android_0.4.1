@@ -1,5 +1,9 @@
 package de.fahrerabrechnung.app
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.mutableStateOf
@@ -93,22 +97,31 @@ fun AppRoot(
         },
         bottomBar = {
             if (topLevel != null) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                    TopLevelDestination.entries.forEach { destination ->
-                        NavigationBarItem(
-                            selected = currentRoute == destination.route,
-                            onClick = {
-                                if (currentRoute != destination.route) navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(destination.icon, contentDescription = null) },
-                            label = { NavigationLabel(destination.label, navigationLabels, destination.route) },
-                            alwaysShowLabel = true,
-                            modifier = Modifier.testTag("nav_${destination.route}"),
-                        )
+                BoxWithConstraints {
+                    val density = LocalDensity.current
+                    val direction = LocalLayoutDirection.current
+                    val insets = NavigationBarDefaults.windowInsets
+                    val horizontalInsets = insets.getLeft(density, direction) + insets.getRight(density, direction)
+                    // Reserve 8 dp between items and round down once for all five labels.
+                    val itemWidth = (constraints.maxWidth - horizontalInsets - with(density) { 32.dp.roundToPx() }) / 5
+                    val labelStyle = navigationLabelStyle(navigationLabels, itemWidth - with(density) { 2.dp.roundToPx() })
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+                        TopLevelDestination.entries.forEach { destination ->
+                            NavigationBarItem(
+                                selected = currentRoute == destination.route,
+                                onClick = {
+                                    if (currentRoute != destination.route) navController.navigate(destination.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(destination.icon, contentDescription = null) },
+                                label = { NavigationLabel(destination.label, destination.route, labelStyle) },
+                                alwaysShowLabel = true,
+                                modifier = Modifier.testTag("nav_${destination.route}"),
+                            )
+                        }
                     }
                 }
             }

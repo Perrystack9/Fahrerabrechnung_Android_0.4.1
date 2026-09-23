@@ -241,6 +241,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Reserve disk space for the emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          df -h / | tee ci-logs/disk-before-cleanup.log
+          # Only unused preinstalled toolchains on this disposable Android runner.
+          # Keep the Android SDK, JDK, Gradle cache and checked-out project intact.
+          sudo rm -rf /usr/share/dotnet /opt/ghc
+          df -h / | tee ci-logs/disk-after-cleanup.log
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -296,6 +307,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          disk-size: 2048M
+          ram-size: 2048M
           disable-animations: true
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim

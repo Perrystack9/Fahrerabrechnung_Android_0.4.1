@@ -9,7 +9,7 @@ import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.io.File
 import java.security.SecureRandom
 import kotlinx.coroutines.runBlocking
-import net.zetetic.database.sqlcipher.SQLiteException
+import android.database.sqlite.SQLiteException
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

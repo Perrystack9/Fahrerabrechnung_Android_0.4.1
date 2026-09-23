@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -26,16 +27,18 @@ object FahrerBrand {
 /** A square vector symbol; the wordmark is accessible text, never a stretched bitmap. */
 @Composable
 fun BrandLockup(modifier: Modifier = Modifier) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val symbol = if (dark) R.drawable.ft_symbol_dark else R.drawable.ft_symbol
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Image(painterResource(R.drawable.ft_symbol), contentDescription = null, modifier = Modifier.size(40.dp))
+        Image(painterResource(symbol), contentDescription = null, modifier = Modifier.size(40.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 buildAnnotatedString {
                     append("Fahrer")
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) { append("Tagebuch") }
+                    withStyle(SpanStyle(color = BrandColors.Petrol)) { append("Tagebuch") }
                 },
                 style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (dark) BrandColors.White else BrandColors.Navy,
                 maxLines = 1,
                 softWrap = false,
             )
