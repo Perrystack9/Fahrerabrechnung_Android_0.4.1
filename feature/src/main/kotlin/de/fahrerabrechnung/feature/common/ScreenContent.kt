@@ -20,9 +20,9 @@ fun ScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .padding(horizontal = FahrerThemeTokens.spacing.md, vertical = FahrerThemeTokens.spacing.sm)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(FahrerThemeTokens.spacing.sm),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = FahrerThemeTokens.spacing.lg, vertical = FahrerThemeTokens.spacing.md),
+        verticalArrangement = Arrangement.spacedBy(FahrerThemeTokens.spacing.md),
         content = content,
     )
 }

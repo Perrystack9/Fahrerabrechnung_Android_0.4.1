@@ -10,6 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import de.fahrerabrechnung.core.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +34,12 @@ private val LightColors = lightColorScheme(
     background = LightTokens.Background,
     onBackground = LightTokens.OnBackground,
     surface = LightTokens.Surface,
+    surfaceTint = LightTokens.Primary,
+    surfaceContainer = LightTokens.Surface,
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFF7F9FB),
+    surfaceContainerHigh = LightTokens.SurfaceVariant,
+    surfaceContainerHighest = LightTokens.SurfaceVariant,
+    surfaceContainerLowest = LightTokens.Surface,
     onSurface = LightTokens.OnSurface,
     surfaceVariant = LightTokens.SurfaceVariant,
     onSurfaceVariant = LightTokens.OnSurfaceVariant,
@@ -54,6 +65,12 @@ private val DarkColors = darkColorScheme(
     background = DarkTokens.Background,
     onBackground = DarkTokens.OnBackground,
     surface = DarkTokens.Surface,
+    surfaceTint = DarkTokens.Primary,
+    surfaceContainer = DarkTokens.Surface,
+    surfaceContainerLow = DarkTokens.Surface,
+    surfaceContainerHigh = DarkTokens.SurfaceVariant,
+    surfaceContainerHighest = DarkTokens.SurfaceVariant,
+    surfaceContainerLowest = DarkTokens.Background,
     onSurface = DarkTokens.OnSurface,
     surfaceVariant = DarkTokens.SurfaceVariant,
     onSurfaceVariant = DarkTokens.OnSurfaceVariant,
@@ -65,26 +82,36 @@ private val DarkColors = darkColorScheme(
     onErrorContainer = DarkTokens.OnErrorContainer,
 )
 
+@OptIn(ExperimentalTextApi::class)
+private val Inter = FontFamily(
+    listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold).map { weight ->
+        Font(R.font.inter_variable, weight = weight, variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)))
+    },
+)
+
 private val AppTypography = Typography(
-    displaySmall = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.SemiBold),
-    headlineLarge = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.SemiBold),
-    headlineMedium = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.SemiBold),
-    headlineSmall = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.SemiBold),
-    titleLarge = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
-    titleMedium = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
-    titleSmall = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
-    bodyLarge = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal),
-    bodySmall = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal),
-    labelLarge = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
-    labelMedium = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+    displayLarge = TextStyle(fontFamily = Inter, fontSize = 48.sp, fontWeight = FontWeight.Bold),
+    displayMedium = TextStyle(fontFamily = Inter, fontSize = 40.sp, fontWeight = FontWeight.Bold),
+    labelSmall = TextStyle(fontFamily = Inter, fontSize = 11.sp, fontWeight = FontWeight.Medium),
+    displaySmall = TextStyle(fontFamily = Inter, fontSize = 36.sp, fontWeight = FontWeight.SemiBold),
+    headlineLarge = TextStyle(fontFamily = Inter, fontSize = 32.sp, fontWeight = FontWeight.SemiBold),
+    headlineMedium = TextStyle(fontFamily = Inter, fontSize = 28.sp, fontWeight = FontWeight.SemiBold),
+    headlineSmall = TextStyle(fontFamily = Inter, fontSize = 24.sp, fontWeight = FontWeight.SemiBold),
+    titleLarge = TextStyle(fontFamily = Inter, fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
+    titleMedium = TextStyle(fontFamily = Inter, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+    titleSmall = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+    bodyLarge = TextStyle(fontFamily = Inter, fontSize = 16.sp, fontWeight = FontWeight.Normal),
+    bodyMedium = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.Normal),
+    bodySmall = TextStyle(fontFamily = Inter, fontSize = 12.sp, fontWeight = FontWeight.Normal),
+    labelLarge = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+    labelMedium = TextStyle(fontFamily = Inter, fontSize = 12.sp, fontWeight = FontWeight.Medium),
 )
 
 private val AppShapes = Shapes(
     extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
     small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
     medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-    large = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+    large = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
     extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
 )
 
@@ -96,7 +123,7 @@ object FahrerThemeTokens {
 }
 
 @Composable
-fun FahrerabrechnungTheme(
+fun FahrerTagebuchTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {

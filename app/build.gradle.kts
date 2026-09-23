@@ -24,8 +24,8 @@ android {
         applicationId = "de.fahrerabrechnung.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40100
-        versionName = "0.4.1-projectstart"
+        versionCode = 40101
+        versionName = "0.4.1-ui-v2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -92,6 +92,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit4)
+    androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.espresso.core)

@@ -28,7 +28,8 @@ fun CalendarScreen(padding: PaddingValues, onOpenExampleDay: () -> Unit) {
                     OutlinedButton(
                         onClick = if (day == "22") onOpenExampleDay else ({}),
                         modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),
-                    ) { Text(day) }
+                        contentPadding = PaddingValues(0.dp),
+                    ) { Text(day, maxLines = 1, softWrap = false) }
                 }
             }
             StatusChip("22 · Beispieltag öffnen", StatusTone.INFO)

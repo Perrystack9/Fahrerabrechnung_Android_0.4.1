@@ -1,13 +1,17 @@
 package de.fahrerabrechnung.app
 
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.SideEffect
+import de.fahrerabrechnung.core.model.ThemeMode
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import de.fahrerabrechnung.core.design.FahrerabrechnungTheme
+import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -18,7 +22,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeMode = viewModel.themeMode.collectAsStateWithLifecycle().value
-            FahrerabrechnungTheme(themeMode = themeMode) {
+            val dark = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+            }
+            SideEffect {
+                val bars = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+            }
+            FahrerTagebuchTheme(themeMode = themeMode) {
                 AppRoot(
                     themeMode = themeMode,
                     onThemeModeChanged = viewModel::setThemeMode,

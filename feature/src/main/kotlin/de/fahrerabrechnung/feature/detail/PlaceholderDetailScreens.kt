@@ -8,13 +8,13 @@ import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.feature.common.ScreenContent
 
 @Composable
-fun CardImportPlaceholderScreen(padding: PaddingValues) = Placeholder(padding, "Fahrerkarte einlesen", "Transport-/Parser-Schnittstelle vorbereitet. USB-CCID und Kartenparser sind am Zwischenstopp ausdrücklich noch nicht implementiert.")
+fun CardImportPlaceholderScreen(padding: PaddingValues) = Placeholder(padding, "Fahrerkarte einlesen", "Das Einlesen der Fahrerkarte ist noch nicht verfügbar.")
 
 @Composable
-fun VehicleDetailPlaceholderScreen(padding: PaddingValues) = Placeholder(padding, "Fahrzeugdetail", "Fahrzeugdarstellung ist vorbereitet. VIN-Decoding bleibt eine Schnittstelle; es werden keine Hersteller-/Modelldaten geraten.")
+fun VehicleDetailPlaceholderScreen(padding: PaddingValues) = Placeholder(padding, "Fahrzeugdetail", "Es liegen noch keine Fahrzeugdaten vor.")
 
 @Composable
-fun SettingsSubpagePlaceholderScreen(padding: PaddingValues, title: String) = Placeholder(padding, title, "Diese Unterseite ist als Navigationziel vorbereitet. Fachliche Eingaben werden erst in einer später geprüften Phase umgesetzt.")
+fun SettingsSubpagePlaceholderScreen(padding: PaddingValues, title: String) = Placeholder(padding, title, "Dieser Bereich wird später verfügbar.")
 
 @Composable
 private fun Placeholder(padding: PaddingValues, title: String, body: String) {

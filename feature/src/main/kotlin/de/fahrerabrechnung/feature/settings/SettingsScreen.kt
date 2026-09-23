@@ -18,9 +18,14 @@ fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChanged: (ThemeMode) -> Unit,
     onOpenSubpage: (String) -> Unit,
+    onOpenOnboarding: () -> Unit,
 ) {
     ScreenContent(padding) {
-        Text("Einstellungen", style = MaterialTheme.typography.titleLarge)
+        Text("Deine App. Deine Übersicht.", style = MaterialTheme.typography.titleLarge)
+        SectionCard(title = "Einrichtung") {
+            Text("Alle acht Schritte in der Vorschau ansehen.")
+            androidx.compose.material3.OutlinedButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
+        }
         SectionCard(title = "Darstellung") {
             ThemeMode.entries.forEach { mode ->
                 androidx.compose.foundation.layout.Row(
@@ -35,10 +40,11 @@ fun SettingsScreen(
         SettingsGroup("Profil", onOpenSubpage)
         SettingsGroup("Standort / GPS", onOpenSubpage)
         SettingsGroup("Spesen / Übernachtung", onOpenSubpage)
-        SettingsGroup("Bezahlte Zeit / Zuschläge", onOpenSubpage)
+        SettingsGroup("Arbeitszeit / Zuschläge", onOpenSubpage)
         SettingsGroup("Fahrerkarte / Erinnerungen", onOpenSubpage)
         SettingsGroup("Berichte", onOpenSubpage)
         SettingsGroup("Daten / Datenschutz", onOpenSubpage)
+        Text("FahrerTagebuch · 0.4.1", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

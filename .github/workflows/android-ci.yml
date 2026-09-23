@@ -279,7 +279,15 @@ jobs:
           cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.properties" gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           rm -rf "${bootstrap_dir}"
+          printf 'distributionSha256Sum=%s\n' "${GRADLE_DIST_SHA256}" >> gradle/wrapper/gradle-wrapper.properties
           echo "${GRADLE_WRAPPER_SHA256}  gradle/wrapper/gradle-wrapper.jar" | sha256sum --check --strict
+
+      - name: Enable emulator hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -r /dev/kvm && test -w /dev/kvm
 
       - name: Run Room SQLCipher and Compose tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -289,11 +297,9 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            mkdir -p ci-logs
-            set -o pipefail
-            ./gradlew :data:connectedDebugAndroidTest :app:connectedDebugAndroidTest --stacktrace 2>&1 | tee ci-logs/instrumentation.log
+          script: bash scripts/run_instrumentation.sh
 
       - name: Upload instrumentation reports
         if: always()

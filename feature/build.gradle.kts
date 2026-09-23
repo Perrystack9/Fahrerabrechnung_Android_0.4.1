@@ -24,5 +24,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.material3)
+    testImplementation(libs.junit4)
     debugImplementation(libs.compose.ui.tooling)
 }

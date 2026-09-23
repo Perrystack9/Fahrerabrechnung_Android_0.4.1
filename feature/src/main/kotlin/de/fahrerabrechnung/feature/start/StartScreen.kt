@@ -22,15 +22,20 @@ import de.fahrerabrechnung.core.design.StatusTone
 import de.fahrerabrechnung.feature.common.ScreenContent
 
 @Composable
-fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit) {
+fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnboarding: () -> Unit) {
     ScreenContent(padding) {
-        Text("Beispieldaten · UI-Prototyp", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Dein Fahrertag im Überblick", style = MaterialTheme.typography.headlineSmall)
+        Text("Touren und Zeiten an einem Ort.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionCard(title = "Dein FahrerTagebuch") {
+            Text("Lerne die Einrichtung in acht Schritten kennen.")
+            androidx.compose.material3.OutlinedButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
+        }
         SectionCard(title = "Standortstatus") {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("GPS / Ort", style = MaterialTheme.typography.bodyLarge)
                 StatusChip("Noch nicht angebunden", StatusTone.NEUTRAL)
             }
-            Text("Produktive Standorterfassung beginnt erst nach dem 0.4.1-Zwischenstopp.", style = MaterialTheme.typography.bodySmall)
+            Text("Die Standortfunktion steht noch nicht zur Verfügung.", style = MaterialTheme.typography.bodySmall)
         }
         SectionCard(title = "Fahrerkarte") {
             LabelValueRow("Letzter erfolgreicher Import", "Noch keiner")
@@ -39,18 +44,18 @@ fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit) {
                 Text("  Kartenimport öffnen")
             }
         }
-        Text("September · Beispiel", style = MaterialTheme.typography.titleMedium)
+        Text("Monatsübersicht", style = MaterialTheme.typography.titleMedium)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("Bezahlte Zeit", "—", Modifier.weight(1f), "keine Berechnung")
-            MetricCard("Lenkzeit", "—", Modifier.weight(1f), "keine Berechnung")
+            MetricCard("Arbeitszeit", "—", Modifier.weight(1f), "Noch keine Daten")
+            MetricCard("Lenkzeit", "—", Modifier.weight(1f), "Noch keine Daten")
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("Nachtzeit", "—", Modifier.weight(1f), "keine Berechnung")
-            MetricCard("Spesen", "—", Modifier.weight(1f), "keine Berechnung")
+            MetricCard("Nachtzeit", "—", Modifier.weight(1f), "Noch keine Daten")
+            MetricCard("Spesen", "—", Modifier.weight(1f), "Noch keine Daten")
         }
-        MetricCard("Übernachtungen", "—", Modifier.fillMaxWidth(), "keine Berechnung")
+        MetricCard("Übernachtungen", "—", Modifier.fillMaxWidth(), "Noch keine Daten")
         SectionCard(title = "Hinweise") {
-            Text("Prüfstand noch nicht vorhanden. Produktive Auswertung beginnt erst nach dem 0.4.1-Zwischenstopp.")
+            Text("Sobald Daten vorliegen, findest du hier deine Hinweise.")
         }
     }
 }

@@ -1,5 +1,6 @@
 package de.fahrerabrechnung.core.design
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +37,11 @@ fun AppScaffold(
     content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(title) }, navigationIcon = navigationIcon) },
+        topBar = { TopAppBar(
+            title = { if (title == FahrerBrand.NAME) BrandLockup() else Text(title, style = MaterialTheme.typography.titleLarge) },
+            navigationIcon = navigationIcon,
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+        ) },
         bottomBar = bottomBar,
         content = content,
     )
@@ -51,7 +57,8 @@ fun SectionCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier.padding(FahrerThemeTokens.spacing.md),
@@ -70,7 +77,7 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     supporting: String? = null,
 ) {
-    Card(modifier = modifier, shape = MaterialTheme.shapes.large) {
+    Card(modifier = modifier, shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(
             Modifier.padding(FahrerThemeTokens.spacing.md),
             verticalArrangement = Arrangement.spacedBy(FahrerThemeTokens.spacing.xs),
@@ -132,7 +139,7 @@ fun LabelValueRow(label: String, value: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.titleSmall)
+        Text(label, modifier = Modifier.weight(1f).padding(end = 12.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, textAlign = androidx.compose.ui.text.style.TextAlign.End)
     }
 }

@@ -19,9 +19,9 @@ import de.fahrerabrechnung.feature.common.ScreenContent
 @Composable
 fun AnalyticsScreen(padding: PaddingValues) {
     ScreenContent(padding) {
-        Text("Monatsauswertung · UI-Platzhalter", style = MaterialTheme.typography.titleLarge)
+        Text("Monatsauswertung", style = MaterialTheme.typography.titleLarge)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("Bezahlte Zeit", "—", Modifier.weight(1f))
+            MetricCard("Arbeitszeit", "—", Modifier.weight(1f))
             MetricCard("Lenkzeit", "—", Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -39,6 +39,6 @@ fun AnalyticsScreen(padding: PaddingValues) {
             LabelValueRow("App-GPS", "—")
             LabelValueRow("Vergleich", "nicht verfügbar")
         }
-        StatusChip("Keine produktive Fachlogik in dieser Phase", StatusTone.NEUTRAL)
+        StatusChip("Noch keine Auswertungsdaten", StatusTone.NEUTRAL)
     }
 }

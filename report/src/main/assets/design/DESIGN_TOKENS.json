@@ -1,0 +1,26 @@
+{
+  "brand": {
+    "name": "FahrerTagebuch",
+    "claim": "Touren. Zeiten. Übersicht."
+  },
+  "colors": {
+    "navy": "#0F2D4A",
+    "petrol": "#008B8B",
+    "lightGray": "#E5E7EB",
+    "white": "#FFFFFF"
+  },
+  "typography": {
+    "primaryFamily": "Inter",
+    "weights": ["Regular", "Medium", "SemiBold", "Bold"]
+  },
+  "pdf": {
+    "format": "A4",
+    "orientation": "portrait",
+    "standardPages": 5,
+    "separateComplianceExport": true
+  },
+  "geometry": {
+    "circlesMustKeepAspectRatio": "1:1",
+    "logoMustKeepAspectRatio": true
+  }
+}
