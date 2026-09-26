@@ -1,6 +1,7 @@
 package de.fahrerabrechnung.app
 
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -27,6 +28,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberUpdatedState
@@ -42,6 +44,7 @@ import de.fahrerabrechnung.core.design.AppScaffold
 import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
+import de.fahrerabrechnung.feature.common.LocalScreenScrollState
 import de.fahrerabrechnung.feature.detail.CardImportPlaceholderScreen
 import de.fahrerabrechnung.feature.detail.DayReportScreen
 import de.fahrerabrechnung.feature.detail.SettingsSubpagePlaceholderScreen
@@ -81,6 +84,8 @@ fun AppRoot(
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
     // Enter/ExitTransition.None. Render only the current entry to avoid two screens at once.
     val visibleRoute = rememberUpdatedState(currentRoute)
+    // Keep each tab's scroll position alive while its outgoing NavHost content is hidden.
+    val tabScrollStates = TopLevelDestination.entries.associate { it.route to rememberScrollState() }
     val topLevel = TopLevelDestination.entries.firstOrNull { it.route == currentRoute }
     val title = if (topLevel == TopLevelDestination.START) FahrerBrand.NAME else topLevel?.label ?: when (currentRoute) {
         DetailRoutes.ONBOARDING -> FahrerBrand.NAME
@@ -145,29 +150,43 @@ fun AppRoot(
         ) {
             composable(TopLevelDestination.START.route) {
                 if (visibleRoute.value == TopLevelDestination.START.route) {
-                    StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) }, onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) })
+                    CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.START.route)) {
+                        StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) }, onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) })
+                    }
                 }
             }
             composable(TopLevelDestination.CALENDAR.route) {
                 if (visibleRoute.value == TopLevelDestination.CALENDAR.route) {
-                    CalendarScreen(padding, onOpenExampleDay = { navController.navigate(DetailRoutes.DAY_REPORT) })
+                    CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.CALENDAR.route)) {
+                        CalendarScreen(padding, onOpenExampleDay = { navController.navigate(DetailRoutes.DAY_REPORT) })
+                    }
                 }
             }
             composable(TopLevelDestination.ANALYTICS.route) {
-                if (visibleRoute.value == TopLevelDestination.ANALYTICS.route) AnalyticsScreen(padding)
+                if (visibleRoute.value == TopLevelDestination.ANALYTICS.route) {
+                    CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.ANALYTICS.route)) {
+                        AnalyticsScreen(padding)
+                    }
+                }
             }
             composable(TopLevelDestination.PAYROLL.route) {
-                if (visibleRoute.value == TopLevelDestination.PAYROLL.route) PayrollScreen(padding)
+                if (visibleRoute.value == TopLevelDestination.PAYROLL.route) {
+                    CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.PAYROLL.route)) {
+                        PayrollScreen(padding)
+                    }
+                }
             }
             composable(TopLevelDestination.SETTINGS.route) {
                 if (visibleRoute.value == TopLevelDestination.SETTINGS.route) {
-                    SettingsScreen(
-                        padding = padding,
-                        themeMode = themeMode,
-                        onThemeModeChanged = onThemeModeChanged,
-                        onOpenSubpage = { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) },
-                        onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
-                    )
+                    CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.SETTINGS.route)) {
+                        SettingsScreen(
+                            padding = padding,
+                            themeMode = themeMode,
+                            onThemeModeChanged = onThemeModeChanged,
+                            onOpenSubpage = { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) },
+                            onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
+                        )
+                    }
                 }
             }
             composable(DetailRoutes.ONBOARDING) {
