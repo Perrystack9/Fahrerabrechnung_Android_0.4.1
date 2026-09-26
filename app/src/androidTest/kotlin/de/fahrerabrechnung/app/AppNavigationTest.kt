@@ -72,6 +72,7 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag("nav_calendar").performClick()
         compose.mainClock.advanceTimeBy(32)
+        compose.onNodeWithTag("nav_calendar").assertIsSelected()
         screenshot("calendar_32ms")
         compose.onNodeWithText("September 2026 · Strukturvorschau").assertIsDisplayed()
         compose.onNodeWithText("Dein Fahrertag im Überblick").assertDoesNotExist()

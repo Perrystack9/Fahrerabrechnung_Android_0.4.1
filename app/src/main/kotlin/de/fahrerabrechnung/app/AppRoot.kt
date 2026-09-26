@@ -28,6 +28,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -76,6 +78,9 @@ fun AppRoot(
     var settingsTitle by rememberSaveable { mutableStateOf("Einstellung") }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: TopLevelDestination.START.route
+    // NavHost retains outgoing entries during its AnimatedContent transition, even with
+    // Enter/ExitTransition.None. Render only the current entry to avoid two screens at once.
+    val visibleRoute = rememberUpdatedState(currentRoute)
     val topLevel = TopLevelDestination.entries.firstOrNull { it.route == currentRoute }
     val title = if (topLevel == TopLevelDestination.START) FahrerBrand.NAME else topLevel?.label ?: when (currentRoute) {
         DetailRoutes.ONBOARDING -> FahrerBrand.NAME
@@ -105,22 +110,25 @@ fun AppRoot(
                     // Reserve 8 dp between items and round down once for all five labels.
                     val itemWidth = (constraints.maxWidth - horizontalInsets - with(density) { 32.dp.roundToPx() }) / 5
                     val labelStyle = navigationLabelStyle(navigationLabels, itemWidth - with(density) { 2.dp.roundToPx() })
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                        TopLevelDestination.entries.forEach { destination ->
-                            NavigationBarItem(
-                                selected = currentRoute == destination.route,
-                                onClick = {
-                                    if (currentRoute != destination.route) navController.navigate(destination.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(destination.icon, contentDescription = null) },
-                                label = { NavigationLabel(destination.label, destination.route, labelStyle) },
-                                alwaysShowLabel = true,
-                                modifier = Modifier.testTag("nav_${destination.route}"),
-                            )
+                    // Reset Material's animated selection state when the destination changes.
+                    key(currentRoute) {
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+                            TopLevelDestination.entries.forEach { destination ->
+                                NavigationBarItem(
+                                    selected = currentRoute == destination.route,
+                                    onClick = {
+                                        if (currentRoute != destination.route) navController.navigate(destination.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = { Icon(destination.icon, contentDescription = null) },
+                                    label = { NavigationLabel(destination.label, destination.route, labelStyle) },
+                                    alwaysShowLabel = true,
+                                    modifier = Modifier.testTag("nav_${destination.route}"),
+                                )
+                            }
                         }
                     }
                 }
@@ -136,34 +144,54 @@ fun AppRoot(
             popExitTransition = { ExitTransition.None },
         ) {
             composable(TopLevelDestination.START.route) {
-                StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) }, onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) })
+                if (visibleRoute.value == TopLevelDestination.START.route) {
+                    StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) }, onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) })
+                }
             }
             composable(TopLevelDestination.CALENDAR.route) {
-                CalendarScreen(padding, onOpenExampleDay = { navController.navigate(DetailRoutes.DAY_REPORT) })
+                if (visibleRoute.value == TopLevelDestination.CALENDAR.route) {
+                    CalendarScreen(padding, onOpenExampleDay = { navController.navigate(DetailRoutes.DAY_REPORT) })
+                }
             }
-            composable(TopLevelDestination.ANALYTICS.route) { AnalyticsScreen(padding) }
-            composable(TopLevelDestination.PAYROLL.route) { PayrollScreen(padding) }
+            composable(TopLevelDestination.ANALYTICS.route) {
+                if (visibleRoute.value == TopLevelDestination.ANALYTICS.route) AnalyticsScreen(padding)
+            }
+            composable(TopLevelDestination.PAYROLL.route) {
+                if (visibleRoute.value == TopLevelDestination.PAYROLL.route) PayrollScreen(padding)
+            }
             composable(TopLevelDestination.SETTINGS.route) {
-                SettingsScreen(
-                    padding = padding,
-                    themeMode = themeMode,
-                    onThemeModeChanged = onThemeModeChanged,
-                    onOpenSubpage = { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) },
-                    onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
-                )
+                if (visibleRoute.value == TopLevelDestination.SETTINGS.route) {
+                    SettingsScreen(
+                        padding = padding,
+                        themeMode = themeMode,
+                        onThemeModeChanged = onThemeModeChanged,
+                        onOpenSubpage = { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) },
+                        onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
+                    )
+                }
             }
             composable(DetailRoutes.ONBOARDING) {
-                OnboardingScreen(padding, draft, onDraftChange = { draft = it }, onFinish = {
-                    navController.navigate(TopLevelDestination.START.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                })
+                if (visibleRoute.value == DetailRoutes.ONBOARDING) {
+                    OnboardingScreen(padding, draft, onDraftChange = { draft = it }, onFinish = {
+                        navController.navigate(TopLevelDestination.START.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    })
+                }
             }
-            composable(DetailRoutes.DAY_REPORT) { DayReportScreen(padding) }
-            composable(DetailRoutes.CARD_IMPORT) { CardImportPlaceholderScreen(padding) }
-            composable(DetailRoutes.VEHICLE_DETAIL) { VehicleDetailPlaceholderScreen(padding) }
-            composable(DetailRoutes.SETTINGS_SUBPAGE) { SettingsSubpagePlaceholderScreen(padding, settingsTitle) }
+            composable(DetailRoutes.DAY_REPORT) {
+                if (visibleRoute.value == DetailRoutes.DAY_REPORT) DayReportScreen(padding)
+            }
+            composable(DetailRoutes.CARD_IMPORT) {
+                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardImportPlaceholderScreen(padding)
+            }
+            composable(DetailRoutes.VEHICLE_DETAIL) {
+                if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL) VehicleDetailPlaceholderScreen(padding)
+            }
+            composable(DetailRoutes.SETTINGS_SUBPAGE) {
+                if (visibleRoute.value == DetailRoutes.SETTINGS_SUBPAGE) SettingsSubpagePlaceholderScreen(padding, settingsTitle)
+            }
         }
     }
 }
