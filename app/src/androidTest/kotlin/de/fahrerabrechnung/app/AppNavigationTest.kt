@@ -1,6 +1,8 @@
 package de.fahrerabrechnung.app
 
+import android.content.ContentValues
 import android.graphics.Bitmap
+import android.provider.MediaStore
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -23,9 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
 import de.fahrerabrechnung.core.model.ThemeMode
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,12 +51,21 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         val routes = listOf("start", "calendar", "analytics", "payroll", "settings")
         val layouts = routes.map { route ->
             compose.onNodeWithTag("nav_$route").assertIsDisplayed()
+            compose.onNodeWithTag("nav_label_$route", useUnmergedTree = true).assertIsDisplayed()
             val result = mutableListOf<TextLayoutResult>()
             compose.onNodeWithTag("nav_label_$route", useUnmergedTree = true)
                 .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(result) }
-            assertEquals(1, result.single().lineCount)
-            assertFalse("Clipped label at $widthDp dp: $route", result.single().hasVisualOverflow)
-            result.single()
+            val layout = result.single()
+            assertEquals(1, layout.lineCount)
+            // Compose's semantics TextLayoutResult for a String remeasures with a full-width
+            // MultiParagraph but retains the narrow intrinsic Text size. Its didOverflowWidth
+            // can therefore be true even for "Start". Check the rendered glyph bounds and
+            // the complete visible text instead of comparing those incompatible box widths.
+            assertEquals("Truncated label at $widthDp dp: $route", layout.layoutInput.text.length, layout.getLineEnd(0, visibleEnd = true))
+            assertFalse("Vertically clipped label at $widthDp dp: $route", layout.didOverflowHeight)
+            assertTrue("Horizontally clipped label at $widthDp dp: $route (left=${layout.getLineLeft(0)}, right=${layout.getLineRight(0)}, width=${layout.size.width})",
+                layout.getLineLeft(0) >= 0f && layout.getLineRight(0) <= layout.size.width.toFloat())
+            layout
         }
         assertEquals(1, layouts.map { it.layoutInput.style.fontSize }.distinct().size)
         screenshot("start")
@@ -115,10 +126,16 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
     private fun screenshot(name: String) {
         compose.waitForIdle()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val directory = File(context.getExternalFilesDir(null), "ui-screenshots").apply { mkdirs() }
-        File(directory, "${widthDp}dp-${mode.name.lowercase()}-$name.png").outputStream().use {
-            compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
+        // Shared media survives AGP's automatic uninstall of the test application.
+        val image = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "${widthDp}dp-${mode.name.lowercase()}-$name.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FahrerTagebuch-CI")
+        }) ?: error("Could not create screenshot in shared media")
+        context.contentResolver.openOutputStream(image)?.use {
+            assertTrue("Could not encode screenshot: $name",
+                compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it))
+        } ?: error("Could not open screenshot output stream")
     }
 
     companion object {
