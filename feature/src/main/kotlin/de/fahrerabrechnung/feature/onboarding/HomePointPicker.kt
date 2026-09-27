@@ -71,8 +71,8 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
             }
         }
     }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
-        if (allowed) requestLocation() else error = "Ohne Berechtigung kannst du die Nadel manuell setzen."
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+        if (grants[Manifest.permission.ACCESS_FINE_LOCATION] == true) requestLocation() else error = "Ohne Berechtigung kannst du die Nadel manuell setzen."
     }
     val bridge = remember {
         HomePointBridge { lat, lon -> pending = lat to lon }
@@ -105,7 +105,7 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
         }
         OutlinedButton(onClick = {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) requestLocation()
-            else launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            else launcher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         }) { Text("Aktuellen Standort verwenden") }
         Text("Nadel verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
         Button(onClick = { pending?.let { currentOnPointChange(it.first, it.second) } }, enabled = pending != null) {
