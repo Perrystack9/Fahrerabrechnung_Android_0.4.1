@@ -9,13 +9,14 @@ object AtrDecoder {
         var y = bytes[1].toInt() ushr 4
         val historicLength = bytes[1].toInt() and 15
         var index = 2
-        val protocols = mutableSetOf(0)
+        val protocols = mutableSetOf<Int>()
         var hasTck = false
         repeat(8) {
             val count = Integer.bitCount(y and 7)
             if (index + count > bytes.size) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             index += count
             if (y and 8 == 0) {
+                if (protocols.isEmpty()) protocols += 0
                 if (index + historicLength + (if (hasTck) 1 else 0) != bytes.size)
                     throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
                 val historical = bytes.copyOfRange(index, index + historicLength)

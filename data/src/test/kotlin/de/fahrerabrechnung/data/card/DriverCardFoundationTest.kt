@@ -50,6 +50,7 @@ class DriverCardFoundationTest {
         try { CcidProtocol.response(reply, 0x80, 0, 6); fail() }
         catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
         assertTrue(AtrDecoder.parse(bytes(0x3B, 0)).protocols.contains(0))
+        assertEquals(setOf(1), AtrDecoder.parse(bytes(0x3B, 0x80, 0x01, 0x81)).protocols)
         try { AtrDecoder.parse(bytes(0x3B, 0x01)); fail() }
         catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
     }
