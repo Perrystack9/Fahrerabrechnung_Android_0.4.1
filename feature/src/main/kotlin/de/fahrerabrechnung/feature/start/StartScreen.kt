@@ -34,6 +34,7 @@ fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnbo
                 Text("  Fahrerkarte ansehen")
             }
         }
+        TextButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Monatsübersicht", style = MaterialTheme.typography.titleLarge)
@@ -61,6 +62,5 @@ fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnbo
         Text("Hinweise", style = MaterialTheme.typography.titleLarge)
         Text("Aktuell liegen keine Hinweise vor.",
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
     }
 }

@@ -96,8 +96,9 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
 
     @Test fun allSevenSetupStepsAndSummaryEditingRemainNavigable() {
         launch()
-        compose.onNodeWithText("Einrichtung ansehen").performClick()
-        compose.waitUntilAtLeastOneExists(hasTestTag("onboarding_username"))
+        compose.onNodeWithText("Einrichtung ansehen").performScrollTo().performClick()
+        compose.onNodeWithTag("onboarding").assertIsDisplayed()
+        compose.waitUntilAtLeastOneExists(hasTestTag("onboarding_username"), timeoutMillis = 5_000)
         compose.onNodeWithText("App-GPS", substring = true).assertDoesNotExist()
         compose.onNodeWithTag("onboarding_username").performTextInput("Testfahrer")
         for (step in 1..7) {
@@ -124,7 +125,7 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         compose.onNodeWithTag("onboarding_next").performClick()
         compose.onNodeWithTag("nav_start").assertIsSelected()
         // Draft belongs to the UI session and survives closing/reopening the preview.
-        compose.onNodeWithText("Einrichtung ansehen").performClick()
+        compose.onNodeWithText("Einrichtung ansehen").performScrollTo().performClick()
         compose.onNodeWithText("Testfahrer").assertIsDisplayed()
     }
 
