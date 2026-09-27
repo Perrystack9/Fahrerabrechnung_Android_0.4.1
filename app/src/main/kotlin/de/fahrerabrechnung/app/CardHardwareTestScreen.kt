@@ -122,8 +122,8 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 Text("APDU: ${if (result.apduResponded) "Antwort erhalten" else "nicht bestätigt"}")
                 Text("Kartengeneration: ${result.generation.label()}")
                 result.failure?.let { Text("Fehlercode: ${it.name}") }
-                if (result.operation != null) Text("Befehl: ${result.operation.name}")
-                if (result.stage != null) Text("Schritt: ${result.stage.name}")
+                result.operation?.let { Text("Befehl: ${it.name}") }
+                result.stage?.let { Text("Schritt: ${it.name}") }
             }
         }
     }
