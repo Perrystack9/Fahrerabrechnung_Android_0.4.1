@@ -3,6 +3,7 @@ package de.fahrerabrechnung.data.settings
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,12 +29,26 @@ class AppPreferencesRepository @Inject constructor(
         context.appSettingsDataStore.edit { it[THEME_MODE] = mode.name }
     }
 
-    suspend fun setOnboardingComplete(value: Boolean) {
-        context.appSettingsDataStore.edit { it[ONBOARDING_COMPLETE] = value }
+    suspend fun finishOnboarding(latitude: Double?, longitude: Double?) {
+        context.appSettingsDataStore.edit { prefs ->
+            if (latitude != null && longitude != null && latitude in -90.0..90.0 && longitude in -180.0..180.0) {
+                prefs[HOME_LATITUDE] = latitude
+                prefs[HOME_LONGITUDE] = longitude
+            }
+            prefs[ONBOARDING_COMPLETE] = true
+        }
+    }
+
+    val homePoint: Flow<Pair<Double, Double>?> = context.appSettingsDataStore.data.map { prefs ->
+        val lat = prefs[HOME_LATITUDE]
+        val lon = prefs[HOME_LONGITUDE]
+        if (lat != null && lon != null) lat to lon else null
     }
 
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val HOME_LATITUDE = doublePreferencesKey("home_latitude")
+        val HOME_LONGITUDE = doublePreferencesKey("home_longitude")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
     }
 }
