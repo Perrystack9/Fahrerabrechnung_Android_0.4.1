@@ -14,7 +14,7 @@ class DriverCardFoundationTest {
 
     @Test fun apduCasesAndStatus() {
         assertArrayEquals(bytes(0, 0xB0, 0, 0, 0), CardCommands.readBinary(0, 256).encode())
-        assertArrayEquals(bytes(0, 0xA4, 0, 12, 2, 5, 1), CardCommands.selectFile(0x0501).encode())
+        assertArrayEquals(bytes(0, 0xA4, 2, 12, 2, 5, 1), CardCommands.selectFile(0x0501).encode())
         assertEquals("file not found", ResponseApdu.decode(bytes(0x6A, 0x82)).meaning)
         assertEquals("security status not satisfied", ResponseApdu.decode(bytes(0x69, 0x82)).meaning)
         assertEquals("conditions of use not satisfied", ResponseApdu.decode(bytes(0x69, 0x85)).meaning)
@@ -37,8 +37,8 @@ class DriverCardFoundationTest {
         assertEquals("99", r.bcd(2, "c"))
         assertEquals(5, failure { r.u8("last") }.offset)
         assertEquals(0, failure { BinaryReader(bytes(0xFA)).bcd(2, "bcd") }.offset)
-        assertEquals(0, failure { BinaryReader(bytes(0x82, 0x01)).tlv("tlv") }.offset)
-        assertEquals(4, BinaryReader(bytes(0, 0, 0, 4)).epochSeconds("time").epochSecond)
+        assertEquals(2, failure { BinaryReader(bytes(0x82, 0x01)).tlv("tlv") }.offset)
+        assertEquals(4L, BinaryReader(bytes(0, 0, 0, 4)).epochSeconds("time").epochSecond)
     }
 
     @Test fun ccidFrameAndAtrValidation() {
@@ -66,6 +66,8 @@ class DriverCardFoundationTest {
         g2[0] = 2
         assertEquals(CardRecognition.OTHER_CARD, DriverCardDecoder.generation(null, g2).first)
         assertEquals(15, DriverCardFiles.files.first { it.generation == CardGeneration.GEN2 }.expectedLength)
+        assertEquals(10, DriverCardFiles.files.first { it.generation == CardGeneration.GEN2V2 }.expectedLength)
+        assertTrue(CardGeneration.GEN2V2.capabilities.contains(CardCapability.V2_FILES))
     }
 
     @Test fun syntheticIdentityAndTruncation() {
@@ -91,6 +93,23 @@ class DriverCardFoundationTest {
         val unknown = DriverCardReader(CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())).read()
         assertEquals(CardRecognition.UNKNOWN_CARD, unknown.recognition)
         assertNull(unknown.card)
+    }
+
+    @Test fun readerErrorsCloseSessionWithoutReturningPartialIdentity() = runBlocking {
+        for (failure in listOf(ReaderFailure.TIMEOUT, ReaderFailure.CARD_REMOVED, ReaderFailure.DISCONNECTED)) {
+            val transport = object : CardReaderTransport {
+                var closed = false
+                override suspend fun availability() = SourceAvailability.AVAILABLE
+                override suspend fun open() = ReaderState.Open
+                override suspend fun powerOn() = byteArrayOf(0x3B, 0)
+                override suspend fun exchange(apdu: ByteArray): ByteArray = throw ReaderException(failure)
+                override suspend fun powerOff() = Unit
+                override fun close() { closed = true }
+            }
+            try { DriverCardReader(transport).read(); fail("Expected $failure") }
+            catch (e: ReaderException) { assertEquals(failure, e.failure) }
+            assertTrue(transport.closed)
+        }
     }
 
     private fun identityFixture() = ByteArrayOutputStream().apply {
@@ -149,6 +168,7 @@ class DriverCardFoundationTest {
             }
             if (ins == 0xB0 && selected) {
                 val data = if (file == DriverCardFiles.IDENTIFICATION) identification else
+                    if (file == DriverCardFiles.APPLICATION_V2) ByteArray(10) else
                     ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1

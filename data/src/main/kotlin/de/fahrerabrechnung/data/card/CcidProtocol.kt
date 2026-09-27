@@ -13,8 +13,8 @@ internal object CcidProtocol {
 
     data class Response(val type: Int, val slot: Int, val sequence: Int, val status: Int,
                         val error: Int, val chain: Int, val data: ByteArray) {
-        val cardPresent: Boolean get() = status and 3 != 2
-        val timeExtension: Boolean get() = status ushr 6 == 2
+        val cardPresent: Boolean get() = (status and 3) != 2
+        val timeExtension: Boolean get() = (status ushr 6) == 2
     }
 
     fun command(type: Int, slot: Int, sequence: Int, payload: ByteArray = byteArrayOf()): ByteArray {
@@ -36,19 +36,18 @@ internal object CcidProtocol {
 
     fun response(bytes: ByteArray, type: Int, slot: Int, sequence: Int): Response {
         val total = expectedLength(bytes)
-        if (bytes.size != total || bytes[0].toInt() and 255 != type ||
-            bytes[5].toInt() and 255 != slot || bytes[6].toInt() and 255 != sequence)
+        if (bytes.size != total || (bytes[0].toInt() and 255) != type ||
+            (bytes[5].toInt() and 255) != slot || (bytes[6].toInt() and 255) != sequence)
             throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
         val status = bytes[7].toInt() and 255
         val error = bytes[8].toInt() and 255
-        if (status and 3 == 2) throw ReaderException(ReaderFailure.CARD_ABSENT)
-        if (status ushr 6 == 1) throw ReaderException(
+        if ((status and 3) == 2) throw ReaderException(ReaderFailure.CARD_ABSENT)
+        if ((status ushr 6) == 1) throw ReaderException(
             when (error) {
-                0xFE -> ReaderFailure.CARD_REMOVED
-                0xF0 -> ReaderFailure.TIMEOUT
+                0xFE -> ReaderFailure.TIMEOUT // ICC_MUTE (CCID 1.1 table 6.2-2)
                 else -> ReaderFailure.IO
             })
-        if (status ushr 6 == 3) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+        if ((status ushr 6) == 3) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
         return Response(type, slot, sequence, status, error, bytes[9].toInt() and 255,
             bytes.copyOfRange(HEADER_SIZE, total))
     }

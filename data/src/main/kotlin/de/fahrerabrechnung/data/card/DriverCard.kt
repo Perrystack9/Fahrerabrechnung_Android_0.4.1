@@ -4,6 +4,13 @@ import java.nio.charset.Charset
 import java.time.Instant
 
 enum class CardGeneration { GEN1, GEN2, GEN2V2, UNKNOWN, UNSUPPORTED }
+enum class CardCapability { BASIC_IDENTITY, G2_FILES, V2_FILES }
+val CardGeneration.capabilities: Set<CardCapability> get() = when (this) {
+    CardGeneration.GEN1 -> setOf(CardCapability.BASIC_IDENTITY)
+    CardGeneration.GEN2 -> setOf(CardCapability.BASIC_IDENTITY, CardCapability.G2_FILES)
+    CardGeneration.GEN2V2 -> CardCapability.entries.toSet()
+    else -> emptySet()
+}
 enum class CardRecognition { DRIVER, OTHER_CARD, UNKNOWN_CARD, INCONSISTENT }
 data class DriverIdentity(val surname: String, val givenNames: String, val birthDate: Instant,
                           val language: String)
@@ -23,11 +30,13 @@ object DriverCardFiles {
     const val MF = 0x3F00
     const val APPLICATION = 0x0501
     const val IDENTIFICATION = 0x0520
+    const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
         CardFile(IDENTIFICATION, "Identification", CardGeneration.GEN1, true, 143, "DriverIdentity"),
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN2, true, 15, "ApplicationIdG2"),
-        CardFile(IDENTIFICATION, "Identification", CardGeneration.GEN2, true, 143, "DriverIdentity")
+        CardFile(IDENTIFICATION, "Identification", CardGeneration.GEN2, true, 143, "DriverIdentity"),
+        CardFile(APPLICATION_V2, "Application_Identification_V2", CardGeneration.GEN2V2, true, 10, "ApplicationIdV2")
     )
 }
 
@@ -90,13 +99,20 @@ object DriverCardDecoder {
 class DriverCardReader(private val transport: CardReaderTransport) {
     suspend fun read(): CardReadResult {
         try {
-            transport.open()
+            when (transport.open()) {
+                ReaderState.Open, ReaderState.CardPresent -> Unit
+                ReaderState.Absent -> throw ReaderException(ReaderFailure.NO_READER)
+                ReaderState.PermissionRequired, ReaderState.PermissionDenied -> throw ReaderException(ReaderFailure.PERMISSION)
+                ReaderState.Empty -> throw ReaderException(ReaderFailure.CARD_ABSENT)
+                ReaderState.Disconnected -> throw ReaderException(ReaderFailure.DISCONNECTED)
+            }
             AtrDecoder.parse(transport.powerOn())
             val session = ApduSession(transport)
             val g2 = readApplication(session, DriverCardFiles.gen2Aid, 15)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
+            if (generation == CardGeneration.GEN2V2) readFile(session, DriverCardFiles.APPLICATION_V2, 10)
             val identity = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
             return try {
                 CardReadResult(recognized, generation, DriverCardDecoder.identity(identity, generation))

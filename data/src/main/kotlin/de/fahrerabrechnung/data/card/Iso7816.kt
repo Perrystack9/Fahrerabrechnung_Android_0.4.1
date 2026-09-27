@@ -63,7 +63,7 @@ class ApduSession(private val transport: CardReaderTransport) {
 }
 
 object CardCommands {
-    fun selectFile(id: Int) = CommandApdu(0, 0xA4, 0, 0x0C,
+    fun selectFile(id: Int) = CommandApdu(0, 0xA4, 2, 0x0C,
         byteArrayOf((id ushr 8).toByte(), id.toByte()))
     fun selectAid(aid: ByteArray) = CommandApdu(0, 0xA4, 4, 0x0C, aid)
     fun readBinary(offset: Int, length: Int): CommandApdu {

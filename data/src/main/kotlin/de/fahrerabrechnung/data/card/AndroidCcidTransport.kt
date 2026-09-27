@@ -22,8 +22,10 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     private var active: Candidate? = null
     private var connection: UsbDeviceConnection? = null
     private var sequence = 0
+    private var powered = false
     private var maxMessage = CcidProtocol.MAX_PAYLOAD + CcidProtocol.HEADER_SIZE
     private val timeoutMs = 5000
+    private var deniedDeviceId: Int? = null
 
     private data class Descriptor(val maxSlots: Int, val maxMessage: Int, val features: Long)
     private fun descriptor(raw: ByteArray): Descriptor? {
@@ -61,11 +63,19 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
 
     fun requestPermission(device: UsbDevice, resultIntent: PendingIntent) {
         require(candidates().any { it.device.deviceId == device.deviceId })
+        deniedDeviceId = null
         manager.requestPermission(device, resultIntent)
     }
 
+    /** Call from the receiver for UsbManager.EXTRA_PERMISSION_GRANTED. */
+    fun onPermissionResult(device: UsbDevice, granted: Boolean) {
+        deniedDeviceId = if (granted) null else device.deviceId
+    }
+
     override suspend fun availability(): SourceAvailability = when {
-        candidates().isEmpty() -> SourceAvailability.UNAVAILABLE
+        candidates().isEmpty() -> if (manager.deviceList.values.any { device ->
+            (0 until device.interfaceCount).any { device.getInterface(it).interfaceClass == 0x0B }
+        }) SourceAvailability.UNKNOWN else SourceAvailability.UNAVAILABLE
         candidates().any { manager.hasPermission(it.device) } -> SourceAvailability.AVAILABLE
         else -> SourceAvailability.PERMISSION_REQUIRED
     }
@@ -73,7 +83,8 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     override suspend fun open(): ReaderState = withContext(Dispatchers.IO) {
         close()
         val candidate = candidates().firstOrNull() ?: return@withContext ReaderState.Absent
-        if (!manager.hasPermission(candidate.device)) return@withContext ReaderState.PermissionRequired
+        if (!manager.hasPermission(candidate.device)) return@withContext
+            if (deniedDeviceId == candidate.device.deviceId) ReaderState.PermissionDenied else ReaderState.PermissionRequired
         val conn = manager.openDevice(candidate.device) ?: return@withContext ReaderState.Disconnected
         if (!conn.claimInterface(candidate.iface, true)) {
             conn.close()
@@ -82,7 +93,7 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         val properties = descriptor(conn.rawDescriptors)
         // The reader must expose short or extended APDU-level exchange; TPDU/character
         // exchange requires host-side T=0/T=1 handling and is deliberately rejected.
-        if (properties == null || properties.features and 0x00060000L == 0L) {
+        if (properties == null || (properties.features and 0x00060000L) == 0L) {
             conn.releaseInterface(candidate.iface)
             conn.close()
             throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
@@ -90,6 +101,7 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         active = candidate
         connection = conn
         sequence = 0
+        powered = false
         maxMessage = properties.maxMessage
         ReaderState.Open
     }
@@ -118,16 +130,18 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         var extensions = 0
         while (true) {
             val buffer = ByteArrayOutputStream()
-            var target = CcidProtocol.HEADER_SIZE
-            while (buffer.size() < target) {
-                val chunk = ByteArray(minOf(4096, target - buffer.size()))
+            var target: Int? = null
+            while (target == null || buffer.size() < target) {
+                val chunk = ByteArray(minOf(4096, maxMessage - buffer.size()))
+                if (chunk.isEmpty()) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
                 val n = conn.bulkTransfer(candidate.input, chunk, chunk.size, timeoutMs)
                 if (n <= 0) throw ReaderException(if (n == 0) ReaderFailure.TIMEOUT else ReaderFailure.IO)
                 buffer.write(chunk, 0, n)
-                if (buffer.size() >= CcidProtocol.HEADER_SIZE && target == CcidProtocol.HEADER_SIZE) {
+                if (buffer.size() >= CcidProtocol.HEADER_SIZE && target == null) {
                     target = CcidProtocol.expectedLength(buffer.toByteArray())
                     if (target > maxMessage) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
                 }
+                if (target != null && buffer.size() > target) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             }
             val response = CcidProtocol.response(buffer.toByteArray(), expected, 0, seq)
             if (!response.timeExtension) return response
@@ -145,16 +159,26 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     }
 
     override suspend fun powerOn(): ByteArray = withContext(Dispatchers.IO) {
-        transfer(CcidProtocol.POWER_ON, CcidProtocol.DATA_BLOCK).data.also { AtrDecoder.parse(it) }
+        transfer(CcidProtocol.POWER_ON, CcidProtocol.DATA_BLOCK).data.also {
+            AtrDecoder.parse(it)
+            powered = true
+        }
     }
     override suspend fun exchange(apdu: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         require(apdu.size in 4..65535)
-        transfer(CcidProtocol.XFR_BLOCK, CcidProtocol.DATA_BLOCK, apdu).also {
-            if (it.chain != 0) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
-        }.data
+        try {
+            transfer(CcidProtocol.XFR_BLOCK, CcidProtocol.DATA_BLOCK, apdu).also {
+                if (it.chain != 0) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
+            }.data
+        } catch (e: ReaderException) {
+            if (e.failure == ReaderFailure.CARD_ABSENT && powered)
+                throw ReaderException(ReaderFailure.CARD_REMOVED)
+            throw e
+        }
     }
     override suspend fun powerOff(): Unit = withContext(Dispatchers.IO) {
         transfer(CcidProtocol.POWER_OFF, CcidProtocol.STATUS)
+        powered = false
         Unit
     }
     override fun close() {
@@ -162,6 +186,7 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         val conn = connection
         active = null
         connection = null
+        powered = false
         if (candidate != null && conn != null) runCatching { conn.releaseInterface(candidate.iface) }
         conn?.close()
     }
