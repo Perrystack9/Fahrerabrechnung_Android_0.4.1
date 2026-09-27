@@ -11,6 +11,7 @@ import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -96,6 +97,7 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
     @Test fun allSevenSetupStepsAndSummaryEditingRemainNavigable() {
         launch()
         compose.onNodeWithText("Einrichtung ansehen").performClick()
+        compose.waitUntilAtLeastOneExists(hasTestTag("onboarding_username"))
         compose.onNodeWithText("App-GPS", substring = true).assertDoesNotExist()
         compose.onNodeWithTag("onboarding_username").performTextInput("Testfahrer")
         for (step in 1..7) {
