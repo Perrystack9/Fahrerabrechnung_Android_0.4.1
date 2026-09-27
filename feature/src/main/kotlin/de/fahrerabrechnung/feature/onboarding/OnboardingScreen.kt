@@ -77,7 +77,7 @@ fun OnboardingScreen(
                 color = MaterialTheme.colorScheme.secondary, trackColor = MaterialTheme.colorScheme.secondaryContainer,
             )
             Text("Schritt ${step + 1} von 7", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.testTag("onboarding_step"))
-            Text("Deine Angaben bleiben auf diesem Gerät.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Der Heimatpunkt wird beim Abschluss gespeichert; übrige Profilfelder sind derzeit Vorschau.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         key(step) {
             Column(
