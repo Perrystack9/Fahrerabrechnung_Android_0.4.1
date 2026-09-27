@@ -3,7 +3,7 @@ name: Android 0.4.1 CI Verification
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, card-foundation]
 
 permissions:
   contents: write
