@@ -13,10 +13,12 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 
 /** USB interface class 0x0B. Permission result is delivered to the caller's explicit receiver. */
-class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTransport {
-    constructor(context: Context) : this(context.getSystemService(Context.USB_SERVICE) as UsbManager)
+class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) : CardReaderTransport {
+    constructor(context: Context, slot: Int = 0) : this(context.getSystemService(Context.USB_SERVICE) as UsbManager, slot)
 
-    data class DeviceInfo(val vendorId: Int, val productId: Int, val slots: Int, val permission: Boolean)
+    init { require(slot in 0..255) }
+
+    data class DeviceInfo(val vendorId: Int, val productId: Int, val slots: Int?, val permission: Boolean)
     private data class Candidate(val device: UsbDevice, val iface: UsbInterface,
                                  val input: UsbEndpoint, val output: UsbEndpoint)
     private var active: Candidate? = null
@@ -24,27 +26,10 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     private var sequence = 0
     private var powered = false
     private var maxMessage = CcidProtocol.MAX_PAYLOAD + CcidProtocol.HEADER_SIZE
+    private var extendedApdu = false
+    private var openedSlots: Int? = null
     private val timeoutMs = 5000
     private var deniedDeviceId: Int? = null
-
-    private data class Descriptor(val maxSlots: Int, val maxMessage: Int, val features: Long)
-    private fun descriptor(raw: ByteArray): Descriptor? {
-        var i = 0
-        while (i + 2 <= raw.size) {
-            val length = raw[i].toInt() and 255
-            if (length < 2 || i + length > raw.size) return null
-            if (raw[i + 1].toInt() and 255 == 0x21 && length >= 54) {
-                fun le32(at: Int) = (0..3).fold(0L) { value, shift ->
-                    value or ((raw[i + at + shift].toLong() and 255) shl (8 * shift))
-                }
-                val message = le32(44)
-                if (message !in 10..(CcidProtocol.MAX_PAYLOAD + 10).toLong()) return null
-                return Descriptor((raw[i + 4].toInt() and 255) + 1, message.toInt(), le32(40))
-            }
-            i += length
-        }
-        return null
-    }
 
     private fun candidates(): List<Candidate> = manager.deviceList.values.flatMap { device ->
         (0 until device.interfaceCount).mapNotNull { i ->
@@ -58,7 +43,9 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     }
 
     fun devices(): List<DeviceInfo> = candidates().map {
-        DeviceInfo(it.device.vendorId, it.device.productId, 1, manager.hasPermission(it.device))
+        DeviceInfo(it.device.vendorId, it.device.productId,
+            if (active?.device?.deviceId == it.device.deviceId) openedSlots else null,
+            manager.hasPermission(it.device))
     }
 
     fun requestPermission(device: UsbDevice, resultIntent: PendingIntent) {
@@ -94,10 +81,10 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
             conn.close()
             throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
         }
-        val properties = conn.rawDescriptors?.let(::descriptor)
+        val properties = conn.rawDescriptors?.let { CcidDescriptor.parse(it, candidate.iface.id) }
         // The reader must expose short or extended APDU-level exchange; TPDU/character
         // exchange requires host-side T=0/T=1 handling and is deliberately rejected.
-        if (properties == null || (properties.features and 0x00060000L) == 0L) {
+        if (properties == null || !properties.apduExchange || slot >= properties.slots) {
             conn.releaseInterface(candidate.iface)
             conn.close()
             throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
@@ -107,6 +94,8 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         sequence = 0
         powered = false
         maxMessage = properties.maxMessage
+        extendedApdu = properties.extendedApdu
+        openedSlots = properties.slots
         ReaderState.Open
     }
 
@@ -120,10 +109,10 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         return candidate to conn
     }
 
-    private fun transfer(type: Int, expected: Int, payload: ByteArray = byteArrayOf()): CcidProtocol.Response {
+    private fun transfer(type: Int, expected: Int, payload: ByteArray = byteArrayOf(), level: Int = 0): CcidProtocol.Response {
         val (candidate, conn) = checked()
         val seq = sequence++ and 255
-        val request = CcidProtocol.command(type, 0, seq, payload)
+        val request = CcidProtocol.command(type, slot, seq, payload, level)
         if (request.size > maxMessage) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
         fun transferFailure(n: Int): Nothing {
             val detached = manager.deviceList.values.none { it.deviceId == candidate.device.deviceId }
@@ -155,7 +144,7 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
                 }
                 if (target != null && buffer.size() > target) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             }
-            val response = CcidProtocol.response(buffer.toByteArray(), expected, 0, seq)
+            val response = CcidProtocol.response(buffer.toByteArray(), expected, slot, seq)
             if (!response.timeExtension) return response
             if (++extensions > 8) throw ReaderException(ReaderFailure.TIMEOUT)
         }
@@ -179,9 +168,21 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
     override suspend fun exchange(apdu: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         require(apdu.size in 4..65535)
         try {
-            transfer(CcidProtocol.XFR_BLOCK, CcidProtocol.DATA_BLOCK, apdu).also {
-                if (it.chain != 0) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
-            }.data
+            val blocks = CcidCommandBlocks.split(apdu, maxMessage, extendedApdu)
+            var response: CcidProtocol.Response? = null
+            for ((index, block) in blocks.withIndex()) {
+                response = transfer(CcidProtocol.XFR_BLOCK, CcidProtocol.DATA_BLOCK, block.data, block.level)
+                if (index < blocks.lastIndex && (response.chain != 0x10 || response.data.isNotEmpty()))
+                    throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+            }
+            val chain = CcidResponseChain(65538)
+            var current = response ?: throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+            repeat(128) {
+                if (current.chain != 0 && !extendedApdu) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
+                chain.add(current)?.let { return@withContext it }
+                current = transfer(CcidProtocol.XFR_BLOCK, CcidProtocol.DATA_BLOCK, level = 0x10)
+            }
+            throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
         } catch (e: ReaderException) {
             if (e.failure == ReaderFailure.CARD_ABSENT && powered)
                 throw ReaderException(ReaderFailure.CARD_REMOVED)
@@ -199,6 +200,8 @@ class AndroidCcidTransport(private val manager: UsbManager) : CardReaderTranspor
         active = null
         connection = null
         powered = false
+        extendedApdu = false
+        openedSlots = null
         if (candidate != null && conn != null) runCatching { conn.releaseInterface(candidate.iface) }
         conn?.close()
     }

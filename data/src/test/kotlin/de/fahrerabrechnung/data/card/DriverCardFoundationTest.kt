@@ -55,6 +55,54 @@ class DriverCardFoundationTest {
         catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
     }
 
+    @Test fun ccidDescriptorMatchesInterfaceAndRejectsUnsupportedExchange() {
+        val iface = bytes(9, 4, 2, 0, 2, 0x0B, 0, 0, 0)
+        val ccid = ByteArray(54).also {
+            it[0] = 54; it[1] = 0x21; it[4] = 1 // two slots
+            it[40] = 0; it[41] = 0; it[42] = 4 // extended APDU exchange
+            it[44] = 0x10; it[45] = 1 // 272-byte CCID message
+        }
+        val raw = iface + ccid
+        assertNull(CcidDescriptor.parse(raw, 1))
+        val descriptor = CcidDescriptor.parse(raw, 2)!!
+        assertEquals(2, descriptor.slots)
+        assertEquals(272, descriptor.maxMessage)
+        assertTrue(descriptor.apduExchange)
+        assertTrue(descriptor.extendedApdu)
+        ccid[42] = 0
+        assertFalse(CcidDescriptor.parse(iface + ccid, 2)!!.apduExchange)
+        assertNull(CcidDescriptor.parse(raw.copyOf(raw.size - 1), 2))
+    }
+
+    @Test fun ccidResponseChainIsOrderedAndBounded() {
+        fun response(chain: Int, vararg data: Int) = CcidProtocol.Response(0x80, 1, 0, 0, 0,
+            chain, bytes(*data))
+        val chain = CcidResponseChain(4)
+        assertNull(chain.add(response(1, 1)))
+        assertNull(chain.add(response(3, 2)))
+        assertArrayEquals(bytes(1, 2, 3), chain.add(response(2, 3)))
+        try { chain.add(response(0)); fail() }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
+        try { CcidResponseChain().add(response(2, 1)); fail() }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
+        try { CcidResponseChain(1).add(response(0, 1, 2)); fail() }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
+        assertEquals(0x10, CcidProtocol.command(CcidProtocol.XFR_BLOCK, 1, 7, level = 0x10)[8].toInt())
+        assertEquals(2, CcidProtocol.command(CcidProtocol.XFR_BLOCK, 1, 7, bytes(1), level = 2)[8].toInt())
+    }
+
+    @Test fun ccidCommandBlocksRespectAdvertisedMessageSize() {
+        val apdu = ByteArray(14) { it.toByte() }
+        val blocks = CcidCommandBlocks.split(apdu, 16, true)
+        assertEquals(listOf(1, 3, 2), blocks.map { it.level })
+        assertArrayEquals(apdu, blocks.flatMap { it.data.toList() }.toByteArray())
+        assertEquals(0, CcidCommandBlocks.split(apdu, 24, false).single().level)
+        try { CcidCommandBlocks.split(apdu, 16, false); fail() }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.UNSUPPORTED_READER, e.failure) }
+        try { CcidCommandBlocks.split(apdu, 10, true); fail() }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.UNSUPPORTED_READER, e.failure) }
+    }
+
     @Test fun generationIsBoundToApplicationBytes() {
         val g1 = ByteArray(10).also { it[0] = 1 }
         val g2 = ByteArray(15).also { it[0] = 1; it[1] = 1 }

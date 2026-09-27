@@ -4,6 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.fahrerabrechnung.data.card.AndroidCcidTransport
+import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.ReaderState
 import de.fahrerabrechnung.data.card.SourceAvailability
 import kotlinx.coroutines.runBlocking
@@ -19,6 +20,7 @@ class CardTransportInstrumentedTest {
         if (transport.devices().isEmpty()) {
             assertEquals(SourceAvailability.UNAVAILABLE, transport.availability())
             assertEquals(ReaderState.Absent, transport.open())
+            assertEquals(ReaderState.Absent, CardDiagnosticProbe(transport).inspect().reader)
         }
         transport.close()
     }
