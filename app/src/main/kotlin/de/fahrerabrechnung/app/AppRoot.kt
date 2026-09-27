@@ -45,7 +45,6 @@ import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
-import de.fahrerabrechnung.feature.detail.CardImportPlaceholderScreen
 import de.fahrerabrechnung.feature.detail.DayReportScreen
 import de.fahrerabrechnung.feature.detail.SettingsSubpagePlaceholderScreen
 import de.fahrerabrechnung.feature.detail.VehicleDetailPlaceholderScreen
@@ -183,7 +182,10 @@ fun AppRoot(
                             padding = padding,
                             themeMode = themeMode,
                             onThemeModeChanged = onThemeModeChanged,
-                            onOpenSubpage = { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) },
+                            onOpenSubpage = {
+                                if (it == "Fahrerkarte") navController.navigate(DetailRoutes.CARD_IMPORT)
+                                else { settingsTitle = it; navController.navigate(DetailRoutes.SETTINGS_SUBPAGE) }
+                            },
                             onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
                         )
                     }
@@ -203,7 +205,7 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.DAY_REPORT) DayReportScreen(padding)
             }
             composable(DetailRoutes.CARD_IMPORT) {
-                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardImportPlaceholderScreen(padding)
+                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(padding)
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL) VehicleDetailPlaceholderScreen(padding)

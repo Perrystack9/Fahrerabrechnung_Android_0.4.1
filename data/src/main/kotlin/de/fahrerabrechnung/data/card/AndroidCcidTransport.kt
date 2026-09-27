@@ -54,6 +54,13 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
         manager.requestPermission(device, resultIntent)
     }
 
+    /** Request access to the first compatible reader when none is already permitted. */
+    fun requestPermission(resultIntent: PendingIntent): Boolean {
+        val candidate = candidates().firstOrNull { !manager.hasPermission(it.device) } ?: return false
+        requestPermission(candidate.device, resultIntent)
+        return true
+    }
+
     /** Call from the receiver for UsbManager.EXTRA_PERMISSION_GRANTED. */
     fun onPermissionResult(device: UsbDevice, granted: Boolean) {
         deniedDeviceId = if (granted) null else device.deviceId

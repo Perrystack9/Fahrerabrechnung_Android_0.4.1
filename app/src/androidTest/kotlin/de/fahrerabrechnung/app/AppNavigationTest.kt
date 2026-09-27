@@ -94,6 +94,13 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         compose.onNodeWithText("Hinweise").assertIsDisplayed()
     }
 
+    @Test fun cardReaderDiagnosticCanBeOpenedFromStart() {
+        launch()
+        compose.onNodeWithText("Fahrerkarte ansehen", substring = true).performClick()
+        compose.onNodeWithText("Technischer Lesertest").assertIsDisplayed()
+        compose.onNodeWithText("Kartenleser prüfen").assertIsDisplayed()
+    }
+
     @Test fun allSevenSetupStepsAndSummaryEditingRemainNavigable() {
         launch()
         compose.onNodeWithText("Einrichtung ansehen").performScrollTo().performClick()
