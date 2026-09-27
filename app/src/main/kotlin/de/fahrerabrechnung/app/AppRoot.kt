@@ -74,7 +74,7 @@ private object DetailRoutes {
 fun AppRoot(
     themeMode: ThemeMode,
     onboardingComplete: Boolean = true,
-    onFinishOnboarding: (() -> Unit) -> Unit = { it() },
+    onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
     onThemeModeChanged: (ThemeMode) -> Unit,
 ) {
     val navController = rememberNavController()
@@ -196,7 +196,7 @@ fun AppRoot(
             composable(DetailRoutes.ONBOARDING) {
                 if (visibleRoute.value == DetailRoutes.ONBOARDING) {
                     OnboardingScreen(padding, draft, onDraftChange = { draft = it }, onFinish = {
-                        onFinishOnboarding {
+                        onFinishOnboarding(draft.homeLatitude.toDoubleOrNull(), draft.homeLongitude.toDoubleOrNull()) {
                             navController.navigate(TopLevelDestination.START.route) {
                                 popUpTo(DetailRoutes.ONBOARDING) { inclusive = true }
                                 launchSingleTop = true
