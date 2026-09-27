@@ -158,14 +158,14 @@ private fun mapHtml(latitude: String, longitude: String): String {
         </head><body><div id="map"><div id="status">Karte wird geladen …</div></div>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-          var status=document.getElementById('status');
+          var statusEl=document.getElementById('status');
           if (!window.L) {
-            status.textContent='Karte nicht verfügbar. Prüfe die Internetverbindung oder nutze GPS.';
+            statusEl.textContent='Karte nicht verfügbar. Prüfe die Internetverbindung oder nutze GPS.';
           } else {
           var map=L.map('map').setView([${String.format(Locale.US, "%.7f", lat)},${String.format(Locale.US, "%.7f", lon)}],${if (hasPoint) 16 else 6});
           L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             {maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
-          map.whenReady(function(){status.style.display='none';setTimeout(function(){map.invalidateSize();},0)});
+          map.whenReady(function(){statusEl.style.display='none';setTimeout(function(){map.invalidateSize();},0)});
           var marker=null;
           function setPoint(lat,lon) {
             if (!marker) {
