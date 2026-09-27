@@ -154,7 +154,7 @@ private fun mapHtml(latitude: String, longitude: String): String {
     val hasPoint = latitude.toDoubleOrNull() != null && longitude.toDoubleOrNull() != null
     return """
         <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
         <style>html,body,#map{width:100%;height:100%;margin:0}#map{position:relative;background:#e8f0f2}
         #status{position:absolute;top:44%;left:5%;width:90%;text-align:center;color:#17334b;font:16px sans-serif;z-index:1000}</style>
         </head><body><div id="map"><div id="status">Karte wird geladen …</div></div>
@@ -162,7 +162,10 @@ private fun mapHtml(latitude: String, longitude: String): String {
         <script>function loadBackup(){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";s.onload=initMap;s.onerror=function(){document.getElementById("status").textContent="Karten-Skript nicht erreichbar. Prüfe die Internetverbindung oder nutze GPS."};document.body.appendChild(s)}</script>
         <script>
           var statusEl=document.getElementById('status');
+          var initialized=false;
           function initMap(){
+          if(initialized)return;
+          initialized=true;
           if (!window.L) {
             statusEl.textContent='Karte nicht verfügbar. Prüfe die Internetverbindung oder nutze GPS.';
           } else {
@@ -175,15 +178,15 @@ private fun mapHtml(latitude: String, longitude: String): String {
           setTimeout(function(){if(!tileCount&&!failedTiles){statusEl.style.display='block';statusEl.textContent='Kartenkacheln laden nicht. Prüfe die Internetverbindung oder nutze GPS.'}},8000);
           map.whenReady(function(){setTimeout(function(){map.invalidateSize();},100)});
           var marker=null;
-          function setPoint(lat,lon) {
+          window.setPoint=function(lat,lon) {
             if (!marker) {
               marker=L.marker([lat,lon],{draggable:true}).addTo(map);
               marker.on('dragend',function(e){var p=e.target.getLatLng();HomePoint.setPoint(p.lat,p.lng)});
             } else marker.setLatLng([lat,lon]);
             map.setView([lat,lon],16);
           }
-          map.on('click',function(e){setPoint(e.latlng.lat,e.latlng.lng);HomePoint.setPoint(e.latlng.lat,e.latlng.lng)});
-          ${if (hasPoint) "setPoint($lat,$lon);" else ""}
+          map.on('click',function(e){window.setPoint(e.latlng.lat,e.latlng.lng);HomePoint.setPoint(e.latlng.lat,e.latlng.lng)});
+          ${if (hasPoint) "window.setPoint($lat,$lon);" else ""}
           }
           }
           if(window.L)initMap();
