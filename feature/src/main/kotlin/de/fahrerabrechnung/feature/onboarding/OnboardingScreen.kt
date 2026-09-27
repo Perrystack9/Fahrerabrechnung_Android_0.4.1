@@ -77,7 +77,7 @@ fun OnboardingScreen(
                 color = MaterialTheme.colorScheme.secondary, trackColor = MaterialTheme.colorScheme.secondaryContainer,
             )
             Text("Schritt ${step + 1} von 7", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.testTag("onboarding_step"))
-            Text("Vorschau · Eingaben werden noch nicht als Profil gespeichert.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Deine Angaben bleiben auf diesem Gerät.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         key(step) {
             Column(
@@ -97,7 +97,7 @@ fun OnboardingScreen(
                         Note("Deine Daten werden lokal auf deinem Gerät verarbeitet.")
                         SectionCard(title = "Zuhause festlegen") {
                             Entry("Adresse", draft.address, { onDraftChange(draft.copy(address = it)) })
-                            Text("Die Adresse dient später der Zuordnung von Zuhause; noch keine Geokodierung oder Berechnung.",
+                            Text("Setze den Heimatpunkt einmalig. Die Adresse kann als eigene Notiz dienen.",
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Surface(shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -105,6 +105,9 @@ fun OnboardingScreen(
                                 }
                                 Column { Text("Heimbereich: 500 Meter", style = MaterialTheme.typography.titleSmall); Text("Fest vorgegeben", style = MaterialTheme.typography.bodySmall) }
                             }
+                        }
+                        HomePointPicker(draft.homeLatitude, draft.homeLongitude) { lat, lon ->
+                            onDraftChange(draft.copy(homeLatitude = lat.toString(), homeLongitude = lon.toString()))
                         }
                     }
                     2 -> {
@@ -176,7 +179,7 @@ fun OnboardingScreen(
                         Text("Prüfe deinen Entwurf. Über „Ändern“ kommst du direkt zum passenden Schritt.")
                         val summaries = listOf(
                             "Hauptprofil" to draft.username.ifBlank { "Noch nicht eingegeben" },
-                            "Zuhause" to if (draft.address.isBlank()) "Noch nicht festgelegt · 500 Meter" else "${draft.address} · 500 Meter",
+                            "Zuhause" to if (draft.homeLatitude.isBlank()) "Noch nicht festgelegt · 500 Meter" else "Heimatpunkt gesetzt · 500 Meter${if (draft.address.isNotBlank()) " · ${draft.address}" else ""}",
                             "Spesen" to "Über 8 Stunden: ${draft.expenses8.money()}\nÜber 24 Stunden: ${draft.expenses24.money()}\nÜbernachtungspauschale: ${draft.overnight.money()}\nDoppelte Spesen: ${if (draft.doubleExpenses) "Ja" else "Nein"}",
                             "Arbeitszeit & Zuschläge" to "Basiswert: ${draft.hourlyRate.money()}\nBereitschaft bezahlt: ${draft.standbyPaid.yesNo()}\nPause bezahlt: ${draft.breakPaid.yesNo()}\nNachtfenster: ${draft.nightWindows.size}\nSamstag: ${draft.saturday.percent()} · Sonntag: ${draft.sunday.percent()} · Feiertag: ${draft.holiday.percent()}",
                             "Fahrerkarte" to "Noch nicht eingelesen",
