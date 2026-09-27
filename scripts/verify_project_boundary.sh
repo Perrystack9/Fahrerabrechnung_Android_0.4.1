@@ -16,6 +16,10 @@ if grep -RInE "ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION" --include="*.kt" --i
   echo "Foreground location must remain in the onboarding home picker" >&2
   exit 1
 fi
+if find feature/src/main/kotlin -name "*.kt" ! -name "HomePointPicker.kt" -exec grep -IlE "ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION" {} + | grep -q .; then
+  echo "Foreground location outside the home picker" >&2
+  exit 1
+fi
 if ! grep -q 'android.permission.ACCESS_FINE_LOCATION' app/src/main/AndroidManifest.xml || ! grep -q 'android.permission.ACCESS_COARSE_LOCATION' app/src/main/AndroidManifest.xml; then
   echo "Home picker permission missing" >&2
   exit 1
