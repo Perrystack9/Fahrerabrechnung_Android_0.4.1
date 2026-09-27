@@ -21,7 +21,14 @@ sealed class ReaderState {
     data object Disconnected : ReaderState()
 }
 enum class ReaderFailure { NO_READER, PERMISSION, CARD_ABSENT, CARD_REMOVED, DISCONNECTED, TIMEOUT, IO, MALFORMED_RESPONSE, UNSUPPORTED_READER }
-class ReaderException(val failure: ReaderFailure, cause: Throwable? = null) : Exception(failure.name, cause)
+enum class ReaderOperation { SLOT_STATUS, POWER_ON, POWER_OFF, APDU }
+enum class ReaderStage { SEND, RECEIVE, RESPONSE, ATR }
+class ReaderException(
+    val failure: ReaderFailure,
+    cause: Throwable? = null,
+    val operation: ReaderOperation? = null,
+    val stage: ReaderStage? = null,
+) : Exception(failure.name, cause)
 
 class NoOpCardReaderTransport @javax.inject.Inject constructor() : CardReaderTransport {
     override suspend fun availability() = SourceAvailability.UNKNOWN

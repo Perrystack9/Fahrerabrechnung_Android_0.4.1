@@ -8,6 +8,7 @@ import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
+import android.os.SystemClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -29,6 +30,7 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
     private var extendedApdu = false
     private var openedSlots: Int? = null
     private val timeoutMs = 5000
+    private val powerOnTimeoutMs = 15000
     private var deniedDeviceId: Int? = null
 
     private fun candidates(): List<Candidate> = manager.deviceList.values.flatMap { device ->
@@ -118,32 +120,55 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
 
     private fun transfer(type: Int, expected: Int, payload: ByteArray = byteArrayOf(), level: Int = 0): CcidProtocol.Response {
         val (candidate, conn) = checked()
+        val operation = when (type) {
+            CcidProtocol.SLOT_STATUS -> ReaderOperation.SLOT_STATUS
+            CcidProtocol.POWER_ON -> ReaderOperation.POWER_ON
+            CcidProtocol.POWER_OFF -> ReaderOperation.POWER_OFF
+            else -> ReaderOperation.APDU
+        }
+        val waitMs = if (type == CcidProtocol.POWER_ON) powerOnTimeoutMs else timeoutMs
         val seq = sequence++ and 255
         val request = CcidProtocol.command(type, slot, seq, payload, level)
         if (request.size > maxMessage) throw ReaderException(ReaderFailure.UNSUPPORTED_READER)
-        fun transferFailure(n: Int): Nothing {
+        fun transferFailure(n: Int, stage: ReaderStage, startedAt: Long): Nothing {
             val detached = manager.deviceList.values.none { it.deviceId == candidate.device.deviceId }
             throw ReaderException(when {
                 detached -> ReaderFailure.DISCONNECTED
-                n == 0 -> ReaderFailure.TIMEOUT
+                n == 0 || SystemClock.elapsedRealtime() - startedAt >= waitMs - 250 -> ReaderFailure.TIMEOUT
                 else -> ReaderFailure.IO
-            })
+            }, operation = operation, stage = stage)
         }
         var sent = 0
+        var emptyWrites = 0
         while (sent < request.size) {
-            val n = conn.bulkTransfer(candidate.output, request, sent, request.size - sent, timeoutMs)
-            if (n <= 0) transferFailure(n)
+            val startedAt = SystemClock.elapsedRealtime()
+            val n = conn.bulkTransfer(candidate.output, request, sent, request.size - sent, waitMs)
+            if (n < 0) transferFailure(n, ReaderStage.SEND, startedAt)
+            if (n == 0) {
+                if (++emptyWrites >= 8) transferFailure(n, ReaderStage.SEND, startedAt)
+                continue
+            }
+            emptyWrites = 0
             sent += n
         }
         var extensions = 0
         while (true) {
             val buffer = ByteArrayOutputStream()
             var target: Int? = null
+            var emptyReads = 0
             while (target == null || buffer.size() < target) {
                 val chunk = ByteArray(minOf(4096, maxMessage - buffer.size()))
                 if (chunk.isEmpty()) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
-                val n = conn.bulkTransfer(candidate.input, chunk, chunk.size, timeoutMs)
-                if (n <= 0) transferFailure(n)
+                val startedAt = SystemClock.elapsedRealtime()
+                val n = conn.bulkTransfer(candidate.input, chunk, chunk.size, waitMs)
+                if (n < 0) transferFailure(n, ReaderStage.RECEIVE, startedAt)
+                // Android documents zero as a successful bulk call. A CCID reader may
+                // emit a zero-length packet; keep waiting with a bounded no-progress count.
+                if (n == 0) {
+                    if (++emptyReads >= 8) transferFailure(n, ReaderStage.RECEIVE, startedAt)
+                    continue
+                }
+                emptyReads = 0
                 buffer.write(chunk, 0, n)
                 if (buffer.size() >= CcidProtocol.HEADER_SIZE && target == null) {
                     target = CcidProtocol.expectedLength(buffer.toByteArray())
@@ -151,9 +176,14 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
                 }
                 if (target != null && buffer.size() > target) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             }
-            val response = CcidProtocol.response(buffer.toByteArray(), expected, slot, seq)
+            val response = try {
+                CcidProtocol.response(buffer.toByteArray(), expected, slot, seq)
+            } catch (e: ReaderException) {
+                throw ReaderException(e.failure, e, operation, ReaderStage.RESPONSE)
+            }
             if (!response.timeExtension) return response
-            if (++extensions > 8) throw ReaderException(ReaderFailure.TIMEOUT)
+            if (++extensions > 8) throw ReaderException(ReaderFailure.TIMEOUT,
+                operation = operation, stage = ReaderStage.RESPONSE)
         }
     }
 
@@ -168,7 +198,10 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
 
     override suspend fun powerOn(): ByteArray = withContext(Dispatchers.IO) {
         transfer(CcidProtocol.POWER_ON, CcidProtocol.DATA_BLOCK).data.also {
-            AtrDecoder.parse(it)
+            try { AtrDecoder.parse(it) }
+            catch (e: ReaderException) {
+                throw ReaderException(e.failure, e, ReaderOperation.POWER_ON, ReaderStage.ATR)
+            }
             powered = true
         }
     }

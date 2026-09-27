@@ -58,7 +58,8 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
         scope.launch {
             try {
                 diagnostic = CardDiagnosticProbe(transport).inspect()
-                message = "Prüfung abgeschlossen."
+                message = if (diagnostic?.failure == null) "Prüfung abgeschlossen."
+                    else "Prüfung mit Fehler beendet."
             } catch (_: Exception) {
                 message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
             } finally {
@@ -121,6 +122,8 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 Text("APDU: ${if (result.apduResponded) "Antwort erhalten" else "nicht bestätigt"}")
                 Text("Kartengeneration: ${result.generation.label()}")
                 result.failure?.let { Text("Fehlercode: ${it.name}") }
+                if (result.operation != null) Text("Befehl: ${result.operation.name}")
+                if (result.stage != null) Text("Schritt: ${result.stage.name}")
             }
         }
     }

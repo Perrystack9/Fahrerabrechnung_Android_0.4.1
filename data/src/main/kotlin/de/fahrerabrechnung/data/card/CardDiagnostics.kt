@@ -5,7 +5,9 @@ data class CardDiagnostic(
     val vendorId: Int?, val productId: Int?, val permission: Boolean,
     val slot: Int, val reader: ReaderState, val atrProtocols: Set<Int> = emptySet(),
     val apduResponded: Boolean = false, val generation: CardGeneration = CardGeneration.UNKNOWN,
-    val failure: ReaderFailure? = null
+    val failure: ReaderFailure? = null,
+    val operation: ReaderOperation? = null,
+    val stage: ReaderStage? = null
 )
 
 class CardDiagnosticProbe(private val transport: AndroidCcidTransport) {
@@ -17,6 +19,8 @@ class CardDiagnosticProbe(private val transport: AndroidCcidTransport) {
         var apduResponded = false
         var generation = CardGeneration.UNKNOWN
         var failure: ReaderFailure? = null
+        var operation: ReaderOperation? = null
+        var stage: ReaderStage? = null
         try {
             state = transport.open()
             if (state == ReaderState.Open) {
@@ -32,6 +36,8 @@ class CardDiagnosticProbe(private val transport: AndroidCcidTransport) {
             }
         } catch (e: ReaderException) {
             failure = e.failure
+            operation = e.operation
+            stage = e.stage
             state = when (e.failure) {
                 ReaderFailure.CARD_ABSENT -> ReaderState.Empty
                 ReaderFailure.CARD_REMOVED -> ReaderState.Disconnected
@@ -43,7 +49,7 @@ class CardDiagnosticProbe(private val transport: AndroidCcidTransport) {
             transport.close()
         }
         return CardDiagnostic(info?.vendorId, info?.productId, info?.permission == true,
-            transport.slot, state, protocols, apduResponded, generation, failure)
+            transport.slot, state, protocols, apduResponded, generation, failure, operation, stage)
     }
 
     private suspend fun application(session: ApduSession, aid: ByteArray, size: Int): ByteArray? {
