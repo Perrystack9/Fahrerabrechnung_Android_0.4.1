@@ -11,6 +11,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +27,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -37,6 +39,7 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
     val context = LocalContext.current
     var error by remember { mutableStateOf<String?>(null) }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    var showMap by remember { mutableStateOf(false) }
     var pending by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     val currentOnPointChange by rememberUpdatedState(onPointChange)
     val requestLocation: () -> Unit = requestLocation@{
@@ -79,25 +82,43 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
     val bridge = remember {
         HomePointBridge { lat, lon -> pending = lat to lon }
     }
-    Column {
-        AndroidView(
-            factory = { viewContext ->
-                WebView(viewContext).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = false
-                    settings.allowFileAccess = false
-                    settings.allowContentAccess = false
-                    settings.setSupportMultipleWindows(false)
-                    isHorizontalScrollBarEnabled = false
-                    isVerticalScrollBarEnabled = false
-                    settings.userAgentString = settings.userAgentString + " FahrerTagebuch/0.4.1 (home point picker)"
-                    addJavascriptInterface(bridge, "HomePoint")
-                    loadDataWithBaseURL("https://leafletjs.com/", mapHtml(latitude, longitude), "text/html", "UTF-8", null)
-                    webView = this
-                }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) requestLocation()
+                else launcher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             },
-            modifier = Modifier.fillMaxWidth().height(220.dp),
-        )
+            modifier = Modifier.fillMaxWidth().testTag("onboarding_use_gps"),
+        ) { Text("Aktuellen Standort per GPS verwenden") }
+        if (!showMap) {
+            OutlinedButton(onClick = { showMap = true }, modifier = Modifier.fillMaxWidth().testTag("onboarding_open_map")) {
+                Text("Oder Punkt auf Karte wählen")
+            }
+        } else {
+            AndroidView(
+                factory = { viewContext ->
+                    WebView(viewContext).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = false
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        settings.setSupportMultipleWindows(false)
+                        isHorizontalScrollBarEnabled = false
+                        isVerticalScrollBarEnabled = false
+                        settings.userAgentString = settings.userAgentString + " FahrerTagebuch/0.4.1 (home point picker)"
+                        addJavascriptInterface(bridge, "HomePoint")
+                        loadDataWithBaseURL(
+                            "https://leafletjs.com/",
+                            mapHtml(pending?.first?.toString() ?: latitude, pending?.second?.toString() ?: longitude),
+                            "text/html", "UTF-8", null,
+                        )
+                        webView = this
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(220.dp).testTag("onboarding_map"),
+            )
+            Text("Nadel verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
+        }
         DisposableEffect(Unit) {
             onDispose {
                 webView?.removeJavascriptInterface("HomePoint")
@@ -105,12 +126,7 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
                 webView = null
             }
         }
-        OutlinedButton(onClick = {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) requestLocation()
-            else launcher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-        }) { Text("Aktuellen Standort verwenden") }
-        Text("Nadel verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
-        Button(onClick = { pending?.let { currentOnPointChange(it.first, it.second) } }, enabled = pending != null) {
+        Button(onClick = { pending?.let { currentOnPointChange(it.first, it.second) } }, enabled = pending != null, modifier = Modifier.fillMaxWidth().testTag("onboarding_confirm_home")) {
             Text("Heimatpunkt übernehmen")
         }
         pending?.let { Text("Ausgewählt: ${it.first}, ${it.second}") }
@@ -137,12 +153,19 @@ private fun mapHtml(latitude: String, longitude: String): String {
     return """
         <!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-        <style>html,body,#map{width:100%;height:100%;margin:0}</style></head><body><div id="map"></div>
+        <style>html,body,#map{width:100%;height:100%;margin:0}#map{position:relative;background:#e8f0f2}
+        #status{position:absolute;top:44%;left:5%;width:90%;text-align:center;color:#17334b;font:16px sans-serif;z-index:1000}</style>
+        </head><body><div id="map"><div id="status">Karte wird geladen …</div></div>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
+          var status=document.getElementById('status');
+          if (!window.L) {
+            status.textContent='Karte nicht verfügbar. Prüfe die Internetverbindung oder nutze GPS.';
+          } else {
           var map=L.map('map').setView([${String.format(Locale.US, "%.7f", lat)},${String.format(Locale.US, "%.7f", lon)}],${if (hasPoint) 16 else 6});
           L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             {maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+          map.whenReady(function(){status.style.display='none';setTimeout(function(){map.invalidateSize();},0)});
           var marker=null;
           function setPoint(lat,lon) {
             if (!marker) {
@@ -153,6 +176,7 @@ private fun mapHtml(latitude: String, longitude: String): String {
           }
           map.on('click',function(e){setPoint(e.latlng.lat,e.latlng.lng);HomePoint.setPoint(e.latlng.lat,e.latlng.lng)});
           ${if (hasPoint) "setPoint($lat,$lon);" else ""}
+          }
         </script></body></html>
     """.trimIndent()
 }

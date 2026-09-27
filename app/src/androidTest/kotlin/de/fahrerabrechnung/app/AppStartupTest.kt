@@ -18,7 +18,11 @@ class AppStartupTest {
         }
         compose.onNodeWithText("Schritt 1 von 7").assertIsDisplayed()
         compose.onNodeWithTag("nav_settings").assertDoesNotExist()
-        repeat(6) { compose.onNodeWithTag("onboarding_next").performClick() }
+        compose.onNodeWithTag("onboarding_next").performClick()
+        compose.onNodeWithText("Schritt 2 von 7").assertIsDisplayed()
+        compose.onNodeWithTag("onboarding_use_gps").assertIsDisplayed()
+        compose.onNodeWithTag("onboarding_open_map").assertIsDisplayed()
+        repeat(5) { compose.onNodeWithTag("onboarding_next").performClick() }
         compose.onNodeWithText("Schritt 7 von 7").assertIsDisplayed()
         compose.onNodeWithTag("onboarding_next").performClick()
         compose.waitUntil(timeoutMillis = 10_000) {
