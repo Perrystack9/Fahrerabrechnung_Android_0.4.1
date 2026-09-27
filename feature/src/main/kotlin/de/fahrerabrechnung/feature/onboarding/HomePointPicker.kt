@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +35,8 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
     val context = LocalContext.current
     var error by remember { mutableStateOf<String?>(null) }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    var pending by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    val currentOnPointChange by rememberUpdatedState(onPointChange)
     val requestLocation: () -> Unit = {
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -43,7 +47,7 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
                     manager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, ContextCompat.getMainExecutor(context)) { location ->
                         if (location == null) error = "Kein Standort gefunden. Bitte versuche es erneut oder setze die Nadel selbst."
                         else {
-                            onPointChange(location.latitude, location.longitude)
+                            pending = location.latitude to location.longitude
                             webView?.evaluateJavascript("setPoint(${location.latitude},${location.longitude})", null)
                             error = null
                         }
@@ -52,7 +56,7 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
                     @Suppress("DEPRECATION")
                     manager.requestSingleUpdate(LocationManager.GPS_PROVIDER, object : android.location.LocationListener {
                         override fun onLocationChanged(location: android.location.Location) {
-                            onPointChange(location.latitude, location.longitude)
+                            pending = location.latitude to location.longitude
                             webView?.evaluateJavascript("setPoint(${location.latitude},${location.longitude})", null)
                             error = null
                         }
@@ -66,8 +70,8 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
         if (allowed) requestLocation() else error = "Ohne Berechtigung kannst du die Nadel manuell setzen."
     }
-    val bridge = remember(onPointChange) {
-        HomePointBridge { lat, lon -> onPointChange(lat, lon) }
+    val bridge = remember {
+        HomePointBridge { lat, lon -> pending = lat to lon }
     }
     Column {
         AndroidView(
@@ -99,7 +103,11 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) requestLocation()
             else launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }) { Text("Aktuellen Standort verwenden") }
-        Text("Nadel antippen und verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
+        Text("Nadel verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
+        Button(onClick = { pending?.let { currentOnPointChange(it.first, it.second) } }, enabled = pending != null) {
+            Text("Heimatpunkt übernehmen")
+        }
+        pending?.let { Text("Ausgewählt: ${it.first}, ${it.second}") }
         if (latitude.isNotBlank() && longitude.isNotBlank()) {
             Text("Heimatpunkt: ${latitude.take(10)}, ${longitude.take(10)} · Radius 500 m")
         }
