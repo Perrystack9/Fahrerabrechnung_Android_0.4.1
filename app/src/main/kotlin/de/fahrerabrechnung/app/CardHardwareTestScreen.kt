@@ -115,7 +115,9 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 Text("Reader: ${result.reader.label()}")
                 Text("USB: ${result.vendorId?.toString(16) ?: "–"}:${result.productId?.toString(16) ?: "–"}")
                 Text("Freigabe: ${if (result.permission) "erteilt" else "fehlt"} · Slot: ${result.slot}")
-                Text("ATR: ${if (result.atrProtocols.isEmpty()) "nicht gelesen" else "T=${result.atrProtocols.sorted().joinToString(", T=")}")}")
+                val atrText = if (result.atrProtocols.isEmpty()) "nicht gelesen"
+                    else "T=" + result.atrProtocols.sorted().joinToString(", T=")
+                Text("ATR: $atrText")
                 Text("APDU: ${if (result.apduResponded) "Antwort erhalten" else "nicht bestätigt"}")
                 Text("Kartengeneration: ${result.generation.label()}")
                 result.failure?.let { Text("Fehlercode: ${it.name}") }
