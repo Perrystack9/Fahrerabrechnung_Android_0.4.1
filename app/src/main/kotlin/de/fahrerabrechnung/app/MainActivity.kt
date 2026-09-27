@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val onboardingComplete = viewModel.onboardingComplete.collectAsStateWithLifecycle().value
             val themeMode = viewModel.themeMode.collectAsStateWithLifecycle().value
             val dark = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -32,7 +33,9 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
             FahrerTagebuchTheme(themeMode = themeMode) {
-                AppRoot(
+                if (onboardingComplete != null) AppRoot(
+                    onboardingComplete = onboardingComplete,
+                    onFinishOnboarding = viewModel::finishOnboarding,
                     themeMode = themeMode,
                     onThemeModeChanged = viewModel::setThemeMode,
                 )

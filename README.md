@@ -1,6 +1,6 @@
 # Fahrerabrechnung & Fahrertagebuch – Android-Projektstart 0.4.1
 
-**Aktuelle Produktregeln: [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md). Smartphone/App GPS ist ausgeschlossen; GNSS-Punkte aus Fahrerkarte/Tachograph bleiben möglich. Ältere widersprechende Spezifikationen gelten insoweit nicht.**
+**Aktuelle Produktregeln: [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md). Smartphone-Standort wird ausschließlich auf ausdrückliche Aktion zur einmaligen Heimatpunktwahl im Onboarding verwendet. Für Fahrten, Zeiten und weitere Ortsdaten gelten nur Fahrerkarte/Tachograph. Ältere widersprechende Spezifikationen sind überholt.**
 
 Technische Startbasis gemäß dem verbindlichen Work-Auftrag **„Android-Projektstart 0.4.1“** und dem anschließenden Zwischenschritt **„Build-Verifikation und technische Basiskorrektur“**. Der Stand bildet absichtlich **keine produktive Fachlogik** für Fahrerkarte, USB/CCID, Gen2/Gen2V2, Matching, Reisen, Spesen, Übernachtungen, Zuschläge, Compliance, PDF oder Serverbackup ab.
 
@@ -53,7 +53,7 @@ Der SQLCipher-Instrumentationstest prüft zusätzlich:
 
 Die technische Basis ist local-first. Die Room-Datenbank wird ausschließlich über SQLCipher geöffnet. Die zufällige Datenbank-Passphrase wird nicht im Klartext persistiert, sondern per Android Keystore (AES/GCM) geschützt und erst zur Laufzeit entschlüsselt. Es gibt **keinen unverschlüsselten Fallback** und kein `fallbackToDestructiveMigration()`.
 
-DataStore enthält nur technische Komfortwerte wie Theme-/Onboarding-/Debug-Einstellungen, keine fachliche Abrechnungskonfiguration.
+DataStore enthält Theme, Onboarding-Abschluss und den optionalen Heimatpunkt. Weitere Profil- und Abrechnungsfelder im Onboarding sind derzeit UI-Vorschau und werden noch nicht dauerhaft gespeichert.
 
 ## Logging
 
@@ -61,9 +61,9 @@ DataStore enthält nur technische Komfortwerte wie Theme-/Onboarding-/Debug-Eins
 
 ## Aktuelle Implementierungsgrenze
 
-Vorbereitet, aber absichtlich ohne produktive Implementierung:
+Vorbereitet, aber noch ohne vollständigen produktiven Kartenimport:
 
-- `CardReaderTransport`
+- `CardReaderTransport` (USB-CCID/APDU-Hardwaretest vorhanden)
 - `VinDecoder`
 - `BackupProvider`
 - Berichts-/PDF-Gateway
@@ -73,4 +73,4 @@ Die Werteplatzhalter in den fünf Grundscreens sind **reine UI-Vorschauen** und 
 
 ## Spezifikationsbezug
 
-Quelle: „Fahrerabrechnung & Fahrertagebuch 0.4.1 – Gesamtpaket für ChatGPT Work“, Stand 22.09.2026. Bei Widersprüchen gelten die späteren finalen 0.4.1-Festlegungen. Dieser Projektstand bleibt am vorgeschriebenen Zwischenstopp; eine Fahrerkarte-/USB-/Parser-Phase ist nicht begonnen.
+Quelle: „Fahrerabrechnung & Fahrertagebuch 0.4.1 – Gesamtpaket für ChatGPT Work“, Stand 22.09.2026. Bei Widersprüchen gelten die späteren finalen 0.4.1-Festlegungen. Der technische USB-CCID/APDU-Hardwaretest und die Kartengenerationserkennung sind inzwischen vorhanden; ein vollständiger Kartenimport und die Fachberechnungen fehlen weiterhin.

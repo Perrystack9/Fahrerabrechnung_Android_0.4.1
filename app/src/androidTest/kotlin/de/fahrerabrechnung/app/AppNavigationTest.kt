@@ -47,6 +47,18 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         }
     }
 
+    @Test fun firstLaunchShowsOnboardingBeforeTabs() {
+        compose.setContent {
+            FahrerTagebuchTheme(mode) {
+                AppRoot(themeMode = mode, onThemeModeChanged = {}, onboardingComplete = false)
+            }
+        }
+        compose.onNodeWithTag("onboarding").assertIsDisplayed()
+        compose.onNodeWithText("Schritt 1 von 7").assertIsDisplayed()
+        compose.onNodeWithTag("nav_start").assertDoesNotExist()
+        compose.onNodeWithTag("back").assertDoesNotExist()
+    }
+
     @Test fun allFiveTabsHaveEqualSingleLineUnclippedLabelsAndSwitchImmediately() {
         launch()
         val routes = listOf("start", "calendar", "analytics", "payroll", "settings")

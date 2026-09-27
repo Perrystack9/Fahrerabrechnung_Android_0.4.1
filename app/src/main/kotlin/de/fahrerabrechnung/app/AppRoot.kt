@@ -74,12 +74,14 @@ private object DetailRoutes {
 fun AppRoot(
     themeMode: ThemeMode,
     onThemeModeChanged: (ThemeMode) -> Unit,
+    onboardingComplete: Boolean = true,
+    onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
 ) {
     val navController = rememberNavController()
     var draft by rememberSaveable(stateSaver = OnboardingDraft.Saver) { mutableStateOf(OnboardingDraft()) }
     var settingsTitle by rememberSaveable { mutableStateOf("Einstellung") }
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route ?: TopLevelDestination.START.route
+    val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
     // Enter/ExitTransition.None. Render only the current entry to avoid two screens at once.
     val visibleRoute = rememberUpdatedState(currentRoute)
@@ -98,14 +100,14 @@ fun AppRoot(
     AppScaffold(
         title = title,
         navigationIcon = {
-            if (topLevel == null) {
+            if (topLevel == null && (onboardingComplete || currentRoute != DetailRoutes.ONBOARDING)) {
                 IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.testTag("back")) {
                     Icon(Icons.Rounded.ArrowBack, contentDescription = "Zurück")
                 }
             }
         },
         bottomBar = {
-            if (topLevel != null) {
+            if (topLevel != null && onboardingComplete) {
                 BoxWithConstraints {
                     val density = LocalDensity.current
                     val direction = LocalLayoutDirection.current
@@ -141,7 +143,7 @@ fun AppRoot(
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = TopLevelDestination.START.route,
+            startDestination = if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING,
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
@@ -194,9 +196,11 @@ fun AppRoot(
             composable(DetailRoutes.ONBOARDING) {
                 if (visibleRoute.value == DetailRoutes.ONBOARDING) {
                     OnboardingScreen(padding, draft, onDraftChange = { draft = it }, onFinish = {
-                        navController.navigate(TopLevelDestination.START.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
-                            launchSingleTop = true
+                        onFinishOnboarding(draft.homeLatitude.toDoubleOrNull(), draft.homeLongitude.toDoubleOrNull()) {
+                            navController.navigate(TopLevelDestination.START.route) {
+                                popUpTo(DetailRoutes.ONBOARDING) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     })
                 }
