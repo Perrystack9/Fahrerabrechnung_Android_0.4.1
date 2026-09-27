@@ -73,9 +73,9 @@ private object DetailRoutes {
 @Composable
 fun AppRoot(
     themeMode: ThemeMode,
+    onThemeModeChanged: (ThemeMode) -> Unit,
     onboardingComplete: Boolean = true,
     onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
-    onThemeModeChanged: (ThemeMode) -> Unit,
 ) {
     val navController = rememberNavController()
     var draft by rememberSaveable(stateSaver = OnboardingDraft.Saver) { mutableStateOf(OnboardingDraft()) }
