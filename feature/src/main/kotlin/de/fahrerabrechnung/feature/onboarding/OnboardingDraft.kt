@@ -22,6 +22,8 @@ data class OnboardingDraft(
     val reminder27: Boolean = true,
     val reminderTime: String = "18:00",
     val nightWindows: List<NightWindowDraft> = emptyList(),
+    val homeLatitude: String = "",
+    val homeLongitude: String = "",
 ) {
     companion object {
         val Saver = listSaver<OnboardingDraft, String>(
@@ -31,13 +33,14 @@ data class OnboardingDraft(
                     d.doubleExpenses.toString(), d.standbyPaid.toString(), d.breakPaid.toString(),
                     d.hourlyRate, d.saturday, d.sunday, d.holiday, d.remindersEnabled.toString(),
                     d.reminder21.toString(), d.reminder25.toString(), d.reminder27.toString(), d.reminderTime,
-                ) + d.nightWindows.flatMap { listOf(it.start, it.end, it.percent) }
+                ) + d.nightWindows.flatMap { listOf(it.start, it.end, it.percent) } + listOf(d.homeLatitude, d.homeLongitude)
             },
             restore = { s ->
                 OnboardingDraft(
                     s[0], s[1], s[2], s[3], s[4], s[5].toBoolean(), s[6].toBoolean(), s[7].toBoolean(),
                     s[8], s[9], s[10], s[11], s[12].toBoolean(), s[13].toBoolean(), s[14].toBoolean(), s[15].toBoolean(), s[16],
-                    s.drop(17).chunked(3).map { NightWindowDraft(it[0], it[1], it[2]) },
+                    s.drop(17).dropLast(2).chunked(3).map { NightWindowDraft(it[0], it[1], it[2]) },
+                    s[s.size - 2], s[s.size - 1],
                 )
             },
         )
