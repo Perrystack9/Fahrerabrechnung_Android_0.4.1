@@ -1,6 +1,7 @@
 package de.fahrerabrechnung.feature.onboarding
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
@@ -30,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import java.util.Locale
 
+@SuppressLint("JavascriptInterface") // Lint sees remember<T>; HomePointBridge.setPoint is annotated and validates both coordinates.
 @Composable
 internal fun HomePointPicker(latitude: String, longitude: String, onPointChange: (Double, Double) -> Unit) {
     val context = LocalContext.current
