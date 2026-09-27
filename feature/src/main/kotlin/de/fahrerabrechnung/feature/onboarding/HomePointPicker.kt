@@ -37,7 +37,11 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
     var webView by remember { mutableStateOf<WebView?>(null) }
     var pending by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     val currentOnPointChange by rememberUpdatedState(onPointChange)
-    val requestLocation: () -> Unit = {
+    val requestLocation: () -> Unit = requestLocation@{
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            error = "Standortberechtigung fehlt."
+            return@requestLocation
+        }
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             error = "GPS ist ausgeschaltet. Du kannst die Nadel auf der Karte selbst setzen."
