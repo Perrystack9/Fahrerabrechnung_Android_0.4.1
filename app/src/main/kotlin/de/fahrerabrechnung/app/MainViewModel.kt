@@ -27,9 +27,9 @@ class MainViewModel @Inject constructor(
         initialValue = null,
     )
 
-    fun finishOnboarding(onSaved: () -> Unit) {
+    fun finishOnboarding(latitude: Double?, longitude: Double?, onSaved: () -> Unit) {
         viewModelScope.launch {
-            preferences.setOnboardingComplete(true)
+            preferences.finishOnboarding(latitude, longitude)
             onSaved()
         }
     }
