@@ -3,7 +3,7 @@ package de.fahrerabrechnung.core.security
 import android.util.Log
 
 /**
- * Central logging boundary. Never pass names, complete card IDs/VINs, GPS coordinates,
+ * Central logging boundary. Never pass names, complete card IDs/VINs, card/tachograph position coordinates,
  * APDUs or driver-card binary payloads to this API.
  */
 object SafeLogger {

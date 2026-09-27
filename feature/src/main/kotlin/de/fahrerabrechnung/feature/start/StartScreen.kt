@@ -1,7 +1,6 @@
 package de.fahrerabrechnung.feature.start
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,51 +10,57 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import de.fahrerabrechnung.core.design.LabelValueRow
-import de.fahrerabrechnung.core.design.MetricCard
+import de.fahrerabrechnung.core.design.PreviewDivider
+import de.fahrerabrechnung.core.design.PreviewMetric
 import de.fahrerabrechnung.core.design.SectionCard
-import de.fahrerabrechnung.core.design.StatusChip
-import de.fahrerabrechnung.core.design.StatusTone
 import de.fahrerabrechnung.feature.common.ScreenContent
 
 @Composable
 fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnboarding: () -> Unit) {
     ScreenContent(padding) {
         Text("Dein Fahrertag im Überblick", style = MaterialTheme.typography.headlineSmall)
-        Text("Touren und Zeiten an einem Ort.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        SectionCard(title = "Dein FahrerTagebuch") {
-            Text("Lerne die Einrichtung in acht Schritten kennen.")
-            androidx.compose.material3.OutlinedButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
-        }
-        SectionCard(title = "Standortstatus") {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("GPS / Ort", style = MaterialTheme.typography.bodyLarge)
-                StatusChip("Noch nicht angebunden", StatusTone.NEUTRAL)
-            }
-            Text("Die Standortfunktion steht noch nicht zur Verfügung.", style = MaterialTheme.typography.bodySmall)
-        }
+        Text("Touren. Zeiten. Übersicht.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
         SectionCard(title = "Fahrerkarte") {
-            LabelValueRow("Letzter erfolgreicher Import", "Noch keiner")
+            Text("Noch keine Fahrerkarte eingelesen", style = MaterialTheme.typography.titleSmall)
+            Text("Für die spätere Auswertung werden Daten aus der Fahrerkarte benötigt.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onOpenCardImport) {
                 Icon(Icons.Rounded.CreditCard, contentDescription = null)
-                Text("  Kartenimport öffnen")
+                Text("  Fahrerkarte ansehen")
             }
         }
-        Text("Monatsübersicht", style = MaterialTheme.typography.titleMedium)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("Arbeitszeit", "—", Modifier.weight(1f), "Noch keine Daten")
-            MetricCard("Lenkzeit", "—", Modifier.weight(1f), "Noch keine Daten")
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Monatsübersicht", style = MaterialTheme.typography.titleLarge)
+            Text("Vorschau", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MetricCard("Nachtzeit", "—", Modifier.weight(1f), "Noch keine Daten")
-            MetricCard("Spesen", "—", Modifier.weight(1f), "Noch keine Daten")
+        SectionCard {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewMetric("Arbeitszeit", Modifier.weight(1f))
+                PreviewMetric("Lenkzeit", Modifier.weight(1f))
+            }
+            PreviewDivider()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewMetric("Nachtstunden", Modifier.weight(1f))
+                PreviewMetric("Spesen", Modifier.weight(1f))
+            }
+            PreviewDivider()
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewMetric("Abwesenheitstage", Modifier.weight(1f))
+                PreviewMetric("Karte / Tacho km", Modifier.weight(1f))
+            }
+            Text("Noch keine Auswertungsdaten. Es werden keine Werte berechnet.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        MetricCard("Übernachtungen", "—", Modifier.fillMaxWidth(), "Noch keine Daten")
-        SectionCard(title = "Hinweise") {
-            Text("Sobald Daten vorliegen, findest du hier deine Hinweise.")
-        }
+
+        Text("Hinweise", style = MaterialTheme.typography.titleLarge)
+        Text("Aktuell liegen keine Hinweise vor.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        TextButton(onClick = onOpenOnboarding) { Text("Einrichtung ansehen") }
     }
 }

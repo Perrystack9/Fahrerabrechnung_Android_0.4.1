@@ -1,3 +1,5 @@
+> Historischer Implementierungsstand. Die aktuellen Produktregeln in [CURRENT_RULES.md](CURRENT_RULES.md) ersetzen alle GPS- und Acht-Schritte-Aussagen.
+
 # FahrerTagebuch · UI-Feinschliff 0.4.1 v2
 
 Grundlage: `design-handoff-v2/WORK_UI_REFINEMENT_0.4.1.md`. Die schriftlichen Vorgaben des Handoffs sind im Projekt versioniert und haben Vorrang vor den Referenzbildern aus dem gelieferten ZIP.

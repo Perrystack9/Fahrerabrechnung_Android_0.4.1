@@ -5,7 +5,6 @@ import de.fahrerabrechnung.domain.model.Money
 import de.fahrerabrechnung.domain.model.ResultValue
 import de.fahrerabrechnung.domain.model.TimeContext
 import de.fahrerabrechnung.domain.status.DataStatus
-import de.fahrerabrechnung.domain.status.RouteStatus
 import java.math.BigDecimal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -14,11 +13,6 @@ import org.junit.Test
 class DomainTypesTest {
     @Test fun `required data statuses stay stable`() {
         assertEquals(listOf("VOLLSTAENDIG","TEILWEISE","UNKLAR","KEINE_DATEN","NICHT_ANWENDBAR"), DataStatus.entries.map { it.name })
-    }
-
-    @Test fun `required route statuses stay stable`() {
-        assertEquals(5, RouteStatus.entries.size)
-        assertEquals(RouteStatus.NUR_GEN2_ORTSDATEN, RouteStatus.valueOf("NUR_GEN2_ORTSDATEN"))
     }
 
     @Test fun `required card activity types stay stable`() {

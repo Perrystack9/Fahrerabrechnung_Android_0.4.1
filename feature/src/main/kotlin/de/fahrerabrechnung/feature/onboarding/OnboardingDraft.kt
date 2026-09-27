@@ -5,7 +5,6 @@ import androidx.compose.runtime.saveable.listSaver
 /** UI-only draft. No repository, permissions, scheduling or calculation is invoked. */
 data class OnboardingDraft(
     val username: String = "",
-    val gpsChoice: String = "unset",
     val address: String = "",
     val expenses8: String = "",
     val expenses24: String = "",
@@ -28,7 +27,7 @@ data class OnboardingDraft(
         val Saver = listSaver<OnboardingDraft, String>(
             save = { d ->
                 listOf(
-                    d.username, d.gpsChoice, d.address, d.expenses8, d.expenses24, d.overnight,
+                    d.username, d.address, d.expenses8, d.expenses24, d.overnight,
                     d.doubleExpenses.toString(), d.standbyPaid.toString(), d.breakPaid.toString(),
                     d.hourlyRate, d.saturday, d.sunday, d.holiday, d.remindersEnabled.toString(),
                     d.reminder21.toString(), d.reminder25.toString(), d.reminder27.toString(), d.reminderTime,
@@ -36,9 +35,9 @@ data class OnboardingDraft(
             },
             restore = { s ->
                 OnboardingDraft(
-                    s[0], s[1], s[2], s[3], s[4], s[5], s[6].toBoolean(), s[7].toBoolean(), s[8].toBoolean(),
-                    s[9], s[10], s[11], s[12], s[13].toBoolean(), s[14].toBoolean(), s[15].toBoolean(), s[16].toBoolean(), s[17],
-                    s.drop(18).chunked(3).map { NightWindowDraft(it[0], it[1], it[2]) },
+                    s[0], s[1], s[2], s[3], s[4], s[5].toBoolean(), s[6].toBoolean(), s[7].toBoolean(),
+                    s[8], s[9], s[10], s[11], s[12].toBoolean(), s[13].toBoolean(), s[14].toBoolean(), s[15].toBoolean(), s[16],
+                    s.drop(17).chunked(3).map { NightWindowDraft(it[0], it[1], it[2]) },
                 )
             },
         )

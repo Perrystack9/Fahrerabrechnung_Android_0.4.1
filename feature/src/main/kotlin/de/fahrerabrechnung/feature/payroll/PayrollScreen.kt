@@ -5,26 +5,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import de.fahrerabrechnung.core.design.LabelValueRow
+import de.fahrerabrechnung.core.design.PreviewDivider
 import de.fahrerabrechnung.core.design.SectionCard
-import de.fahrerabrechnung.core.design.StatusChip
-import de.fahrerabrechnung.core.design.StatusTone
 import de.fahrerabrechnung.feature.common.ScreenContent
 
 @Composable
 fun PayrollScreen(padding: PaddingValues) {
     ScreenContent(padding) {
         Text("Abrechnungsvergleich · Beispielstruktur", style = MaterialTheme.typography.titleLarge)
+        Text("Vorschau zum späteren neutralen Abgleich mit erfassten Abrechnungswerten.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionCard(title = "Bezahlte Zeit") {
-            LabelValueRow("App-Wert", "—")
-            LabelValueRow("Abrechnungswert", "nicht erfasst")
-            LabelValueRow("Differenz (Ist − App)", "—")
+            LabelValueRow("FahrerTagebuch", "—")
+            PreviewDivider()
+            LabelValueRow("Erfasster Wert", "—")
+            PreviewDivider()
+            LabelValueRow("Abweichung", "—")
         }
         SectionCard(title = "Spesen") {
-            LabelValueRow("App-Wert", "—")
-            LabelValueRow("Abrechnungswert", "nicht erfasst")
-            LabelValueRow("Differenz", "—")
+            LabelValueRow("FahrerTagebuch", "—")
+            PreviewDivider()
+            LabelValueRow("Erfasster Wert", "—")
+            PreviewDivider()
+            LabelValueRow("Abweichung", "—")
         }
-        StatusChip("Neutraler Vergleich – keine Bewertung des Arbeitgebers", StatusTone.INFO)
-        Text("Die Maske ist nur UI. Ist-Werte lösen keine Soll-Neuberechnung aus.", style = MaterialTheme.typography.bodySmall)
+        Text("Noch keine Daten oder Berechnungen. Der Vergleich bewertet niemanden.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

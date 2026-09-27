@@ -1,3 +1,5 @@
+> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+
 # Work-Auftrag – UI-Feinschliff & verbindliche Designübernahme 0.4.1
 
 ## Ausgangslage

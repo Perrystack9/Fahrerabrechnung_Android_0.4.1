@@ -1,3 +1,5 @@
+> Aktuelle Produktentscheidung: Smartphone/App GPS gehört nicht zum Produkt. Keine GPS-Spalten, Karte oder Route; GNSS-Punkte nur aus Fahrerkarte/Tachograph.
+
 # FahrerTagebuch – PDF-Export-Spezifikation
 
 ## Allgemeines

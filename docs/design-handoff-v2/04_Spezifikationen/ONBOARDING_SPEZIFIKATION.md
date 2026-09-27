@@ -1,3 +1,5 @@
+> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+
 # FahrerTagebuch – Onboarding-Spezifikation 0.4.1
 
 Diese Datei ist fachlich verbindlich. Die PNG-Datei unter `05_Onboarding/Referenzen/` dient nur als visuelle Referenz. Bei Widersprüchen gilt diese Markdown-Datei.

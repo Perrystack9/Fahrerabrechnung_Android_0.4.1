@@ -1,3 +1,5 @@
+> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+
 # WICHTIGER NACHTRAG – UI-Refinement v2
 
 Für die nächste UI-/Designrunde zuerst **`WORK_UI_REFINEMENT_0.4.1.md`** lesen. Diese Datei enthält das aktuelle Galaxy-S23-Testfeedback sowie die neuesten verbindlichen Onboarding-Korrekturen. Bei Widersprüchen hat sie Vorrang.

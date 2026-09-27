@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -29,7 +28,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -50,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import de.fahrerabrechnung.core.design.SectionCard
 
 private val stepTitles = listOf(
-    "Willkommen bei FahrerTagebuch", "App-GPS", "Datenschutz & Zuhause", "Spesen",
+    "Willkommen bei FahrerTagebuch", "Datenschutz & Zuhause", "Spesen",
     "Arbeitszeit & Zuschläge", "Fahrerkarte", "Erinnerungen", "Deine Übersicht",
 )
 
@@ -64,10 +62,10 @@ fun OnboardingScreen(
     var step by rememberSaveable { mutableIntStateOf(0) }
     var editingSummary by rememberSaveable { mutableStateOf(false) }
     val validation = when (step) {
-        3 -> if (listOf(draft.expenses8, draft.expenses24, draft.overnight).any { !validAmount(it) }) "Bitte Beträge mit höchstens zwei Nachkommastellen eingeben." else null
-        4 -> nightWindowError(draft.nightWindows) ?: if (listOf(draft.hourlyRate, draft.saturday, draft.sunday, draft.holiday).any { !validAmount(it) }) "Bitte gültige Beträge bzw. Prozentsätze eingeben." else null
-        6 -> if (clockMinutes(draft.reminderTime) == null) "Bitte eine Uhrzeit im Format HH:mm eingeben." else null
-        7 -> nightWindowError(draft.nightWindows)
+        2 -> if (listOf(draft.expenses8, draft.expenses24, draft.overnight).any { !validAmount(it) }) "Bitte Beträge mit höchstens zwei Nachkommastellen eingeben." else null
+        3 -> nightWindowError(draft.nightWindows) ?: if (listOf(draft.hourlyRate, draft.saturday, draft.sunday, draft.holiday).any { !validAmount(it) }) "Bitte gültige Beträge bzw. Prozentsätze eingeben." else null
+        5 -> if (clockMinutes(draft.reminderTime) == null) "Bitte eine Uhrzeit im Format HH:mm eingeben." else null
+        6 -> nightWindowError(draft.nightWindows)
             ?: if (listOf(draft.expenses8, draft.expenses24, draft.overnight, draft.hourlyRate, draft.saturday, draft.sunday, draft.holiday).any { !validAmount(it) }) "Bitte die Beträge und Prozentsätze prüfen."
             else if (clockMinutes(draft.reminderTime) == null) "Bitte die Erinnerungszeit prüfen." else null
         else -> null
@@ -75,10 +73,10 @@ fun OnboardingScreen(
     Column(Modifier.fillMaxSize().padding(padding).imePadding().testTag("onboarding")) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             LinearProgressIndicator(
-                progress = { (step + 1) / 8f }, modifier = Modifier.fillMaxWidth(),
+                progress = { (step + 1) / 7f }, modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondary, trackColor = MaterialTheme.colorScheme.secondaryContainer,
             )
-            Text("Schritt ${step + 1} von 8", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.testTag("onboarding_step"))
+            Text("Schritt ${step + 1} von 7", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.testTag("onboarding_step"))
             Text("Vorschau · Eingaben werden noch nicht als Profil gespeichert.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         key(step) {
@@ -96,17 +94,11 @@ fun OnboardingScreen(
                         Note("Vorname und Nachname werden später aus deiner Fahrerkarte übernommen.")
                     }
                     1 -> {
-                        Text("GPS ergänzt Routen und Ortsbezug. Arbeits- und Lenkzeiten stammen nicht aus dem App-GPS.")
-                        Choice("GPS verwenden", draft.gpsChoice == "use") { onDraftChange(draft.copy(gpsChoice = "use")) }
-                        Choice("Ohne App-GPS fortfahren", draft.gpsChoice == "skip") { onDraftChange(draft.copy(gpsChoice = "skip")) }
-                        if (draft.gpsChoice == "use") Note("GPS ist in dieser Vorschau noch nicht verfügbar. Es wird kein Standort erfasst.")
-                    }
-                    2 -> {
                         Note("Deine Daten werden lokal auf deinem Gerät verarbeitet.")
                         SectionCard(title = "Zuhause festlegen") {
                             Entry("Adresse", draft.address, { onDraftChange(draft.copy(address = it)) })
-                            OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("Aktuelle Position verwenden") }
-                            Text("Die Standortauswahl ist noch nicht verfügbar.", style = MaterialTheme.typography.bodySmall)
+                            Text("Die Adresse dient später der Zuordnung von Zuhause; noch keine Geokodierung oder Berechnung.",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Surface(shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
                                     Icon(Icons.Rounded.Home, contentDescription = null, modifier = Modifier.size(48.dp).padding(12.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
@@ -115,7 +107,7 @@ fun OnboardingScreen(
                             }
                         }
                     }
-                    3 -> {
+                    2 -> {
                         Text("Trage die mit deinem Arbeitgeber vereinbarten Profilwerte ein.")
                         SectionCard {
                             Amount("Spesen über 8 Stunden", draft.expenses8) { onDraftChange(draft.copy(expenses8 = it)) }
@@ -125,7 +117,7 @@ fun OnboardingScreen(
                             Text("Eine freiwillige Leistung des Arbeitgebers.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    4 -> {
+                    3 -> {
                         SectionCard(title = "Arbeitszeit") {
                             Toggle("Bereitschaft bezahlt", draft.standbyPaid) { onDraftChange(draft.copy(standbyPaid = it)) }
                             Toggle("Pause bezahlt", draft.breakPaid) { onDraftChange(draft.copy(breakPaid = it)) }
@@ -159,15 +151,15 @@ fun OnboardingScreen(
                         }
                         Note("Verschiedene Zuschlagsarten können sich addieren. Sie gelten auf Lenkzeit und sonstige Arbeit, nicht auf Bereitschaft, Pause oder Ruhe.")
                     }
-                    5 -> {
+                    4 -> {
                         SectionCard(title = "Fahrerkarte verbinden") {
                             Icon(Icons.Rounded.CreditCard, contentDescription = "Fahrerkarte", modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.secondary)
                             Text("Das Einlesen mit einem Kartenleser steht noch nicht zur Verfügung.")
-                            Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("Jetzt Fahrerkarte einlesen") }
-                            OutlinedButton(onClick = { step = if (editingSummary) 7 else 6; editingSummary = false }, modifier = Modifier.fillMaxWidth()) { Text("Später einrichten") }
+                            Text("Einlesen jetzt: folgt mit der Kartenleser-Unterstützung.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedButton(onClick = { step = if (editingSummary) 6 else 5; editingSummary = false }, modifier = Modifier.fillMaxWidth()) { Text("Später einrichten") }
                         }
                     }
-                    6 -> {
+                    5 -> {
                         Text("Erinnere dich an das nächste Einlesen deiner Fahrerkarte.")
                         SectionCard {
                             Toggle("Erinnerungen aktivieren", draft.remindersEnabled) { onDraftChange(draft.copy(remindersEnabled = it)) }
@@ -180,11 +172,10 @@ fun OnboardingScreen(
                         Note("Empfehlung: Fahrerkarte an Tag 27 erneut einlesen. Diese Empfehlung bleibt auch ohne Benachrichtigungen sichtbar.")
                         Text("Es werden in der Vorschau noch keine Benachrichtigungen eingerichtet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    7 -> {
+                    6 -> {
                         Text("Prüfe deinen Entwurf. Über „Ändern“ kommst du direkt zum passenden Schritt.")
                         val summaries = listOf(
                             "Hauptprofil" to draft.username.ifBlank { "Noch nicht eingegeben" },
-                            "App-GPS" to when (draft.gpsChoice) { "use" -> "Gewünscht · noch nicht aktiv"; "skip" -> "Ohne App-GPS"; else -> "Noch nicht ausgewählt" },
                             "Zuhause" to if (draft.address.isBlank()) "Noch nicht festgelegt · 500 Meter" else "${draft.address} · 500 Meter",
                             "Spesen" to "Über 8 Stunden: ${draft.expenses8.money()}\nÜber 24 Stunden: ${draft.expenses24.money()}\nÜbernachtungspauschale: ${draft.overnight.money()}\nDoppelte Spesen: ${if (draft.doubleExpenses) "Ja" else "Nein"}",
                             "Arbeitszeit & Zuschläge" to "Basiswert: ${draft.hourlyRate.money()}\nBereitschaft bezahlt: ${draft.standbyPaid.yesNo()}\nPause bezahlt: ${draft.breakPaid.yesNo()}\nNachtfenster: ${draft.nightWindows.size}\nSamstag: ${draft.saturday.percent()} · Sonntag: ${draft.sunday.percent()} · Feiertag: ${draft.holiday.percent()}",
@@ -198,7 +189,7 @@ fun OnboardingScreen(
                                     TextButton(onClick = { step = index; editingSummary = true }, modifier = Modifier.testTag("edit_step_${index + 1}")) { Text("Ändern") }
                                 }
                                 Text(body, style = MaterialTheme.typography.bodyMedium)
-                                if (index == 4) draft.nightWindows.forEach { Text("${it.start}–${it.end} · ${it.percent} %", style = MaterialTheme.typography.bodySmall) }
+                                if (index == 3) draft.nightWindows.forEach { Text("${it.start}–${it.end} · ${it.percent} %", style = MaterialTheme.typography.bodySmall) }
                             }
                         }
                     }
@@ -208,13 +199,13 @@ fun OnboardingScreen(
         }
         Surface(shadowElevation = 0.dp) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { if (editingSummary) { step = 7; editingSummary = false } else step-- }, enabled = step > 0 || editingSummary, modifier = Modifier.testTag("onboarding_back")) { Text("Zurück") }
+                TextButton(onClick = { if (editingSummary) { step = 6; editingSummary = false } else step-- }, enabled = step > 0 || editingSummary, modifier = Modifier.testTag("onboarding_back")) { Text("Zurück") }
                 Button(
-                    onClick = { if (step == 7) onFinish() else { step = if (editingSummary) 7 else step + 1; editingSummary = false } },
+                    onClick = { if (step == 6) onFinish() else { step = if (editingSummary) 6 else step + 1; editingSummary = false } },
                     enabled = validation == null,
                     modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp).testTag("onboarding_next"),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                ) { Text(if (step == 7) "FahrerTagebuch starten" else if (editingSummary) "Zur Übersicht" else "Weiter") }
+                ) { Text(if (step == 6) "FahrerTagebuch starten" else if (editingSummary) "Zur Übersicht" else "Weiter") }
             }
         }
     }
@@ -250,16 +241,6 @@ private fun Toggle(label: String, checked: Boolean, change: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().sizeIn(minHeight = 56.dp).toggleable(checked, role = Role.Switch, onValueChange = change), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         Switch(checked, onCheckedChange = null)
-    }
-}
-
-@Composable
-private fun Choice(label: String, selected: Boolean, choose: () -> Unit) {
-    SectionCard(modifier = Modifier.selectable(selected, role = Role.RadioButton, onClick = choose)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            RadioButton(selected, onClick = null)
-            Text(label, style = MaterialTheme.typography.titleSmall)
-        }
     }
 }
 

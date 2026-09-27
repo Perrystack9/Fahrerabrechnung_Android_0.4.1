@@ -1,3 +1,5 @@
+> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+
 # FahrerTagebuch – PDF-Export-Spezifikation
 
 ## Allgemeines

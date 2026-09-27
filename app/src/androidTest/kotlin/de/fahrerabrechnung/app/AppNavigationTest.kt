@@ -93,31 +93,32 @@ class AppNavigationTest(private val widthDp: Int, private val mode: ThemeMode) {
         compose.onNodeWithText("Hinweise").assertIsDisplayed()
     }
 
-    @Test fun allEightSetupStepsAndSummaryEditingRemainNavigable() {
+    @Test fun allSevenSetupStepsAndSummaryEditingRemainNavigable() {
         launch()
         compose.onNodeWithText("Einrichtung ansehen").performClick()
+        compose.onNodeWithText("App-GPS", substring = true).assertDoesNotExist()
         compose.onNodeWithTag("onboarding_username").performTextInput("Testfahrer")
-        for (step in 1..8) {
-            compose.onNodeWithText("Schritt $step von 8").assertIsDisplayed()
+        for (step in 1..7) {
+            compose.onNodeWithText("Schritt $step von 7").assertIsDisplayed()
+            compose.onNodeWithText("App-GPS", substring = true).assertDoesNotExist()
             if (step == 1) {
                 compose.onNodeWithText("Vorname", substring = false).assertDoesNotExist()
                 compose.onNodeWithText("Nachname", substring = false).assertDoesNotExist()
             }
-            if (step == 2) compose.onNodeWithText("Ohne App-GPS fortfahren").performClick()
-            if (step == 3) compose.onNodeWithText("Heimbereich: 500 Meter").performScrollTo().assertIsDisplayed()
-            if (step == 4) {
+            if (step == 2) compose.onNodeWithText("Heimbereich: 500 Meter").performScrollTo().assertIsDisplayed()
+            if (step == 3) {
                 listOf("Spesen über 8 Stunden", "Spesen über 24 Stunden", "Übernachtungspauschale").forEach {
                     compose.onNodeWithTag(it).performScrollTo().assertIsDisplayed()
                 }
             }
-            if (step == 7) compose.onNodeWithText("Tag 27 · Empfehlung").performScrollTo().assertIsDisplayed()
+            if (step == 6) compose.onNodeWithText("Tag 27 · Empfehlung").performScrollTo().assertIsDisplayed()
             screenshot("onboarding_$step")
-            if (step < 8) compose.onNodeWithTag("onboarding_next").performClick()
+            if (step < 7) compose.onNodeWithTag("onboarding_next").performClick()
         }
         compose.onNodeWithTag("edit_step_1").performScrollTo().performClick()
         compose.onNodeWithText("Testfahrer").assertIsDisplayed()
         compose.onNodeWithTag("onboarding_next").performClick()
-        compose.onNodeWithText("Schritt 8 von 8").assertIsDisplayed()
+        compose.onNodeWithText("Schritt 7 von 7").assertIsDisplayed()
         compose.onNodeWithTag("onboarding_next").performClick()
         compose.onNodeWithTag("nav_start").assertIsSelected()
         // Draft belongs to the UI session and survives closing/reopening the preview.

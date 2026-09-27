@@ -6,16 +6,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import de.fahrerabrechnung.core.design.LabelValueRow
 import de.fahrerabrechnung.core.design.SectionCard
-import de.fahrerabrechnung.core.design.StatusChip
-import de.fahrerabrechnung.core.design.StatusTone
-import de.fahrerabrechnung.domain.status.RouteStatus
 import de.fahrerabrechnung.feature.common.ScreenContent
 
 @Composable
 fun DayReportScreen(padding: PaddingValues) {
     ScreenContent(padding) {
         Text("22. September 2026 · Beispieldetail", style = MaterialTheme.typography.titleLarge)
-        StatusChip("Keine Daten", StatusTone.NEUTRAL)
+        Text("Vorschau · Noch keine belegten Tagesdaten.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionCard(title = "Zeiten") {
             LabelValueRow("Bezahlte Zeit", "—")
             LabelValueRow("Lenkzeit", "—")
@@ -23,13 +21,10 @@ fun DayReportScreen(padding: PaddingValues) {
             LabelValueRow("Bereitschaft", "—")
             LabelValueRow("Pause", "—")
         }
-        SectionCard(title = "Route") {
-            LabelValueRow("Status", RouteStatus.KEINE_ORTSDATEN.name)
-            Text("Keine Route wird aus Gen2-Ortsankern erzeugt. Die spätere Darstellung bleibt getrennt.")
-        }
-        SectionCard(title = "Kilometervergleich") {
-            LabelValueRow("Gemeinsame Abdeckung", "—")
-            LabelValueRow("Differenz GPS − Karte", "—")
+        SectionCard(title = "Quelldaten") {
+            Text("Fahrerkarte und Tachograph können später punktuelle Positionsnachweise enthalten.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LabelValueRow("Kilometer aus Quelldaten", "—")
         }
     }
 }

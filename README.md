@@ -1,6 +1,8 @@
 # Fahrerabrechnung & Fahrertagebuch – Android-Projektstart 0.4.1
 
-Technische Startbasis gemäß dem verbindlichen Work-Auftrag **„Android-Projektstart 0.4.1“** und dem anschließenden Zwischenschritt **„Build-Verifikation und technische Basiskorrektur“**. Der Stand bildet absichtlich **keine produktive Fachlogik** für Fahrerkarte, USB/CCID, GPS, Gen2/Gen2V2, Matching, Reisen, Spesen, Übernachtungen, Zuschläge, Compliance, PDF oder Serverbackup ab.
+**Aktuelle Produktregeln: [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md). Smartphone/App GPS ist ausgeschlossen; GNSS-Punkte aus Fahrerkarte/Tachograph bleiben möglich. Ältere widersprechende Spezifikationen gelten insoweit nicht.**
+
+Technische Startbasis gemäß dem verbindlichen Work-Auftrag **„Android-Projektstart 0.4.1“** und dem anschließenden Zwischenschritt **„Build-Verifikation und technische Basiskorrektur“**. Der Stand bildet absichtlich **keine produktive Fachlogik** für Fahrerkarte, USB/CCID, Gen2/Gen2V2, Matching, Reisen, Spesen, Übernachtungen, Zuschläge, Compliance, PDF oder Serverbackup ab.
 
 ## Architektur und Module
 
@@ -21,7 +23,7 @@ Die fünf Hauptbereiche sind exakt: **Start, Kalender, Auswertung, Abrechnung, E
 - Android Gradle Plugin 9.4.0
 - offizieller Gradle Wrapper 9.6.1
 
-Der Wrapper muss aus `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.properties` **und** `gradle/wrapper/gradle-wrapper.jar` bestehen. Der aktuelle Übergabestand enthält die offiziellen Wrapper-Skripte und die 9.6.1-Properties; in der isolierten Erzeugungsumgebung konnte das offizielle Wrapper-JAR nicht binär materialisiert werden. Details stehen in `BUILD_STATUS.md` und `BUILD_VERIFICATION_REPORT_0.4.1.md`.
+Der vollständige offizielle Gradle Wrapper 9.6.1 ist im Repository enthalten.
 
 ## Verifikationsbefehle
 
@@ -55,20 +57,19 @@ DataStore enthält nur technische Komfortwerte wie Theme-/Onboarding-/Debug-Eins
 
 ## Logging
 
-`SafeLogger` ist die zentrale Logging-Grenze. Sensible Rohwerte (vollständige VIN, Karten-ID, Name, GPS-Koordinaten, APDU/Kartenbinärdaten) dürfen dort nicht ausgegeben werden.
+`SafeLogger` ist die zentrale Logging-Grenze. Sensible Rohwerte (vollständige VIN, Karten-ID, Name, Positionskoordinaten aus Karte/Tachograph, APDU/Kartenbinärdaten) dürfen dort nicht ausgegeben werden.
 
 ## Aktuelle Implementierungsgrenze
 
 Vorbereitet, aber absichtlich ohne produktive Implementierung:
 
 - `CardReaderTransport`
-- `LocationSource`
 - `VinDecoder`
 - `BackupProvider`
 - Berichts-/PDF-Gateway
 - Detailnavigation für Tagesreport, Kartenimport, Fahrzeugdetail und Einstellungs-Unterseiten
 
-Die Mockwerte in den fünf Grundscreens sind **reine UI-Demodaten** und werden nicht als reale Berechnung ausgegeben.
+Die Werteplatzhalter in den fünf Grundscreens sind **reine UI-Vorschauen** und werden nicht als reale Berechnung ausgegeben.
 
 ## Spezifikationsbezug
 
