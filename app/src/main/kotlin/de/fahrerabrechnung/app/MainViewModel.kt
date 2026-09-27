@@ -21,6 +21,19 @@ class MainViewModel @Inject constructor(
         initialValue = ThemeMode.SYSTEM,
     )
 
+    val onboardingComplete: StateFlow<Boolean?> = preferences.onboardingComplete.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = null,
+    )
+
+    fun finishOnboarding(onSaved: () -> Unit) {
+        viewModelScope.launch {
+            preferences.setOnboardingComplete(true)
+            onSaved()
+        }
+    }
+
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { preferences.setThemeMode(mode) }
     }
