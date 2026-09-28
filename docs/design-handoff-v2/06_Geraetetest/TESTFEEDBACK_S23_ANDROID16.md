@@ -1,3 +1,5 @@
+> **Historisches Galaxy-S23-Feedback zu einem früheren UI-Stand.** Maßgeblich sind [aktuelle Produktregeln](../../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
+
 # Gerätetest – UI-Feedback 0.4.1
 
 **Testgerät:** Samsung Galaxy S23  
