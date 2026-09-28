@@ -8,7 +8,7 @@ import java.time.Clock
 import javax.inject.Inject
 
 data class SavedCardVehicles(val file: CardVehiclesFile, val uses: List<CardVehicleUse>,
-                             val importedAtEpochMillis: Long)
+                             val importedAtEpochMillis: Long, val cardNumber: String)
 
 /** Stores a complete, validated vehicle EF in SQLCipher after explicit confirmation. */
 class CardVehicleImportRepository @Inject constructor(
@@ -45,6 +45,6 @@ class CardVehicleImportRepository @Inject constructor(
             CardGeneration.valueOf(entity.generation), entity.records)
         val uses = CardVehiclesParser.parse(file)
         check(uses.size == entity.useCount)
-        SavedCardVehicles(file, uses, entity.importedAtEpochMillis)
+        SavedCardVehicles(file, uses, entity.importedAtEpochMillis, entity.cardNumber)
     }
 }
