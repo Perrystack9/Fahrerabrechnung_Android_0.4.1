@@ -1,8 +1,8 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main`-Commit `0f6da793` (PR #7).** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #8, mit Aktivitäts-Teilimport in PR #9.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
-Die App ist eine lokale Android-Basis mit einem **echten, aber noch nicht persistenten Fahrerkarte-Lesetest**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
+Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und einem **explizit speicherbaren Aktivitäts-Teilimport**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
 ## Tatsächlich vorhanden
 
@@ -11,13 +11,14 @@ Die App ist eine lokale Android-Basis mit einem **echten, aber noch nicht persis
 - Vollständiges Lesen der `EF Driver_Activity_Data` entsprechend der auf der Karte angegebenen Dateilänge. Der Gerätetest las 13.776 Bytes und dekodierte 74 zyklische Tagesdatensätze.
 - Dekodierung der Tätigkeitswechsel und Kartenstatus-Bits, Projektion der UTC-Quelldaten auf lokale Kalendertage einschließlich Tagesgrenzen/Zeitumstellung.
 - Vorschau des Kartentags mit kompakter Tagesübersicht, zoombarem und verschiebbarem Detail, Abschnittsauswahl mit Start/Ende/Dauer und verstellbarer Zeitmarke. Tätigkeiten und Einträge ohne eingelegte Karte sind getrennt gekennzeichnet. Fehlende Kartenzeit wird nicht als Ruhe oder Heimkehr erfunden.
+- PR #9: Nach erfolgreichem Test kann die vollständige Aktivitätsdatei ausdrücklich als Snapshot in Room/SQLCipher gespeichert werden. Ein identischer Snapshot wird nicht doppelt gespeichert. Der zuletzt gespeicherte Snapshot wird beim Öffnen der Kartenansicht erneut dekodiert und als Vorschau angezeigt; die Migration bestehender Datenbanken von Schema 1 auf 2 ist vorgesehen.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
-**Wichtig:** Der Aktivitätstest und die Kartentag-Zeitleiste halten ihre Daten nur im Arbeitsspeicher. Das ist eine technische Test-/Preview-Funktion, noch kein abgeschlossener Import oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
+**Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst der zusätzliche Knopf speichert die Aktivitätsdatei lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
 
 ## Noch nicht produktiv
 
-- Keine persistente Kartenimport-Pipeline, keine Importhistorie oder vollständige Kartenabdeckung.
+- Noch keine vollständige persistente Kartenimport-Pipeline mit Profilzuordnung, Importhistorie in der Oberfläche und vollständiger Kartenabdeckung; bislang ist nur der Aktivitäts-Snapshot dauerhaft gespeichert.
 - Fahrzeuge/Fahrzeugwechsel, GNSS-Einzelpunkte, Grenzübertritte, Ereignisse/Störungen, Kontrollen und weitere Kartendateien sind noch nicht vollständig importiert oder in der Tageschronik verbunden.
 - Keine belastbare Heimkehr-/Übernachtungs-/Reiseauswertung, Spesen, Arbeitszeit- und Arbeitgeberzuschlagsberechnung, vollständige PDF-Ausgabe oder Cloud-Synchronisation. Keine Steuerlogik.
 - Die in [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) beschriebene Tageszeitleiste ist erst für die vorhandenen Aktivitätsdaten als Vorschau umgesetzt; Fahrzeugbezug, Zusatzmarker und Tageskennzahlen fehlen.
