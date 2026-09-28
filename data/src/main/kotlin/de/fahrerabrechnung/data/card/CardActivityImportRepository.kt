@@ -8,7 +8,8 @@ import java.time.Clock
 import javax.inject.Inject
 
 data class SavedCardActivity(val file: CardActivityFile, val generation: CardGeneration,
-                             val dayCount: Int, val importedAtEpochMillis: Long)
+                             val dayCount: Int, val importedAtEpochMillis: Long,
+                             val cardNumber: String)
 
 /** Stores only the explicitly confirmed activity snapshot in the encrypted Room database. */
 class CardActivityImportRepository @Inject constructor(
@@ -45,6 +46,7 @@ class CardActivityImportRepository @Inject constructor(
         val file = CardActivityFile(entity.oldestDayOffset, entity.newestDayOffset, entity.dailyRecords)
         val days = CardActivityParser.parse(file)
         check(days.size == entity.dayCount)
-        SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis)
+        SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis,
+            entity.cardNumber)
     }
 }

@@ -38,6 +38,7 @@ import de.fahrerabrechnung.data.card.CardVehicleUse
 import de.fahrerabrechnung.data.card.CardVehiclesParser
 import de.fahrerabrechnung.data.card.CardReadResult
 import de.fahrerabrechnung.data.card.CardDayTimeline
+import de.fahrerabrechnung.data.card.CardDayVehicles
 import de.fahrerabrechnung.data.card.LocalCardDay
 import de.fahrerabrechnung.data.card.CardDaySegment
 import de.fahrerabrechnung.data.card.DriverActivity
@@ -85,6 +86,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var vehicleStatus by remember { mutableStateOf<String?>(null) }
     var savedVehicleStatus by remember { mutableStateOf<String?>(null) }
     var vehicleUses by remember { mutableStateOf<List<CardVehicleUse>>(emptyList()) }
+    var activityCardNumber by remember { mutableStateOf<String?>(null) }
+    var vehicleCardNumber by remember { mutableStateOf<String?>(null) }
     var activitySavedForRead by remember { mutableStateOf(false) }
     var vehicleSavedForRead by remember { mutableStateOf(false) }
 
@@ -93,6 +96,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             imports.latest()?.let { saved ->
                 displayZone = ZoneId.systemDefault()
                 localDays = CardDayTimeline.build(CardActivityParser.parse(saved.file), displayZone)
+                activityCardNumber = saved.cardNumber
                 selectedDay = localDays.lastIndex.coerceAtLeast(0)
                 savedStatus = "Gespeicherter Aktivitäts-Teilimport: ${saved.dayCount} Tagesdatensätze (${saved.generation.label()})."
             }
@@ -105,6 +109,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         if (vehicleImports != null) try {
             vehicleImports.latest()?.let { saved ->
                 vehicleUses = saved.uses
+                vehicleCardNumber = saved.cardNumber
                 savedVehicleStatus = "Gespeicherter Fahrzeug-Teilimport: ${saved.uses.size} Nutzungsdatensätze."
             }
         } catch (_: Exception) {
@@ -122,6 +127,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
                         pendingRead = if (result.card != null && days.isNotEmpty()) result else null
+                        activityCardNumber = result.card?.card?.number
                         val vehicleFile = result.vehicles
                         var vehicleDecodeError: ParseError? = null
                         vehicleUses = try {
@@ -130,6 +136,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                             vehicleDecodeError = e
                             emptyList()
                         }
+                        vehicleCardNumber = if (vehicleFile != null && vehicleDecodeError == null)
+                            result.card?.card?.number else null
                         vehicleStatus = when {
                             result.vehicleReadFailed -> "Fahrzeugdatei nicht gelesen; Aktivitätsdaten bleiben nutzbar."
                             vehicleFile == null -> "Keine Fahrzeugdatei verfügbar."
@@ -303,6 +311,9 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
         if (localDays.isNotEmpty()) {
             val day = localDays[selectedDay.coerceIn(localDays.indices)]
+            val dayVehicles = if (activityCardNumber != null &&
+                activityCardNumber == vehicleCardNumber)
+                CardDayVehicles.forDate(day.date, displayZone, vehicleUses) else emptyList()
             SectionCard {
                 Text("Kartentag · Vorschau", style = MaterialTheme.typography.titleMedium)
                 Text("Ortszeit des Geräts (${displayZone.id}). Einträge ohne eingelegte Karte werden getrennt gekennzeichnet. Fehlende Kartentage bleiben offen; daraus folgt keine bestätigte Ruhe oder Heimkehr.",
@@ -317,7 +328,10 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 }
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
-                CardTimelinePreview(day, displayZone)
+                CardTimelinePreview(day, displayZone, dayVehicles)
+                if (vehicleUses.isNotEmpty() && activityCardNumber != vehicleCardNumber)
+                    Text("Fahrzeugdaten stammen aus einem anderen Karten-Snapshot und werden hier nicht zugeordnet.",
+                        style = MaterialTheme.typography.bodySmall)
                 var showList by remember(day.date) { mutableStateOf(false) }
                 OutlinedButton(onClick = { showList = !showList }) {
                     Text(if (showList) "Abschnittsliste ausblenden" else "Abschnittsliste anzeigen")

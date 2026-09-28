@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import de.fahrerabrechnung.data.card.CardDaySegment
+import de.fahrerabrechnung.data.card.CardDayVehicle
+import de.fahrerabrechnung.data.card.CardDayVehicles
 import de.fahrerabrechnung.data.card.DriverActivity
 import de.fahrerabrechnung.data.card.LocalCardDay
 import java.time.Duration
@@ -38,7 +40,8 @@ import kotlin.math.roundToLong
 
 /** Read-only preview; missing source intervals remain visibly blank. */
 @Composable
-internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId) {
+internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
+                                 vehicles: List<CardDayVehicle> = emptyList()) {
     val start = day.date.atStartOfDay(zone).toInstant()
     val end = day.date.plusDays(1).atStartOfDay(zone).toInstant()
     val totalMillis = Duration.between(start, end).toMillis()
@@ -58,6 +61,14 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (vehicles.isNotEmpty()) {
+            Text("Fahrzeugnutzung laut Karte", style = MaterialTheme.typography.titleSmall)
+            Canvas(Modifier.fillMaxWidth().height(28.dp)) {
+                drawVehicleSpans(vehicles, start.toEpochMilli(), totalMillis.toDouble())
+            }
+            Text("▰ belegtes Zeitfenster · ▲ Nutzungsbeginn · offenes Ende nur als Zeitpunkt",
+                style = MaterialTheme.typography.bodySmall)
+        }
         Text("24-Stunden-Übersicht", style = MaterialTheme.typography.titleSmall)
         Canvas(Modifier.fillMaxWidth().height(44.dp).pointerInput(day.date, zone) {
             detectTapGestures { offset ->
@@ -91,6 +102,11 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId) {
         }
         Text("Detail · mit zwei Fingern zoomen, seitlich verschieben oder +/− tippen",
             style = MaterialTheme.typography.bodySmall)
+        if (vehicles.isNotEmpty()) Canvas(Modifier.fillMaxWidth().height(28.dp)) {
+            drawVehicleSpans(vehicles,
+                start.toEpochMilli() + (windowStart * totalMillis).roundToLong(),
+                totalMillis / zoom.toDouble())
+        }
         Canvas(Modifier.fillMaxWidth().height(92.dp)
             .pointerInput(day.date, zone) {
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
@@ -131,6 +147,19 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId) {
         val cursorTime = start.plusSeconds(cursorMinute * 60)
         Text("Zeitmarke: ${cursorTime.atZone(zone).format(DateTimeFormatter.ofPattern("dd.MM. HH:mm XXX"))}",
             style = MaterialTheme.typography.bodyMedium)
+        if (vehicles.isNotEmpty()) {
+            val point = start.plusMillis((cursor * totalMillis).roundToLong()
+                .coerceIn(0L, totalMillis - 1))
+            val use = CardDayVehicles.at(point, vehicles)
+            Text(if (use != null) "Fahrzeug zur Zeitmarke: ${use.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${use.registrationNation}"
+                else "Fahrzeug zur Zeitmarke nicht eindeutig belegt.",
+                style = MaterialTheme.typography.bodySmall)
+            vehicles.filter { it.beginsHere }.forEach { vehicle ->
+                Text("▲ ${vehicle.start.atZone(zone).format(DateTimeFormatter.ofPattern("HH:mm XXX"))} · " +
+                    "${vehicle.use.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${vehicle.use.registrationNation}",
+                    style = MaterialTheme.typography.bodySmall)
+            }
+        }
         selected?.let { segment ->
             val formatter = DateTimeFormatter.ofPattern("dd.MM. HH:mm XXX")
             val title = if (segment.cardInserted) segment.activity.title()
@@ -146,6 +175,33 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId) {
         if (totalMillis != 86_400_000L)
             Text("Zeitumstellung: Dieser Ortskalendertag umfasst ${totalMillis / 3_600_000} reale Stunden.",
                 style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+private fun DrawScope.drawVehicleSpans(
+    vehicles: List<CardDayVehicle>, visibleStartMillis: Long, visibleMillis: Double
+) {
+    drawRect(Color(0xFFE5E9ED))
+    val visibleEnd = visibleStartMillis + visibleMillis
+    vehicles.forEach { vehicle ->
+        vehicle.end?.let { end ->
+            val left = maxOf(vehicle.start.toEpochMilli().toDouble(), visibleStartMillis.toDouble())
+            val right = minOf(end.toEpochMilli().toDouble(), visibleEnd)
+            if (right > left) drawRect(Color(0xFF007D85),
+                topLeft = Offset(((left - visibleStartMillis) / visibleMillis * size.width).toFloat(), 0f),
+                size = Size(((right - left) / visibleMillis * size.width).toFloat(), size.height))
+        }
+        if (vehicle.beginsHere && vehicle.start.toEpochMilli() >= visibleStartMillis &&
+            vehicle.start.toEpochMilli() < visibleEnd) {
+            val x = ((vehicle.start.toEpochMilli() - visibleStartMillis) / visibleMillis * size.width).toFloat()
+            drawLine(Color(0xFF102F4C), Offset(x, 0f), Offset(x, size.height), strokeWidth = 2.dp.toPx())
+            drawContext.canvas.nativeCanvas.drawText("▲", x.coerceIn(8.dp.toPx(), size.width - 8.dp.toPx()),
+                size.height - 2.dp.toPx(), Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = android.graphics.Color.WHITE
+                    textAlign = Paint.Align.CENTER
+                    textSize = 14.dp.toPx()
+                })
+        }
     }
 }
 

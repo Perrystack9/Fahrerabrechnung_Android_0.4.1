@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #9, mit Fahrzeug-Teilimport in PR #10.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #10, mit Fahrzeug-Zeitleisten-Vorschau in PR #11.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **explizit speicherbaren Aktivitäts- und Fahrzeug-Teilimporten**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
@@ -12,7 +12,8 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 - Dekodierung der Tätigkeitswechsel und Kartenstatus-Bits, Projektion der UTC-Quelldaten auf lokale Kalendertage einschließlich Tagesgrenzen/Zeitumstellung.
 - Vorschau des Kartentags mit kompakter Tagesübersicht, zoombarem und verschiebbarem Detail, Abschnittsauswahl mit Start/Ende/Dauer und verstellbarer Zeitmarke. Tätigkeiten und Einträge ohne eingelegte Karte sind getrennt gekennzeichnet. Fehlende Kartenzeit wird nicht als Ruhe oder Heimkehr erfunden.
 - PR #9: Nach erfolgreichem Test kann die vollständige Aktivitätsdatei ausdrücklich als Snapshot in Room/SQLCipher gespeichert werden. Ein identischer Snapshot wird nicht doppelt gespeichert. Der zuletzt gespeicherte Snapshot wird beim Öffnen der Kartenansicht erneut dekodiert und als Vorschau angezeigt; die Migration von Schema 1 auf 2 und der echte Gerätetest mit App-Neustart sind bestanden.
-- PR #10: `EF Vehicles_Used` wird vollständig gelesen und in Gen1-/Gen2-Fahrzeugnutzungen dekodiert. Ein eigener Knopf speichert einen verschlüsselten, dublettenfreien Fahrzeug-Snapshot; die Quellvorschau zeigt Kennzeichen, Zeitpunkte und Kilometerstände. Migration 2 → 3.
+- PR #10: `EF Vehicles_Used` wird vollständig gelesen und in Gen1-/Gen2-Fahrzeugnutzungen dekodiert. Ein eigener Knopf speichert einen verschlüsselten, dublettenfreien Fahrzeug-Snapshot; die Quellvorschau zeigt Kennzeichen, Zeitpunkte und Kilometerstände. Migration 2 → 3. Der Gerätetest bestätigte 69 gespeicherte Nutzungen nach Wiederöffnung ohne Karte.
+- PR #11: Passende Aktivitäts- und Fahrzeug-Snapshots derselben Fahrerkarte erscheinen gemeinsam im Kartentag als belegte Zeitfenster und Nutzungsbeginne. Ein offenes Ende bleibt ein Zeitpunkt.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
 **Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst die jeweiligen zusätzlichen Knöpfe speichern Aktivitäts- oder Fahrzeugdatei lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
@@ -20,9 +21,9 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 ## Noch nicht produktiv
 
 - Noch keine vollständige persistente Kartenimport-Pipeline mit Profilzuordnung, Importhistorie in der Oberfläche und vollständiger Kartenabdeckung; bislang sind Aktivitäts- und Fahrzeug-Snapshots separat gespeichert.
-- Fahrzeugnutzungen sind noch nicht mit Tätigkeitsabschnitten oder einer dauerhaften Fahrzeughistorie verknüpft. GNSS-Einzelpunkte, Grenzübertritte, Ereignisse/Störungen, Kontrollen und weitere Kartendateien fehlen.
+- Fahrzeugnutzungen erscheinen als Quellintervalle bei der Zeitleiste, sind aber noch nicht als dauerhafte Fahrzeughistorie oder fertige Tätigkeit/Fahrzeug-Zuordnung ausgewertet. GNSS-Einzelpunkte, Grenzübertritte, Ereignisse/Störungen, Kontrollen und weitere Kartendateien fehlen.
 - Keine belastbare Heimkehr-/Übernachtungs-/Reiseauswertung, Spesen, Arbeitszeit- und Arbeitgeberzuschlagsberechnung, vollständige PDF-Ausgabe oder Cloud-Synchronisation. Keine Steuerlogik.
-- Die in [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) beschriebene Tageszeitleiste ist erst für die vorhandenen Aktivitätsdaten als Vorschau umgesetzt; Fahrzeugbezug, Zusatzmarker und Tageskennzahlen fehlen.
+- Die in [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) beschriebene Tageszeitleiste bleibt eine Vorschau; Fahrzeug-Zeitfenster sind der erste Zusatzmarker. GNSS, Grenzübertritte, Ereignisse und Tageskennzahlen fehlen.
 
 ## Architektur
 
@@ -46,7 +47,7 @@ JDK 17, Android SDK Platform 37, Build Tools 36.0.0, AGP 9.4.0 und der offiziell
 ./gradlew assembleInternal
 ```
 
-Room-/SQLCipher- und Compose-Instrumentierung erfordern Emulator/Gerät (`./gradlew connectedDebugAndroidTest`). Der [CI-Lauf zu PR #9](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36433505151) war für Build, Tests, Lint, APK-Verifikation und diese Emulator-Tests grün. Der Aktivitäts-Teilimport wurde auf dem Galaxy S23 mit echter Fahrerkarte und App-Neustart getestet; die Fahrzeugdatei benötigt noch einen Gerätetest.
+Room-/SQLCipher- und Compose-Instrumentierung erfordern Emulator/Gerät (`./gradlew connectedDebugAndroidTest`). Der [CI-Lauf zu PR #9](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36433505151) war für Build, Tests, Lint, APK-Verifikation und diese Emulator-Tests grün. Aktivitäts- und Fahrzeug-Teilimport wurden auf dem Galaxy S23 mit echter Fahrerkarte und erneuter Anzeige ohne Karte bestätigt. Der Emulatorjob zu PR #10 scheiterte zweimal vor den App-Tests am fehlenden `/dev/kvm` des Runners; Build, Unit-Tests, Lint und APK-Verifikation waren grün.
 
 Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist per Android Keystore/AES-GCM geschützt; kein unverschlüsselter Fallback und kein `fallbackToDestructiveMigration()`. `SafeLogger` darf keine sensiblen Kartendaten, Rohdumps oder vollständigen APDUs ausgeben.
 
