@@ -24,10 +24,11 @@ import java.time.format.DateTimeFormatter
 
 /** Read-only history from explicitly saved card snapshots. */
 @Composable
-internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?) {
+internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?,
+                                  initialQuery: String = "") {
     var history by remember { mutableStateOf<List<CardVehicleHistoryEntry>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Fahrzeugdaten …") }
-    var query by remember { mutableStateOf("") }
+    var query by remember(initialQuery) { mutableStateOf(initialQuery) }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
     LaunchedEffect(imports) {
