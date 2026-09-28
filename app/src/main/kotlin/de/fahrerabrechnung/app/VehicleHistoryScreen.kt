@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter
 internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?) {
     var history by remember { mutableStateOf<List<CardVehicleHistoryEntry>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Fahrzeugdaten …") }
+    var query by remember { mutableStateOf("") }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
     LaunchedEffect(imports) {
@@ -43,9 +45,25 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
         Text("Quelle: ausdrücklich gespeicherte Fahrerkarten-Dateien. Gleiche Nutzungen aus mehreren Snapshots werden nur einmal gezeigt. Kennzeichen ohne gültige VIN werden nach Staat und Kennzeichen gruppiert.",
             style = MaterialTheme.typography.bodyMedium)
         Text(status, style = MaterialTheme.typography.bodyMedium)
-        history.forEach { vehicle ->
+        if (history.isNotEmpty()) OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Kennzeichen oder VIN suchen") },
+            singleLine = true
+        )
+        val filtered = history.filter { vehicle ->
+            val search = query.trim()
+            search.isEmpty() || vehicle.registrationNumber.contains(search, ignoreCase = true) ||
+                vehicle.vin?.contains(search, ignoreCase = true) == true
+        }
+        if (history.isNotEmpty() && filtered.isEmpty())
+            Text("Kein Fahrzeug für diese Suche.", style = MaterialTheme.typography.bodyMedium)
+        filtered.forEach { vehicle ->
             var expanded by remember(vehicle.vin, vehicle.registrationNation, vehicle.registrationNumber) {
                 mutableStateOf(false)
+            }
+            var visibleUses by remember(vehicle.vin, vehicle.registrationNation, vehicle.registrationNumber) {
+                mutableStateOf(10)
             }
             SectionCard {
                 Text("${vehicle.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${vehicle.registrationNation}",
@@ -54,19 +72,25 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
                 Text("Erste Nutzung: ${vehicle.firstUseUtc.atZone(zone).format(formatter)}")
                 Text("Letzte belegte Zeit: ${vehicle.lastObservedUtc.atZone(zone).format(formatter)}")
                 Text("${vehicle.uses.size} verschiedene Nutzungen")
-                OutlinedButton(onClick = { expanded = !expanded }) {
+                OutlinedButton(onClick = {
+                    expanded = !expanded
+                    if (!expanded) visibleUses = 10
+                }) {
                     Text(if (expanded) "Nutzungen ausblenden" else "Letzte Nutzungen anzeigen")
                 }
                 if (expanded) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    vehicle.uses.take(10).forEach { use ->
+                    vehicle.uses.take(visibleUses).forEach { use ->
                         val start = use.firstUseUtc.atZone(zone).format(formatter)
                         val end = use.lastUseUtc?.atZone(zone)?.format(formatter) ?: "Ende offen"
                         Text("$start – $end · ${use.registrationNumber}")
                         Text("Tacho ${use.odometerBeginKm} → ${use.odometerEndKm?.toString() ?: "offen"} km",
                             style = MaterialTheme.typography.bodySmall)
                     }
-                    if (vehicle.uses.size > 10)
-                        Text("Die letzten 10 von ${vehicle.uses.size} Nutzungen werden gezeigt.")
+                    if (vehicle.uses.size > visibleUses) OutlinedButton(
+                        onClick = { visibleUses = (visibleUses + 10).coerceAtMost(vehicle.uses.size) }
+                    ) {
+                        Text("Weitere Nutzungen anzeigen (${visibleUses} von ${vehicle.uses.size})")
+                    }
                 }
             }
         }
