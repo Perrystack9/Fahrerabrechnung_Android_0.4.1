@@ -12,4 +12,7 @@ interface CardVehicleImportDao {
 
     @Query("SELECT * FROM card_vehicle_imports ORDER BY importedAtEpochMillis DESC, id DESC LIMIT 1")
     suspend fun latest(): CardVehicleImportEntity?
+
+    @Query("SELECT * FROM card_vehicle_imports ORDER BY importedAtEpochMillis ASC, id ASC")
+    suspend fun all(): List<CardVehicleImportEntity>
 }

@@ -40,11 +40,15 @@ class CardVehicleImportRepository @Inject constructor(
         )) != -1L
     }
 
-    suspend fun latest(): SavedCardVehicles? = dao.latest()?.let { entity ->
+    suspend fun latest(): SavedCardVehicles? = dao.latest()?.let(::decode)
+
+    suspend fun all(): List<SavedCardVehicles> = dao.all().map(::decode)
+
+    private fun decode(entity: CardVehicleImportEntity): SavedCardVehicles {
         val file = CardVehiclesFile(entity.newestRecordIndex, entity.recordCount,
             CardGeneration.valueOf(entity.generation), entity.records)
         val uses = CardVehiclesParser.parse(file)
         check(uses.size == entity.useCount)
-        SavedCardVehicles(file, uses, entity.importedAtEpochMillis, entity.cardNumber)
+        return SavedCardVehicles(file, uses, entity.importedAtEpochMillis, entity.cardNumber)
     }
 }

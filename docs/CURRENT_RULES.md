@@ -13,7 +13,7 @@
 
 - Siebenstufiges Onboarding; Heimatpunkt in Schritt 2. Ältere Acht-Schritte- und „App-GPS während der Fahrt“-Vorgaben sind überholt.
 - Tageszeitleiste als Kernfeature: kompakte horizontale Tagesübersicht, zoombares und verschiebbares Detail bis zur sinnvollen Minutenebene, antippbare Abschnitte mit exaktem Start/Ende/Dauer sowie verstellbare Zeitmarke. Jede Tätigkeit hat **Farbe und Symbol**: Lenken, andere Arbeit, Bereitschaft, Pause/Ruhe.
-- Geplant sind belastbare Marker für Fahrzeugwechsel, echte GNSS-Punkte, Grenzübertritt, Ereignis/Störung, Fähre/Zug, Out of Scope und Kartenstatus; dazu Fahrzeugbezug und kompakte Tageskennzahlen. Nur aus Quelldaten belegte Merkmale anzeigen. Die Kartentag-Zeitleiste bildet Aktivitätsdaten als Vorschau ab und zeigt in PR #11 passende Fahrzeugnutzungen als Quell-Zeitfenster und Startpunkte, ohne offene Enden fortzuschreiben. Eine vollständige Fahrzeughistorie folgt später.
+- Geplant sind belastbare Marker für Fahrzeugwechsel, echte GNSS-Punkte, Grenzübertritt, Ereignis/Störung, Fähre/Zug, Out of Scope und Kartenstatus; dazu Fahrzeugbezug und kompakte Tageskennzahlen. Nur aus Quelldaten belegte Merkmale anzeigen. Die Kartentag-Zeitleiste bildet Aktivitätsdaten als Vorschau ab und zeigt in PR #11 passende Fahrzeugnutzungen als Quell-Zeitfenster und Startpunkte, ohne offene Enden fortzuschreiben. PR #12 zeigt zusätzlich eine read-only Fahrzeughistorien-Vorschau aus gespeicherten Snapshots; dauerhafte Fahrzeugzuordnung, Arbeitstage und Kilometeraggregation folgen später.
 - Technische Ereignisse nicht automatisch als Verstoß oder Fahrerverschulden darstellen. Kontrollen gehören in Fahrerkarte → Details → Kontrollen; sensible Nummern dort standardmäßig maskieren.
 
 ## Reise, Heimkehr und Spesen
