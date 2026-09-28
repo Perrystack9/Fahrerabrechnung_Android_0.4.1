@@ -1,3 +1,5 @@
+> **Historischer Zwischenbericht vom 22.09.2026.** Die folgenden Blockaden und Phasengrenzen beschreiben nur den damaligen Zustand, nicht den heutigen `main`-Stand. Aktuell: [README](README.md), [WORK_STATUS](WORK_STATUS.md), [Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Build, Tests, Lint, APK-Verifikation und Emulator-Tests waren im [CI-Lauf zu PR #7](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36411408668) grün.
+
 # Zwischenbericht – Android-Projektstart 0.4.1
 
 Stand: 22.09.2026
