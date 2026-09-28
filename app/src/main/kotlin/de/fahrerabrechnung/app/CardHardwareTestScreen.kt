@@ -33,6 +33,9 @@ import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardVehicleImportRepository
+import de.fahrerabrechnung.data.card.CardVehicleUse
+import de.fahrerabrechnung.data.card.CardVehiclesParser
 import de.fahrerabrechnung.data.card.CardReadResult
 import de.fahrerabrechnung.data.card.CardDayTimeline
 import de.fahrerabrechnung.data.card.LocalCardDay
@@ -62,9 +65,10 @@ class CardPermissionReceiver : BroadcastReceiver() {
     }
 }
 
-/** Reader diagnostics and an explicit, locally encrypted activity-only partial import. */
+/** Reader diagnostics and explicit, separately saved card source files. */
 @Composable
-fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null) {
+fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
+                           vehicleImports: CardVehicleImportRepository? = null) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
     val scope = rememberCoroutineScope()
@@ -78,6 +82,11 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var displayZone by remember { mutableStateOf(ZoneId.systemDefault()) }
     var pendingRead by remember { mutableStateOf<CardReadResult?>(null) }
     var savedStatus by remember { mutableStateOf<String?>(null) }
+    var vehicleStatus by remember { mutableStateOf<String?>(null) }
+    var savedVehicleStatus by remember { mutableStateOf<String?>(null) }
+    var vehicleUses by remember { mutableStateOf<List<CardVehicleUse>>(emptyList()) }
+    var activitySavedForRead by remember { mutableStateOf(false) }
+    var vehicleSavedForRead by remember { mutableStateOf(false) }
 
     LaunchedEffect(imports) {
         if (imports != null) try {
@@ -92,6 +101,17 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
     }
 
+    LaunchedEffect(vehicleImports) {
+        if (vehicleImports != null) try {
+            vehicleImports.latest()?.let { saved ->
+                vehicleUses = saved.uses
+                savedVehicleStatus = "Gespeicherter Fahrzeug-Teilimport: ${saved.uses.size} Nutzungsdatensätze."
+            }
+        } catch (_: Exception) {
+            savedVehicleStatus = "Gespeicherte Fahrzeugdaten konnten nicht geöffnet werden."
+        }
+    }
+
     fun inspect(fullRead: Boolean) {
         if (busy) return
         busy = true
@@ -102,6 +122,20 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
                         pendingRead = if (result.card != null && days.isNotEmpty()) result else null
+                        var vehicleDecodeFailed = false
+                        vehicleUses = try {
+                            result.vehicles?.let(CardVehiclesParser::parse).orEmpty()
+                        } catch (_: ParseError) {
+                            vehicleDecodeFailed = true
+                            emptyList()
+                        }
+                        vehicleStatus = when {
+                            result.vehicleReadFailed -> "Fahrzeugdatei nicht gelesen; Aktivitätsdaten bleiben nutzbar."
+                            result.vehicles == null -> "Keine Fahrzeugdatei verfügbar."
+                            vehicleDecodeFailed -> "Fahrzeugdatei gelesen, aber nicht dekodierbar; Aktivitätsdaten bleiben nutzbar."
+                            vehicleUses.isEmpty() -> "Fahrzeugdatei gelesen; keine auswertbaren Nutzungen."
+                            else -> "Fahrzeugdatei gelesen: ${result.vehicles.records.size} Bytes; ${vehicleUses.size} Nutzungen dekodiert."
+                        }
                         displayZone = ZoneId.systemDefault()
                         localDays = CardDayTimeline.build(days, displayZone)
                         selectedDay = localDays.lastIndex.coerceAtLeast(0)
@@ -116,15 +150,18 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 pendingRead = null
                 localDays = emptyList()
                 activityStatus = "Rohdatei gelesen, Tagesdaten nicht dekodierbar (${e.field})."
+                vehicleStatus = null
             } catch (e: ReaderException) {
                 pendingRead = null
                 if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Fehlercode: ${e.failure.name}"
+                if (fullRead) vehicleStatus = null
                 else message = "Diagnose fehlgeschlagen. Fehlercode: ${e.failure.name}"
             } catch (_: Exception) {
                 pendingRead = null
                 if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Lesetest fehlgeschlagen."
+                if (fullRead) vehicleStatus = null
                 else message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
             } finally {
                 busy = false
@@ -136,7 +173,10 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         pendingFullRead = fullRead
         if (fullRead) {
             pendingRead = null
+            activitySavedForRead = false
+            vehicleSavedForRead = false
             activityStatus = null
+            vehicleStatus = null
             localDays = emptyList()
         } else diagnostic = null
         if (transport.devices().any { it.permission } || transport.devices().isEmpty()) inspect(fullRead)
@@ -164,6 +204,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     diagnostic = null
                     activityStatus = null
                     pendingRead = null
+                    activitySavedForRead = false
+                    vehicleSavedForRead = false
                     localDays = emptyList()
                     message = "Kartenleser entfernt."
                 }
@@ -182,15 +224,15 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest und dekodiert die Aktivitätsdatei zunächst im Arbeitsspeicher. Nur mit deiner ausdrücklichen Auswahl wird diese Datei verschlüsselt lokal gespeichert. Weitere Kartendateien werden noch nicht importiert.",
+            Text("Der Kartendatentest liest Aktivitäts- und Fahrzeugdatei zunächst im Arbeitsspeicher. Jede Datei wird nur nach ausdrücklicher Auswahl verschlüsselt lokal gespeichert. Weitere Kartendateien fehlen noch.",
                 style = MaterialTheme.typography.bodyMedium)
             Button(enabled = !busy, onClick = { startCheck(false) }) {
                 Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
             }
             Button(enabled = !busy, onClick = { startCheck(true) }) {
-                Text(if (busy) "Lesen läuft …" else "Aktivitätsdatei testen")
+                Text(if (busy) "Lesen läuft …" else "Kartendaten testen")
             }
-            if (pendingRead != null && imports != null) {
+            if (pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {
                     val read = pendingRead ?: return@Button
                     busy = true
@@ -199,7 +241,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                             val inserted = imports.save(read)
                             savedStatus = if (inserted) "Aktivitäts-Teilimport verschlüsselt gespeichert."
                                 else "Diese Aktivitätsdatei ist bereits gespeichert."
-                            pendingRead = null
+                            activitySavedForRead = true
+                            if (vehicleSavedForRead || vehicleUses.isEmpty()) pendingRead = null
                         } catch (_: Exception) {
                             savedStatus = "Speichern fehlgeschlagen. Bitte erneut versuchen."
                         } finally {
@@ -208,8 +251,30 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     }
                 }) { Text("Aktivitätsdaten lokal speichern") }
             }
+            if (pendingRead?.vehicles != null && vehicleUses.isNotEmpty() &&
+                vehicleImports != null && !vehicleSavedForRead) {
+                Button(enabled = !busy, onClick = {
+                    val read = pendingRead ?: return@Button
+                    busy = true
+                    scope.launch {
+                        try {
+                            val inserted = vehicleImports.save(read)
+                            savedVehicleStatus = if (inserted) "Fahrzeug-Teilimport verschlüsselt gespeichert."
+                                else "Diese Fahrzeugdatei ist bereits gespeichert."
+                            vehicleSavedForRead = true
+                            if (activitySavedForRead) pendingRead = null
+                        } catch (_: Exception) {
+                            savedVehicleStatus = "Fahrzeugdaten konnten nicht gespeichert werden."
+                        } finally {
+                            busy = false
+                        }
+                    }
+                }) { Text("Fahrzeugdaten lokal speichern") }
+            }
             activityStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            vehicleStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             savedStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            savedVehicleStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Text(message, style = MaterialTheme.typography.bodyMedium)
             diagnostic?.let { result ->
                 Text("Reader: ${result.reader.label()}")
@@ -222,6 +287,18 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 Text("Kartengeneration: ${result.generation.label()}")
                 result.failure?.let { Text("Fehlercode: ${it.name}") }
             }
+        }
+        if (vehicleUses.isNotEmpty()) SectionCard {
+            Text("Fahrzeugnutzungen · Vorschau", style = MaterialTheme.typography.titleMedium)
+            Text("Quelle: Fahrerkarte. Zeitpunkte in Ortszeit des Geräts; Kilometerstände sind Quellwerte, keine berechnete Tagesstrecke.")
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+            vehicleUses.takeLast(5).asReversed().forEach { use ->
+                Text("${use.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${use.registrationNation}")
+                val start = use.firstUseUtc.atZone(displayZone).format(formatter)
+                val end = use.lastUseUtc?.atZone(displayZone)?.format(formatter) ?: "offen"
+                Text("$start – $end · Tacho ${use.odometerBeginKm} → ${use.odometerEndKm?.toString() ?: "offen"} km")
+            }
+            if (vehicleUses.size > 5) Text("Die letzten 5 von ${vehicleUses.size} Nutzungen werden gezeigt.")
         }
         if (localDays.isNotEmpty()) {
             val day = localDays[selectedDay.coerceIn(localDays.indices)]
