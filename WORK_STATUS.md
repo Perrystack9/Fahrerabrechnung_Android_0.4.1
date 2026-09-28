@@ -1,6 +1,6 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Stand: 28.09.2026 · `main`-HEAD `0f6da793062b1891bbbdbc4b84393eb4a080bc10`.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main`-Commit `0f6da793062b1891bbbdbc4b84393eb4a080bc10` (PR #7).** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 ## Nachweislich umgesetzt
 
