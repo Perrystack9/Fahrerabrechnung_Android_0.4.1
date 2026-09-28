@@ -1,4 +1,4 @@
-> Historischer Implementierungsstand. Die aktuellen Produktregeln in [CURRENT_RULES.md](CURRENT_RULES.md) ersetzen alle GPS- und Acht-Schritte-Aussagen.
+> **Historischer UI-Zwischenstand; Acht-Schritte- und deaktivierte GPS-/Kartenaktionen beschreiben nur die damalige Phase.** Maßgeblich sind [aktuelle Produktregeln](CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
 # FahrerTagebuch · UI-Feinschliff 0.4.1 v2
 

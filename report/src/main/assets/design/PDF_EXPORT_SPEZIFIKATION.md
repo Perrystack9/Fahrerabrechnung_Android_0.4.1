@@ -1,4 +1,4 @@
-> Aktuelle Produktentscheidung: Smartphone/App GPS gehört nicht zum Produkt. Keine GPS-Spalten, Karte oder Route; GNSS-Punkte nur aus Fahrerkarte/Tachograph.
+> **Historische PDF-Designreferenz, kein implementierter PDF-Renderer.** Maßgeblich sind [aktuelle Produktregeln](../../../../../docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../../../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
 # FahrerTagebuch – PDF-Export-Spezifikation
 

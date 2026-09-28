@@ -1,4 +1,4 @@
-> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+> **Historischer UI-Auftrag; seine Acht-Schritte- und Phasengrenzen gelten heute nicht mehr.** Maßgeblich sind [aktuelle Produktregeln](../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
 # Work-Auftrag – UI-Feinschliff & verbindliche Designübernahme 0.4.1
 

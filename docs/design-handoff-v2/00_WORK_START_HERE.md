@@ -1,6 +1,6 @@
-> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+> **Historisches Design-Handoff; die interne Reihenfolge der Verbindlichkeit gilt nur innerhalb dieses alten Pakets.** Maßgeblich sind [aktuelle Produktregeln](../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
-# WICHTIGER NACHTRAG – UI-Refinement v2
+# Historischer Nachtrag – UI-Refinement v2
 
 Für die nächste UI-/Designrunde zuerst **`WORK_UI_REFINEMENT_0.4.1.md`** lesen. Diese Datei enthält das aktuelle Galaxy-S23-Testfeedback sowie die neuesten verbindlichen Onboarding-Korrekturen. Bei Widersprüchen hat sie Vorrang.
 

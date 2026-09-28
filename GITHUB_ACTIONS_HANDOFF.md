@@ -1,3 +1,5 @@
+> **Historischer Zwischenbericht vom 22.09.2026.** Die folgenden Blockaden und Phasengrenzen beschreiben nur den damaligen Zustand, nicht den heutigen `main`-Stand. Aktuell: [README](README.md), [WORK_STATUS](WORK_STATUS.md), [Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Build, Tests, Lint, APK-Verifikation und Emulator-Tests waren im [CI-Lauf zu PR #7](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36411408668) grün.
+
 # GitHub Actions Handoff – Android-Basis 0.4.1
 
 Stand: 22.09.2026
@@ -33,12 +35,12 @@ Dieser Stand dient ausschließlich der echten Build-Verifikation der bereits fre
 - Gradle 9.6.1 Distribution SHA-256: `9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14`
 - Gradle 9.6.1 Wrapper-JAR SHA-256: `497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7`
 
-## Aktueller Plattform-Blocker
+## Damaliger Plattform-Blocker (22.09.2026)
 
 Der verbundene GitHub-Connector kann bestehende Repositories beschreiben und verändern, stellt in der aktuellen Sitzung aber keine Repository-Erstellungsfunktion bereit. Für den verbundenen Nutzer `Perrystack9` ist derzeit kein Repository und keine GitHub-App-Installation verfügbar. Ein Schreibversuch gegen `Perrystack9/Fahrerabrechnung_Android_0.4.1` liefert deshalb 404.
 
 Sobald ein leeres privates Repository mit diesem Namen existiert und für den GitHub-Connector zugänglich ist, kann der komplette Projektstand dorthin übertragen und der CI-Zyklus ohne weitere fachliche Freigabe gestartet werden.
 
-## Strikte Stoppgrenze
+## Damalige Phasengrenze
 
 Nicht beginnen mit Fahrerkarte/Tachographenparser, USB-CCID, produktivem GPS, Gen2/Gen2V2, Matching, Reise/Heimkehr, Spesen, Übernachtungen, Zuschlagsberechnung oder Compliance.
