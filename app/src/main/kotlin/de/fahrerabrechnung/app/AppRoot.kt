@@ -49,7 +49,6 @@ import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
 import de.fahrerabrechnung.feature.detail.DayReportScreen
 import de.fahrerabrechnung.feature.detail.SettingsSubpagePlaceholderScreen
-import de.fahrerabrechnung.feature.detail.VehicleDetailPlaceholderScreen
 import de.fahrerabrechnung.feature.payroll.PayrollScreen
 import de.fahrerabrechnung.feature.settings.SettingsScreen
 import de.fahrerabrechnung.feature.start.StartScreen
@@ -213,10 +212,12 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.DAY_REPORT) DayReportScreen(padding)
             }
             composable(DetailRoutes.CARD_IMPORT) {
-                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(padding, cardActivityImports, cardVehicleImports)
+                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
+                    padding, cardActivityImports, cardVehicleImports,
+                    onOpenVehicleHistory = { navController.navigate(DetailRoutes.VEHICLE_DETAIL) })
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
-                if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL) VehicleDetailPlaceholderScreen(padding)
+                if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL) VehicleHistoryScreen(padding, cardVehicleImports)
             }
             composable(DetailRoutes.SETTINGS_SUBPAGE) {
                 if (visibleRoute.value == DetailRoutes.SETTINGS_SUBPAGE) SettingsSubpagePlaceholderScreen(padding, settingsTitle)

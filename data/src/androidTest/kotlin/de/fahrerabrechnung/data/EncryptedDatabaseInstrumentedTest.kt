@@ -122,6 +122,7 @@ class EncryptedDatabaseInstrumentedTest {
             assertEquals(snapshot.cardNumber, saved.cardNumber)
             assertEquals(snapshot.useCount, saved.useCount)
             assertEquals(snapshot.records.toList(), saved.records.toList())
+            assertEquals(1, reopened.cardVehicleImportDao().all().size)
         } finally {
             reopened.close()
         }
