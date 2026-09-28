@@ -1,3 +1,5 @@
+> **Historisches Asset-Manifest; Bild-/Designreferenzen sind keine aktuellen Fachregeln.** Maßgeblich sind [aktuelle Produktregeln](../../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
+
 # Asset-Manifest
 
 ## Branding
@@ -34,4 +36,4 @@ Aus dem Markenboard ausgeschnittene Detailreferenzen. **Nicht als finale Produkt
 
 ## Autoritätsregel
 
-Die Bilder zeigen die gewünschte visuelle Richtung. **Alle sprachlichen und fachlichen Regeln in den Markdown-Dateien haben Vorrang**, insbesondere wenn in älteren Bildmockups noch Begriffe wie „Abrechnung“ vorkommen.
+Die Bilder zeigen die gewünschte visuelle Richtung. **Innerhalb des damaligen Pakets hatten die Markdown-Texte Vorrang vor den Bildern**, insbesondere wenn in älteren Bildmockups noch Begriffe wie „Abrechnung“ vorkommen.
