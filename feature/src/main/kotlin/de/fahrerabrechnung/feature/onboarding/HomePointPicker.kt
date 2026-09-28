@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 
 @Composable
@@ -85,39 +90,8 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
             },
             modifier = Modifier.fillMaxWidth().testTag("onboarding_use_gps"),
         ) { Text("Aktuellen Standort per GPS verwenden") }
-        if (!showMap) {
-            OutlinedButton(onClick = { showMap = true }, modifier = Modifier.fillMaxWidth().testTag("onboarding_open_map")) {
-                Text("Oder Punkt auf Karte wählen")
-            }
-        } else {
-            AndroidView(
-                factory = { viewContext ->
-                    HomeMapView(viewContext).apply {
-                        onPointSelected = { lat, lon -> pending = lat to lon }
-                        val initial = pending ?: (latitude.toDoubleOrNull()?.let { lat ->
-                            longitude.toDoubleOrNull()?.let { lon -> lat to lon }
-                        })
-                        setInitialPoint(initial?.first, initial?.second)
-                        mapView = this
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(220.dp).testTag("onboarding_map"),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { mapView?.changeZoom(1) }) { Text("+") }
-                OutlinedButton(onClick = { mapView?.changeZoom(-1) }) { Text("−") }
-                OutlinedButton(onClick = { mapView?.retryTiles() }) { Text("Karte neu laden") }
-            }
-            Text("Nadel verschieben oder auf die Karte tippen. Karte: OpenStreetMap.")
-        }
-        DisposableEffect(showMap) {
-            onDispose {
-                mapView?.release()
-                mapView = null
-            }
-        }
-        Button(onClick = { pending?.let { currentOnPointChange(it.first, it.second) } }, enabled = pending != null, modifier = Modifier.fillMaxWidth().testTag("onboarding_confirm_home")) {
-            Text("Heimatpunkt übernehmen")
+        OutlinedButton(onClick = { showMap = true }, modifier = Modifier.fillMaxWidth().testTag("onboarding_open_map")) {
+            Text("Punkt auf Karte wählen")
         }
         pending?.let { Text("Ausgewählt: ${it.first}, ${it.second}") }
         if (latitude.isNotBlank() && longitude.isNotBlank()) {
@@ -125,5 +99,47 @@ internal fun HomePointPicker(latitude: String, longitude: String, onPointChange:
         }
         error?.let { Text(it) }
     }
+    if (showMap) {
+        Dialog(onDismissRequest = { showMap = false }) {
+            Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Heimatpunkt wählen", style = MaterialTheme.typography.titleLarge)
+                    Text("Nadel verschieben oder auf die Karte tippen.", style = MaterialTheme.typography.bodySmall)
+                    AndroidView(
+                        factory = { viewContext ->
+                            HomeMapView(viewContext).apply {
+                                onPointSelected = { lat, lon -> pending = lat to lon }
+                                val initial = pending ?: (latitude.toDoubleOrNull()?.let { lat ->
+                                    longitude.toDoubleOrNull()?.let { lon -> lat to lon }
+                                })
+                                setInitialPoint(initial?.first, initial?.second)
+                                mapView = this
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(220.dp).testTag("onboarding_map"),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { mapView?.changeZoom(1) }) { Text("+") }
+                        OutlinedButton(onClick = { mapView?.changeZoom(-1) }) { Text("−") }
+                        OutlinedButton(onClick = { mapView?.retryTiles() }) { Text("Neu laden") }
+                    }
+                    Button(
+                        onClick = {
+                            pending?.let { currentOnPointChange(it.first, it.second) }
+                            showMap = false
+                        },
+                        enabled = pending != null,
+                        modifier = Modifier.fillMaxWidth().testTag("onboarding_confirm_home"),
+                    ) { Text("Heimatpunkt übernehmen") }
+                    TextButton(onClick = { showMap = false }, modifier = Modifier.fillMaxWidth()) { Text("Schließen") }
+                }
+            }
+        }
+    }
+    DisposableEffect(showMap) {
+        onDispose {
+            mapView?.release()
+            mapView = null
+        }
+    }
 }
-
