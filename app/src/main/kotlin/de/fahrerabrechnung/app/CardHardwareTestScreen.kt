@@ -24,6 +24,8 @@ import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.data.card.AndroidCcidTransport
 import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
+import de.fahrerabrechnung.data.card.CardActivityParser
+import de.fahrerabrechnung.data.card.ParseError
 import de.fahrerabrechnung.data.card.CardGeneration
 import de.fahrerabrechnung.data.card.DriverCardReader
 import de.fahrerabrechnung.data.card.ReaderException
@@ -64,13 +66,16 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 if (fullRead) {
                     val result = DriverCardReader(transport).read()
                     activityStatus = result.activity?.let {
-                        "Aktivitätsdatei vollständig gelesen: ${it.dailyRecords.size} Bytes (${result.generation.label()})."
+                        val days = CardActivityParser.parse(it)
+                        "Aktivitätsdatei gelesen: ${it.dailyRecords.size} Bytes (${result.generation.label()}); ${days.size} Tagesdatensätze dekodiert."
                     } ?: "Aktivitätsdatei nicht gelesen: Kartentyp oder Dateistruktur nicht erkannt."
                     message = "Lesetest abgeschlossen."
                 } else {
                     diagnostic = CardDiagnosticProbe(transport).inspect()
                     message = "Prüfung abgeschlossen."
                 }
+            } catch (e: ParseError) {
+                activityStatus = "Rohdatei gelesen, Tagesdaten nicht dekodierbar (${e.field})."
             } catch (e: ReaderException) {
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Fehlercode: ${e.failure.name}"
                 else message = "Diagnose fehlgeschlagen. Fehlercode: ${e.failure.name}"
@@ -127,7 +132,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest zusätzlich die vollständige Rohdatei im Arbeitsspeicher. Es wird noch kein Kartenimport gespeichert.",
+            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest und dekodiert zusätzlich die Rohdatei im Arbeitsspeicher. Es wird noch kein Kartenimport gespeichert.",
                 style = MaterialTheme.typography.bodyMedium)
             Button(enabled = !busy, onClick = { startCheck(false) }) {
                 Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
