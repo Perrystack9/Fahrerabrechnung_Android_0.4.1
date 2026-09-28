@@ -42,7 +42,7 @@ import kotlin.math.roundToLong
 @Composable
 internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
                                  vehicles: List<CardDayVehicle> = emptyList(),
-                                 onOpenVehicleHistory: (String?) -> Unit = {}) {
+                                 onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
     val start = day.date.atStartOfDay(zone).toInstant()
     val end = day.date.plusDays(1).atStartOfDay(zone).toInstant()
     val totalMillis = Duration.between(start, end).toMillis()
@@ -159,7 +159,8 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
                     val validVin = use.vin?.trim()?.takeIf {
                         it.matches(Regex("[A-HJ-NPR-Za-hj-npr-z0-9]{17}"))
                     }
-                    onOpenVehicleHistory(validVin ?: use.registrationNumber)
+                    onOpenVehicleHistory(validVin ?: use.registrationNumber,
+                        use.firstUseUtc.epochSecond, use.registrationNation)
                 }) { Text("Dieses Fahrzeug in der Historie öffnen") }
             } else Text("Fahrzeug zur Zeitmarke nicht eindeutig belegt.",
                 style = MaterialTheme.typography.bodySmall)

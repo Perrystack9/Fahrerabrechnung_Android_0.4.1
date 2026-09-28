@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #14, mit Fahrzeuglink in PR #15.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #15, mit gezielter Kartennutzung in PR #16.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **explizit speicherbaren Aktivitäts- und Fahrzeug-Teilimporten**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
@@ -18,6 +18,7 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 - PR #13: Die Fahrzeughistorie lässt sich nach Kennzeichen oder VIN durchsuchen; weitere Nutzungen werden in Zehnerschritten angezeigt.
 - PR #14: Der Kartentag zeigt die Dauern belegter Tätigkeitsabschnitte mit eingelegter Karte, Einträge ohne Karte und unbelegte Zeit getrennt. Das ist weder eine Arbeitszeit- noch eine Ruhe- oder Abrechnungsberechnung.
 - PR #15: Ein eindeutig belegtes Fahrzeug zur Zeitmarke lässt sich gezielt in der gespeicherten Fahrzeughistorie suchen.
+- PR #16: Bei Navigation aus dem Kartentag zeigt die Fahrzeughistorie die dort ausgewählte Kartennutzung mit Zeit und Tacho-Quellwerten zuerst; sie bleibt zusätzlich in der vollständigen Liste. Eine nicht gespeicherte Nutzung wird nicht als Historie ausgegeben.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
 **Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst die jeweiligen zusätzlichen Knöpfe speichern Aktivitäts- oder Fahrzeugdatei lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
