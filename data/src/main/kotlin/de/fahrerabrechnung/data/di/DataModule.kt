@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import de.fahrerabrechnung.data.db.AppDatabase
 import de.fahrerabrechnung.data.db.ProfileDao
 import de.fahrerabrechnung.data.db.CardActivityImportDao
+import de.fahrerabrechnung.data.db.CardVehicleImportDao
 import de.fahrerabrechnung.data.security.DatabasePassphraseStore
 import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.time.Clock
@@ -31,4 +32,7 @@ object DataModule {
 
     @Provides
     fun provideCardActivityImportDao(database: AppDatabase): CardActivityImportDao = database.cardActivityImportDao()
+
+    @Provides
+    fun provideCardVehicleImportDao(database: AppDatabase): CardVehicleImportDao = database.cardVehicleImportDao()
 }

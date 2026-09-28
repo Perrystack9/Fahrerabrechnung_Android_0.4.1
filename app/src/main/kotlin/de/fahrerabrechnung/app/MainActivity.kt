@@ -13,12 +13,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     @Inject lateinit var cardActivityImports: CardActivityImportRepository
+    @Inject lateinit var cardVehicleImports: CardVehicleImportRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
             FahrerTagebuchTheme(themeMode = themeMode) {
                 if (onboardingComplete != null) AppRoot(
                     cardActivityImports = cardActivityImports,
+                    cardVehicleImports = cardVehicleImports,
                     onboardingComplete = onboardingComplete,
                     onFinishOnboarding = viewModel::finishOnboarding,
                     themeMode = themeMode,

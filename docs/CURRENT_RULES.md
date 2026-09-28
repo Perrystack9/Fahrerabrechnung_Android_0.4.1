@@ -13,7 +13,7 @@
 
 - Siebenstufiges Onboarding; Heimatpunkt in Schritt 2. Ältere Acht-Schritte- und „App-GPS während der Fahrt“-Vorgaben sind überholt.
 - Tageszeitleiste als Kernfeature: kompakte horizontale Tagesübersicht, zoombares und verschiebbares Detail bis zur sinnvollen Minutenebene, antippbare Abschnitte mit exaktem Start/Ende/Dauer sowie verstellbare Zeitmarke. Jede Tätigkeit hat **Farbe und Symbol**: Lenken, andere Arbeit, Bereitschaft, Pause/Ruhe.
-- Geplant sind belastbare Marker für Fahrzeugwechsel, echte GNSS-Punkte, Grenzübertritt, Ereignis/Störung, Fähre/Zug, Out of Scope und Kartenstatus; dazu Fahrzeugbezug und kompakte Tageskennzahlen. Nur aus Quelldaten belegte Merkmale anzeigen. Der aktuelle In-Memory-Kartentest bildet erst die Aktivitätsvorschau ab.
+- Geplant sind belastbare Marker für Fahrzeugwechsel, echte GNSS-Punkte, Grenzübertritt, Ereignis/Störung, Fähre/Zug, Out of Scope und Kartenstatus; dazu Fahrzeugbezug und kompakte Tageskennzahlen. Nur aus Quelldaten belegte Merkmale anzeigen. Die Kartentag-Zeitleiste bildet Aktivitätsdaten als Vorschau ab; gespeicherte Fahrzeug-Quelldaten sind noch nicht damit verknüpft.
 - Technische Ereignisse nicht automatisch als Verstoß oder Fahrerverschulden darstellen. Kontrollen gehören in Fahrerkarte → Details → Kontrollen; sensible Nummern dort standardmäßig maskieren.
 
 ## Reise, Heimkehr und Spesen
@@ -32,4 +32,4 @@
 
 ## Aktueller Umsetzungsrahmen
 
-Die technische Fahrerkarte-/Parser-Phase hat bereits echte Teilfunktionen; der Test bleibt in-memory. Persistenter vollständiger Import, zusätzliche Kartendateien, Fahrzeughistorie, fachliche Berechnungen, PDF und Cloud folgen nur in gesonderten Umsetzungen. Keine ältere Spezifikation darf einen noch nicht implementierten Punkt als vorhanden ausgeben.
+Die technische Fahrerkarte-/Parser-Phase hat bereits echte Teilfunktionen; Aktivitäts- und Fahrzeugdatei werden zunächst im Arbeitsspeicher geprüft und nach gesonderter Bestätigung als verschlüsselte Teilimporte gespeichert. Ein vollständiger Import, weitere Kartendateien, Fahrzeughistorie, fachliche Berechnungen, PDF und Cloud folgen nur in gesonderten Umsetzungen. Keine ältere Spezifikation darf einen noch nicht implementierten Punkt als vorhanden ausgeben.

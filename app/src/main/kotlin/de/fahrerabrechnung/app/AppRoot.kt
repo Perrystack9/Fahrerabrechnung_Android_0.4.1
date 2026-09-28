@@ -43,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import de.fahrerabrechnung.core.design.AppScaffold
 import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
@@ -76,6 +77,7 @@ fun AppRoot(
     themeMode: ThemeMode,
     onThemeModeChanged: (ThemeMode) -> Unit,
     cardActivityImports: CardActivityImportRepository? = null,
+    cardVehicleImports: CardVehicleImportRepository? = null,
     onboardingComplete: Boolean = true,
     onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
 ) {
@@ -211,7 +213,7 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.DAY_REPORT) DayReportScreen(padding)
             }
             composable(DetailRoutes.CARD_IMPORT) {
-                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(padding, cardActivityImports)
+                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(padding, cardActivityImports, cardVehicleImports)
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL) VehicleDetailPlaceholderScreen(padding)

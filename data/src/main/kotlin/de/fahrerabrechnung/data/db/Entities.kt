@@ -81,3 +81,16 @@ data class CardActivityImportEntity(
     val dayCount: Int,
     val importedAtEpochMillis: Long,
 )
+
+/** Explicitly saved EF Vehicles_Used snapshot; separate from activity and calculated trips. */
+@Entity(tableName = "card_vehicle_imports", indices = [Index("importedAtEpochMillis")])
+data class CardVehicleImportEntity(
+    @PrimaryKey val id: String,
+    val cardNumber: String,
+    val generation: String,
+    val newestRecordIndex: Int,
+    val recordCount: Int,
+    val records: ByteArray,
+    val useCount: Int,
+    val importedAtEpochMillis: Long,
+)

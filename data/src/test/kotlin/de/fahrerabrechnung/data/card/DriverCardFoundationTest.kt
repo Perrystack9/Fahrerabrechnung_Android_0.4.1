@@ -139,6 +139,8 @@ class DriverCardFoundationTest {
             assertEquals(expected, result.card!!.generation)
             assertEquals(16, result.activity!!.dailyRecords.size)
             assertEquals(4, result.activity!!.newestDayOffset)
+            assertNotNull(result.vehicles)
+            assertFalse(result.vehicleReadFailed)
             assertTrue(fake.closed)
         }
         val unknown = DriverCardReader(CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())).read()
@@ -249,10 +251,13 @@ class DriverCardFoundationTest {
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = 4 // newest day starts at byte 4 of the ring
                     }
+                    DriverCardFiles.VEHICLES_USED -> ByteArray(2 + 2 *
+                        (if (generation == CardGeneration.GEN1) 31 else 48))
                     else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
                         it[6] = 16 // 16-byte activity ring
+                        it[8] = 2 // two vehicle record slots
                     }
                 }
                 val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)

@@ -35,4 +35,22 @@ class MigrationTestBase {
             }
         }
     }
+
+    @Test fun migration_2_3_preservesExistingActivitySnapshots() {
+        val name = "vehicle-migration-test"
+        helper.createDatabase(name, 2).apply {
+            execSQL("INSERT INTO card_activity_imports (id, cardNumber, generation, oldestDayOffset, newestDayOffset, dailyRecords, dayCount, importedAtEpochMillis) VALUES ('a1', 'test-card', 'GEN2V2', 0, 0, X'0102', 1, 100)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 3, true, DatabaseMigrations.MIGRATION_2_3).use { db ->
+            db.query("SELECT cardNumber FROM card_activity_imports WHERE id = 'a1'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("test-card", cursor.getString(0))
+            }
+            db.query("SELECT count(*) FROM card_vehicle_imports").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+        }
+    }
 }
