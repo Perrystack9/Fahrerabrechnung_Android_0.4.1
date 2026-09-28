@@ -1,8 +1,8 @@
-> Historische Designreferenz. Bei Widersprüchen gelten die [aktuellen Produktregeln](../../CURRENT_RULES.md): kein Smartphone-GPS, keine Karten-/Routenansicht, sieben Einrichtungsschritte.
+> **Historische Onboarding-Spezifikation; App-GPS für Routen und acht Schritte sind überholt.** Maßgeblich sind [aktuelle Produktregeln](../../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
 # FahrerTagebuch – Onboarding-Spezifikation 0.4.1
 
-Diese Datei ist fachlich verbindlich. Die PNG-Datei unter `05_Onboarding/Referenzen/` dient nur als visuelle Referenz. Bei Widersprüchen gilt diese Markdown-Datei.
+Diese Datei war innerhalb des damaligen Designpakets maßgeblich. Die PNG-Datei unter `05_Onboarding/Referenzen/` dient nur als visuelle Referenz. Innerhalb des historischen Pakets hatte die Markdown-Datei Vorrang vor dem Bild; heute gelten die oben verlinkten aktuellen Quellen.
 
 ## Globale Gestaltung
 - Markenname: **FahrerTagebuch**
