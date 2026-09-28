@@ -1,3 +1,5 @@
+> **Historische Designreferenz; visuelle Vorgaben gelten nur, soweit sie den aktuellen Produktregeln nicht widersprechen.** Maßgeblich sind [aktuelle Produktregeln](../../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
+
 # FahrerTagebuch – Mini-Brand-Guideline
 
 ## 1. Marke
