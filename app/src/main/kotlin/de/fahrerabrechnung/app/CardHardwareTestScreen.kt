@@ -7,8 +7,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,13 +22,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.data.card.AndroidCcidTransport
 import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardActivityParser
+import de.fahrerabrechnung.data.card.CardDayTimeline
+import de.fahrerabrechnung.data.card.LocalCardDay
+import de.fahrerabrechnung.data.card.CardDaySegment
+import de.fahrerabrechnung.data.card.DriverActivity
 import de.fahrerabrechnung.data.card.ParseError
 import de.fahrerabrechnung.data.card.CardGeneration
 import de.fahrerabrechnung.data.card.DriverCardReader
@@ -32,6 +42,9 @@ import de.fahrerabrechnung.data.card.ReaderException
 import de.fahrerabrechnung.data.card.ReaderState
 import de.fahrerabrechnung.feature.common.ScreenContent
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /** Explicit PendingIntent target; Android's USB result needs a mutable PendingIntent. */
 class CardPermissionReceiver : BroadcastReceiver() {
@@ -57,6 +70,9 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
     var busy by remember { mutableStateOf(false) }
     var pendingFullRead by remember { mutableStateOf(false) }
     var activityStatus by remember { mutableStateOf<String?>(null) }
+    var localDays by remember { mutableStateOf<List<LocalCardDay>>(emptyList()) }
+    var selectedDay by remember { mutableStateOf(0) }
+    var displayZone by remember { mutableStateOf(ZoneId.systemDefault()) }
 
     fun inspect(fullRead: Boolean) {
         if (busy) return
@@ -67,6 +83,9 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     val result = DriverCardReader(transport).read()
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
+                        displayZone = ZoneId.systemDefault()
+                        localDays = CardDayTimeline.build(days, displayZone)
+                        selectedDay = localDays.lastIndex.coerceAtLeast(0)
                         "Aktivitätsdatei gelesen: ${it.dailyRecords.size} Bytes (${result.generation.label()}); ${days.size} Tagesdatensätze dekodiert."
                     } ?: "Aktivitätsdatei nicht gelesen: Kartentyp oder Dateistruktur nicht erkannt."
                     message = "Lesetest abgeschlossen."
@@ -75,11 +94,14 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     message = "Prüfung abgeschlossen."
                 }
             } catch (e: ParseError) {
+                localDays = emptyList()
                 activityStatus = "Rohdatei gelesen, Tagesdaten nicht dekodierbar (${e.field})."
             } catch (e: ReaderException) {
+                if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Fehlercode: ${e.failure.name}"
                 else message = "Diagnose fehlgeschlagen. Fehlercode: ${e.failure.name}"
             } catch (_: Exception) {
+                if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Lesetest fehlgeschlagen."
                 else message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
             } finally {
@@ -90,7 +112,10 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
 
     fun startCheck(fullRead: Boolean) {
         pendingFullRead = fullRead
-        if (fullRead) activityStatus = null else diagnostic = null
+        if (fullRead) {
+            activityStatus = null
+            localDays = emptyList()
+        } else diagnostic = null
         if (transport.devices().any { it.permission } || transport.devices().isEmpty()) inspect(fullRead)
         else {
             val intent = Intent(context, CardPermissionReceiver::class.java)
@@ -115,6 +140,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     transport.close()
                     diagnostic = null
                     activityStatus = null
+                    localDays = emptyList()
                     message = "Kartenleser entfernt."
                 }
             }
@@ -154,7 +180,58 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 result.failure?.let { Text("Fehlercode: ${it.name}") }
             }
         }
+        if (localDays.isNotEmpty()) {
+            val day = localDays[selectedDay.coerceIn(localDays.indices)]
+            SectionCard {
+                Text("Kartentag · Vorschau", style = MaterialTheme.typography.titleMedium)
+                Text("Ortszeit des Geräts (${displayZone.id}). Einträge ohne eingelegte Karte werden getrennt gekennzeichnet. Fehlende Kartentage bleiben offen; daraus folgt keine bestätigte Ruhe oder Heimkehr.",
+                    style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { selectedDay-- }, enabled = selectedDay > 0) {
+                        Text("‹")
+                    }
+                    OutlinedButton(onClick = { selectedDay++ }, enabled = selectedDay < localDays.lastIndex) {
+                        Text("›")
+                    }
+                }
+                Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
+                    style = MaterialTheme.typography.titleMedium)
+                day.segments.forEach { segment ->
+                    CardActivityRow(segment, displayZone)
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun CardActivityRow(segment: CardDaySegment, zone: ZoneId) {
+    val (label, color) = if (!segment.cardInserted) {
+        "○ Karte nicht eingelegt · Karteneintrag: ${segment.activity.label()}" to Color(0xFF59636E)
+    } else when (segment.activity) {
+        DriverActivity.DRIVING -> "▶ Lenken" to Color(0xFF145A94)
+        DriverActivity.WORK -> "◆ Andere Arbeit" to Color(0xFF875100)
+        DriverActivity.AVAILABILITY -> "◷ Bereitschaft" to Color(0xFF6843A1)
+        DriverActivity.REST -> "☾ Pause/Ruhe" to Color(0xFF16765A)
+    }
+    val formatter = DateTimeFormatter.ofPattern("HH:mm XXX")
+    val start = segment.start.atZone(zone).format(formatter)
+    val endTime = segment.end.atZone(zone)
+    val end = endTime.format(formatter) +
+        if (endTime.toLocalDate().isAfter(segment.start.atZone(zone).toLocalDate())) " (Folgetag)" else ""
+    val minutes = Duration.between(segment.start, segment.end).toMinutes()
+    Column {
+        Text(label, color = color, style = MaterialTheme.typography.titleSmall)
+        Text("$start – $end · ${minutes / 60} h ${(minutes % 60).toString().padStart(2, '0')} min",
+            style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun DriverActivity.label() = when (this) {
+    DriverActivity.DRIVING -> "Lenken"
+    DriverActivity.WORK -> "Andere Arbeit"
+    DriverActivity.AVAILABILITY -> "Bereitschaft"
+    DriverActivity.REST -> "Pause/Ruhe"
 }
 
 private fun ReaderState.label() = when (this) {
