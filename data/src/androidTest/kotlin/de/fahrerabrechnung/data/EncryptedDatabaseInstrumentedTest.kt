@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.fahrerabrechnung.data.db.AppDatabase
 import de.fahrerabrechnung.data.db.ProfileEntity
+import de.fahrerabrechnung.data.db.CardActivityImportEntity
 import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.io.File
 import java.security.SecureRandom
@@ -78,6 +79,28 @@ class EncryptedDatabaseInstrumentedTest {
             }
         } finally {
             wrongKeyDb.close()
+        }
+    }
+
+    @Test
+    fun activitySnapshotSurvivesEncryptedReopenAndDuplicateIsIgnored() = runBlocking {
+        val snapshot = CardActivityImportEntity(
+            id = "same-source", cardNumber = "test-card", generation = "GEN2V2",
+            oldestDayOffset = 0, newestDayOffset = 0,
+            dailyRecords = byteArrayOf(1, 2, 3), dayCount = 1, importedAtEpochMillis = 100L,
+        )
+        assertFalse(db.cardActivityImportDao().insert(snapshot) == -1L)
+        assertEquals(-1L, db.cardActivityImportDao().insert(snapshot))
+        db.close()
+
+        val reopened = EncryptedDatabaseFactory.create(context, correctPassphrase)
+        try {
+            val saved = reopened.cardActivityImportDao().latest()!!
+            assertEquals(snapshot.cardNumber, saved.cardNumber)
+            assertEquals(snapshot.dayCount, saved.dayCount)
+            assertEquals(snapshot.dailyRecords.toList(), saved.dailyRecords.toList())
+        } finally {
+            reopened.close()
         }
     }
 }

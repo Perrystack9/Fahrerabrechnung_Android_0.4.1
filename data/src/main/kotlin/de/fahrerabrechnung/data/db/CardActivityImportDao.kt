@@ -1,0 +1,15 @@
+package de.fahrerabrechnung.data.db
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+
+@Dao
+interface CardActivityImportDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(snapshot: CardActivityImportEntity): Long
+
+    @Query("SELECT * FROM card_activity_imports ORDER BY importedAtEpochMillis DESC, id DESC LIMIT 1")
+    suspend fun latest(): CardActivityImportEntity?
+}

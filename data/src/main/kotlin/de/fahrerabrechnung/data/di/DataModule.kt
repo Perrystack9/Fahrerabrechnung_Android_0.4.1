@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.fahrerabrechnung.data.db.AppDatabase
 import de.fahrerabrechnung.data.db.ProfileDao
+import de.fahrerabrechnung.data.db.CardActivityImportDao
 import de.fahrerabrechnung.data.security.DatabasePassphraseStore
 import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.time.Clock
@@ -27,4 +28,7 @@ object DataModule {
 
     @Provides
     fun provideProfileDao(database: AppDatabase): ProfileDao = database.profileDao()
+
+    @Provides
+    fun provideCardActivityImportDao(database: AppDatabase): CardActivityImportDao = database.cardActivityImportDao()
 }

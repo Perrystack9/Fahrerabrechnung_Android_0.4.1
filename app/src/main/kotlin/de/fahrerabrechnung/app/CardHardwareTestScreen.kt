@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,8 @@ import de.fahrerabrechnung.data.card.AndroidCcidTransport
 import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardActivityParser
+import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardReadResult
 import de.fahrerabrechnung.data.card.CardDayTimeline
 import de.fahrerabrechnung.data.card.LocalCardDay
 import de.fahrerabrechnung.data.card.CardDaySegment
@@ -59,9 +62,9 @@ class CardPermissionReceiver : BroadcastReceiver() {
     }
 }
 
-/** Explicit in-memory reader tests. Card identities and raw bytes are never displayed or stored. */
+/** Reader diagnostics and an explicit, locally encrypted activity-only partial import. */
 @Composable
-fun CardHardwareTestScreen(padding: PaddingValues) {
+fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
     val scope = rememberCoroutineScope()
@@ -73,6 +76,21 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
     var localDays by remember { mutableStateOf<List<LocalCardDay>>(emptyList()) }
     var selectedDay by remember { mutableStateOf(0) }
     var displayZone by remember { mutableStateOf(ZoneId.systemDefault()) }
+    var pendingRead by remember { mutableStateOf<CardReadResult?>(null) }
+    var savedStatus by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(imports) {
+        if (imports != null) try {
+            imports.latest()?.let { saved ->
+                displayZone = ZoneId.systemDefault()
+                localDays = CardDayTimeline.build(CardActivityParser.parse(saved.file), displayZone)
+                selectedDay = localDays.lastIndex.coerceAtLeast(0)
+                savedStatus = "Gespeicherter Aktivitäts-Teilimport: ${saved.dayCount} Tagesdatensätze (${saved.generation.label()})."
+            }
+        } catch (_: Exception) {
+            savedStatus = "Gespeicherte Aktivitätsdaten konnten nicht geöffnet werden."
+        }
+    }
 
     fun inspect(fullRead: Boolean) {
         if (busy) return
@@ -83,6 +101,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     val result = DriverCardReader(transport).read()
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
+                        pendingRead = if (result.card != null && days.isNotEmpty()) result else null
                         displayZone = ZoneId.systemDefault()
                         localDays = CardDayTimeline.build(days, displayZone)
                         selectedDay = localDays.lastIndex.coerceAtLeast(0)
@@ -94,13 +113,16 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     message = "Prüfung abgeschlossen."
                 }
             } catch (e: ParseError) {
+                pendingRead = null
                 localDays = emptyList()
                 activityStatus = "Rohdatei gelesen, Tagesdaten nicht dekodierbar (${e.field})."
             } catch (e: ReaderException) {
+                pendingRead = null
                 if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Fehlercode: ${e.failure.name}"
                 else message = "Diagnose fehlgeschlagen. Fehlercode: ${e.failure.name}"
             } catch (_: Exception) {
+                pendingRead = null
                 if (fullRead) localDays = emptyList()
                 if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Lesetest fehlgeschlagen."
                 else message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
@@ -113,6 +135,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
     fun startCheck(fullRead: Boolean) {
         pendingFullRead = fullRead
         if (fullRead) {
+            pendingRead = null
             activityStatus = null
             localDays = emptyList()
         } else diagnostic = null
@@ -140,6 +163,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                     transport.close()
                     diagnostic = null
                     activityStatus = null
+                    pendingRead = null
                     localDays = emptyList()
                     message = "Kartenleser entfernt."
                 }
@@ -158,7 +182,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest und dekodiert zusätzlich die Rohdatei im Arbeitsspeicher. Es wird noch kein Kartenimport gespeichert.",
+            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest und dekodiert die Aktivitätsdatei zunächst im Arbeitsspeicher. Nur mit deiner ausdrücklichen Auswahl wird diese Datei verschlüsselt lokal gespeichert. Weitere Kartendateien werden noch nicht importiert.",
                 style = MaterialTheme.typography.bodyMedium)
             Button(enabled = !busy, onClick = { startCheck(false) }) {
                 Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
@@ -166,7 +190,26 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
             Button(enabled = !busy, onClick = { startCheck(true) }) {
                 Text(if (busy) "Lesen läuft …" else "Aktivitätsdatei testen")
             }
+            if (pendingRead != null && imports != null) {
+                Button(enabled = !busy, onClick = {
+                    val read = pendingRead ?: return@Button
+                    busy = true
+                    scope.launch {
+                        try {
+                            val inserted = imports.save(read)
+                            savedStatus = if (inserted) "Aktivitäts-Teilimport verschlüsselt gespeichert."
+                                else "Diese Aktivitätsdatei ist bereits gespeichert."
+                            pendingRead = null
+                        } catch (_: Exception) {
+                            savedStatus = "Speichern fehlgeschlagen. Bitte erneut versuchen."
+                        } finally {
+                            busy = false
+                        }
+                    }
+                }) { Text("Aktivitätsdaten lokal speichern") }
+            }
             activityStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            savedStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Text(message, style = MaterialTheme.typography.bodyMedium)
             diagnostic?.let { result ->
                 Text("Reader: ${result.reader.label()}")

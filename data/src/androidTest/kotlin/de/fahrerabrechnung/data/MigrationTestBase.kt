@@ -4,7 +4,8 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import de.fahrerabrechnung.data.db.AppDatabase
-import org.junit.Ignore
+import de.fahrerabrechnung.data.db.DatabaseMigrations
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,6 +18,21 @@ class MigrationTestBase {
         AppDatabase::class.java,
     )
 
-    @Ignore("Schema version 1 is the baseline. Activate and add explicit MIGRATION_1_2 when schema v2 exists.")
-    @Test fun migration_1_2_placeholder() = Unit
+    @Test fun migration_1_2_keepsProfilesAndAddsActivitySnapshots() {
+        val name = "activity-migration-test"
+        helper.createDatabase(name, 1).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 2, true, DatabaseMigrations.MIGRATION_1_2).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("Fahrer", cursor.getString(0))
+            }
+            db.query("SELECT count(*) FROM card_activity_imports").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
+            }
+        }
+    }
 }

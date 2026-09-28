@@ -3,6 +3,7 @@ package de.fahrerabrechnung.data.security
 import android.content.Context
 import androidx.room.Room
 import de.fahrerabrechnung.data.db.AppDatabase
+import de.fahrerabrechnung.data.db.DatabaseMigrations
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 object EncryptedDatabaseFactory {
@@ -15,6 +16,7 @@ object EncryptedDatabaseFactory {
             AppDatabase.DATABASE_NAME,
         )
             .openHelperFactory(sqlCipherFactory)
+            .addMigrations(DatabaseMigrations.MIGRATION_1_2)
             .build()
     }
 }

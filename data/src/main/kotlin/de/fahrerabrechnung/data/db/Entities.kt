@@ -68,3 +68,16 @@ data class ImportSessionEntity(
     val createdAtEpochMillis: Long,
     val updatedAtEpochMillis: Long,
 )
+
+/** An explicitly saved, complete EF Driver_Activity_Data snapshot. No other card files are implied. */
+@Entity(tableName = "card_activity_imports", indices = [Index("importedAtEpochMillis")])
+data class CardActivityImportEntity(
+    @PrimaryKey val id: String,
+    val cardNumber: String,
+    val generation: String,
+    val oldestDayOffset: Int,
+    val newestDayOffset: Int,
+    val dailyRecords: ByteArray,
+    val dayCount: Int,
+    val importedAtEpochMillis: Long,
+)
