@@ -30,7 +30,9 @@ object CardVehiclesParser {
         return (1..file.recordCount).mapNotNull { step ->
             val index = (file.newestRecordIndex + step) % file.recordCount
             val bytes = file.records.copyOfRange(index * width, (index + 1) * width)
-            if (bytes.all { it == 0.toByte() }) return@mapNotNull null
+            // Unused slots can have non-zero filler in text/identification fields.
+            // The odometers and both use times are initialised to zero on the card.
+            if (bytes.take(14).all { it == 0.toByte() }) return@mapNotNull null
             val r = BinaryReader(bytes)
             fun u24(field: String) = (r.u8(field) shl 16) or (r.u8(field) shl 8) or r.u8(field)
             val beginKm = u24("vehicleOdometerBegin")
