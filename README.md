@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #11, mit Fahrzeughistorien-Vorschau in PR #12.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #12, mit Suche und nachladbaren Nutzungen in PR #13.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **explizit speicherbaren Aktivitäts- und Fahrzeug-Teilimporten**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
@@ -15,6 +15,7 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 - PR #10: `EF Vehicles_Used` wird vollständig gelesen und in Gen1-/Gen2-Fahrzeugnutzungen dekodiert. Ein eigener Knopf speichert einen verschlüsselten, dublettenfreien Fahrzeug-Snapshot; die Quellvorschau zeigt Kennzeichen, Zeitpunkte und Kilometerstände. Migration 2 → 3. Der Gerätetest bestätigte 69 gespeicherte Nutzungen nach Wiederöffnung ohne Karte.
 - PR #11: Passende Aktivitäts- und Fahrzeug-Snapshots derselben Fahrerkarte erscheinen gemeinsam im Kartentag als belegte Zeitfenster und Nutzungsbeginne. Ein offenes Ende bleibt ein Zeitpunkt.
 - PR #12: Eine eigene Fahrzeughistorien-Vorschau zeigt alle ausdrücklich gespeicherten Fahrzeug-Snapshots gruppiert nach gültiger VIN, sonst nach Staat/Kennzeichen. Wiederholte Nutzungen werden zusammengeführt; Einzelbelege mit Tacho-Quellwerten bleiben sichtbar.
+- PR #13: Die Fahrzeughistorie lässt sich nach Kennzeichen oder VIN durchsuchen; weitere Nutzungen werden in Zehnerschritten angezeigt.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
 **Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst die jeweiligen zusätzlichen Knöpfe speichern Aktivitäts- oder Fahrzeugdatei lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
