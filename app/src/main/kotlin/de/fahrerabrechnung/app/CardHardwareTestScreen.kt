@@ -331,6 +331,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
                 CardTimelinePreview(day, displayZone, dayVehicles)
+                CardDaySourceTimes(day, displayZone)
                 if (vehicleUses.isNotEmpty() && activityCardNumber != vehicleCardNumber)
                     Text("Fahrzeugdaten stammen aus einem anderen Karten-Snapshot und werden hier nicht zugeordnet.",
                         style = MaterialTheme.typography.bodySmall)
@@ -345,6 +346,34 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
     }
 }
+
+/** Durations of recorded source intervals, without payroll or rest-day inference. */
+@Composable
+private fun CardDaySourceTimes(day: LocalCardDay, zone: ZoneId) {
+    val dayMinutes = Duration.between(
+        day.date.atStartOfDay(zone), day.date.plusDays(1).atStartOfDay(zone)
+    ).toMinutes()
+    fun minutes(segments: List<CardDaySegment>) = segments.sumOf {
+        Duration.between(it.start, it.end).toMinutes()
+    }
+    val inserted = day.segments.filter { it.cardInserted }
+    val withoutCard = minutes(day.segments.filterNot { it.cardInserted })
+    val unrecorded = (dayMinutes - minutes(day.segments)).coerceAtLeast(0)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Quellzeiten am Kartentag", style = MaterialTheme.typography.titleSmall)
+        Text("Dauer der belegten Kartenabschnitte in Ortszeit; keine berechnete Arbeitszeit, Ruhezeit oder Abrechnung.",
+            style = MaterialTheme.typography.bodySmall)
+        listOf(DriverActivity.DRIVING, DriverActivity.WORK,
+            DriverActivity.AVAILABILITY, DriverActivity.REST).forEach { activity ->
+            Text("${activity.label()} (Karte eingelegt): ${formatSourceMinutes(minutes(inserted.filter { it.activity == activity }))}")
+        }
+        Text("Karte nicht eingelegt (Karteneinträge): ${formatSourceMinutes(withoutCard)}")
+        Text("Ohne belegten Kartenabschnitt: ${formatSourceMinutes(unrecorded)}")
+    }
+}
+
+private fun formatSourceMinutes(minutes: Long): String =
+    "${minutes / 60} h ${(minutes % 60).toString().padStart(2, '0')} min"
 
 @Composable
 private fun CardActivityRow(segment: CardDaySegment, zone: ZoneId) {

@@ -1,6 +1,6 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main` nach PR #12, mit Suche und nachladbaren Nutzungen in PR #13.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main` nach PR #13, mit Quellzeiten-Vorschau in PR #14.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 ## Nachweislich umgesetzt
 
@@ -17,6 +17,7 @@
 | Fahrzeug im Kartentag | PR #11 zeigt belegte Fahrzeug-Zeitfenster und den tatsächlichen Nutzungsbeginn über der Aktivitäts-Zeitleiste, sofern die Snapshots zur selben Karte gehören. Offene Enden werden nicht fortgeschrieben; Fahrzeug zur Zeitmarke nur bei genau einem passenden Intervall. Noch keine Fahrzeughistorie. |
 | Fahrzeughistorien-Vorschau | PR #12 gruppiert alle gespeicherten Fahrzeug-Snapshots nach gültiger VIN oder Staat/Kennzeichen, entfernt wiederholte Nutzungen und zeigt erste/letzte Belegzeit sowie einzelne Karten- und Tacho-Quellwerte. Keine berechneten Gesamtkilometer, Arbeitstage oder fahrzeugbezogene Arbeitszeiten. |
 | Fahrzeughistorie bedienen | PR #13 ergänzt die Suche nach Kennzeichen/VIN und zeigt die Nutzungen in nachladbaren Zehnerschritten. Die Quellwerte werden nicht neu berechnet. |
+| Quellzeiten am Kartentag | PR #14 summiert die belegten Abschnitte nach Tätigkeit bei eingelegter Karte und zeigt Karteneinträge ohne Karte sowie unbelegte Zeit separat. Keine fachliche Arbeits-, Ruhe- oder Abrechnungsberechnung. |
 | Technische Basis | Fünf Haupttabs, Room/SQLCipher-/Keystore-Basis, DataStore, Debug-/Internal-Builds und CI vorhanden. |
 
 Die echte Kartenprobe mit USB-CCID, APDU, Kartenerkennung, vollständiger Aktivitätsdatei und Vorschau **hat bereits stattgefunden**. Der früher hier angekündigte „nächste Hardwaretest“ ist erledigt. Die Probe belegt den getesteten Leser und die getestete Gen2V2-Karte, nicht jede Karten-/Leserkombination.
