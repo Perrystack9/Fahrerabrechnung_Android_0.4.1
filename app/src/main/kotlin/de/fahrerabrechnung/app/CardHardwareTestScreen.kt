@@ -196,7 +196,12 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 }
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
-                day.segments.forEach { segment ->
+                CardTimelinePreview(day, displayZone)
+                var showList by remember(day.date) { mutableStateOf(false) }
+                OutlinedButton(onClick = { showList = !showList }) {
+                    Text(if (showList) "Abschnittsliste ausblenden" else "Abschnittsliste anzeigen")
+                }
+                if (showList) day.segments.forEach { segment ->
                     CardActivityRow(segment, displayZone)
                 }
             }
