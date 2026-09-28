@@ -94,10 +94,13 @@ fun OnboardingScreen(
                         Note("Vorname und Nachname werden später aus deiner Fahrerkarte übernommen.")
                     }
                     1 -> {
+                        HomePointPicker(draft.homeLatitude, draft.homeLongitude) { lat, lon ->
+                            onDraftChange(draft.copy(homeLatitude = lat.toString(), homeLongitude = lon.toString()))
+                        }
                         Note("Deine Daten werden lokal auf deinem Gerät verarbeitet.")
                         SectionCard(title = "Zuhause festlegen") {
                             Entry("Adresse", draft.address, { onDraftChange(draft.copy(address = it)) })
-                            Text("Setze den Heimatpunkt einmalig. Die Adresse kann als eigene Notiz dienen.",
+                            Text("Die Adresse ist eine optionale Notiz. Für den Heimatbereich zählt der Punkt, den du oben festlegst.",
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Surface(shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -105,9 +108,6 @@ fun OnboardingScreen(
                                 }
                                 Column { Text("Heimbereich: 500 Meter", style = MaterialTheme.typography.titleSmall); Text("Fest vorgegeben", style = MaterialTheme.typography.bodySmall) }
                             }
-                        }
-                        HomePointPicker(draft.homeLatitude, draft.homeLongitude) { lat, lon ->
-                            onDraftChange(draft.copy(homeLatitude = lat.toString(), homeLongitude = lon.toString()))
                         }
                     }
                     2 -> {
