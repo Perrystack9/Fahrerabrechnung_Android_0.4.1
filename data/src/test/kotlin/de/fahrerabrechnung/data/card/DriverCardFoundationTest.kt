@@ -137,11 +137,36 @@ class DriverCardFoundationTest {
             val result = DriverCardReader(fake).read()
             assertEquals(CardRecognition.DRIVER, result.recognition)
             assertEquals(expected, result.card!!.generation)
+            assertEquals(16, result.activity!!.dailyRecords.size)
+            assertEquals(4, result.activity!!.newestDayOffset)
             assertTrue(fake.closed)
         }
         val unknown = DriverCardReader(CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())).read()
         assertEquals(CardRecognition.UNKNOWN_CARD, unknown.recognition)
         assertNull(unknown.card)
+    }
+
+    @Test fun activityLengthAndRingPointersAreValidated() {
+        val app = ByteArray(15).also { it[5] = 0; it[6] = 16 }
+        assertEquals(16, DriverCardDecoder.activityLength(app, CardGeneration.GEN2V2))
+        val ring = ByteArray(20).also { it[2] = 0; it[3] = 4 }
+        assertEquals(4, DriverCardDecoder.activity(ring, 16).newestDayOffset)
+        ring[3] = 16
+        assertEquals("Driver_Activity_Data",
+            failure { DriverCardDecoder.activity(ring, 16) }.field)
+        assertEquals("Driver_Activity_Data",
+            failure { DriverCardDecoder.activity(ring.copyOf(19), 16) }.field)
+        app[5] = 0x7F
+        app[6] = 0xFD.toByte()
+        assertEquals("activityStructureLength",
+            failure { DriverCardDecoder.activityLength(app, CardGeneration.GEN2) }.field)
+    }
+
+    @Test fun truncatedActivityDoesNotReturnPartialCard() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), truncateActivity = true)
+        try { DriverCardReader(fake).read(); fail("Expected truncated activity failure") }
+        catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
+        assertTrue(fake.closed)
     }
 
     @Test fun readerErrorsCloseSessionWithoutReturningPartialIdentity() = runBlocking {
@@ -192,7 +217,9 @@ class DriverCardFoundationTest {
         companion object { fun bytesStatic(vararg n: Int) = n.map(Int::toByte).toByteArray() }
     }
 
-    private class CardFixtureTransport(private val generation: CardGeneration, private val identification: ByteArray) : CardReaderTransport {
+    private class CardFixtureTransport(private val generation: CardGeneration,
+                                       private val identification: ByteArray,
+                                       private val truncateActivity: Boolean = false) : CardReaderTransport {
         var closed = false
         private var selected = false
         private var file = 0
@@ -216,12 +243,18 @@ class DriverCardFoundationTest {
                 return byteArrayOf(0x90.toByte(), 0)
             }
             if (ins == 0xB0 && selected) {
-                val data = if (file == DriverCardFiles.IDENTIFICATION) identification else
-                    if (file == DriverCardFiles.APPLICATION_V2) ByteArray(10) else
-                    ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
+                val data = when (file) {
+                    DriverCardFiles.IDENTIFICATION -> identification
+                    DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
+                    DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
+                        it[3] = 4 // newest day starts at byte 4 of the ring
+                    }
+                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
+                        it[6] = 16 // 16-byte activity ring
                     }
+                }
                 val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)
                 val length = (apdu[4].toInt() and 255).let { if (it == 0) 256 else it }
                 return data.copyOfRange(offset, minOf(offset + length, data.size)) + byteArrayOf(0x90.toByte(), 0)

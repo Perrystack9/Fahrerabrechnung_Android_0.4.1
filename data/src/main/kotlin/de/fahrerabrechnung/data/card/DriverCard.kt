@@ -17,8 +17,12 @@ data class DriverIdentity(val surname: String, val givenNames: String, val birth
 data class CardIdentity(val number: String, val issuingState: Int, val issuingAuthority: String,
                         val issued: Instant, val validFrom: Instant, val expires: Instant)
 data class DriverCard(val generation: CardGeneration, val card: CardIdentity, val holder: DriverIdentity)
+/** The activity ring is raw card data; day records are decoded in a later stage. */
+class CardActivityFile(val oldestDayOffset: Int, val newestDayOffset: Int, bytes: ByteArray) {
+    val dailyRecords: ByteArray = bytes.copyOf()
+}
 data class CardReadResult(val recognition: CardRecognition, val generation: CardGeneration,
-                          val card: DriverCard? = null)
+                          val card: DriverCard? = null, val activity: CardActivityFile? = null)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -30,6 +34,7 @@ object DriverCardFiles {
     const val MF = 0x3F00
     const val APPLICATION = 0x0501
     const val IDENTIFICATION = 0x0520
+    const val DRIVER_ACTIVITY = 0x0504
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -57,6 +62,29 @@ object DriverCardDecoder {
             return CardRecognition.DRIVER to CardGeneration.GEN1
         }
         return CardRecognition.UNKNOWN_CARD to CardGeneration.UNKNOWN
+    }
+
+    /** Appendix 2: activityStructureLength is the two-byte field after card type,
+     * structure version, event count and fault count in EF Application_Identification. */
+    fun activityLength(application: ByteArray, generation: CardGeneration): Int {
+        val expected = if (generation == CardGeneration.GEN1) 10 else 15
+        if (generation !in setOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2) ||
+            application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        val length = (application[5].toInt() and 255) shl 8 or (application[6].toInt() and 255)
+        // READ BINARY uses a 15-bit offset; do not silently truncate larger card files.
+        if (length !in 12..32764) throw ParseError(5, "activityStructureLength", "unsupported length")
+        return length
+    }
+
+    /** EF Driver_Activity_Data has two two-byte offsets into its cyclic data area. */
+    fun activity(bytes: ByteArray, expectedRingLength: Int): CardActivityFile {
+        if (bytes.size != expectedRingLength + 4) throw ParseError(0, "Driver_Activity_Data", "invalid length")
+        val r = BinaryReader(bytes)
+        val oldest = r.u16be("activityPointerOldestDayRecord")
+        val newest = r.u16be("activityPointerNewestRecord")
+        if (oldest >= expectedRingLength || newest >= expectedRingLength)
+            throw ParseError(0, "Driver_Activity_Data", "pointer outside activity ring")
+        return CardActivityFile(oldest, newest, r.slice(expectedRingLength, "activityDailyRecords"))
     }
 
     /** EF Identification: 65-byte CardIdentification followed by 78-byte holder record. */
@@ -95,7 +123,7 @@ object DriverCardDecoder {
     }
 }
 
-/** No storage side effects: only a fully read and validated card is returned. */
+/** No storage side effects: identity and complete raw activity file are returned together. */
 class DriverCardReader(private val transport: CardReaderTransport) {
     suspend fun read(): CardReadResult {
         try {
@@ -113,9 +141,13 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
             if (generation == CardGeneration.GEN2V2) readFile(session, DriverCardFiles.APPLICATION_V2, 10)
-            val identity = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
             return try {
-                CardReadResult(recognized, generation, DriverCardDecoder.identity(identity, generation))
+                val application = g2 ?: g1!!
+                val activityLength = DriverCardDecoder.activityLength(application, generation)
+                val identity = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
+                val activity = readFile(session, DriverCardFiles.DRIVER_ACTIVITY, activityLength + 4)
+                CardReadResult(recognized, generation, DriverCardDecoder.identity(identity, generation),
+                    DriverCardDecoder.activity(activity, activityLength))
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }
@@ -134,13 +166,16 @@ class DriverCardReader(private val transport: CardReaderTransport) {
 
     private suspend fun readFile(session: ApduSession, id: Int, length: Int): ByteArray {
         if (!session.send(CardCommands.selectFile(id)).success) throw ReaderException(ReaderFailure.IO)
-        val data = ArrayList<Byte>()
-        while (data.size < length) {
-            val response = session.send(CardCommands.readBinary(data.size, minOf(256, length - data.size)))
-            if (!response.success || response.data.isEmpty() || response.data.size > length - data.size)
+        if (length !in 1..32768) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+        val data = ByteArray(length)
+        var offset = 0
+        while (offset < length) {
+            val response = session.send(CardCommands.readBinary(offset, minOf(256, length - offset)))
+            if (!response.success || response.data.isEmpty() || response.data.size > length - offset)
                 throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
-            data.addAll(response.data.toList())
+            response.data.copyInto(data, offset)
+            offset += response.data.size
         }
-        return data.toByteArray()
+        return data
     }
 }
