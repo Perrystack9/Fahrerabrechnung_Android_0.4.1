@@ -16,6 +16,23 @@
 - Geplant sind belastbare Marker für Fahrzeugwechsel, echte GNSS-Punkte, Grenzübertritt, Ereignis/Störung, Fähre/Zug, Out of Scope und Kartenstatus; dazu Fahrzeugbezug und kompakte Tageskennzahlen. Nur aus Quelldaten belegte Merkmale anzeigen. Die Kartentag-Zeitleiste bildet Aktivitätsdaten als Vorschau ab und zeigt in PR #11 passende Fahrzeugnutzungen als Quell-Zeitfenster und Startpunkte, ohne offene Enden fortzuschreiben. PR #12 zeigt zusätzlich eine read-only Fahrzeughistorien-Vorschau aus gespeicherten Snapshots; dauerhafte Fahrzeugzuordnung, Arbeitstage und Kilometeraggregation folgen später.
 - Technische Ereignisse nicht automatisch als Verstoß oder Fahrerverschulden darstellen. Kontrollen gehören in Fahrerkarte → Details → Kontrollen; sensible Nummern dort standardmäßig maskieren.
 
+## Fahrzeugdarstellung und visuelle Zuordnung
+
+- Fahrzeugdaten sollen später in **Tagesübersicht**, **Monatsübersicht** und **Fahrzeughistorie** kompakt und visuell verständlich dargestellt werden.
+- Wenn aus belastbaren Quelldaten bzw. einer verlässlichen Fahrzeugzuordnung verfügbar, anzeigen:
+  - **Marke**
+  - **Modell**
+  - **Antriebsart**
+  - **Baureihe**
+- Für ein **eindeutig zugeordnetes Modell** soll ein kleines, passendes LKW-Modellbild verwendet werden. Produktionsassets dafür **nicht KI-generiert** verwenden, sondern aus einer kuratierten, rechtlich nutzbaren Bildquelle übernehmen und für die App optimieren.
+- Keine beliebigen Bilder zur Laufzeit aus Suchmaschinen laden oder hotlinken. Bevorzugt werden lokal mitgelieferte oder kontrolliert gecachte/verwaltete, optimierte Assets.
+- Wenn der **Hersteller sicher erkannt**, das konkrete Modell aber nicht zuverlässig zugeordnet werden kann, **Herstellerlogo als Fallback** anzeigen.
+- Wenn auch der Hersteller nicht zuverlässig erkannt werden kann, ein **neutrales LKW-Standardsymbol** anzeigen.
+- Ein konkretes Modellbild darf **niemals nur geraten** werden. Unklare VIN-/Baureihen-Zuordnungen bleiben allgemein; die visuelle Darstellung darf keine höhere Sicherheit suggerieren als die Datenquelle hergibt.
+- Bei Elektro-LKW zusätzlich ein kleines, klar erkennbares **Elektro-/Blitz-Badge** am Fahrzeugbild bzw. an der Fahrzeugkarte anzeigen. Weitere Antriebs-Badges (z. B. LNG/CNG/H₂) können später ergänzt werden, wenn die Antriebsart belastbar bestimmt ist.
+- Modellbilder und Herstellerlogos sollen optisch einheitlich aufbereitet sein: bevorzugt freigestellt bzw. mit ruhigem Hintergrund, konsistenter Blickwinkel/Größe und ohne dekorative Effekte, die nicht zum FahrerTagebuch-Design passen.
+- Rechte/Lizenzen der verwendeten Bilder und Logos müssen vor produktiver Auslieferung geklärt sein.
+
 ## Reise, Heimkehr und Spesen
 
 - **Karte ziehen allein ist niemals Heimkehr.** Heimkehr erst bei belastbar erkanntem Heimatstandort und anschließenden mindestens **8:59 h zusammenhängender, belegter Pause/Ruhe**. Heimkehrzeit rückwirkend auf den Beginn dieser Phase setzen. Karte darf dabei eingesteckt oder entnommen sein; fehlende Zeit nach Entnahme ist keine automatisch belegte Ruhe. 8:59 h ist eine Produkt-/Toleranzschwelle, keine Aussage über gesetzliche Ruhezeiten.
