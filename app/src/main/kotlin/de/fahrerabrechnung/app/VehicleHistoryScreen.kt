@@ -25,10 +25,12 @@ import java.time.format.DateTimeFormatter
 /** Read-only history from explicitly saved card snapshots. */
 @Composable
 internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?,
-                                  initialQuery: String = "") {
+                                  initialQuery: String = "", selectedUseStart: Long? = null,
+                                  selectedNation: Int? = null) {
     var history by remember { mutableStateOf<List<CardVehicleHistoryEntry>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Fahrzeugdaten …") }
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
+    var selectedStart by remember(selectedUseStart) { mutableStateOf(selectedUseStart) }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
     LaunchedEffect(imports) {
@@ -48,7 +50,7 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
         Text(status, style = MaterialTheme.typography.bodyMedium)
         if (history.isNotEmpty()) OutlinedTextField(
             value = query,
-            onValueChange = { query = it },
+            onValueChange = { query = it; selectedStart = null },
             label = { Text("Kennzeichen oder VIN suchen") },
             singleLine = true
         )
@@ -56,6 +58,24 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
             val search = query.trim()
             search.isEmpty() || vehicle.registrationNumber.contains(search, ignoreCase = true) ||
                 vehicle.vin?.contains(search, ignoreCase = true) == true
+        }
+        if (selectedStart != null && history.isNotEmpty()) {
+            val selectedUse = filtered.asSequence().flatMap { it.uses.asSequence() }
+                .firstOrNull { it.firstUseUtc.epochSecond == selectedStart &&
+                    it.registrationNation == selectedNation &&
+                    (it.registrationNumber.equals(initialQuery, ignoreCase = true) ||
+                        it.vin?.equals(initialQuery, ignoreCase = true) == true) }
+            if (selectedUse != null) SectionCard {
+                Text("Ausgewählte Kartennutzung", style = MaterialTheme.typography.titleMedium)
+                Text("${selectedUse.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${selectedUse.registrationNation}")
+                val first = selectedUse.firstUseUtc.atZone(zone).format(formatter)
+                val last = selectedUse.lastUseUtc?.atZone(zone)?.format(formatter) ?: "Ende offen"
+                Text("$first – $last")
+                Text("Tacho ${selectedUse.odometerBeginKm} → ${selectedUse.odometerEndKm?.toString() ?: "offen"} km")
+                Text("Quellwerte der Fahrerkarte; keine berechnete Strecke.",
+                    style = MaterialTheme.typography.bodySmall)
+            } else Text("Die ausgewählte Nutzung ist in dieser gespeicherten Historie nicht vorhanden.",
+                style = MaterialTheme.typography.bodySmall)
         }
         if (history.isNotEmpty() && filtered.isEmpty())
             Text("Kein Fahrzeug für diese Suche.", style = MaterialTheme.typography.bodyMedium)

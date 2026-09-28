@@ -70,7 +70,7 @@ class CardPermissionReceiver : BroadcastReceiver() {
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
                            vehicleImports: CardVehicleImportRepository? = null,
-                           onOpenVehicleHistory: (String?) -> Unit = {}) {
+                           onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
     val scope = rememberCoroutineScope()
@@ -300,7 +300,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
         if (vehicleUses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen · Vorschau", style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = { onOpenVehicleHistory(null) }) { Text("Fahrzeughistorie öffnen") }
+            OutlinedButton(onClick = { onOpenVehicleHistory(null, null, null) }) { Text("Fahrzeughistorie öffnen") }
             Text("Quelle: Fahrerkarte. Zeitpunkte in Ortszeit des Geräts; Kilometerstände sind Quellwerte, keine berechnete Tagesstrecke.")
             val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             vehicleUses.takeLast(5).asReversed().forEach { use ->

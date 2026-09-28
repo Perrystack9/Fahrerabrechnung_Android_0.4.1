@@ -84,6 +84,8 @@ fun AppRoot(
     var draft by rememberSaveable(stateSaver = OnboardingDraft.Saver) { mutableStateOf(OnboardingDraft()) }
     var settingsTitle by rememberSaveable { mutableStateOf("Einstellung") }
     var vehicleHistoryQuery by rememberSaveable { mutableStateOf("") }
+    var vehicleHistoryUseStart by rememberSaveable { mutableStateOf<Long?>(null) }
+    var vehicleHistoryNation by rememberSaveable { mutableStateOf<Int?>(null) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
@@ -215,14 +217,17 @@ fun AppRoot(
             composable(DetailRoutes.CARD_IMPORT) {
                 if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
-                    onOpenVehicleHistory = { query ->
+                    onOpenVehicleHistory = { query, useStart, nation ->
                         vehicleHistoryQuery = query.orEmpty()
+                        vehicleHistoryUseStart = useStart
+                        vehicleHistoryNation = nation
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     })
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
-                    VehicleHistoryScreen(padding, cardVehicleImports, vehicleHistoryQuery)
+                    VehicleHistoryScreen(padding, cardVehicleImports, vehicleHistoryQuery,
+                        vehicleHistoryUseStart, vehicleHistoryNation)
             }
             composable(DetailRoutes.SETTINGS_SUBPAGE) {
                 if (visibleRoute.value == DetailRoutes.SETTINGS_SUBPAGE) SettingsSubpagePlaceholderScreen(padding, settingsTitle)
