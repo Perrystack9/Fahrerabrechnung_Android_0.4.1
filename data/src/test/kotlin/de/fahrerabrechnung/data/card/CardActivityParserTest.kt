@@ -64,7 +64,7 @@ class CardActivityParserTest {
         val badLength = bytes.copyOf().also { it[43] = 0 }
         assertEquals("activityRecordLength",
             failure { CardActivityParser.parse(CardActivityFile(40, 54, badLength)) }.field)
-        assertEquals("activityDailyRecords",
+        assertEquals("activityRecordLength",
             failure { CardActivityParser.parse(CardActivityFile(40, 41, bytes)) }.field)
     }
 
