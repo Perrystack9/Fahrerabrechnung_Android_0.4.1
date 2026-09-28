@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Stand auf `main`: 28.09.2026, Commit `0f6da793`.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main`-Commit `0f6da793` (PR #7).** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit einem **echten, aber noch nicht persistenten Fahrerkarte-Lesetest**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
