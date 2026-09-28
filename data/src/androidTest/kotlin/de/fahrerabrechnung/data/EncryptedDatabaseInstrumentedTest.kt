@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.fahrerabrechnung.data.db.AppDatabase
 import de.fahrerabrechnung.data.db.ProfileEntity
 import de.fahrerabrechnung.data.db.CardActivityImportEntity
+import de.fahrerabrechnung.data.db.CardVehicleImportEntity
 import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.io.File
 import java.security.SecureRandom
@@ -99,6 +100,28 @@ class EncryptedDatabaseInstrumentedTest {
             assertEquals(snapshot.cardNumber, saved.cardNumber)
             assertEquals(snapshot.dayCount, saved.dayCount)
             assertEquals(snapshot.dailyRecords.toList(), saved.dailyRecords.toList())
+        } finally {
+            reopened.close()
+        }
+    }
+
+    @Test
+    fun vehicleSnapshotSurvivesEncryptedReopenAndDuplicateIsIgnored() = runBlocking {
+        val snapshot = CardVehicleImportEntity(
+            id = "same-vehicle-source", cardNumber = "test-card", generation = "GEN2V2",
+            newestRecordIndex = 0, recordCount = 1,
+            records = byteArrayOf(4, 5, 6), useCount = 1, importedAtEpochMillis = 200L,
+        )
+        assertFalse(db.cardVehicleImportDao().insert(snapshot) == -1L)
+        assertEquals(-1L, db.cardVehicleImportDao().insert(snapshot))
+        db.close()
+
+        val reopened = EncryptedDatabaseFactory.create(context, correctPassphrase)
+        try {
+            val saved = reopened.cardVehicleImportDao().latest()!!
+            assertEquals(snapshot.cardNumber, saved.cardNumber)
+            assertEquals(snapshot.useCount, saved.useCount)
+            assertEquals(snapshot.records.toList(), saved.records.toList())
         } finally {
             reopened.close()
         }
