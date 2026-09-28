@@ -41,7 +41,8 @@ import kotlin.math.roundToLong
 /** Read-only preview; missing source intervals remain visibly blank. */
 @Composable
 internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
-                                 vehicles: List<CardDayVehicle> = emptyList()) {
+                                 vehicles: List<CardDayVehicle> = emptyList(),
+                                 onOpenVehicleHistory: (String?) -> Unit = {}) {
     val start = day.date.atStartOfDay(zone).toInstant()
     val end = day.date.plusDays(1).atStartOfDay(zone).toInstant()
     val totalMillis = Duration.between(start, end).toMillis()
@@ -151,8 +152,16 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
             val point = start.plusMillis((cursor * totalMillis).roundToLong()
                 .coerceIn(0L, totalMillis - 1))
             val use = CardDayVehicles.at(point, vehicles)
-            Text(if (use != null) "Fahrzeug zur Zeitmarke: ${use.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${use.registrationNation}"
-                else "Fahrzeug zur Zeitmarke nicht eindeutig belegt.",
+            if (use != null) {
+                Text("Fahrzeug zur Zeitmarke: ${use.registrationNumber.ifBlank { "Kennzeichen unbekannt" }} · Staat ${use.registrationNation}",
+                    style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = {
+                    val validVin = use.vin?.trim()?.takeIf {
+                        it.matches(Regex("[A-HJ-NPR-Za-hj-npr-z0-9]{17}"))
+                    }
+                    onOpenVehicleHistory(validVin ?: use.registrationNumber)
+                }) { Text("Dieses Fahrzeug in der Historie öffnen") }
+            } else Text("Fahrzeug zur Zeitmarke nicht eindeutig belegt.",
                 style = MaterialTheme.typography.bodySmall)
             vehicles.filter { it.beginsHere }.forEach { vehicle ->
                 Text("▲ ${vehicle.start.atZone(zone).format(DateTimeFormatter.ofPattern("HH:mm XXX"))} · " +

@@ -70,7 +70,7 @@ class CardPermissionReceiver : BroadcastReceiver() {
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
                            vehicleImports: CardVehicleImportRepository? = null,
-                           onOpenVehicleHistory: () -> Unit = {}) {
+                           onOpenVehicleHistory: (String?) -> Unit = {}) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
     val scope = rememberCoroutineScope()
@@ -300,7 +300,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
         if (vehicleUses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen · Vorschau", style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = onOpenVehicleHistory) { Text("Fahrzeughistorie öffnen") }
+            OutlinedButton(onClick = { onOpenVehicleHistory(null) }) { Text("Fahrzeughistorie öffnen") }
             Text("Quelle: Fahrerkarte. Zeitpunkte in Ortszeit des Geräts; Kilometerstände sind Quellwerte, keine berechnete Tagesstrecke.")
             val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             vehicleUses.takeLast(5).asReversed().forEach { use ->
@@ -330,7 +330,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 }
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
-                CardTimelinePreview(day, displayZone, dayVehicles)
+                CardTimelinePreview(day, displayZone, dayVehicles, onOpenVehicleHistory)
                 CardDaySourceTimes(day, displayZone)
                 if (vehicleUses.isNotEmpty() && activityCardNumber != vehicleCardNumber)
                     Text("Fahrzeugdaten stammen aus einem anderen Karten-Snapshot und werden hier nicht zugeordnet.",
