@@ -21,8 +21,13 @@ data class DriverCard(val generation: CardGeneration, val card: CardIdentity, va
 class CardActivityFile(val oldestDayOffset: Int, val newestDayOffset: Int, bytes: ByteArray) {
     val dailyRecords: ByteArray = bytes.copyOf()
 }
+class CardVehiclesFile(val newestRecordIndex: Int, val recordCount: Int,
+                       val generation: CardGeneration, bytes: ByteArray) {
+    val records: ByteArray = bytes.copyOf()
+}
 data class CardReadResult(val recognition: CardRecognition, val generation: CardGeneration,
-                          val card: DriverCard? = null, val activity: CardActivityFile? = null)
+                          val card: DriverCard? = null, val activity: CardActivityFile? = null,
+                          val vehicles: CardVehiclesFile? = null, val vehicleReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -35,6 +40,7 @@ object DriverCardFiles {
     const val APPLICATION = 0x0501
     const val IDENTIFICATION = 0x0520
     const val DRIVER_ACTIVITY = 0x0504
+    const val VEHICLES_USED = 0x0505
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -74,6 +80,30 @@ object DriverCardDecoder {
         // READ BINARY uses a 15-bit offset; do not silently truncate larger card files.
         if (length !in 12..32764) throw ParseError(5, "activityStructureLength", "unsupported length")
         return length
+    }
+
+    /** Appendix 2: two-byte NoOfCardVehicleRecords at offsets 7..8. */
+    fun vehicleCount(application: ByteArray, generation: CardGeneration): Int {
+        val expected = if (generation == CardGeneration.GEN1) 10 else 15
+        if (generation !in setOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2) ||
+            application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        val count = (application[7].toInt() and 255) shl 8 or (application[8].toInt() and 255)
+        val width = if (generation == CardGeneration.GEN1) 31 else 48
+        if (count !in 1..200 || count * width + 2 > 32768)
+            throw ParseError(7, "noOfCardVehicleRecords", "unsupported count")
+        return count
+    }
+
+    fun vehicles(bytes: ByteArray, count: Int, generation: CardGeneration): CardVehiclesFile {
+        val width = if (generation == CardGeneration.GEN1) 31 else 48
+        if (generation !in setOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2) ||
+            count !in 1..200 || bytes.size != count * width + 2)
+            throw ParseError(0, "Vehicles_Used", "invalid length")
+        val r = BinaryReader(bytes)
+        val newest = r.u16be("vehiclePointerNewestRecord")
+        if (newest !in 0 until count) throw ParseError(0, "Vehicles_Used", "pointer outside record ring")
+        return CardVehiclesFile(newest, count, generation,
+            r.slice(count * width, "cardVehicleRecords"))
     }
 
     /** EF Driver_Activity_Data has two two-byte offsets into its cyclic data area. */
@@ -146,8 +176,16 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 val activityLength = DriverCardDecoder.activityLength(application, generation)
                 val identity = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
                 val activity = readFile(session, DriverCardFiles.DRIVER_ACTIVITY, activityLength + 4)
+                // An unavailable supplementary EF must not discard a complete activity read.
+                val vehicles = try {
+                    val count = DriverCardDecoder.vehicleCount(application, generation)
+                    val width = if (generation == CardGeneration.GEN1) 31 else 48
+                    DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
+                        count * width + 2), count, generation)
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                 CardReadResult(recognized, generation, DriverCardDecoder.identity(identity, generation),
-                    DriverCardDecoder.activity(activity, activityLength))
+                    DriverCardDecoder.activity(activity, activityLength), vehicles,
+                    vehicleReadFailed = vehicles == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }
