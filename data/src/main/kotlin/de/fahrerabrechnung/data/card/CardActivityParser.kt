@@ -70,9 +70,9 @@ object CardActivityParser {
                 changes += ActivityChange(
                     minuteOfDay = minute,
                     activity = DriverActivity.entries[(word ushr 11) and 3],
-                    slot = if (word and 0x8000 == 0) CardSlot.DRIVER else CardSlot.CO_DRIVER,
-                    crewDriving = word and 0x4000 != 0,
-                    cardInserted = word and 0x2000 == 0
+                    slot = if ((word and 0x8000) == 0) CardSlot.DRIVER else CardSlot.CO_DRIVER,
+                    crewDriving = (word and 0x4000) != 0,
+                    cardInserted = (word and 0x2000) == 0
                 )
                 lastMinute = minute
             }
