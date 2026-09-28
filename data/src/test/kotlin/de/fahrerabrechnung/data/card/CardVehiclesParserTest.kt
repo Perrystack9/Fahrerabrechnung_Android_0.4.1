@@ -46,4 +46,14 @@ class CardVehiclesParserTest {
         try { CardVehiclesParser.parse(CardVehiclesFile(0, 1, CardGeneration.GEN1, invalidTime)); fail() }
         catch (e: ParseError) { assertEquals("CardVehicleRecord", e.field) }
     }
+
+    @Test fun partiallyInitialisedUnusedSlotDoesNotDiscardValidVehicle() {
+        val valid = record(1_700_000_000, 1_700_001_000, "AB-CD 123", "WDB12345678901234")
+        val unused = ByteArray(48).also {
+            it[15] = 1 // registration text's code page can be preinitialised
+            it[16] = ' '.code.toByte()
+        }
+        val file = CardVehiclesFile(0, 2, CardGeneration.GEN2V2, valid + unused)
+        assertEquals(listOf(0), CardVehiclesParser.parse(file).map { it.ringIndex })
+    }
 }
