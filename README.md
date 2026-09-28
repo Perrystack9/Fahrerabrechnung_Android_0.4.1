@@ -1,31 +1,39 @@
-# Fahrerabrechnung & Fahrertagebuch – Android-Projektstart 0.4.1
+# FahrerTagebuch – Android 0.4.1
 
-**Aktuelle Produktregeln: [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md). Smartphone-Standort wird ausschließlich auf ausdrückliche Aktion zur einmaligen Heimatpunktwahl im Onboarding verwendet. Für Fahrten, Zeiten und weitere Ortsdaten gelten nur Fahrerkarte/Tachograph. Ältere widersprechende Spezifikationen sind überholt.**
+**Stand auf `main`: 28.09.2026, Commit `0f6da793`.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
-Technische Startbasis gemäß dem verbindlichen Work-Auftrag **„Android-Projektstart 0.4.1“** und dem anschließenden Zwischenschritt **„Build-Verifikation und technische Basiskorrektur“**. Der Stand bildet absichtlich **keine produktive Fachlogik** für Fahrerkarte, USB/CCID, Gen2/Gen2V2, Matching, Reisen, Spesen, Übernachtungen, Zuschläge, Compliance, PDF oder Serverbackup ab.
+Die App ist eine lokale Android-Basis mit einem **echten, aber noch nicht persistenten Fahrerkarte-Lesetest**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
-## Architektur und Module
+## Tatsächlich vorhanden
 
-- `:app` – Application, Hilt-Einstieg, Navigation, Build-Varianten.
-- `:core` – Design-System, gemeinsame UI-Zustände, Security-/Basis-Hilfen.
-- `:data` – Room/SQLCipher, Keystore-Passphrase, DataStore, Repositories und Zukunftsschnittstellen.
-- `:domain` – fachneutrale Grundtypen/Status aus 0.4.1.
-- `:feature` – fünf Hauptbereiche plus vorbereitete Detailziele.
-- `:report` – reine Platzhalter-Schnittstelle für spätere Berichtserzeugung.
+- Siebenstufiges Onboarding mit expliziter Heimatpunktwahl per Vordergrund-Standort oder Karte; gespeicherter 500-m-Heimbereich. Kein Smartphone-Routentracking.
+- USB-CCID-Leserdiagnose und ISO7816/APDU-Austausch mit USB-Freigabe, ATR und Kartengenerationserkennung für Gen1/Gen2/Gen2V2. Eine echte Gen2V2-Karte wurde am Galaxy S23 mit einem CCID-Leser getestet; das ist keine Zusage für alle Leser/Karten.
+- Vollständiges Lesen der `EF Driver_Activity_Data` entsprechend der auf der Karte angegebenen Dateilänge. Der Gerätetest las 13.776 Bytes und dekodierte 74 zyklische Tagesdatensätze.
+- Dekodierung der Tätigkeitswechsel und Kartenstatus-Bits, Projektion der UTC-Quelldaten auf lokale Kalendertage einschließlich Tagesgrenzen/Zeitumstellung.
+- Vorschau des Kartentags mit kompakter Tagesübersicht, zoombarem und verschiebbarem Detail, Abschnittsauswahl mit Start/Ende/Dauer und verstellbarer Zeitmarke. Tätigkeiten und Einträge ohne eingelegte Karte sind getrennt gekennzeichnet. Fehlende Kartenzeit wird nicht als Ruhe oder Heimkehr erfunden.
+- Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
-Die fünf Hauptbereiche sind exakt: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**.
+**Wichtig:** Der Aktivitätstest und die Kartentag-Zeitleiste halten ihre Daten nur im Arbeitsspeicher. Das ist eine technische Test-/Preview-Funktion, noch kein abgeschlossener Import oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
 
-## Build-Voraussetzungen
+## Noch nicht produktiv
 
-- JDK 17
-- Android SDK Platform 37
-- `compileSdk=37`, `targetSdk=36`, `minSdk=26`
-- Android Gradle Plugin 9.4.0
-- offizieller Gradle Wrapper 9.6.1
+- Keine persistente Kartenimport-Pipeline, keine Importhistorie oder vollständige Kartenabdeckung.
+- Fahrzeuge/Fahrzeugwechsel, GNSS-Einzelpunkte, Grenzübertritte, Ereignisse/Störungen, Kontrollen und weitere Kartendateien sind noch nicht vollständig importiert oder in der Tageschronik verbunden.
+- Keine belastbare Heimkehr-/Übernachtungs-/Reiseauswertung, Spesen, Arbeitszeit- und Arbeitgeberzuschlagsberechnung, vollständige PDF-Ausgabe oder Cloud-Synchronisation. Keine Steuerlogik.
+- Die in [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) beschriebene Tageszeitleiste ist erst für die vorhandenen Aktivitätsdaten als Vorschau umgesetzt; Fahrzeugbezug, Zusatzmarker und Tageskennzahlen fehlen.
 
-Der vollständige offizielle Gradle Wrapper 9.6.1 ist im Repository enthalten.
+## Architektur
 
-## Verifikationsbefehle
+- `:app` – Android-Anwendung, Navigation, Hardwaretest und Kartentag-Vorschau.
+- `:core` – Designsystem, gemeinsame UI- und Sicherheitsbasis.
+- `:data` – CCID/Kartenleser, Aktivitätsparser, lokale Tagesprojektion, Room/SQLCipher, Keystore und DataStore.
+- `:domain` – Grundtypen und Status.
+- `:feature` – Hauptbereiche und vorbereitete Detailseiten.
+- `:report` – vorbereitete Berichtsschnittstelle; kein fertiger PDF-Renderer.
+
+## Build und Verifikation
+
+JDK 17, Android SDK Platform 37, Build Tools 36.0.0, AGP 9.4.0 und der offizielle Gradle Wrapper 9.6.1 werden verwendet.
 
 ```bash
 ./gradlew help
@@ -36,41 +44,13 @@ Der vollständige offizielle Gradle Wrapper 9.6.1 ist im Repository enthalten.
 ./gradlew assembleInternal
 ```
 
-Instrumentierte Tests (Room/SQLCipher/UI) benötigen ein Android-Gerät oder einen Emulator:
+Room-/SQLCipher- und Compose-Instrumentierung erfordern Emulator/Gerät (`./gradlew connectedDebugAndroidTest`). Der [CI-Lauf zu PR #7](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36411408668) war für Build, Tests, Lint, APK-Verifikation und diese Emulator-Tests grün. Ein physischer Galaxy-S23-Test der Zeitleiste wurde ebenfalls durchgeführt; er ersetzt keine vollständige Importvalidierung.
 
-```bash
-./gradlew connectedDebugAndroidTest
-```
+Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist per Android Keystore/AES-GCM geschützt; kein unverschlüsselter Fallback und kein `fallbackToDestructiveMigration()`. `SafeLogger` darf keine sensiblen Kartendaten, Rohdumps oder vollständigen APDUs ausgeben.
 
-Der SQLCipher-Instrumentationstest prüft zusätzlich:
+## Dokumente lesen
 
-- Wiederöffnung mit dem korrekten Schlüssel,
-- CRUD nach Wiederöffnung,
-- keinen Klartext-SQLite-Header,
-- Nichtlesbarkeit mit einem falschen Schlüssel.
-
-## Datenschutz / Local-first
-
-Die technische Basis ist local-first. Die Room-Datenbank wird ausschließlich über SQLCipher geöffnet. Die zufällige Datenbank-Passphrase wird nicht im Klartext persistiert, sondern per Android Keystore (AES/GCM) geschützt und erst zur Laufzeit entschlüsselt. Es gibt **keinen unverschlüsselten Fallback** und kein `fallbackToDestructiveMigration()`.
-
-DataStore enthält Theme, Onboarding-Abschluss und den optionalen Heimatpunkt. Weitere Profil- und Abrechnungsfelder im Onboarding sind derzeit UI-Vorschau und werden noch nicht dauerhaft gespeichert.
-
-## Logging
-
-`SafeLogger` ist die zentrale Logging-Grenze. Sensible Rohwerte (vollständige VIN, Karten-ID, Name, Positionskoordinaten aus Karte/Tachograph, APDU/Kartenbinärdaten) dürfen dort nicht ausgegeben werden.
-
-## Aktuelle Implementierungsgrenze
-
-Vorbereitet, aber noch ohne vollständigen produktiven Kartenimport:
-
-- `CardReaderTransport` (USB-CCID/APDU-Hardwaretest vorhanden)
-- `VinDecoder`
-- `BackupProvider`
-- Berichts-/PDF-Gateway
-- Detailnavigation für Tagesreport, Kartenimport, Fahrzeugdetail und Einstellungs-Unterseiten
-
-Die Werteplatzhalter in den fünf Grundscreens sind **reine UI-Vorschauen** und werden nicht als reale Berechnung ausgegeben.
-
-## Spezifikationsbezug
-
-Quelle: „Fahrerabrechnung & Fahrertagebuch 0.4.1 – Gesamtpaket für ChatGPT Work“, Stand 22.09.2026. Bei Widersprüchen gelten die späteren finalen 0.4.1-Festlegungen. Der technische USB-CCID/APDU-Hardwaretest und die Kartengenerationserkennung sind inzwischen vorhanden; ein vollständiger Kartenimport und die Fachberechnungen fehlen weiterhin.
+- [WORK_STATUS.md](WORK_STATUS.md): aktueller Implementierungs- und Teststand.
+- [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3): maßgebliche Produkt-/Fachregeln.
+- [BUILD_STATUS.md](BUILD_STATUS.md), [BUILD_VERIFICATION_REPORT_0.4.1.md](BUILD_VERIFICATION_REPORT_0.4.1.md), [PROJECT_START_REPORT.md](PROJECT_START_REPORT.md) und [GITHUB_ACTIONS_HANDOFF.md](GITHUB_ACTIONS_HANDOFF.md): historische Berichte vom 22.09.2026.
+- `docs/design-handoff-v2/` und `docs/UI_REFINEMENT_0.4.1_V2.md`: historische Design-/Zwischenstände; enthalten teils überholte Smartphone-GPS- und Acht-Schritte-Vorgaben.
