@@ -122,19 +122,20 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
                         pendingRead = if (result.card != null && days.isNotEmpty()) result else null
+                        val vehicleFile = result.vehicles
                         var vehicleDecodeFailed = false
                         vehicleUses = try {
-                            result.vehicles?.let(CardVehiclesParser::parse).orEmpty()
+                            vehicleFile?.let(CardVehiclesParser::parse).orEmpty()
                         } catch (_: ParseError) {
                             vehicleDecodeFailed = true
                             emptyList()
                         }
                         vehicleStatus = when {
                             result.vehicleReadFailed -> "Fahrzeugdatei nicht gelesen; Aktivitätsdaten bleiben nutzbar."
-                            result.vehicles == null -> "Keine Fahrzeugdatei verfügbar."
+                            vehicleFile == null -> "Keine Fahrzeugdatei verfügbar."
                             vehicleDecodeFailed -> "Fahrzeugdatei gelesen, aber nicht dekodierbar; Aktivitätsdaten bleiben nutzbar."
                             vehicleUses.isEmpty() -> "Fahrzeugdatei gelesen; keine auswertbaren Nutzungen."
-                            else -> "Fahrzeugdatei gelesen: ${result.vehicles.records.size} Bytes; ${vehicleUses.size} Nutzungen dekodiert."
+                            else -> "Fahrzeugdatei gelesen: ${vehicleFile.records.size} Bytes; ${vehicleUses.size} Nutzungen dekodiert."
                         }
                         displayZone = ZoneId.systemDefault()
                         localDays = CardDayTimeline.build(days, displayZone)
