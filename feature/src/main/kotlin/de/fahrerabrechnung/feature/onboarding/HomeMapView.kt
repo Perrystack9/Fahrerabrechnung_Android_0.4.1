@@ -12,6 +12,8 @@ import android.view.MotionEvent
 import android.view.View
 import java.net.HttpURLConnection
 import java.net.URL
+import java.io.File
+import java.io.IOException
 import java.util.LinkedHashMap
 import java.util.concurrent.Executors
 import kotlin.math.PI
@@ -38,6 +40,7 @@ internal class HomeMapView(context: Context) : View(context) {
     private val loading = mutableSetOf<String>()
     private val failedKeys = mutableSetOf<String>()
     private var failed = false
+    private var failureReason: String? = null
     private var zoom = 6
     private var centerLat = 48.137
     private var centerLon = 11.575
@@ -71,6 +74,7 @@ internal class HomeMapView(context: Context) : View(context) {
     fun retryTiles() {
         failedKeys.clear()
         failed = false
+        failureReason = null
         invalidate()
     }
 
@@ -151,7 +155,7 @@ internal class HomeMapView(context: Context) : View(context) {
         if (visible == 0) {
             paint.color = Color.rgb(15, 45, 74)
             paint.textSize = 14f * resources.displayMetrics.scaledDensity
-            val message = if (failed) "Kartenkacheln nicht erreichbar · GPS oder erneut versuchen"
+            val message = if (failed) "Karte nicht erreichbar: ${failureReason ?: "Netzwerkfehler"}"
                 else "Karte wird geladen …"
             canvas.drawText(message, 12f * resources.displayMetrics.density, height - 12f * resources.displayMetrics.density, paint)
         }
@@ -164,20 +168,40 @@ internal class HomeMapView(context: Context) : View(context) {
         if (released || key in failedKeys || !loading.add(key)) return
         executor.execute {
             var bitmap: Bitmap? = null
+            var reason: String? = null
             try {
-                val connection = URL("https://tile.openstreetmap.org/$level/$x/$y.png").openConnection() as HttpURLConnection
-                connection.setRequestProperty("User-Agent", "FahrerTagebuch/0.4.1 (Android home-point picker)")
-                connection.connectTimeout = 6000
-                connection.readTimeout = 6000
-                try {
-                    connection.inputStream.use { bitmap = BitmapFactory.decodeStream(it) }
-                } finally {
-                    connection.disconnect()
+                val directory = File(context.cacheDir, "home-map-tiles")
+                val file = File(directory, "$level-$x-$y.png")
+                val sevenDays = 7L * 24 * 60 * 60 * 1000
+                if (file.isFile && System.currentTimeMillis() - file.lastModified() < sevenDays) {
+                    bitmap = BitmapFactory.decodeFile(file.absolutePath)
                 }
-            } catch (_: Exception) {
-                // The map remains usable for GPS selection even when tiles are unavailable.
+                if (bitmap == null) {
+                    val connection = URL("https://tile.openstreetmap.org/$level/$x/$y.png").openConnection() as HttpURLConnection
+                    connection.setRequestProperty("User-Agent", "FahrerTagebuch/0.4.1 (Android home-point picker)")
+                    connection.connectTimeout = 6000
+                    connection.readTimeout = 6000
+                    try {
+                        if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                            throw IOException("HTTP ${connection.responseCode}")
+                        }
+                        val bytes = connection.inputStream.use { it.readBytes() }
+                        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        if (bitmap != null && (directory.isDirectory || directory.mkdirs())) {
+                            file.writeBytes(bytes)
+                        }
+                    } finally {
+                        connection.disconnect()
+                    }
+                }
+            } catch (e: Exception) {
+                reason = when (e) {
+                    is IOException -> e.message?.takeIf { it.startsWith("HTTP ") } ?: "Netzwerk oder DNS"
+                    else -> "Netzwerk oder DNS"
+                }
             }
             val loaded = bitmap
+            val error = reason
             post {
                 if (!released) {
                     loading.remove(key)
@@ -185,6 +209,7 @@ internal class HomeMapView(context: Context) : View(context) {
                     else {
                         failedKeys.add(key)
                         failed = true
+                        failureReason = error ?: "Bilddaten ungültig"
                     }
                     invalidate()
                 }
