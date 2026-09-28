@@ -25,6 +25,8 @@ import de.fahrerabrechnung.data.card.AndroidCcidTransport
 import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardGeneration
+import de.fahrerabrechnung.data.card.DriverCardReader
+import de.fahrerabrechnung.data.card.ReaderException
 import de.fahrerabrechnung.data.card.ReaderState
 import de.fahrerabrechnung.feature.common.ScreenContent
 import kotlinx.coroutines.launch
@@ -42,7 +44,7 @@ class CardPermissionReceiver : BroadcastReceiver() {
     }
 }
 
-/** Explicit diagnostic only. Card identities and raw card bytes are never displayed or stored. */
+/** Explicit in-memory reader tests. Card identities and raw bytes are never displayed or stored. */
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues) {
     val context = LocalContext.current
@@ -51,26 +53,53 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
     var diagnostic by remember { mutableStateOf<CardDiagnostic?>(null) }
     var message by remember { mutableStateOf("Kartenleser anschließen und Fahrerkarte einlegen.") }
     var busy by remember { mutableStateOf(false) }
+    var pendingFullRead by remember { mutableStateOf(false) }
+    var activityStatus by remember { mutableStateOf<String?>(null) }
 
-    fun inspect() {
+    fun inspect(fullRead: Boolean) {
         if (busy) return
         busy = true
         scope.launch {
             try {
-                diagnostic = CardDiagnosticProbe(transport).inspect()
-                message = "Prüfung abgeschlossen."
+                if (fullRead) {
+                    val result = DriverCardReader(transport).read()
+                    activityStatus = result.activity?.let {
+                        "Aktivitätsdatei vollständig gelesen: ${it.dailyRecords.size} Bytes (${result.generation.label()})."
+                    } ?: "Aktivitätsdatei nicht gelesen: Kartentyp oder Dateistruktur nicht erkannt."
+                    message = "Lesetest abgeschlossen."
+                } else {
+                    diagnostic = CardDiagnosticProbe(transport).inspect()
+                    message = "Prüfung abgeschlossen."
+                }
+            } catch (e: ReaderException) {
+                if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Fehlercode: ${e.failure.name}"
+                else message = "Diagnose fehlgeschlagen. Fehlercode: ${e.failure.name}"
             } catch (_: Exception) {
-                message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
+                if (fullRead) activityStatus = "Aktivitätsdatei nicht gelesen. Lesetest fehlgeschlagen."
+                else message = "Diagnose fehlgeschlagen. Verbindung trennen und erneut versuchen."
             } finally {
                 busy = false
             }
         }
     }
 
+    fun startCheck(fullRead: Boolean) {
+        pendingFullRead = fullRead
+        if (fullRead) activityStatus = null else diagnostic = null
+        if (transport.devices().any { it.permission } || transport.devices().isEmpty()) inspect(fullRead)
+        else {
+            val intent = Intent(context, CardPermissionReceiver::class.java)
+            val result = PendingIntent.getBroadcast(context, 0, intent,
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            if (transport.requestPermission(result)) message = "USB-Freigabe am Gerät bestätigen."
+            else inspect(fullRead)
+        }
+    }
+
     DisposableEffect(context, transport) {
         CardPermissionReceiver.callback = { device, granted ->
             if (device != null) transport.onPermissionResult(device, granted)
-            if (granted) inspect() else {
+            if (granted) inspect(pendingFullRead) else {
                 diagnostic = null
                 message = "USB-Freigabe abgelehnt. Erneut prüfen, um sie anzufragen."
             }
@@ -80,6 +109,7 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
                 if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
                     transport.close()
                     diagnostic = null
+                    activityStatus = null
                     message = "Kartenleser entfernt."
                 }
             }
@@ -97,19 +127,15 @@ fun CardHardwareTestScreen(padding: PaddingValues) {
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Dieser Test liest nur Erkennungsdaten im Arbeitsspeicher. Es wird noch kein Kartenimport gespeichert.",
+            Text("Der Lesertest prüft die Erkennung. Der Aktivitätstest liest zusätzlich die vollständige Rohdatei im Arbeitsspeicher. Es wird noch kein Kartenimport gespeichert.",
                 style = MaterialTheme.typography.bodyMedium)
-            Button(enabled = !busy, onClick = {
-                diagnostic = null
-                if (transport.devices().any { it.permission } || transport.devices().isEmpty()) inspect()
-                else {
-                    val intent = Intent(context, CardPermissionReceiver::class.java)
-                    val result = PendingIntent.getBroadcast(context, 0, intent,
-                        PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-                    if (transport.requestPermission(result)) message = "USB-Freigabe am Gerät bestätigen."
-                    else inspect()
-                }
-            }) { Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen") }
+            Button(enabled = !busy, onClick = { startCheck(false) }) {
+                Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
+            }
+            Button(enabled = !busy, onClick = { startCheck(true) }) {
+                Text(if (busy) "Lesen läuft …" else "Aktivitätsdatei testen")
+            }
+            activityStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             Text(message, style = MaterialTheme.typography.bodyMedium)
             diagnostic?.let { result ->
                 Text("Reader: ${result.reader.label()}")
