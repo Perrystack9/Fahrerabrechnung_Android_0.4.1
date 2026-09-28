@@ -41,6 +41,7 @@ internal class HomeMapView(context: Context) : View(context) {
     private val failedKeys = mutableSetOf<String>()
     private var failed = false
     private var failureReason: String? = null
+    private var hasVisibleTiles = false
     private var zoom = 6
     private var centerLat = 48.137
     private var centerLon = 11.575
@@ -132,6 +133,7 @@ internal class HomeMapView(context: Context) : View(context) {
                 }
             }
         }
+        hasVisibleTiles = visible > 0
         selected?.let { (lat, lon) ->
             val (px, py) = world(lat, lon)
             val x = (width / 2 + px - cx).toFloat()
@@ -218,6 +220,7 @@ internal class HomeMapView(context: Context) : View(context) {
     }
 
     private fun select(screenX: Float, screenY: Float) {
+        if (!hasVisibleTiles) return
         val (cx, cy) = world(centerLat, centerLon)
         val point = geo(cx + screenX - width / 2.0, cy + screenY - height / 2.0)
         selected = point
