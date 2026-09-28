@@ -18,6 +18,8 @@
 
 ## Fahrzeugdarstellung und visuelle Zuordnung
 
+> **Verbindliche Detail-Spezifikation:** [VEHICLE_UI_SPEC.md](VEHICLE_UI_SPEC.md). Bei der späteren finalen Platzierung der Fahrzeugdaten soll Work diese Darstellung innerhalb des bestehenden FahrerTagebuch-Designsystems möglichst 1:1 umsetzen.
+
 - Fahrzeugdaten sollen später in **Tagesübersicht**, **Monatsübersicht** und **Fahrzeughistorie** kompakt und visuell verständlich dargestellt werden.
 - Wenn aus belastbaren Quelldaten bzw. einer verlässlichen Fahrzeugzuordnung verfügbar, anzeigen:
   - **Marke**
