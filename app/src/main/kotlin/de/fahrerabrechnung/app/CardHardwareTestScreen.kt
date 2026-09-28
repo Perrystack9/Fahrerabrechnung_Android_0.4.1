@@ -123,17 +123,17 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                         val days = CardActivityParser.parse(it)
                         pendingRead = if (result.card != null && days.isNotEmpty()) result else null
                         val vehicleFile = result.vehicles
-                        var vehicleDecodeFailed = false
+                        var vehicleDecodeError: ParseError? = null
                         vehicleUses = try {
                             vehicleFile?.let(CardVehiclesParser::parse).orEmpty()
-                        } catch (_: ParseError) {
-                            vehicleDecodeFailed = true
+                        } catch (e: ParseError) {
+                            vehicleDecodeError = e
                             emptyList()
                         }
                         vehicleStatus = when {
                             result.vehicleReadFailed -> "Fahrzeugdatei nicht gelesen; Aktivitätsdaten bleiben nutzbar."
                             vehicleFile == null -> "Keine Fahrzeugdatei verfügbar."
-                            vehicleDecodeFailed -> "Fahrzeugdatei gelesen, aber nicht dekodierbar; Aktivitätsdaten bleiben nutzbar."
+                            vehicleDecodeError != null -> "Fahrzeugdatei gelesen, aber nicht dekodierbar (${vehicleDecodeError.field}, Offset ${vehicleDecodeError.offset}); Aktivitätsdaten bleiben nutzbar."
                             vehicleUses.isEmpty() -> "Fahrzeugdatei gelesen; keine auswertbaren Nutzungen."
                             else -> "Fahrzeugdatei gelesen: ${vehicleFile.records.size} Bytes; ${vehicleUses.size} Nutzungen dekodiert."
                         }
