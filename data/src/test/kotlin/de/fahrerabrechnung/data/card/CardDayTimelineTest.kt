@@ -29,8 +29,8 @@ class CardDayTimelineTest {
         assertEquals(Instant.parse("2026-09-28T22:00:00Z"), days[0].segments.last().end)
         assertEquals(Instant.parse("2026-09-28T22:00:00Z"), days[1].segments.first().start)
         assertEquals(Instant.parse("2026-09-29T00:00:00Z"), days[1].segments.last().end)
-        assertFalse(days[1].segments.first().cardInserted)
-        assertEquals(DriverActivity.REST, days[1].segments.first().activity)
+        assertFalse(days[1].segments.last().cardInserted)
+        assertEquals(DriverActivity.REST, days[1].segments.last().activity)
     }
 
     @Test fun daylightSavingBoundaryUsesActualLocalMidnight() {
