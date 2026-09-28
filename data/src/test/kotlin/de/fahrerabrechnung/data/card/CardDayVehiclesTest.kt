@@ -19,7 +19,7 @@ class CardDayVehiclesTest {
         assertFalse(day.beginsHere)
         assertEquals(Instant.parse("2026-09-25T00:00:00Z"), day.end)
         assertEquals(vehicle, CardDayVehicles.at(day.start, listOf(day)))
-        assertNull(CardDayVehicles.at(day.end, listOf(day)))
+        assertNull(CardDayVehicles.at(day.end!!, listOf(day)))
     }
 
     @Test fun openEndIsOnlyAStartPointAndOverlapsRemainAmbiguous() {
