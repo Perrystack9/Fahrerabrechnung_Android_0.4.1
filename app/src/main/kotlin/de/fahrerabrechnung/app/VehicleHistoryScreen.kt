@@ -37,7 +37,7 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
     LaunchedEffect(imports, previewSnapshot) {
         try {
-            history = (previewSnapshot?.let(::listOf) ?: imports?.all())?.let(CardVehicleHistory::build).orEmpty()
+            history = (previewSnapshot?.let { listOf(it) } ?: imports?.all())?.let(CardVehicleHistory::build).orEmpty()
             status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else
                 "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."
         } catch (_: Exception) {
