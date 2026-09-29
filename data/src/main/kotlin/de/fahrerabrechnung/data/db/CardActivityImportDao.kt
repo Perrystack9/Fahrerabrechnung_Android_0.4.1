@@ -12,4 +12,7 @@ interface CardActivityImportDao {
 
     @Query("SELECT * FROM card_activity_imports ORDER BY importedAtEpochMillis DESC, id DESC LIMIT 1")
     suspend fun latest(): CardActivityImportEntity?
+
+    @Query("SELECT * FROM card_activity_imports ORDER BY importedAtEpochMillis DESC, id DESC")
+    suspend fun all(): List<CardActivityImportEntity>
 }

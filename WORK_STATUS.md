@@ -1,6 +1,6 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main` nach PR #15, mit gezielter Kartennutzung in PR #16.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main` nach PR #16, mit Aktivitäts-Snapshot-Abfrage in PR #17.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 ## Nachweislich umgesetzt
 
@@ -20,6 +20,7 @@
 | Quellzeiten am Kartentag | PR #14 summiert die belegten Abschnitte nach Tätigkeit bei eingelegter Karte und zeigt Karteneinträge ohne Karte sowie unbelegte Zeit separat. Keine fachliche Arbeits-, Ruhe- oder Abrechnungsberechnung. |
 | Fahrzeuglink im Kartentag | PR #15 öffnet für ein eindeutig belegtes Fahrzeug zur Zeitmarke die gespeicherte Historie mit Kennzeichen-/VIN-Suche. Bei mehrdeutiger Zuordnung erscheint kein spezifischer Link. |
 | Ausgewählte Kartennutzung | PR #16 hebt beim Wechsel aus dem Kartentag den exakten Quellbeleg in der gespeicherten Fahrzeughistorie hervor. Fehlt er dort, wird das ausdrücklich angezeigt. Keine Strecke oder fahrzeugbezogene Arbeitszeit berechnet. |
+| Aktivitäts-Snapshot-Abfrage | PR #17 ergänzt die geordnete Abfrage aller ausdrücklich gespeicherten Aktivitätsdateien für eine spätere Teilimport-Übersicht. Keine neue Persistenzform oder abgeschlossene Importhistorie. |
 | Technische Basis | Fünf Haupttabs, Room/SQLCipher-/Keystore-Basis, DataStore, Debug-/Internal-Builds und CI vorhanden. |
 
 Die echte Kartenprobe mit USB-CCID, APDU, Kartenerkennung, vollständiger Aktivitätsdatei und Vorschau **hat bereits stattgefunden**. Der früher hier angekündigte „nächste Hardwaretest“ ist erledigt. Die Probe belegt den getesteten Leser und die getestete Gen2V2-Karte, nicht jede Karten-/Leserkombination.

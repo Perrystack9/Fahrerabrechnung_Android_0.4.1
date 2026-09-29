@@ -41,12 +41,16 @@ class CardActivityImportRepository @Inject constructor(
         )) != -1L
     }
 
-    suspend fun latest(): SavedCardActivity? = dao.latest()?.let { entity ->
+    suspend fun latest(): SavedCardActivity? = dao.latest()?.let(::decode)
+
+    suspend fun all(): List<SavedCardActivity> = dao.all().map(::decode)
+
+    private fun decode(entity: CardActivityImportEntity): SavedCardActivity {
         val generation = CardGeneration.valueOf(entity.generation)
         val file = CardActivityFile(entity.oldestDayOffset, entity.newestDayOffset, entity.dailyRecords)
         val days = CardActivityParser.parse(file)
         check(days.size == entity.dayCount)
-        SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis,
+        return SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis,
             entity.cardNumber)
     }
 }
