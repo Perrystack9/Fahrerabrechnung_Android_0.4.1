@@ -45,6 +45,7 @@ import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
+import de.fahrerabrechnung.data.card.SavedCardVehicles
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
@@ -90,6 +91,9 @@ fun AppRoot(
     var vehicleHistoryNation by rememberSaveable { mutableStateOf<Int?>(null) }
     var selectedActivitySnapshot by androidx.compose.runtime.remember {
         mutableStateOf<SavedCardActivity?>(null)
+    }
+    var selectedVehicleSnapshot by androidx.compose.runtime.remember {
+        mutableStateOf<SavedCardVehicles?>(null)
     }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
@@ -227,6 +231,7 @@ fun AppRoot(
                     onShowLatestSnapshot = { selectedActivitySnapshot = null },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
+                        selectedVehicleSnapshot = null
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
                         vehicleHistoryNation = nation
@@ -239,12 +244,20 @@ fun AppRoot(
                         onPreviewActivity = { saved ->
                             selectedActivitySnapshot = saved
                             navController.popBackStack()
+                        },
+                        onPreviewVehicle = { saved ->
+                            selectedVehicleSnapshot = saved
+                            vehicleHistoryQuery = ""
+                            vehicleHistoryUseStart = null
+                            vehicleHistoryNation = null
+                            navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                         })
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
                     VehicleHistoryScreen(padding, cardVehicleImports, vehicleHistoryQuery,
-                        vehicleHistoryUseStart, vehicleHistoryNation)
+                        vehicleHistoryUseStart, vehicleHistoryNation,
+                        previewSnapshot = selectedVehicleSnapshot)
             }
             composable(DetailRoutes.SETTINGS_SUBPAGE) {
                 if (visibleRoute.value == DetailRoutes.SETTINGS_SUBPAGE) SettingsSubpagePlaceholderScreen(padding, settingsTitle)

@@ -18,6 +18,7 @@ import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.data.card.CardVehicleHistory
 import de.fahrerabrechnung.data.card.CardVehicleHistoryEntry
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
+import de.fahrerabrechnung.data.card.SavedCardVehicles
 import de.fahrerabrechnung.feature.common.ScreenContent
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -26,18 +27,20 @@ import java.time.format.DateTimeFormatter
 @Composable
 internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?,
                                   initialQuery: String = "", selectedUseStart: Long? = null,
-                                  selectedNation: Int? = null) {
+                                  selectedNation: Int? = null,
+                                  previewSnapshot: SavedCardVehicles? = null) {
     var history by remember { mutableStateOf<List<CardVehicleHistoryEntry>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Fahrzeugdaten …") }
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
     var selectedStart by remember(selectedUseStart) { mutableStateOf(selectedUseStart) }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
-    LaunchedEffect(imports) {
+    LaunchedEffect(imports, previewSnapshot) {
         try {
-            history = imports?.all()?.let(CardVehicleHistory::build).orEmpty()
-            status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else
-                "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."
+            history = (previewSnapshot?.let { listOf(it) } ?: imports?.all())?.let(CardVehicleHistory::build).orEmpty()
+            status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else if (previewSnapshot != null)
+                "${history.size} Fahrzeuge aus dieser gespeicherten Datei."
+            else "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."
         } catch (_: Exception) {
             history = emptyList()
             status = "Gespeicherte Fahrzeugdaten konnten nicht ausgewertet werden."
@@ -45,7 +48,9 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
     }
     ScreenContent(padding) {
         Text("Fahrzeughistorie · Vorschau", style = MaterialTheme.typography.titleLarge)
-        Text("Quelle: ausdrücklich gespeicherte Fahrerkarten-Dateien. Gleiche Nutzungen aus mehreren Snapshots werden nur einmal gezeigt. Kennzeichen ohne gültige VIN werden nach Staat und Kennzeichen gruppiert.",
+        Text(if (previewSnapshot != null)
+            "Quelle: nur die ausgewählte, ausdrücklich gespeicherte Fahrzeugdatei. Kennzeichen ohne gültige VIN werden nach Staat und Kennzeichen gruppiert."
+            else "Quelle: ausdrücklich gespeicherte Fahrerkarten-Dateien. Gleiche Nutzungen aus mehreren Snapshots werden nur einmal gezeigt. Kennzeichen ohne gültige VIN werden nach Staat und Kennzeichen gruppiert.",
             style = MaterialTheme.typography.bodyMedium)
         Text(status, style = MaterialTheme.typography.bodyMedium)
         if (history.isNotEmpty()) OutlinedTextField(

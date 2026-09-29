@@ -26,7 +26,8 @@ import java.time.format.DateTimeFormatter
 internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                                        activities: CardActivityImportRepository?,
                                        vehicles: CardVehicleImportRepository?,
-                                       onPreviewActivity: (SavedCardActivity) -> Unit = {}) {
+                                       onPreviewActivity: (SavedCardActivity) -> Unit = {},
+                                       onPreviewVehicle: (SavedCardVehicles) -> Unit = {}) {
     var snapshots by remember { mutableStateOf<List<SavedCardActivity>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Aktivitätsdateien …") }
     var vehicleSnapshots by remember { mutableStateOf<List<SavedCardVehicles>>(emptyList()) }
@@ -94,6 +95,9 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                 }
                 Text("Fahrerkarte: ${maskCardNumber(saved.cardNumber)}",
                     style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = { onPreviewVehicle(saved) }) {
+                    Text("Fahrzeuge dieser Datei ansehen")
+                }
             }
         }
     }
