@@ -38,8 +38,9 @@ internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleIm
     LaunchedEffect(imports, previewSnapshot) {
         try {
             history = (previewSnapshot?.let { listOf(it) } ?: imports?.all())?.let(CardVehicleHistory::build).orEmpty()
-            status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else
-                "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."
+            status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else if (previewSnapshot != null)
+                "${history.size} Fahrzeuge aus dieser gespeicherten Datei."
+            else "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."
         } catch (_: Exception) {
             history = emptyList()
             status = "Gespeicherte Fahrzeugdaten konnten nicht ausgewertet werden."
