@@ -19,16 +19,27 @@ import de.fahrerabrechnung.core.design.PreviewMetric
 import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.feature.common.ScreenContent
 
+enum class CardFilesStatus { CHECKING, NONE, ACTIVITY, VEHICLE, BOTH, ERROR }
+
 @Composable
-fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnboarding: () -> Unit) {
+fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnboarding: () -> Unit,
+                cardFilesStatus: CardFilesStatus = CardFilesStatus.CHECKING) {
     ScreenContent(padding) {
         Text("Dein Fahrertag im Überblick", style = MaterialTheme.typography.headlineSmall)
         Text("Touren. Zeiten. Übersicht.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         SectionCard(title = "Fahrerkarte") {
-            Text("Noch keine Fahrerkarte eingelesen", style = MaterialTheme.typography.titleSmall)
-            Text("Für die spätere Auswertung werden Daten aus der Fahrerkarte benötigt.",
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val (headline, description) = when (cardFilesStatus) {
+                CardFilesStatus.CHECKING -> "Gespeicherte Kartendateien werden geprüft" to "Bitte kurz warten."
+                CardFilesStatus.NONE -> "Noch keine Kartendatei gespeichert" to "Der Lesetest allein speichert nichts."
+                CardFilesStatus.ACTIVITY -> "Aktivitätsdatei gespeichert" to "Ein Aktivitäts-Teilimport liegt vor; weitere Kartendateien und der vollständige Import fehlen noch."
+                CardFilesStatus.VEHICLE -> "Fahrzeugdatei gespeichert" to "Ein Fahrzeug-Teilimport liegt vor; weitere Kartendateien und der vollständige Import fehlen noch."
+                CardFilesStatus.BOTH -> "Aktivitäts- und Fahrzeugdatei gespeichert" to "Die Teilimporte sind ohne eingelegte Karte verfügbar. Ein vollständiger Kartenimport und die Auswertung fehlen noch."
+                CardFilesStatus.ERROR -> "Status der Kartendateien nicht verfügbar" to "Gespeicherte Daten konnten gerade nicht geprüft werden."
+            }
+            Text(headline, style = MaterialTheme.typography.titleSmall)
+            Text(description, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             Button(onClick = onOpenCardImport) {
                 Icon(Icons.Rounded.CreditCard, contentDescription = null)
                 Text("  Fahrerkarte ansehen")
