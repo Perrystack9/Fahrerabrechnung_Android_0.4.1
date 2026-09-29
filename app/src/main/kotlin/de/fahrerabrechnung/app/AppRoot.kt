@@ -229,7 +229,7 @@ fun AppRoot(
             }
             composable(DetailRoutes.CARD_SNAPSHOTS) {
                 if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
-                    CardSnapshotHistoryScreen(padding, cardActivityImports)
+                    CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports)
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
