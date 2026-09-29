@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #18, mit Fahrzeug-Teilimport-Übersicht in PR #19.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 28.09.2026; technischer Bezugsstand: `main` nach PR #19, mit alter Aktivitäts-Vorschau in PR #20.** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **explizit speicherbaren Aktivitäts- und Fahrzeug-Teilimporten**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md).
 
@@ -22,6 +22,7 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 - PR #17: Gespeicherte Aktivitäts-Snapshots sind für eine spätere read-only Teilimport-Übersicht nach Speicherzeit abrufbar. Noch keine neue Oberfläche oder vollständige Importhistorie.
 - PR #18: Eine read-only Ansicht listet ausdrücklich gespeicherte Aktivitäts-Snapshots mit Speicherzeit, Kartengeneration und Datensatzanzahl; Kartennummern sind maskiert. Der Lesetest allein erzeugt keinen Eintrag.
 - PR #19: Dieselbe Übersicht zeigt Fahrzeug-Snapshots separat mit Speicherzeit, Kartengeneration, Nutzungsanzahl und maskierter Kartennummer. Aktivitäts- und Fahrzeugdateien werden nicht künstlich zu einem vollständigen Import zusammengezogen.
+- PR #20: Ein ausdrücklich gespeicherter älterer Aktivitäts-Snapshot kann in der bestehenden Kartentag-Zeitleiste als Vorschau geöffnet werden; der Wechsel zurück zum zuletzt gespeicherten Stand ist möglich. Es entsteht dadurch kein neuer Import.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
 **Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst die jeweiligen zusätzlichen Knöpfe speichern Aktivitäts- oder Fahrzeugdatei lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.

@@ -34,6 +34,7 @@ import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
+import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.CardVehicleUse
 import de.fahrerabrechnung.data.card.CardVehiclesParser
 import de.fahrerabrechnung.data.card.CardReadResult
@@ -70,6 +71,8 @@ class CardPermissionReceiver : BroadcastReceiver() {
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
                            vehicleImports: CardVehicleImportRepository? = null,
+                           previewSnapshot: SavedCardActivity? = null,
+                           onShowLatestSnapshot: () -> Unit = {},
                            onOpenSnapshots: () -> Unit = {},
                            onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
     val context = LocalContext.current
@@ -93,14 +96,14 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var activitySavedForRead by remember { mutableStateOf(false) }
     var vehicleSavedForRead by remember { mutableStateOf(false) }
 
-    LaunchedEffect(imports) {
+    LaunchedEffect(imports, previewSnapshot) {
         if (imports != null) try {
-            imports.latest()?.let { saved ->
+            (previewSnapshot ?: imports.latest())?.let { saved ->
                 displayZone = ZoneId.systemDefault()
                 localDays = CardDayTimeline.build(CardActivityParser.parse(saved.file), displayZone)
                 activityCardNumber = saved.cardNumber
                 selectedDay = localDays.lastIndex.coerceAtLeast(0)
-                savedStatus = "Gespeicherter Aktivitäts-Teilimport: ${saved.dayCount} Tagesdatensätze (${saved.generation.label()})."
+                savedStatus = "${if (previewSnapshot != null) "Ausgewählter" else "Gespeicherter"} Aktivitäts-Teilimport: ${saved.dayCount} Tagesdatensätze (${saved.generation.label()})."
             }
         } catch (_: Exception) {
             savedStatus = "Gespeicherte Aktivitätsdaten konnten nicht geöffnet werden."
@@ -245,6 +248,9 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             }
             if (imports != null) OutlinedButton(onClick = onOpenSnapshots) {
                 Text("Gespeicherte Teilimporte ansehen")
+            }
+            if (previewSnapshot != null) OutlinedButton(onClick = onShowLatestSnapshot) {
+                Text("Neueste gespeicherte Vorschau zeigen")
             }
             if (pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {
