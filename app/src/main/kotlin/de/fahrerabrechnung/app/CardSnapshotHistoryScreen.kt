@@ -84,6 +84,14 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                     style = MaterialTheme.typography.titleMedium)
                 Text("Gespeichert: ${Instant.ofEpochMilli(saved.importedAtEpochMillis).atZone(zone).format(formatter)}")
                 Text("${saved.uses.size} Nutzungsdatensätze")
+                if (saved.uses.isNotEmpty()) {
+                    val first = saved.uses.minOf { it.firstUseUtc }.atZone(zone).format(formatter)
+                    val last = saved.uses.maxOf { it.lastUseUtc ?: it.firstUseUtc }.atZone(zone).format(formatter)
+                    Text("Belegte Fahrzeugnutzungen: $first – $last")
+                    if (saved.uses.any { it.lastUseUtc == null })
+                        Text("Mindestens ein Nutzungsende ist in der Quelle offen.",
+                            style = MaterialTheme.typography.bodySmall)
+                }
                 Text("Fahrerkarte: ${maskCardNumber(saved.cardNumber)}",
                     style = MaterialTheme.typography.bodySmall)
             }
