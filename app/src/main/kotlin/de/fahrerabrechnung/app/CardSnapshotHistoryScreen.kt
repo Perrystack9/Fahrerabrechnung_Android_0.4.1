@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import de.fahrerabrechnung.core.design.SectionCard
+import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
@@ -64,6 +65,10 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                     style = MaterialTheme.typography.titleMedium)
                 Text("Gespeichert: ${Instant.ofEpochMilli(saved.importedAtEpochMillis).atZone(zone).format(formatter)}")
                 Text("${saved.dayCount} Tagesdatensätze")
+                val recordDates = remember(saved) { CardActivityParser.parse(saved.file).map { it.recordDateUtc } }
+                if (recordDates.isNotEmpty()) {
+                    Text("Kartentage: ${recordDates.min().atZone(zone).toLocalDate()} – ${recordDates.max().atZone(zone).toLocalDate()}")
+                }
                 Text("Fahrerkarte: ${maskCardNumber(saved.cardNumber)}",
                     style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { onPreviewActivity(saved) }) {
@@ -87,4 +92,4 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
 }
 
 internal fun maskCardNumber(number: String): String =
-    "••••${number.takeLast(4)}"
+    if (number.length > 4) "••••${number.takeLast(4)}" else "••••"
