@@ -106,6 +106,27 @@ class EncryptedDatabaseInstrumentedTest {
     }
 
     @Test
+    fun activitySnapshotsAreListedNewestFirstAfterEncryptedReopen() = runBlocking {
+        val older = CardActivityImportEntity(
+            id = "older", cardNumber = "test-card", generation = "GEN2",
+            oldestDayOffset = 0, newestDayOffset = 0,
+            dailyRecords = byteArrayOf(1), dayCount = 1, importedAtEpochMillis = 100L,
+        )
+        val newer = older.copy(id = "newer", importedAtEpochMillis = 200L,
+            dailyRecords = byteArrayOf(2))
+        db.cardActivityImportDao().insert(older)
+        db.cardActivityImportDao().insert(newer)
+        db.close()
+
+        val reopened = EncryptedDatabaseFactory.create(context, correctPassphrase)
+        try {
+            assertEquals(listOf("newer", "older"), reopened.cardActivityImportDao().all().map { it.id })
+        } finally {
+            reopened.close()
+        }
+    }
+
+    @Test
     fun vehicleSnapshotSurvivesEncryptedReopenAndDuplicateIsIgnored() = runBlocking {
         val snapshot = CardVehicleImportEntity(
             id = "same-vehicle-source", cardNumber = "test-card", generation = "GEN2V2",
