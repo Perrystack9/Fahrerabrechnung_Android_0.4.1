@@ -35,6 +35,7 @@ import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
+import de.fahrerabrechnung.data.card.SavedCardVehicles
 import de.fahrerabrechnung.data.card.CardVehicleUse
 import de.fahrerabrechnung.data.card.CardVehiclesParser
 import de.fahrerabrechnung.data.card.CardReadResult
@@ -73,6 +74,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                            vehicleImports: CardVehicleImportRepository? = null,
                            previewSnapshot: SavedCardActivity? = null,
                            onShowLatestSnapshot: () -> Unit = {},
+                           previewVehicleSnapshot: SavedCardVehicles? = null,
+                           onShowLatestVehicleSnapshot: () -> Unit = {},
                            onOpenSnapshots: () -> Unit = {},
                            onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
     val context = LocalContext.current
@@ -110,12 +113,12 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
     }
 
-    LaunchedEffect(vehicleImports) {
+    LaunchedEffect(vehicleImports, previewVehicleSnapshot) {
         if (vehicleImports != null) try {
-            vehicleImports.latest()?.let { saved ->
+            (previewVehicleSnapshot ?: vehicleImports.latest())?.let { saved ->
                 vehicleUses = saved.uses
                 vehicleCardNumber = saved.cardNumber
-                savedVehicleStatus = "Gespeicherter Fahrzeug-Teilimport: ${saved.uses.size} Nutzungsdatensätze."
+                savedVehicleStatus = "${if (previewVehicleSnapshot != null) "Ausgewählter" else "Gespeicherter"} Fahrzeug-Teilimport: ${saved.uses.size} Nutzungsdatensätze."
             }
         } catch (_: Exception) {
             savedVehicleStatus = "Gespeicherte Fahrzeugdaten konnten nicht geöffnet werden."
@@ -251,6 +254,9 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             }
             if (previewSnapshot != null) OutlinedButton(onClick = onShowLatestSnapshot) {
                 Text("Neueste gespeicherte Vorschau zeigen")
+            }
+            if (previewVehicleSnapshot != null) OutlinedButton(onClick = onShowLatestVehicleSnapshot) {
+                Text("Neueste gespeicherte Fahrzeugdatei zeigen")
             }
             if (pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {
