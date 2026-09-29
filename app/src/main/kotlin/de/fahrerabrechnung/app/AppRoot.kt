@@ -44,6 +44,7 @@ import de.fahrerabrechnung.core.design.AppScaffold
 import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
+import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
@@ -87,6 +88,9 @@ fun AppRoot(
     var vehicleHistoryQuery by rememberSaveable { mutableStateOf("") }
     var vehicleHistoryUseStart by rememberSaveable { mutableStateOf<Long?>(null) }
     var vehicleHistoryNation by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedActivitySnapshot by androidx.compose.runtime.remember {
+        mutableStateOf<SavedCardActivity?>(null)
+    }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
@@ -219,6 +223,8 @@ fun AppRoot(
             composable(DetailRoutes.CARD_IMPORT) {
                 if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
+                    previewSnapshot = selectedActivitySnapshot,
+                    onShowLatestSnapshot = { selectedActivitySnapshot = null },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
                         vehicleHistoryQuery = query.orEmpty()
@@ -229,7 +235,11 @@ fun AppRoot(
             }
             composable(DetailRoutes.CARD_SNAPSHOTS) {
                 if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
-                    CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports)
+                    CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports,
+                        onPreviewActivity = { saved ->
+                            selectedActivitySnapshot = saved
+                            navController.popBackStack()
+                        })
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)

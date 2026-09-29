@@ -2,6 +2,7 @@ package de.fahrerabrechnung.app
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +24,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                                        activities: CardActivityImportRepository?,
-                                       vehicles: CardVehicleImportRepository?) {
+                                       vehicles: CardVehicleImportRepository?,
+                                       onPreviewActivity: (SavedCardActivity) -> Unit = {}) {
     var snapshots by remember { mutableStateOf<List<SavedCardActivity>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Aktivitätsdateien …") }
     var vehicleSnapshots by remember { mutableStateOf<List<SavedCardVehicles>>(emptyList()) }
@@ -64,6 +66,9 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                 Text("${saved.dayCount} Tagesdatensätze")
                 Text("Fahrerkarte: ${maskCardNumber(saved.cardNumber)}",
                     style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = { onPreviewActivity(saved) }) {
+                    Text("Kartentage als Vorschau öffnen")
+                }
             }
         }
         Text("Fahrzeugdateien", style = MaterialTheme.typography.titleMedium)
