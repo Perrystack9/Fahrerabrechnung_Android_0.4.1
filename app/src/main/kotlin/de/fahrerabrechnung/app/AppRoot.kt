@@ -229,6 +229,8 @@ fun AppRoot(
                     padding, cardActivityImports, cardVehicleImports,
                     previewSnapshot = selectedActivitySnapshot,
                     onShowLatestSnapshot = { selectedActivitySnapshot = null },
+                    previewVehicleSnapshot = selectedVehicleSnapshot,
+                    onShowLatestVehicleSnapshot = { selectedVehicleSnapshot = null },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
                         selectedVehicleSnapshot = null
@@ -251,6 +253,11 @@ fun AppRoot(
                             vehicleHistoryUseStart = null
                             vehicleHistoryNation = null
                             navController.navigate(DetailRoutes.VEHICLE_DETAIL)
+                        },
+                        onPreviewVehicleDay = { saved ->
+                            selectedVehicleSnapshot = saved
+                            selectedActivitySnapshot = null
+                            navController.popBackStack()
                         })
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {

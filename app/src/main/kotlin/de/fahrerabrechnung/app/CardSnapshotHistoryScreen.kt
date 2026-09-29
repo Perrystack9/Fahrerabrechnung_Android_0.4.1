@@ -27,7 +27,8 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                                        activities: CardActivityImportRepository?,
                                        vehicles: CardVehicleImportRepository?,
                                        onPreviewActivity: (SavedCardActivity) -> Unit = {},
-                                       onPreviewVehicle: (SavedCardVehicles) -> Unit = {}) {
+                                       onPreviewVehicle: (SavedCardVehicles) -> Unit = {},
+                                       onPreviewVehicleDay: (SavedCardVehicles) -> Unit = {}) {
     var snapshots by remember { mutableStateOf<List<SavedCardActivity>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Aktivitätsdateien …") }
     var vehicleSnapshots by remember { mutableStateOf<List<SavedCardVehicles>>(emptyList()) }
@@ -97,6 +98,9 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                     style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { onPreviewVehicle(saved) }) {
                     Text("Fahrzeuge dieser Datei ansehen")
+                }
+                OutlinedButton(onClick = { onPreviewVehicleDay(saved) }) {
+                    Text("Nutzungen im Kartentag ansehen")
                 }
             }
         }
