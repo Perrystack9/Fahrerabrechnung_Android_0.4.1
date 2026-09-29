@@ -28,6 +28,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -53,6 +54,7 @@ import de.fahrerabrechnung.feature.detail.DayReportScreen
 import de.fahrerabrechnung.feature.detail.SettingsSubpagePlaceholderScreen
 import de.fahrerabrechnung.feature.payroll.PayrollScreen
 import de.fahrerabrechnung.feature.settings.SettingsScreen
+import de.fahrerabrechnung.feature.start.CardFilesStatus
 import de.fahrerabrechnung.feature.start.StartScreen
 
 private enum class TopLevelDestination(val route: String, val label: String, val icon: ImageVector) {
@@ -95,6 +97,7 @@ fun AppRoot(
     var selectedVehicleSnapshot by androidx.compose.runtime.remember {
         mutableStateOf<SavedCardVehicles?>(null)
     }
+    var cardFilesStatus by androidx.compose.runtime.remember { mutableStateOf(CardFilesStatus.CHECKING) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
@@ -102,6 +105,24 @@ fun AppRoot(
     val visibleRoute = rememberUpdatedState(currentRoute)
     // Keep each tab's scroll position alive while its outgoing NavHost content is hidden.
     val tabScrollStates = TopLevelDestination.entries.associate { it.route to rememberScrollState() }
+    LaunchedEffect(currentRoute, cardActivityImports, cardVehicleImports) {
+        if (currentRoute == TopLevelDestination.START.route) {
+            cardFilesStatus = CardFilesStatus.CHECKING
+            cardFilesStatus = try {
+                if (cardActivityImports == null || cardVehicleImports == null) CardFilesStatus.ERROR
+                else {
+                    val activity = cardActivityImports.latest() != null
+                    val vehicle = cardVehicleImports.latest() != null
+                    when {
+                        activity && vehicle -> CardFilesStatus.BOTH
+                        activity -> CardFilesStatus.ACTIVITY
+                        vehicle -> CardFilesStatus.VEHICLE
+                        else -> CardFilesStatus.NONE
+                    }
+                }
+            } catch (_: Exception) { CardFilesStatus.ERROR }
+        }
+    }
     val topLevel = TopLevelDestination.entries.firstOrNull { it.route == currentRoute }
     val title = if (topLevel == TopLevelDestination.START) FahrerBrand.NAME else topLevel?.label ?: when (currentRoute) {
         DetailRoutes.ONBOARDING -> FahrerBrand.NAME
@@ -168,7 +189,9 @@ fun AppRoot(
             composable(TopLevelDestination.START.route) {
                 if (visibleRoute.value == TopLevelDestination.START.route) {
                     CompositionLocalProvider(LocalScreenScrollState provides tabScrollStates.getValue(TopLevelDestination.START.route)) {
-                        StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) }, onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) })
+                        StartScreen(padding, onOpenCardImport = { navController.navigate(DetailRoutes.CARD_IMPORT) },
+                            onOpenOnboarding = { navController.navigate(DetailRoutes.ONBOARDING) },
+                            cardFilesStatus = cardFilesStatus)
                     }
                 }
             }

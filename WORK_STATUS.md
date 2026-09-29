@@ -1,6 +1,6 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 28.09.2026 · technischer Bezugsstand: `main` nach PR #19, mit alter Aktivitäts-Vorschau in PR #20.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 29.09.2026 · technischer Bezugsstand: PR #25.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 ## Nachweislich umgesetzt
 
@@ -14,7 +14,7 @@
 | Kartentag-UI | PR #7 zeigt eine kompakte Tagesübersicht und zoombare/verschiebbare Detailansicht mit auswählbaren Abschnitten, Start/Ende/Dauer und Zeitmarke. Die lange Abschnittsliste bleibt zuschaltbar. |
 | Aktivitäts-Teilimport | PR #9 ergänzt ausdrücklich ausgelöstes Speichern der vollständigen Aktivitätsdatei in Room/SQLCipher, Wiederöffnung der jüngsten gespeicherten Vorschau und Deduplizierung identischer Snapshots. Schema-Migration 1 → 2; keine automatische Speicherung durch den Lesetest. |
 | Fahrzeug-Teilimport | PR #10 liest `EF Vehicles_Used` vollständig nach der auf der Karte angegebenen Anzahl, dekodiert den zyklischen Gen1-/Gen2-Datensatz und speichert nach gesonderter Bestätigung einen verschlüsselten Snapshot. Quellvorschau mit Kennzeichen, Zeit und Kilometerständen; Migration 2 → 3. Echter Gen2V2-Test: 69 Nutzungen nach Wiederöffnung ohne Karte sichtbar. |
-| Fahrzeug im Kartentag | PR #11 zeigt belegte Fahrzeug-Zeitfenster und den tatsächlichen Nutzungsbeginn über der Aktivitäts-Zeitleiste, sofern die Snapshots zur selben Karte gehören. Offene Enden werden nicht fortgeschrieben; Fahrzeug zur Zeitmarke nur bei genau einem passenden Intervall. Noch keine Fahrzeughistorie. |
+| Fahrzeug im Kartentag | PR #11 zeigt belegte Fahrzeug-Zeitfenster und den tatsächlichen Nutzungsbeginn über der Aktivitäts-Zeitleiste, sofern die Snapshots zur selben Karte gehören. Offene Enden werden nicht fortgeschrieben; Fahrzeug zur Zeitmarke nur bei genau einem passenden Intervall. Die Fahrzeughistorie folgte in PR #12. |
 | Fahrzeughistorien-Vorschau | PR #12 gruppiert alle gespeicherten Fahrzeug-Snapshots nach gültiger VIN oder Staat/Kennzeichen, entfernt wiederholte Nutzungen und zeigt erste/letzte Belegzeit sowie einzelne Karten- und Tacho-Quellwerte. Keine berechneten Gesamtkilometer, Arbeitstage oder fahrzeugbezogene Arbeitszeiten. |
 | Fahrzeughistorie bedienen | PR #13 ergänzt die Suche nach Kennzeichen/VIN und zeigt die Nutzungen in nachladbaren Zehnerschritten. Die Quellwerte werden nicht neu berechnet. |
 | Quellzeiten am Kartentag | PR #14 summiert die belegten Abschnitte nach Tätigkeit bei eingelegter Karte und zeigt Karteneinträge ohne Karte sowie unbelegte Zeit separat. Keine fachliche Arbeits-, Ruhe- oder Abrechnungsberechnung. |
@@ -24,6 +24,9 @@
 | Aktivitäts-Teilimport-Übersicht | PR #18 zeigt nur ausdrücklich gespeicherte Aktivitäts-Snapshots nach Speicherzeit, Kartengeneration und Datensatzanzahl an; Kartennummern sind maskiert. Noch keine vollständige Importhistorie. |
 | Fahrzeug-Teilimport-Übersicht | PR #19 zeigt die separat gespeicherten Fahrzeug-Snapshots mit Speicherzeit, Generation und Nutzungsanzahl. Keine fiktive Kopplung beider Dateien zu einem vollständigen Import. |
 | Älteren Snapshot ansehen | PR #20 öffnet einen ausdrücklich gespeicherten Aktivitäts-Snapshot in der bestehenden Kartentag-Vorschau und erlaubt die Rückkehr zum jüngsten Stand. Nur read-only, kein erneuter Import. |
+| Gespeicherte Dateizeiträume | PR #21–#22 zeigen die belegten Kartentage sowie erste/letzte Fahrzeugnutzung je Snapshot, ohne offene Enden zu erfinden. Kurze Kartennummern sind vollständig maskiert. |
+| Einzelne Fahrzeugdatei ansehen | PR #23–#24 öffnen eine ausdrücklich ausgewählte Fahrzeugdatei in ihrer eigenen Historien- oder Kartentag-Vorschau; sie ist kein vollständiger Import. Drei Fahrzeuge aus 69 Nutzungen wurden am Gerät geprüft. |
+| Startseitenstatus | PR #25 unterscheidet noch fehlende, gespeicherte und nicht prüfbare Teilimporte; die Fachauswertung bleibt offen. Gerätetest folgt nach CI. |
 | Technische Basis | Fünf Haupttabs, Room/SQLCipher-/Keystore-Basis, DataStore, Debug-/Internal-Builds und CI vorhanden. |
 
 Die echte Kartenprobe mit USB-CCID, APDU, Kartenerkennung, vollständiger Aktivitätsdatei und Vorschau **hat bereits stattgefunden**. Der früher hier angekündigte „nächste Hardwaretest“ ist erledigt. Die Probe belegt den getesteten Leser und die getestete Gen2V2-Karte, nicht jede Karten-/Leserkombination.
@@ -41,6 +44,6 @@ Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspei
 
 ## Verifikation
 
-Der [CI-Lauf zu PR #9](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36433505151) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation und Room/SQLCipher-/Compose-Emulatortests. Aktivitäts- und Fahrzeug-Speichervorgang wurden auf dem Galaxy S23 mit echter Fahrerkarte und Wiederöffnung ohne Karte bestätigt. PR #10 bestand Build, Unit-Tests, Lint und APK-Prüfung; sein Emulatorjob scheiterte vor App-Tests am fehlenden `/dev/kvm` des GitHub-Runners.
+Der [CI-Lauf zu PR #24](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36528989882) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room/SQLCipher-/Compose-Emulatortests nach einem Runner-Neustart wegen fehlendem `/dev/kvm`. Auf dem Galaxy S23 wurden verschlüsselte Aktivitäts- und Fahrzeug-Teilimporte nach Entfernen der Karte und App-Neustart sowie die getrennte Fahrzeugvorschau geprüft. Der Startseitenstatus aus PR #25 ist noch am Gerät zu bestätigen.
 
 Die Berichte vom 22.09.2026 beschreiben frühere, inzwischen behobene Build-/Zugriffsblockaden und sind nur historische Nachweise.
