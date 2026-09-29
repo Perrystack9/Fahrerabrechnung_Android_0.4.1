@@ -70,6 +70,7 @@ class CardPermissionReceiver : BroadcastReceiver() {
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
                            vehicleImports: CardVehicleImportRepository? = null,
+                           onOpenSnapshots: () -> Unit = {},
                            onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
@@ -241,6 +242,9 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             }
             Button(enabled = !busy, onClick = { startCheck(true) }) {
                 Text(if (busy) "Lesen läuft …" else "Kartendaten testen")
+            }
+            if (imports != null) OutlinedButton(onClick = onOpenSnapshots) {
+                Text("Gespeicherte Teilimporte ansehen")
             }
             if (pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {

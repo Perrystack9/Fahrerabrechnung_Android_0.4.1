@@ -67,6 +67,7 @@ private object DetailRoutes {
     const val ONBOARDING = "onboarding"
     const val DAY_REPORT = "day_report"
     const val CARD_IMPORT = "card_import"
+    const val CARD_SNAPSHOTS = "card_snapshots"
     const val VEHICLE_DETAIL = "vehicle_detail"
     const val SETTINGS_SUBPAGE = "settings_subpage"
 }
@@ -98,6 +99,7 @@ fun AppRoot(
         DetailRoutes.ONBOARDING -> FahrerBrand.NAME
         DetailRoutes.DAY_REPORT -> "Tagesübersicht"
         DetailRoutes.CARD_IMPORT -> "Fahrerkarte"
+        DetailRoutes.CARD_SNAPSHOTS -> "Gespeicherte Dateien"
         DetailRoutes.VEHICLE_DETAIL -> "Fahrzeug"
         DetailRoutes.SETTINGS_SUBPAGE -> settingsTitle
         else -> FahrerBrand.NAME
@@ -217,12 +219,17 @@ fun AppRoot(
             composable(DetailRoutes.CARD_IMPORT) {
                 if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
+                    onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
                         vehicleHistoryNation = nation
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     })
+            }
+            composable(DetailRoutes.CARD_SNAPSHOTS) {
+                if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
+                    CardSnapshotHistoryScreen(padding, cardActivityImports)
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
