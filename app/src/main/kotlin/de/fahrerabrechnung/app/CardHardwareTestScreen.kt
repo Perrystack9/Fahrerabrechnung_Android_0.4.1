@@ -33,6 +33,8 @@ import de.fahrerabrechnung.data.card.CardDiagnostic
 import de.fahrerabrechnung.data.card.CardDiagnosticProbe
 import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardSourcePairRepository
+import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
@@ -68,10 +70,13 @@ class CardPermissionReceiver : BroadcastReceiver() {
     }
 }
 
-/** Reader diagnostics and explicit, separately saved card source files. */
+/** Reader diagnostics and explicitly saved card source files. */
 @Composable
 fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRepository? = null,
                            vehicleImports: CardVehicleImportRepository? = null,
+                           sourcePairs: CardSourcePairRepository? = null,
+                           previewPair: SavedCardSourcePair? = null,
+                           onShowLatestPair: () -> Unit = {},
                            previewSnapshot: SavedCardActivity? = null,
                            onShowLatestSnapshot: () -> Unit = {},
                            previewVehicleSnapshot: SavedCardVehicles? = null,
@@ -96,6 +101,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var vehicleUses by remember { mutableStateOf<List<CardVehicleUse>>(emptyList()) }
     var activityCardNumber by remember { mutableStateOf<String?>(null) }
     var vehicleCardNumber by remember { mutableStateOf<String?>(null) }
+    var pairStatus by remember { mutableStateOf<String?>(null) }
+    var showPairSource by remember(previewPair) { mutableStateOf(previewPair != null) }
     var activitySavedForRead by remember { mutableStateOf(false) }
     var vehicleSavedForRead by remember { mutableStateOf(false) }
 
@@ -189,6 +196,12 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     fun startCheck(fullRead: Boolean) {
         pendingFullRead = fullRead
         if (fullRead) {
+            showPairSource = false
+            pairStatus = null
+            savedStatus = null
+            savedVehicleStatus = null
+            vehicleUses = emptyList()
+            vehicleCardNumber = null
             pendingRead = null
             activitySavedForRead = false
             vehicleSavedForRead = false
@@ -224,7 +237,10 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     activitySavedForRead = false
                     vehicleSavedForRead = false
                     localDays = emptyList()
-                    message = "Kartenleser entfernt."
+                    vehicleUses = emptyList()
+                    vehicleCardNumber = null
+                    showPairSource = false
+                    message = "Kartenleser entfernt. Gespeicherte Teilimporte bleiben unter Gespeicherte Dateien verfügbar."
                 }
             }
         }
@@ -241,7 +257,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Der Kartendatentest liest Aktivitäts- und Fahrzeugdatei zunächst im Arbeitsspeicher. Jede Datei wird nur nach ausdrücklicher Auswahl verschlüsselt lokal gespeichert. Weitere Kartendateien fehlen noch.",
+            Text("Der Kartendatentest liest Aktivitäts- und Fahrzeugdatei zunächst im Arbeitsspeicher. Du kannst beide Dateien gemeinsam oder einzeln ausdrücklich verschlüsselt lokal speichern. Weitere Kartendateien fehlen noch.",
                 style = MaterialTheme.typography.bodyMedium)
             Button(enabled = !busy, onClick = { startCheck(false) }) {
                 Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
@@ -252,11 +268,33 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             if (imports != null) OutlinedButton(onClick = onOpenSnapshots) {
                 Text("Gespeicherte Teilimporte ansehen")
             }
-            if (previewSnapshot != null) OutlinedButton(onClick = onShowLatestSnapshot) {
+            if (showPairSource) {
+                Text("Gemeinsam gespeicherte Vorschau: Beide Dateien stammen aus demselben Lesevorgang.")
+                OutlinedButton(onClick = onShowLatestPair) { Text("Neueste einzelne Dateien zeigen") }
+            }
+            if (previewSnapshot != null && !showPairSource) OutlinedButton(onClick = onShowLatestSnapshot) {
                 Text("Neueste gespeicherte Vorschau zeigen")
             }
-            if (previewVehicleSnapshot != null) OutlinedButton(onClick = onShowLatestVehicleSnapshot) {
+            if (previewVehicleSnapshot != null && !showPairSource) OutlinedButton(onClick = onShowLatestVehicleSnapshot) {
                 Text("Neueste gespeicherte Fahrzeugdatei zeigen")
+            }
+            if (pendingRead?.vehicles != null && vehicleUses.isNotEmpty() && sourcePairs != null) {
+                Button(enabled = !busy, onClick = {
+                    val read = pendingRead ?: return@Button
+                    busy = true
+                    scope.launch {
+                        try {
+                            val inserted = sourcePairs.save(read)
+                            pairStatus = if (inserted) "Beide Dateien gemeinsam verschlüsselt gespeichert."
+                                else "Diese beiden Dateien sind bereits gemeinsam gespeichert."
+                            activitySavedForRead = true
+                            vehicleSavedForRead = true
+                            pendingRead = null
+                        } catch (_: Exception) {
+                            pairStatus = "Gemeinsames Speichern fehlgeschlagen. Es wurde nichts teilweise gespeichert; du kannst es erneut versuchen."
+                        } finally { busy = false }
+                    }
+                }) { Text("Beide Dateien gemeinsam speichern") }
             }
             if (pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {
@@ -297,6 +335,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     }
                 }) { Text("Fahrzeugdaten lokal speichern") }
             }
+            pairStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             activityStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             vehicleStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             savedStatus?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }

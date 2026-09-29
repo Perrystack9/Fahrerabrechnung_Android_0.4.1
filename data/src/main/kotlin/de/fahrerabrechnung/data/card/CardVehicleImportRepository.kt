@@ -15,9 +15,12 @@ class CardVehicleImportRepository @Inject constructor(
     private val dao: CardVehicleImportDao,
     private val clock: Clock,
 ) {
-    suspend fun save(result: CardReadResult): Boolean {
+    suspend fun save(result: CardReadResult): Boolean = dao.insert(prepare(result)) != -1L
+
+    internal fun prepare(result: CardReadResult, savedAt: Long = clock.millis()): CardVehicleImportEntity {
         require(result.recognition == CardRecognition.DRIVER && result.card != null && result.vehicles != null)
         val file = result.vehicles
+        require(file.generation == result.generation)
         val uses = CardVehiclesParser.parse(file)
         require(uses.isNotEmpty())
         val id = MessageDigest.getInstance("SHA-256").apply {
@@ -28,7 +31,7 @@ class CardVehicleImportRepository @Inject constructor(
             update(ByteBuffer.allocate(8).putInt(file.newestRecordIndex).putInt(file.recordCount).array())
             update(file.records)
         }.digest().joinToString("") { "%02x".format(it) }
-        return dao.insert(CardVehicleImportEntity(
+        return CardVehicleImportEntity(
             id = id,
             cardNumber = result.card.card.number,
             generation = result.generation.name,
@@ -36,15 +39,15 @@ class CardVehicleImportRepository @Inject constructor(
             recordCount = file.recordCount,
             records = file.records.copyOf(),
             useCount = uses.size,
-            importedAtEpochMillis = clock.millis(),
-        )) != -1L
+            importedAtEpochMillis = savedAt,
+        )
     }
 
     suspend fun latest(): SavedCardVehicles? = dao.latest()?.let(::decode)
 
     suspend fun all(): List<SavedCardVehicles> = dao.all().map(::decode)
 
-    private fun decode(entity: CardVehicleImportEntity): SavedCardVehicles {
+    internal fun decode(entity: CardVehicleImportEntity): SavedCardVehicles {
         val file = CardVehiclesFile(entity.newestRecordIndex, entity.recordCount,
             CardGeneration.valueOf(entity.generation), entity.records)
         val uses = CardVehiclesParser.parse(file)

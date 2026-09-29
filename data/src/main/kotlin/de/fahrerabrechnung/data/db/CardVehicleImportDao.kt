@@ -7,6 +7,9 @@ import androidx.room.Query
 
 @Dao
 interface CardVehicleImportDao {
+    @Query("SELECT * FROM card_vehicle_imports WHERE id = :id")
+    suspend fun getById(id: String): CardVehicleImportEntity?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(snapshot: CardVehicleImportEntity): Long
 
