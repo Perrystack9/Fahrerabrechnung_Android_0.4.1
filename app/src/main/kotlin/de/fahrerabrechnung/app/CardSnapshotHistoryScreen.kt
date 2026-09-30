@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.data.card.CardActivityParser
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardSourcePairRepository
+import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
@@ -26,15 +28,29 @@ import java.time.format.DateTimeFormatter
 internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                                        activities: CardActivityImportRepository?,
                                        vehicles: CardVehicleImportRepository?,
+                                       pairs: CardSourcePairRepository? = null,
+                                       onPreviewPair: (SavedCardSourcePair) -> Unit = {},
                                        onPreviewActivity: (SavedCardActivity) -> Unit = {},
                                        onPreviewVehicle: (SavedCardVehicles) -> Unit = {},
                                        onPreviewVehicleDay: (SavedCardVehicles) -> Unit = {}) {
+    var sourcePairs by remember { mutableStateOf<List<SavedCardSourcePair>>(emptyList()) }
+    var pairStatus by remember { mutableStateOf("Lade gemeinsam gespeicherte Dateien …") }
     var snapshots by remember { mutableStateOf<List<SavedCardActivity>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Aktivitätsdateien …") }
     var vehicleSnapshots by remember { mutableStateOf<List<SavedCardVehicles>>(emptyList()) }
     var vehicleStatus by remember { mutableStateOf("Lade gespeicherte Fahrzeugdateien …") }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
+    LaunchedEffect(pairs) {
+        try {
+            sourcePairs = pairs?.all().orEmpty()
+            pairStatus = if (sourcePairs.isEmpty()) "Noch keine Dateien gemeinsam gespeichert."
+                else "${sourcePairs.size} gemeinsam gespeicherte Dateipaare."
+        } catch (_: Exception) {
+            sourcePairs = emptyList()
+            pairStatus = "Gemeinsam gespeicherte Dateien konnten nicht geöffnet werden."
+        }
+    }
     LaunchedEffect(activities) {
         try {
             snapshots = activities?.all().orEmpty()
@@ -59,6 +75,22 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
         Text("Gespeicherte Teilimporte · Vorschau", style = MaterialTheme.typography.titleLarge)
         Text("Hier stehen nur ausdrücklich gespeicherte Fahrerkarten-Dateien. Der Lesetest allein speichert nichts; ein vollständiger Kartenimport ist noch nicht vorhanden.",
             style = MaterialTheme.typography.bodyMedium)
+        Text("Gemeinsam gespeicherte Dateien", style = MaterialTheme.typography.titleMedium)
+        Text(pairStatus)
+        Text("Nur ausdrücklich gemeinsam gespeicherte Dateien aus demselben Lesevorgang stehen hier. Ältere einzelne Dateien werden nicht nachträglich zugeordnet.",
+            style = MaterialTheme.typography.bodySmall)
+        sourcePairs.forEach { saved ->
+            SectionCard {
+                Text("Aktivität + Fahrzeuge · ${saved.activity.generation.name}",
+                    style = MaterialTheme.typography.titleMedium)
+                Text("Gemeinsam gespeichert: ${Instant.ofEpochMilli(saved.savedAtEpochMillis).atZone(zone).format(formatter)}")
+                Text("${saved.activity.dayCount} Tagesdatensätze · ${saved.vehicles.uses.size} Fahrzeugnutzungen")
+                Text("Fahrerkarte: ${maskCardNumber(saved.activity.cardNumber)}")
+                OutlinedButton(onClick = { onPreviewPair(saved) }) { Text("Gemeinsame Vorschau öffnen") }
+            }
+        }
+        Text("Einzeldateien bleiben auch unten verfügbar; identische Dateien werden nur einmal gespeichert.",
+            style = MaterialTheme.typography.bodySmall)
         Text("Aktivitätsdateien", style = MaterialTheme.typography.titleMedium)
         Text(status)
         snapshots.forEach { saved ->

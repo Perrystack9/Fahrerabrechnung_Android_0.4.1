@@ -1,6 +1,6 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 29.09.2026 · technischer Bezugsstand: PR #25.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 29.09.2026 · technischer Bezugsstand: gemeinsame Quelldatei-Speicherung nach PR #25.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 ## Nachweislich umgesetzt
 
@@ -26,24 +26,25 @@
 | Älteren Snapshot ansehen | PR #20 öffnet einen ausdrücklich gespeicherten Aktivitäts-Snapshot in der bestehenden Kartentag-Vorschau und erlaubt die Rückkehr zum jüngsten Stand. Nur read-only, kein erneuter Import. |
 | Gespeicherte Dateizeiträume | PR #21–#22 zeigen die belegten Kartentage sowie erste/letzte Fahrzeugnutzung je Snapshot, ohne offene Enden zu erfinden. Kurze Kartennummern sind vollständig maskiert. |
 | Einzelne Fahrzeugdatei ansehen | PR #23–#24 öffnen eine ausdrücklich ausgewählte Fahrzeugdatei in ihrer eigenen Historien- oder Kartentag-Vorschau; sie ist kein vollständiger Import. Drei Fahrzeuge aus 69 Nutzungen wurden am Gerät geprüft. |
-| Startseitenstatus | PR #25 unterscheidet noch fehlende, gespeicherte und nicht prüfbare Teilimporte; die Fachauswertung bleibt offen. Gerätetest folgt nach CI. |
+| Startseitenstatus | PR #25 unterscheidet noch fehlende, gespeicherte und nicht prüfbare Teilimporte; die Fachauswertung bleibt offen. Am Gerät bestätigt. |
+| Gemeinsam gespeicherte Quellen | Beide validierten Dateien aus demselben Lesevorgang können ausdrücklich in einer Transaktion gespeichert werden. Die Zuordnung verweist auf die unveränderten deduplizierten Quellen. Gemeinsame Vorschau aus der Dateiübersicht; additive Migration 3 → 4. Alte Einzeldateien bleiben ohne erfundene Zuordnung erhalten. |
 | Technische Basis | Fünf Haupttabs, Room/SQLCipher-/Keystore-Basis, DataStore, Debug-/Internal-Builds und CI vorhanden. |
 
 Die echte Kartenprobe mit USB-CCID, APDU, Kartenerkennung, vollständiger Aktivitätsdatei und Vorschau **hat bereits stattgefunden**. Der früher hier angekündigte „nächste Hardwaretest“ ist erledigt. Die Probe belegt den getesteten Leser und die getestete Gen2V2-Karte, nicht jede Karten-/Leserkombination.
 
 ## Test-/Preview-Grenze
 
-Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspeicher. Gesonderte Knöpfe persistieren die Aktivitäts- und Fahrzeugdatei als verschlüsselte Teilimporte. Die Zeitleiste kann aus passenden gespeicherten Aktivitäts- und Fahrzeugdaten auch nach einem Neustart eine Vorschau erzeugen; Fahrzeugdaten erscheinen außerdem getrennt als Quellvorschau. Es gibt noch keinen fertig integrierten Tagesbestand. „Karte nicht eingelegt“ und der dort kodierte Tätigkeitswert sind getrennte Quellinformationen; Kartenentnahme allein beweist weder Ruhe noch Heimkehr. Smartphone-Routenaufzeichnung findet nicht statt.
+Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspeicher. Gesonderte Knöpfe persistieren die Aktivitäts- und Fahrzeugdatei gemeinsam oder einzeln als verschlüsselte Teilimporte. Bei gemeinsamer Speicherung wird die Herkunft aus einem tatsächlichen Lesevorgang festgehalten; eine identische Dateikombination erzeugt keinen zweiten Eintrag. Die Speicherzeit bezeichnet die erste Bestätigung der Kombination, keine lückenlose Liste aller Leseversuche. Die Zeitleiste kann aus passenden gespeicherten Aktivitäts- und Fahrzeugdaten auch nach einem Neustart eine Vorschau erzeugen; Fahrzeugdaten erscheinen außerdem getrennt als Quellvorschau. Es gibt noch keinen fertig integrierten Tagesbestand. „Karte nicht eingelegt“ und der dort kodierte Tätigkeitswert sind getrennte Quellinformationen; Kartenentnahme allein beweist weder Ruhe noch Heimkehr. Smartphone-Routenaufzeichnung findet nicht statt.
 
 ## Offen
 
-1. Die separaten Teilimporte zu einer nachvollziehbaren Kartenimport-Pipeline mit Profilzuordnung, Importhistorie und dauerhaftem Tagesbestand ausbauen. Die bisherige Deduplizierung gilt nur für identische Quell-Snapshots.
+1. Die Einzeldateien und gemeinsam gespeicherten Quellen zu einer vollständigen Kartenimport-Pipeline mit Profilzuordnung, Importhistorie und dauerhaftem Tagesbestand ausbauen. Die Deduplizierung gilt für identische Quell-Snapshots und identische gemeinsam bestätigte Dateipaare. Vollständige Importhistorie, Profilbindung, weitere Dateien und normalisierter Tagesbestand fehlen weiterhin.
 2. Fahrzeugnutzungen über die Quell-Vorschauen hinaus belastbar mit Tätigkeiten, dauerhafter Fahrzeug-Entität und geprüften Tageskennzahlen verknüpfen; weitere Karten-/Tachographendaten einlesen: GNSS-Einzelpunkte, Grenzübertritte, Ereignisse/Störungen, Kontrollen und weitere Marker. Keine künstliche Route.
 3. Tageskennzahlen und fachliche Auswertung von Heimkehr, Reise/Übernachtung, Arbeitszeit, Spesen und Arbeitgeberzuschlägen gemäß Issue #3. Keine Steuerlogik.
 4. PDF-/Exportfunktionen und spätere Komfortfunktionen getrennt umsetzen. Vorbereitete Entities/Interfaces und UI-Platzhalter gelten nicht als fertige Funktion.
 
 ## Verifikation
 
-Der [CI-Lauf zu PR #24](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36528989882) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room/SQLCipher-/Compose-Emulatortests nach einem Runner-Neustart wegen fehlendem `/dev/kvm`. Auf dem Galaxy S23 wurden verschlüsselte Aktivitäts- und Fahrzeug-Teilimporte nach Entfernen der Karte und App-Neustart sowie die getrennte Fahrzeugvorschau geprüft. Der Startseitenstatus aus PR #25 ist noch am Gerät zu bestätigen.
+Der [CI-Lauf zu PR #24](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36528989882) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room/SQLCipher-/Compose-Emulatortests nach einem Runner-Neustart wegen fehlendem `/dev/kvm`. Auf dem Galaxy S23 wurden verschlüsselte Aktivitäts- und Fahrzeug-Teilimporte nach Entfernen der Karte und App-Neustart sowie die getrennte Fahrzeugvorschau geprüft. Der Startseitenstatus aus PR #25 wurde anschließend am Gerät bestätigt. Die neue gemeinsame Speicherung erfordert einen erneuten Gerätetest; die zugehörigen CI-Prüfungen sind im aktuellen PR verlinkt.
 
 Die Berichte vom 22.09.2026 beschreiben frühere, inzwischen behobene Build-/Zugriffsblockaden und sind nur historische Nachweise.

@@ -44,6 +44,8 @@ import androidx.navigation.compose.rememberNavController
 import de.fahrerabrechnung.core.design.AppScaffold
 import de.fahrerabrechnung.core.model.ThemeMode
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
+import de.fahrerabrechnung.data.card.CardSourcePairRepository
+import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
@@ -82,6 +84,7 @@ fun AppRoot(
     onThemeModeChanged: (ThemeMode) -> Unit,
     cardActivityImports: CardActivityImportRepository? = null,
     cardVehicleImports: CardVehicleImportRepository? = null,
+    cardSourcePairs: CardSourcePairRepository? = null,
     onboardingComplete: Boolean = true,
     onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
 ) {
@@ -97,6 +100,7 @@ fun AppRoot(
     var selectedVehicleSnapshot by androidx.compose.runtime.remember {
         mutableStateOf<SavedCardVehicles?>(null)
     }
+    var selectedSourcePair by androidx.compose.runtime.remember { mutableStateOf<SavedCardSourcePair?>(null) }
     var cardFilesStatus by androidx.compose.runtime.remember { mutableStateOf(CardFilesStatus.CHECKING) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
@@ -250,12 +254,19 @@ fun AppRoot(
             composable(DetailRoutes.CARD_IMPORT) {
                 if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
+                    sourcePairs = cardSourcePairs, previewPair = selectedSourcePair,
+                    onShowLatestPair = {
+                        selectedSourcePair = null
+                        selectedActivitySnapshot = null
+                        selectedVehicleSnapshot = null
+                    },
                     previewSnapshot = selectedActivitySnapshot,
-                    onShowLatestSnapshot = { selectedActivitySnapshot = null },
+                    onShowLatestSnapshot = { selectedActivitySnapshot = null; selectedSourcePair = null },
                     previewVehicleSnapshot = selectedVehicleSnapshot,
-                    onShowLatestVehicleSnapshot = { selectedVehicleSnapshot = null },
+                    onShowLatestVehicleSnapshot = { selectedVehicleSnapshot = null; selectedSourcePair = null },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
+                        selectedSourcePair = null
                         selectedVehicleSnapshot = null
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
@@ -266,11 +277,20 @@ fun AppRoot(
             composable(DetailRoutes.CARD_SNAPSHOTS) {
                 if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
                     CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports,
+                        pairs = cardSourcePairs,
+                        onPreviewPair = { saved ->
+                            selectedSourcePair = saved
+                            selectedActivitySnapshot = saved.activity
+                            selectedVehicleSnapshot = saved.vehicles
+                            navController.popBackStack()
+                        },
                         onPreviewActivity = { saved ->
+                            selectedSourcePair = null
                             selectedActivitySnapshot = saved
                             navController.popBackStack()
                         },
                         onPreviewVehicle = { saved ->
+                            selectedSourcePair = null
                             selectedVehicleSnapshot = saved
                             vehicleHistoryQuery = ""
                             vehicleHistoryUseStart = null
@@ -278,6 +298,7 @@ fun AppRoot(
                             navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                         },
                         onPreviewVehicleDay = { saved ->
+                            selectedSourcePair = null
                             selectedVehicleSnapshot = saved
                             selectedActivitySnapshot = null
                             navController.popBackStack()
