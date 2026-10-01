@@ -15,6 +15,7 @@ import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
 import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardSourcePairRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
+import de.fahrerabrechnung.data.card.DriverCardImportRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var cardActivityImports: CardActivityImportRepository
     @Inject lateinit var cardSourcePairs: CardSourcePairRepository
     @Inject lateinit var cardVehicleImports: CardVehicleImportRepository
+    @Inject lateinit var driverCardImports: DriverCardImportRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
                     cardActivityImports = cardActivityImports,
                     cardVehicleImports = cardVehicleImports,
                     cardSourcePairs = cardSourcePairs,
+                    driverCardImports = driverCardImports,
                     onboardingComplete = onboardingComplete,
                     onFinishOnboarding = viewModel::finishOnboarding,
                     themeMode = themeMode,

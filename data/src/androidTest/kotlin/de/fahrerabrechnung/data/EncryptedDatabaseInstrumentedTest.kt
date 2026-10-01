@@ -242,8 +242,11 @@ class EncryptedDatabaseInstrumentedTest {
         val read = completeRead()
         CardActivityImportRepository(db.cardActivityImportDao(), testClock).save(read)
         CardVehicleImportRepository(db.cardVehicleImportDao(), testClock).save(read)
-        // The unchanged v3 tables are retained; remove only the new v4 table and identity.
+        // Retain the v3 tables; remove the additive v4/v5 tables and Room identity.
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_sources")
+            execSQL("DROP TABLE driver_card_identities")
+            execSQL("DROP TABLE local_driver_profile")
             execSQL("DROP TABLE card_source_pairs")
             execSQL("DELETE FROM room_master_table")
             version = 3
@@ -253,7 +256,7 @@ class EncryptedDatabaseInstrumentedTest {
         assertEquals(1, db.cardActivityImportDao().all().size)
         assertEquals(1, db.cardVehicleImportDao().all().size)
         assertTrue(pairs().all().isEmpty())
-        assertEquals(4, db.openHelper.writableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.writableDatabase.version)
         // A fresh explicit same-read save may reuse identical standalone snapshots.
         assertTrue(pairs().save(read))
         assertEquals(1, db.cardActivityImportDao().all().size)

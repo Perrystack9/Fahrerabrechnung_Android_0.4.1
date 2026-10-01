@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.data.card.CardVehicleHistory
 import de.fahrerabrechnung.data.card.CardVehicleHistoryEntry
+import de.fahrerabrechnung.data.card.DriverCardImportRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardVehicles
 import de.fahrerabrechnung.feature.common.ScreenContent
@@ -28,16 +29,19 @@ import java.time.format.DateTimeFormatter
 internal fun VehicleHistoryScreen(padding: PaddingValues, imports: CardVehicleImportRepository?,
                                   initialQuery: String = "", selectedUseStart: Long? = null,
                                   selectedNation: Int? = null,
-                                  previewSnapshot: SavedCardVehicles? = null) {
+                                  previewSnapshot: SavedCardVehicles? = null,
+                                  driverImports: DriverCardImportRepository? = null) {
     var history by remember { mutableStateOf<List<CardVehicleHistoryEntry>>(emptyList()) }
     var status by remember { mutableStateOf("Lade gespeicherte Fahrzeugdaten …") }
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
     var selectedStart by remember(selectedUseStart) { mutableStateOf(selectedUseStart) }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
-    LaunchedEffect(imports, previewSnapshot) {
+    LaunchedEffect(imports, previewSnapshot, driverImports) {
         try {
-            history = (previewSnapshot?.let { listOf(it) } ?: imports?.all())?.let(CardVehicleHistory::build).orEmpty()
+            val bound = driverImports?.profile() != null
+            val sources = previewSnapshot?.let { listOf(it) } ?: if (bound) driverImports?.vehicleSources() else imports?.all()
+            history = sources?.let(CardVehicleHistory::build).orEmpty()
             status = if (history.isEmpty()) "Noch keine Fahrzeugdaten gespeichert." else if (previewSnapshot != null)
                 "${history.size} Fahrzeuge aus dieser gespeicherten Datei."
             else "${history.size} Fahrzeuge aus gespeicherten Karten-Snapshots."

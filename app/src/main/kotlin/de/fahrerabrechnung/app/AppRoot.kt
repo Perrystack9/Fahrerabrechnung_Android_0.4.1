@@ -49,6 +49,7 @@ import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
+import de.fahrerabrechnung.data.card.DriverCardImportRepository
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
@@ -87,6 +88,7 @@ fun AppRoot(
     cardSourcePairs: CardSourcePairRepository? = null,
     onboardingComplete: Boolean = true,
     onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
+    driverCardImports: DriverCardImportRepository? = null,
 ) {
     val navController = rememberNavController()
     var draft by rememberSaveable(stateSaver = OnboardingDraft.Saver) { mutableStateOf(OnboardingDraft()) }
@@ -109,14 +111,16 @@ fun AppRoot(
     val visibleRoute = rememberUpdatedState(currentRoute)
     // Keep each tab's scroll position alive while its outgoing NavHost content is hidden.
     val tabScrollStates = TopLevelDestination.entries.associate { it.route to rememberScrollState() }
-    LaunchedEffect(currentRoute, cardActivityImports, cardVehicleImports) {
+    LaunchedEffect(currentRoute, cardActivityImports, cardVehicleImports, driverCardImports) {
         if (currentRoute == TopLevelDestination.START.route) {
             cardFilesStatus = CardFilesStatus.CHECKING
             cardFilesStatus = try {
                 if (cardActivityImports == null || cardVehicleImports == null) CardFilesStatus.ERROR
                 else {
-                    val activity = cardActivityImports.latest() != null
-                    val vehicle = cardVehicleImports.latest() != null
+                    val bound = driverCardImports?.profile() != null
+                    val own = if (bound) driverCardImports?.latest() else null
+                    val activity = if (bound) own?.activity != null else cardActivityImports.latest() != null
+                    val vehicle = if (bound) own?.vehicles != null else cardVehicleImports.latest() != null
                     when {
                         activity && vehicle -> CardFilesStatus.BOTH
                         activity -> CardFilesStatus.ACTIVITY
@@ -255,19 +259,31 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
                     sourcePairs = cardSourcePairs, previewPair = selectedSourcePair,
+                    driverImports = driverCardImports,
                     onShowLatestPair = {
                         selectedSourcePair = null
                         selectedActivitySnapshot = null
                         selectedVehicleSnapshot = null
                     },
                     previewSnapshot = selectedActivitySnapshot,
-                    onShowLatestSnapshot = { selectedActivitySnapshot = null; selectedSourcePair = null },
+                    onShowLatestSnapshot = {
+                        selectedActivitySnapshot = null
+                        selectedSourcePair = null
+                        if (driverCardImports != null) selectedVehicleSnapshot = null
+                    },
                     previewVehicleSnapshot = selectedVehicleSnapshot,
-                    onShowLatestVehicleSnapshot = { selectedVehicleSnapshot = null; selectedSourcePair = null },
+                    onShowLatestVehicleSnapshot = {
+                        selectedVehicleSnapshot = null
+                        selectedSourcePair = null
+                        if (driverCardImports != null) selectedActivitySnapshot = null
+                    },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
-                        selectedSourcePair = null
-                        selectedVehicleSnapshot = null
+                        // An explicitly selected archive stays within its own source file.
+                        if (driverCardImports == null || selectedVehicleSnapshot == null) {
+                            selectedSourcePair = null
+                            selectedVehicleSnapshot = null
+                        }
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
                         vehicleHistoryNation = nation
@@ -278,6 +294,7 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
                     CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports,
                         pairs = cardSourcePairs,
+                        driverImports = driverCardImports,
                         onPreviewPair = { saved ->
                             selectedSourcePair = saved
                             selectedActivitySnapshot = saved.activity
@@ -287,11 +304,13 @@ fun AppRoot(
                         onPreviewActivity = { saved ->
                             selectedSourcePair = null
                             selectedActivitySnapshot = saved
+                            if (driverCardImports != null) selectedVehicleSnapshot = null
                             navController.popBackStack()
                         },
                         onPreviewVehicle = { saved ->
                             selectedSourcePair = null
                             selectedVehicleSnapshot = saved
+                            if (driverCardImports != null) selectedActivitySnapshot = null
                             vehicleHistoryQuery = ""
                             vehicleHistoryUseStart = null
                             vehicleHistoryNation = null
@@ -308,7 +327,7 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
                     VehicleHistoryScreen(padding, cardVehicleImports, vehicleHistoryQuery,
                         vehicleHistoryUseStart, vehicleHistoryNation,
-                        previewSnapshot = selectedVehicleSnapshot)
+                        previewSnapshot = selectedVehicleSnapshot, driverImports = driverCardImports)
             }
             composable(DetailRoutes.SETTINGS_SUBPAGE) {
                 if (visibleRoute.value == DetailRoutes.SETTINGS_SUBPAGE) SettingsSubpagePlaceholderScreen(padding, settingsTitle)

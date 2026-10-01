@@ -51,6 +51,11 @@ import de.fahrerabrechnung.data.card.CardGeneration
 import de.fahrerabrechnung.data.card.DriverCardReader
 import de.fahrerabrechnung.data.card.ReaderException
 import de.fahrerabrechnung.data.card.ReaderState
+import de.fahrerabrechnung.data.card.DriverCard
+import de.fahrerabrechnung.data.card.DriverCardImportRepository
+import de.fahrerabrechnung.data.card.CardImportSelection
+import de.fahrerabrechnung.data.card.CardBindingReview
+import java.util.UUID
 import de.fahrerabrechnung.feature.common.ScreenContent
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -82,7 +87,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                            previewVehicleSnapshot: SavedCardVehicles? = null,
                            onShowLatestVehicleSnapshot: () -> Unit = {},
                            onOpenSnapshots: () -> Unit = {},
-                           onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> }) {
+                           onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> },
+                           driverImports: DriverCardImportRepository? = null) {
     val context = LocalContext.current
     val transport = remember(context) { AndroidCcidTransport(context) }
     val scope = rememberCoroutineScope()
@@ -95,6 +101,18 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var selectedDay by remember { mutableStateOf(0) }
     var displayZone by remember { mutableStateOf(ZoneId.systemDefault()) }
     var pendingRead by remember { mutableStateOf<CardReadResult?>(null) }
+    var readCard by remember { mutableStateOf<DriverCard?>(null) }
+    var bindingReview by remember { mutableStateOf<CardBindingReview?>(null) }
+    var readToken by remember { mutableStateOf("") }
+    val canSaveRead = driverImports == null || bindingReview?.canSave == true
+    val canOpenSavedHistory = driverImports == null || readCard == null || bindingReview?.canSave == true
+    val openHistory: (String?, Long?, Int?) -> Unit = { query, useStart, nation ->
+        if (driverImports == null || readCard == null || bindingReview?.canSave == true) {
+            // A new live read must not navigate within an earlier archive selection.
+            if (driverImports != null && readCard != null) onShowLatestPair()
+            onOpenVehicleHistory(query, useStart, nation)
+        }
+    }
     var savedStatus by remember { mutableStateOf<String?>(null) }
     var vehicleStatus by remember { mutableStateOf<String?>(null) }
     var savedVehicleStatus by remember { mutableStateOf<String?>(null) }
@@ -106,9 +124,14 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var activitySavedForRead by remember { mutableStateOf(false) }
     var vehicleSavedForRead by remember { mutableStateOf(false) }
 
-    LaunchedEffect(imports, previewSnapshot) {
+    LaunchedEffect(imports, previewSnapshot, previewVehicleSnapshot, driverImports) {
+        localDays = emptyList()
+        activityCardNumber = null
+        savedStatus = null
         if (imports != null) try {
-            (previewSnapshot ?: imports.latest())?.let { saved ->
+            val bound = driverImports?.profile() != null
+            val selectedVehicleOnly = driverImports != null && previewVehicleSnapshot != null && previewSnapshot == null
+            (previewSnapshot ?: if (selectedVehicleOnly) null else if (bound) driverImports?.latest()?.activity else imports.latest())?.let { saved ->
                 displayZone = ZoneId.systemDefault()
                 localDays = CardDayTimeline.build(CardActivityParser.parse(saved.file), displayZone)
                 activityCardNumber = saved.cardNumber
@@ -120,9 +143,14 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
     }
 
-    LaunchedEffect(vehicleImports, previewVehicleSnapshot) {
+    LaunchedEffect(vehicleImports, previewVehicleSnapshot, previewSnapshot, driverImports) {
+        vehicleUses = emptyList()
+        vehicleCardNumber = null
+        savedVehicleStatus = null
         if (vehicleImports != null) try {
-            (previewVehicleSnapshot ?: vehicleImports.latest())?.let { saved ->
+            val bound = driverImports?.profile() != null
+            val selectedActivityOnly = driverImports != null && previewSnapshot != null && previewVehicleSnapshot == null
+            (previewVehicleSnapshot ?: if (selectedActivityOnly) null else if (bound) driverImports?.latest()?.vehicles else vehicleImports.latest())?.let { saved ->
                 vehicleUses = saved.uses
                 vehicleCardNumber = saved.cardNumber
                 savedVehicleStatus = "${if (previewVehicleSnapshot != null) "Ausgewählter" else "Gespeicherter"} Fahrzeug-Teilimport: ${saved.uses.size} Nutzungsdatensätze."
@@ -139,6 +167,9 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             try {
                 if (fullRead) {
                     val result = DriverCardReader(transport).read()
+                    readCard = result.card
+                    bindingReview = null
+                    readToken = UUID.randomUUID().toString()
                     activityStatus = result.activity?.let {
                         val days = CardActivityParser.parse(it)
                         pendingRead = if (result.card != null && days.isNotEmpty()) result else null
@@ -203,6 +234,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             vehicleUses = emptyList()
             vehicleCardNumber = null
             pendingRead = null
+            readCard = null
+            bindingReview = null
             activitySavedForRead = false
             vehicleSavedForRead = false
             activityStatus = null
@@ -234,6 +267,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     diagnostic = null
                     activityStatus = null
                     pendingRead = null
+                    readCard = null
+                    bindingReview = null
                     activitySavedForRead = false
                     vehicleSavedForRead = false
                     localDays = emptyList()
@@ -257,7 +292,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         Text("Fahrerkarte einlesen", style = MaterialTheme.typography.titleLarge)
         SectionCard {
             Text("Technischer Lesertest", style = MaterialTheme.typography.titleMedium)
-            Text("Der Kartendatentest liest Aktivitäts- und Fahrzeugdatei zunächst im Arbeitsspeicher. Du kannst beide Dateien gemeinsam oder einzeln ausdrücklich verschlüsselt lokal speichern. Weitere Kartendateien fehlen noch.",
+            Text("Der Kartendatentest liest Aktivitäts- und Fahrzeugdatei zunächst im Arbeitsspeicher. Deine eigene Karte wird nach Bestätigung einem lokalen Fahrerprofil zugeordnet. Danach kannst du beide Dateien gemeinsam oder einzeln als Teilimport speichern. Weitere Kartendateien fehlen noch.",
                 style = MaterialTheme.typography.bodyMedium)
             Button(enabled = !busy, onClick = { startCheck(false) }) {
                 Text(if (busy) "Prüfung läuft …" else "Kartenleser prüfen")
@@ -265,6 +300,14 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             Button(enabled = !busy, onClick = { startCheck(true) }) {
                 Text(if (busy) "Lesen läuft …" else "Kartendaten testen")
             }
+            if (driverImports != null && readCard != null) {
+                val currentCard = checkNotNull(readCard)
+                DriverProfileBindingPanel(currentCard, driverImports) {
+                    if (readCard == currentCard) bindingReview = it
+                }
+            }
+            if (driverImports != null && (previewSnapshot != null || previewVehicleSnapshot != null))
+                Text("Dateivorschau: Diese Auswahl ordnet ältere Teilimporte keinem Fahrerprofil zu.")
             if (imports != null) OutlinedButton(onClick = onOpenSnapshots) {
                 Text("Gespeicherte Teilimporte ansehen")
             }
@@ -278,15 +321,21 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             if (previewVehicleSnapshot != null && !showPairSource) OutlinedButton(onClick = onShowLatestVehicleSnapshot) {
                 Text("Neueste gespeicherte Fahrzeugdatei zeigen")
             }
-            if (pendingRead?.vehicles != null && vehicleUses.isNotEmpty() && sourcePairs != null) {
+            if (canSaveRead && pendingRead?.vehicles != null && vehicleUses.isNotEmpty() && sourcePairs != null) {
                 Button(enabled = !busy, onClick = {
                     val read = pendingRead ?: return@Button
                     busy = true
                     scope.launch {
                         try {
-                            val inserted = sourcePairs.save(read)
-                            pairStatus = if (inserted) "Beide Dateien gemeinsam verschlüsselt gespeichert."
-                                else "Diese beiden Dateien sind bereits gemeinsam gespeichert."
+                            if (driverImports != null) {
+                                val saved = driverImports.save(read, "$readToken:PAIR", CardImportSelection.PAIR)
+                                pairStatus = "Teilimport im Fahrerprofil gespeichert. Neue Quelldateien: ${saved.newSourceCount}."
+                                bindingReview = driverImports.review(checkNotNull(read.card))
+                            } else {
+                                val inserted = sourcePairs.save(read)
+                                pairStatus = if (inserted) "Beide Dateien gemeinsam verschlüsselt gespeichert."
+                                    else "Diese beiden Dateien sind bereits gemeinsam gespeichert."
+                            }
                             activitySavedForRead = true
                             vehicleSavedForRead = true
                             pendingRead = null
@@ -296,15 +345,21 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     }
                 }) { Text("Beide Dateien gemeinsam speichern") }
             }
-            if (pendingRead != null && imports != null && !activitySavedForRead) {
+            if (canSaveRead && pendingRead != null && imports != null && !activitySavedForRead) {
                 Button(enabled = !busy, onClick = {
                     val read = pendingRead ?: return@Button
                     busy = true
                     scope.launch {
                         try {
-                            val inserted = imports.save(read)
-                            savedStatus = if (inserted) "Aktivitäts-Teilimport verschlüsselt gespeichert."
-                                else "Diese Aktivitätsdatei ist bereits gespeichert."
+                            if (driverImports != null) {
+                                val saved = driverImports.save(read, "$readToken:ACTIVITY", CardImportSelection.ACTIVITY)
+                                savedStatus = "Aktivitäts-Teilimport im Fahrerprofil gespeichert. Neue Quelldateien: ${saved.newSourceCount}."
+                                bindingReview = driverImports.review(checkNotNull(read.card))
+                            } else {
+                                val inserted = imports.save(read)
+                                savedStatus = if (inserted) "Aktivitäts-Teilimport verschlüsselt gespeichert."
+                                    else "Diese Aktivitätsdatei ist bereits gespeichert."
+                            }
                             activitySavedForRead = true
                             if (vehicleSavedForRead || vehicleUses.isEmpty()) pendingRead = null
                         } catch (_: Exception) {
@@ -315,16 +370,22 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                     }
                 }) { Text("Aktivitätsdaten lokal speichern") }
             }
-            if (pendingRead?.vehicles != null && vehicleUses.isNotEmpty() &&
+            if (canSaveRead && pendingRead?.vehicles != null && vehicleUses.isNotEmpty() &&
                 vehicleImports != null && !vehicleSavedForRead) {
                 Button(enabled = !busy, onClick = {
                     val read = pendingRead ?: return@Button
                     busy = true
                     scope.launch {
                         try {
-                            val inserted = vehicleImports.save(read)
-                            savedVehicleStatus = if (inserted) "Fahrzeug-Teilimport verschlüsselt gespeichert."
-                                else "Diese Fahrzeugdatei ist bereits gespeichert."
+                            if (driverImports != null) {
+                                val saved = driverImports.save(read, "$readToken:VEHICLES", CardImportSelection.VEHICLES)
+                                savedVehicleStatus = "Fahrzeug-Teilimport im Fahrerprofil gespeichert. Neue Quelldateien: ${saved.newSourceCount}."
+                                bindingReview = driverImports.review(checkNotNull(read.card))
+                            } else {
+                                val inserted = vehicleImports.save(read)
+                                savedVehicleStatus = if (inserted) "Fahrzeug-Teilimport verschlüsselt gespeichert."
+                                    else "Diese Fahrzeugdatei ist bereits gespeichert."
+                            }
                             vehicleSavedForRead = true
                             if (activitySavedForRead) pendingRead = null
                         } catch (_: Exception) {
@@ -355,7 +416,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
         if (vehicleUses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen · Vorschau", style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = { onOpenVehicleHistory(null, null, null) }) { Text("Fahrzeughistorie öffnen") }
+            if (canOpenSavedHistory) OutlinedButton(onClick = { openHistory(null, null, null) }) { Text("Fahrzeughistorie öffnen") }
             Text("Quelle: Fahrerkarte. Zeitpunkte in Ortszeit des Geräts; Kilometerstände sind Quellwerte, keine berechnete Tagesstrecke.")
             val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             vehicleUses.takeLast(5).asReversed().forEach { use ->
@@ -385,7 +446,8 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 }
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
-                CardTimelinePreview(day, displayZone, dayVehicles, onOpenVehicleHistory)
+                CardTimelinePreview(day, displayZone, dayVehicles, openHistory,
+                    allowHistoryNavigation = canOpenSavedHistory)
                 CardDaySourceTimes(day, displayZone)
                 if (vehicleUses.isNotEmpty() && activityCardNumber != vehicleCardNumber)
                     Text("Fahrzeugdaten stammen aus einem anderen Karten-Snapshot und werden hier nicht zugeordnet.",
