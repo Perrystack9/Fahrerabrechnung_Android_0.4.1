@@ -106,6 +106,13 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
     var readToken by remember { mutableStateOf("") }
     val canSaveRead = driverImports == null || bindingReview?.canSave == true
     val canOpenSavedHistory = driverImports == null || readCard == null || bindingReview?.canSave == true
+    val openHistory: (String?, Long?, Int?) -> Unit = { query, useStart, nation ->
+        if (driverImports == null || readCard == null || bindingReview?.canSave == true) {
+            // A new live read must not navigate within an earlier archive selection.
+            if (driverImports != null && readCard != null) onShowLatestPair()
+            onOpenVehicleHistory(query, useStart, nation)
+        }
+    }
     var savedStatus by remember { mutableStateOf<String?>(null) }
     var vehicleStatus by remember { mutableStateOf<String?>(null) }
     var savedVehicleStatus by remember { mutableStateOf<String?>(null) }
@@ -409,7 +416,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
         }
         if (vehicleUses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen · Vorschau", style = MaterialTheme.typography.titleMedium)
-            if (canOpenSavedHistory) OutlinedButton(onClick = { onOpenVehicleHistory(null, null, null) }) { Text("Fahrzeughistorie öffnen") }
+            if (canOpenSavedHistory) OutlinedButton(onClick = { openHistory(null, null, null) }) { Text("Fahrzeughistorie öffnen") }
             Text("Quelle: Fahrerkarte. Zeitpunkte in Ortszeit des Geräts; Kilometerstände sind Quellwerte, keine berechnete Tagesstrecke.")
             val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             vehicleUses.takeLast(5).asReversed().forEach { use ->
@@ -439,7 +446,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 }
                 Text("${day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} · ${selectedDay + 1} / ${localDays.size}",
                     style = MaterialTheme.typography.titleMedium)
-                CardTimelinePreview(day, displayZone, dayVehicles, onOpenVehicleHistory,
+                CardTimelinePreview(day, displayZone, dayVehicles, openHistory,
                     allowHistoryNavigation = canOpenSavedHistory)
                 CardDaySourceTimes(day, displayZone)
                 if (vehicleUses.isNotEmpty() && activityCardNumber != vehicleCardNumber)

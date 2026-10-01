@@ -24,5 +24,6 @@ Falls Android das Update wegen einer abweichenden Debug-Signatur ablehnt: nicht 
 ## Altes Archiv bleibt getrennt
 
 8. Eine ältere Datei oder ein älteres Dateipaar aus dem **Quellarchiv und frühere Teilimporte** öffnen. Es darf dadurch keine zusätzliche Profil-Teilimport-Sitzung entstehen. Die Fahrzeugvorschau dieser Datei darf keine Quellen aus einer anderen Sitzung ergänzen.
+9. Danach die eigene Karte frisch lesen und ihre **Fahrzeughistorie öffnen**. Die normale Profilhistorie muss wieder ausschließlich die zugeordneten eigenen Quellen verwenden; die zuvor gewählte Archivdatei darf diesen neuen Live-Lesevorgang nicht weiter eingrenzen.
 
 Rückmeldung: Installationsweg (Update/Neuinstallation), Ergebnis der Bestätigung und des Abbruchs, gemeinsame Speicherung, Wiederöffnung ohne Leser sowie Auffälligkeiten im alten Archiv. Keine vollständigen Kartennummern oder Rohkartendaten senden. Eine zweite/fremde echte Karte ist für diesen Test nicht erforderlich; Match-, Fremdkarten- und Rollbackfälle sind zusätzlich durch synthetische automatische Tests abgedeckt.
