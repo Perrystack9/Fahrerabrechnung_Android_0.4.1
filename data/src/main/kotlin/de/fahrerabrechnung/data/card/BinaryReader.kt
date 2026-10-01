@@ -1,7 +1,9 @@
 package de.fahrerabrechnung.data.card
 
 import java.nio.charset.Charset
+import java.time.DateTimeException
 import java.time.Instant
+import java.time.LocalDate
 
 class ParseError(val offset: Int, val field: String, val reason: String) : Exception("$field at $offset: $reason")
 
@@ -39,6 +41,19 @@ class BinaryReader(private val bytes: ByteArray) {
     }
     fun text(n: Int, charset: Charset, field: String) = slice(n, field).toString(charset).trimEnd('\u0000', ' ')
     fun epochSeconds(field: String): Instant = Instant.ofEpochSecond(u32be(field))
+    /** Appendix 1 Datef: four BCD bytes (YYYYMMDD), with all zeroes meaning no date. */
+    fun datef(field: String): LocalDate? {
+        val start = offset
+        val digits = bcd(8, field)
+        if (digits == "00000000") return null
+        val year = digits.substring(0, 4).toInt()
+        if (year == 0) throw ParseError(start, field, "invalid calendar date")
+        return try {
+            LocalDate.of(year, digits.substring(4, 6).toInt(), digits.substring(6, 8).toInt())
+        } catch (_: DateTimeException) {
+            throw ParseError(start, field, "invalid calendar date")
+        }
+    }
     fun berLength(field: String): Int {
         val first = u8(field)
         if (first < 128) return first

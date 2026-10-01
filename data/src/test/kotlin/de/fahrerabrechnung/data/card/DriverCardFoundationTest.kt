@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.time.LocalDate
 
 class DriverCardFoundationTest {
     private fun bytes(vararg numbers: Int) = numbers.map(Int::toByte).toByteArray()
@@ -126,9 +127,30 @@ class DriverCardFoundationTest {
             val result = DriverCardDecoder.identity(data, generation)
             assertEquals("MUSTER", result.holder.surname)
             assertEquals("TESTCARD12345678", result.card.number)
+            assertEquals(LocalDate.of(2000, 2, 29), result.holder.birthDate)
+            assertEquals("DE", result.holder.language)
             assertEquals(1968435456L, result.card.expires.epochSecond)
         }
         assertEquals(0, failure { DriverCardDecoder.identity(data.copyOf(142), CardGeneration.GEN1) }.offset)
+    }
+
+    @Test fun missingBirthDateKeepsIdentificationAligned() {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val result = DriverCardDecoder.identity(identityFixture(ByteArray(4)), generation)
+            assertNull(result.holder.birthDate)
+            assertEquals("DE", result.holder.language)
+            assertEquals(1968435456L, result.card.expires.epochSecond)
+        }
+    }
+
+    @Test fun invalidBirthDateIsRejectedForEveryGeneration() {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            for (date in listOf(bytes(0x20, 0x01, 0x02, 0x29), bytes(0x20, 0x00, 0x0A, 0x29))) {
+                val error = failure { DriverCardDecoder.identity(identityFixture(date), generation) }
+                assertEquals("birthDate", error.field)
+                assertEquals(137, error.offset)
+            }
+        }
     }
 
     @Test fun completeReadWithSyntheticGenerationsAndUnknownCard() = runBlocking {
@@ -136,7 +158,9 @@ class DriverCardFoundationTest {
             val fake = CardFixtureTransport(expected, identityFixture())
             val result = DriverCardReader(fake).read()
             assertEquals(CardRecognition.DRIVER, result.recognition)
-            assertEquals(expected, result.card!!.generation)
+            val card = result.card!!
+            assertEquals(expected, card.generation)
+            assertEquals(LocalDate.of(2000, 2, 29), card.holder.birthDate)
             assertEquals(16, result.activity!!.dailyRecords.size)
             assertEquals(4, result.activity!!.newestDayOffset)
             assertNotNull(result.vehicles)
@@ -146,6 +170,34 @@ class DriverCardFoundationTest {
         val unknown = DriverCardReader(CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())).read()
         assertEquals(CardRecognition.UNKNOWN_CARD, unknown.recognition)
         assertNull(unknown.card)
+    }
+
+    @Test fun missingBirthDateDoesNotDiscardCompleteRead() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(generation, identityFixture(ByteArray(4)))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            val card = result.card!!
+            assertNull(card.holder.birthDate)
+            assertEquals("DE", card.holder.language)
+            assertNotNull(result.activity)
+            assertNotNull(result.vehicles)
+            assertFalse(result.vehicleReadFailed)
+            assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun invalidBirthDateDoesNotReturnPartialCard() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(generation, identityFixture(bytes(0x20, 0x01, 0x02, 0x29)))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.INCONSISTENT, result.recognition)
+            assertEquals(CardGeneration.UNKNOWN, result.generation)
+            assertNull(result.card)
+            assertNull(result.activity)
+            assertNull(result.vehicles)
+            assertTrue(fake.closed)
+        }
     }
 
     @Test fun activityLengthAndRingPointersAreValidated() {
@@ -188,7 +240,7 @@ class DriverCardFoundationTest {
         }
     }
 
-    private fun identityFixture() = ByteArrayOutputStream().apply {
+    private fun identityFixture(birthDate: ByteArray = bytes(0x20, 0x00, 0x02, 0x29)) = ByteArrayOutputStream().apply {
             write(1)
             write("TESTCARD12345678".toByteArray())
             write(name("TEST AUTHORITY"))
@@ -197,7 +249,7 @@ class DriverCardFoundationTest {
             write(bytes(0x75, 0x53, 0xF1, 0))
             write(name("MUSTER"))
             write(name("ERIKA"))
-            write(bytes(0x20, 0, 0, 0))
+            write(birthDate)
             write("DE".toByteArray())
     }.toByteArray()
 
