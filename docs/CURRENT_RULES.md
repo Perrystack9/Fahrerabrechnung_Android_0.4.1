@@ -1,6 +1,6 @@
 # FahrerTagebuch · aktuelle Produktregeln
 
-**Stand: 01.10.2026.** Dieses Dokument und [Issue #3 „Berater-Handoff“](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) bilden zusammen den maßgeblichen Fach-/Produktstand. Die Profilbindung wurde am 01.10.2026 ausdrücklich als Fachvorgabe ergänzt. Bei Widersprüchen haben die aktuellen Regeln Vorrang vor älteren Design-Handoffs, GPS-Konzepten und Tests. Issue #3 ist eine Produktvorgabe, **kein Auftrag, alle Punkte sofort zu implementieren**. Der tatsächliche Code-Stand steht in [WORK_STATUS.md](../WORK_STATUS.md).
+**Stand: 01.10.2026.** Dieses Dokument und [Issue #3 „Berater-Handoff“](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) bilden zusammen den maßgeblichen Fach-/Produktstand. Die Profilbindung und die spätere vereinfachte Import-Bedienung wurden am 01.10.2026 ausdrücklich als Nutzervorgaben ergänzt. Bei Widersprüchen haben die aktuellen Regeln Vorrang vor älteren Design-Handoffs, GPS-Konzepten und Tests. Issue #3 ist eine Produktvorgabe, **kein Auftrag, alle Punkte sofort zu implementieren**. Der tatsächliche Code-Stand steht in [WORK_STATUS.md](../WORK_STATUS.md).
 
 ## Fahrerprofil, Fahrerkarte und Importzuordnung
 
@@ -10,6 +10,17 @@
 - Bei nicht eindeutigem Identitäts-Match muss der Nutzer bestätigen, dass es seine neue/Ersatzkarte ist. Keine automatische Zusammenführung auf Basis einer teilweisen oder unsicheren Übereinstimmung.
 - Eine erkennbar fremde Fahrerkarte darf niemals mit dem gebundenen Profil, Kalender, der Fahrzeughistorie oder Abrechnung vermischt werden. Für V1 höchstens technischer Lesetest/temporäre Vorschau, ohne dauerhafte Profilbindung.
 - Bereits gespeicherte ältere Teilimporte werden nicht nachträglich anhand von Datum, Kartennummer oder Vermutung einem Profil zugeordnet. Dafür ist eine belastbare Zuordnung oder ausdrückliche Nutzerbestätigung erforderlich.
+
+## Spätere reguläre Kartenimport-Bedienung
+
+**Nutzervorgabe vom 01.10.2026:** Die aktuelle technische Ansicht ist für Entwicklung und Gerätetests akzeptiert, aber keine Vorlage für die spätere normale Bedienung. Die folgende Vereinfachung ist ein verbindliches Ziel der vollständigen Import-Pipeline und noch nicht implementiert.
+
+- Die App soll einen angeschlossenen Kartenleser erkennen und eine verfügbare Fahrerkarte selbständig lesen. Zulässige Daten der eigenen, bestätigten bzw. zuverlässig zugeordneten Karte sollen automatisch übernommen und gespeichert werden; kein gesonderter Speichern-Schritt im normalen Ablauf.
+- Manuelle Bedienknöpfe wie **„Kartenleser prüfen“**, **„Kartendaten testen“** sowie gemeinsames oder getrenntes Speichern gehören nicht in den späteren normalen Importablauf.
+- Die Übersicht soll einen verständlichen, zusammenhängenden Kartenimport zeigen. Technische Begriffe wie **„Teilimporte“**, Quelldateien oder eine getrennte Aktivitäts-/Fahrzeugdateiverwaltung sind keine Bedienaufgaben für den Nutzer.
+- Die verbindliche Profilregel bleibt erhalten: Die erste eigene Karte erfordert eine ausdrückliche Bestätigung; eine nicht eindeutig zuordenbare Folge-/Ersatzkarte ebenfalls. Automatisches Lesen hebt diese Bestätigung vor Profilbindung und dauerhafter Übernahme nicht auf. Erkennbar fremde Karten dürfen weiterhin nicht dauerhaft mit dem eigenen Profil oder dessen Daten vermischt werden.
+- Technisch erforderliche Android-USB-Freigaben bleiben zu beachten. Fortschritt, Ergebnis und ein gegebenenfalls erforderlicher Eingriff bei Fehlern sollen verständlich angezeigt werden.
+- Die vereinfachte Oberfläche darf fehlende oder fehlerhafte Daten nicht als vollständigen Import ausgeben. Die interne Herkunft und Trennung der Quellen sowie die Regeln für ältere unzugeordnete Daten bleiben erhalten.
 
 ## Standort, Karte und Datenquellen
 
@@ -60,4 +71,4 @@
 
 ## Aktueller Umsetzungsrahmen
 
-Die technische Fahrerkarte-/Parser-Phase hat bereits echte Teilfunktionen; Aktivitäts- und Fahrzeugdatei werden zunächst im Arbeitsspeicher geprüft und nach gesonderter Bestätigung als verschlüsselte Teilimporte gespeichert. Ein vollständiger Import, weitere Kartendateien, dauerhafte Fahrzeugzuordnung und fachliche Fahrzeugkennzahlen, Abrechnungsberechnungen, PDF und Cloud folgen nur in gesonderten Umsetzungen. Die Fahrzeughistorie ist bereits als Quellvorschau mit Kennzeichen-/VIN-Suche und nachladbaren Nutzungen vorhanden; die Kartentag-Zeiten aus PR #14 sind lediglich Summen belegter Quellenabschnitte, keine berechnete Arbeitszeit oder Ruhefeststellung. Keine ältere Spezifikation darf einen noch nicht implementierten Punkt als vorhanden ausgeben.
+Die technische Fahrerkarte-/Parser-Phase hat bereits echte Teilfunktionen; Aktivitäts- und Fahrzeugdatei werden zunächst im Arbeitsspeicher geprüft und nach gesonderter Bestätigung als verschlüsselte Teilimporte gespeichert. Ein vollständiger Import, weitere Kartendateien, dauerhafte Fahrzeugzuordnung und fachliche Fahrzeugkennzahlen, Abrechnungsberechnungen, PDF und Cloud folgen nur in gesonderten Umsetzungen. Die Fahrzeughistorie ist bereits als Quellvorschau mit Kennzeichen-/VIN-Suche und nachladbaren Nutzungen vorhanden; die Kartentag-Zeiten aus PR #14 sind lediglich Summen belegter Quellenabschnitte, keine berechnete Arbeitszeit oder Ruhefeststellung. Keine ältere Spezifikation darf einen noch nicht implementierten Punkt als vorhanden ausgeben. Die derzeitigen manuellen Lese-/Speicherschritte gelten für diesen Entwicklungsstand; die spätere reguläre Import-Bedienung folgt der oben festgelegten automatischen, vereinfachten Vorgabe.
