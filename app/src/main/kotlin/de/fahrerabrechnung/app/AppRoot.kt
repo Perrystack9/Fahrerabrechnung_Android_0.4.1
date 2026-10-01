@@ -266,9 +266,17 @@ fun AppRoot(
                         selectedVehicleSnapshot = null
                     },
                     previewSnapshot = selectedActivitySnapshot,
-                    onShowLatestSnapshot = { selectedActivitySnapshot = null; selectedSourcePair = null },
+                    onShowLatestSnapshot = {
+                        selectedActivitySnapshot = null
+                        selectedSourcePair = null
+                        if (driverCardImports != null) selectedVehicleSnapshot = null
+                    },
                     previewVehicleSnapshot = selectedVehicleSnapshot,
-                    onShowLatestVehicleSnapshot = { selectedVehicleSnapshot = null; selectedSourcePair = null },
+                    onShowLatestVehicleSnapshot = {
+                        selectedVehicleSnapshot = null
+                        selectedSourcePair = null
+                        if (driverCardImports != null) selectedActivitySnapshot = null
+                    },
                     onOpenSnapshots = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenVehicleHistory = { query, useStart, nation ->
                         // An explicitly selected archive stays within its own source file.
@@ -296,11 +304,13 @@ fun AppRoot(
                         onPreviewActivity = { saved ->
                             selectedSourcePair = null
                             selectedActivitySnapshot = saved
+                            if (driverCardImports != null) selectedVehicleSnapshot = null
                             navController.popBackStack()
                         },
                         onPreviewVehicle = { saved ->
                             selectedSourcePair = null
                             selectedVehicleSnapshot = saved
+                            if (driverCardImports != null) selectedActivitySnapshot = null
                             vehicleHistoryQuery = ""
                             vehicleHistoryUseStart = null
                             vehicleHistoryNation = null

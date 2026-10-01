@@ -13,8 +13,8 @@
 | Letzter Produktcode-PR | [PR #28: Fahrerkarten-Geburtsdatum korrekt als BCD-Kalenderdatum dekodieren](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/28), gemergt |
 | Produktcode-Basis auf main | [`a0ce87675779aa7130473fa847cea76db2a12f82`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/a0ce87675779aa7130473fa847cea76db2a12f82); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
 | Getesteter PR-28-Kopf | `969310b68446437e2214ea07e3e3155a2a72bb86` |
-| Aktueller begrenzter Produktabschnitt | Branch `feature/driver-profile-binding`: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen; auf diesem Stand weiterarbeiten, nicht neu beginnen |
-| Datenbank im Produktabschnitt | Room/SQLCipher, Schema **5**, additive Migrationen 1 → 2 → 3 → 4 → 5; ältere Quellen werden nicht nachträglich zugeordnet |
+| Aktueller begrenzter Produktabschnitt | [PR #30](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30), Branch `feature/driver-profile-binding`: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen; auf diesem Stand weiterarbeiten, nicht neu beginnen |
+| Datenbank im Produktabschnitt | Room/SQLCipher, Schema **5**, additive Migrationen 1 → 2 → 3 → 4 → 5, generierter Schemaexport 5.json eingecheckt; ältere Quellen werden nicht nachträglich zugeordnet |
 | Offene Prüfung | Vollständige CI und Debug-ZIP im Produkt-PR; manueller Gerätetest der neuen Profilbindungs-Stufe noch offen |
 | Letzter manueller Gerätetest | **01.10.2026, PR #28: vom Nutzer als funktionierend zurückgemeldet**, Details und Grenzen unten |
 
@@ -44,6 +44,7 @@ Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipa
 - Schema 5 ergänzt drei Tabellen ohne Backfill oder Umschreibung alter Karten/Snapshots/Sitzungen. Alte Dateien bleiben im getrennten Quellarchiv. Eine Archivauswahl bleibt read-only und erzeugt keine Profilbindung; bei Navigation bleibt die Fahrzeugvorschau auf diese ausgewählte Datei begrenzt.
 - Die normale Fahrzeughistorie und Standard-Kartenvorschau nutzen bei gebundenem Profil ausschließlich dessen explizit verknüpfte Quellen. Noch kein normalisierter Tagesbestand, vollständiger Kartenimport, dauerhafte Fahrzeugentität oder fachliche Abrechnung.
 - Automatische Regressionen: exakter/unklarer/fremder Match, Bestätigen/Abbrechen, Fremdkartensperre, unveränderte Folge-/Altkarten, Deduplizierung/Retry, atomarer Rollback, Einzelquellen, verschlüsselte Wiederöffnung, Migration 3 → 5 und 4 → 5 sowie Trennung von Archiv und Profilhistorie. Der neue Gerätetest steht aus.
+- [Gerätetest-Anleitung](PROFILE_BINDING_DEVICE_TEST.md): Bestätigung/Abbruch, Speichern, Neustart ohne Leser, erneute eigene Karte und getrenntes Altarchiv. Identische ältere Quellen dürfen nach einem frischen Lesevorgang wiederverwendet werden; dadurch werden keine alten Sitzungen rückwirkend umgeschrieben.
 
 ## Letzte Hardware-/Gerätetests
 

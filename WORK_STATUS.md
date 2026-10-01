@@ -1,8 +1,8 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 01.10.2026 · Produktcode-Basis: `main` nach PR #28 (`a0ce8767`).** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 01.10.2026 · Aktueller Produktabschnitt: [PR #30](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30), Profilbindung auf Basis von `main` nach PR #28/#29.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
-Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. PR #28 korrigiert ausschließlich den Geburtsdatumsparser und zugehörige Tests. Der Nutzer meldete den anschließenden Gerätetest am 01.10.2026 als funktionierend zurück; neue Einzelmesswerte fehlen. Es gibt keine uncommitteten Produktcode-Änderungen aus dieser Sitzung.
+Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. PR #28 korrigiert ausschließlich den Geburtsdatumsparser und zugehörige Tests; sein Gerätetest wurde als funktionierend zurückgemeldet. PR #29 dokumentiert Teststand und bestätigte Profilregeln. Die vorhandene Implementierung in PR #30 und gegebenenfalls lokale Änderungen dieses Branchs weiterführen, nicht neu beginnen. Der neue Profilbindungs-Gerätetest steht aus.
 
 ## Nachweislich umgesetzt
 
@@ -13,6 +13,7 @@ Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. PR #28 
 | Aktivitätsdatei | PR #4 liest `EF Driver_Activity_Data` bis zur auf der Karte angegebenen Länge vollständig in den Arbeitsspeicher. Am Testgerät: 13.776 Bytes. |
 | Parser | PR #5 dekodiert die zyklischen Tagesdatensätze und Tätigkeitswechsel samt Kartenstatus. Am Testgerät: 74 Datensätze. Parser-Tests prüfen Ringgrenzen und ungültige Daten. |
 | Geburtsdatum | PR #28 dekodiert vier Datef-Bytes als BCD-Kalenderdatum statt Unix-Zeitstempel; Nullwert bleibt ein fehlendes Datum. Zehn neue Regressionstestmethoden, Gen1-/Gen2-/Gen2V2-Leserprüfungen und vollständige CI bestanden. |
+| Profil-/Kartenbindung und Teilimport-Sitzungen | PR #30: erste eigene Karte ausdrücklich bestätigen; Folge-/Ersatzkarten demselben stabilen Profil zuordnen, bei unklarem Match nur nach Bestätigung. Fremdkarten sind für Bindung/Speicherung gesperrt. Atomare Sitzung mit konkreter Karte und ausgewählten Quellen; getrenntes, unverändertes Altarchiv. Additive Migration 4 → 5. Manueller Gerätetest noch offen. |
 | Ortskalendertage | PR #6 projiziert UTC-Kartenintervalle auf lokale Tage, einschließlich Mitternacht und Sommerzeit. Fehlende Kartenabschnitte werden nicht zu Ruhe ergänzt. |
 | Kartentag-UI | PR #7 zeigt eine kompakte Tagesübersicht und zoombare/verschiebbare Detailansicht mit auswählbaren Abschnitten, Start/Ende/Dauer und Zeitmarke. Die lange Abschnittsliste bleibt zuschaltbar. |
 | Aktivitäts-Teilimport | PR #9 ergänzt ausdrücklich ausgelöstes Speichern der vollständigen Aktivitätsdatei in Room/SQLCipher, Wiederöffnung der jüngsten gespeicherten Vorschau und Deduplizierung identischer Snapshots. Schema-Migration 1 → 2; keine automatische Speicherung durch den Lesetest. |

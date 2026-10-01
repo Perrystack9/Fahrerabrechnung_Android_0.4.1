@@ -72,6 +72,7 @@ Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist
 
 - [docs/WORK_HANDOFF.md](docs/WORK_HANDOFF.md): Einstieg für ein neues Work, technische Ausgangsbasis und letzter erfolgreicher Gerätetest.
 - [WORK_STATUS.md](WORK_STATUS.md): aktueller Implementierungs- und Teststand.
+- [docs/PROFILE_BINDING_DEVICE_TEST.md](docs/PROFILE_BINDING_DEVICE_TEST.md): neuer, noch offener Gerätetest der Profilbindungs-Stufe in [PR #30](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30).
 - [docs/CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3): maßgebliche Produkt-/Fachregeln.
 - [BUILD_STATUS.md](BUILD_STATUS.md), [BUILD_VERIFICATION_REPORT_0.4.1.md](BUILD_VERIFICATION_REPORT_0.4.1.md), [PROJECT_START_REPORT.md](PROJECT_START_REPORT.md) und [GITHUB_ACTIONS_HANDOFF.md](GITHUB_ACTIONS_HANDOFF.md): historische Berichte vom 22.09.2026.
 - `docs/design-handoff-v2/` und `docs/UI_REFINEMENT_0.4.1_V2.md`: historische Design-/Zwischenstände; enthalten teils überholte Smartphone-GPS- und Acht-Schritte-Vorgaben.
