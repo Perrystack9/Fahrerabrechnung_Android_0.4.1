@@ -17,7 +17,7 @@ object EncryptedDatabaseFactory {
         )
             .openHelperFactory(sqlCipherFactory)
             .addMigrations(DatabaseMigrations.MIGRATION_1_2, DatabaseMigrations.MIGRATION_2_3,
-                DatabaseMigrations.MIGRATION_3_4)
+                DatabaseMigrations.MIGRATION_3_4, DatabaseMigrations.MIGRATION_4_5)
             .build()
     }
 }

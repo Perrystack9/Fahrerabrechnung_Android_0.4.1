@@ -13,8 +13,9 @@
 | Letzter Produktcode-PR | [PR #28: Fahrerkarten-Geburtsdatum korrekt als BCD-Kalenderdatum dekodieren](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/28), gemergt |
 | Produktcode-Basis auf main | [`a0ce87675779aa7130473fa847cea76db2a12f82`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/a0ce87675779aa7130473fa847cea76db2a12f82); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
 | Getesteter PR-28-Kopf | `969310b68446437e2214ea07e3e3155a2a72bb86` |
-| Datenbank | Room/SQLCipher, Schema **4**, Migrationen 1 → 2 → 3 → 4, Schemaexport 4.json eingecheckt |
-| Offene lokale Arbeit | Keine uncommitteten Produktcode-Änderungen oder laufenden Builds aus diesem Work zu übernehmen; PR #26 ist abgeschlossen |
+| Aktueller begrenzter Produktabschnitt | Branch `feature/driver-profile-binding`: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen; auf diesem Stand weiterarbeiten, nicht neu beginnen |
+| Datenbank im Produktabschnitt | Room/SQLCipher, Schema **5**, additive Migrationen 1 → 2 → 3 → 4 → 5; ältere Quellen werden nicht nachträglich zugeordnet |
+| Offene Prüfung | Vollständige CI und Debug-ZIP im Produkt-PR; manueller Gerätetest der neuen Profilbindungs-Stufe noch offen |
 | Letzter manueller Gerätetest | **01.10.2026, PR #28: vom Nutzer als funktionierend zurückgemeldet**, Details und Grenzen unten |
 
 ## Wirklich implementiert
@@ -32,7 +33,17 @@
 
 **PR #26 ergänzt:** Ein tatsächlicher Lesevorgang mit beiden validierten Dateien kann über „Beide Dateien gemeinsam speichern“ ausdrücklich gesichert werden. Eine Room-Transaktion speichert beide Quellen und ihre Zuordnung. Die gemeinsame Vorschau öffnet genau diese beiden Dateien. Bestehende Einzeldateien werden nicht rückwirkend anhand von Datum oder Kartennummer gepaart.
 
-Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipaars bezeichnet seine erste gemeinsame Speicherbestätigung; sie ist keine vollständige Historie jedes erneuten Leseversuchs. Getrennt gespeicherte Quellen können weiterhin als Vorschau kombiniert werden, ohne dadurch als derselbe Lesevorgang zu gelten.
+Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipaars bezeichnet seine erste gemeinsame Speicherbestätigung; sie ist keine vollständige Historie jedes erneuten Leseversuchs. Neue Profil-Teilimporte protokollieren die ausdrücklich ausgelöste Speicherung eines Lesevorgangs separat. Beim gebundenen Profil öffnet die Standardvorschau die Quellen einer konkreten Teilimport-Sitzung; eine einzelne Quelle wird nicht mit einer anderen Sitzung ergänzt.
+
+## Begrenzte Profilbindungs-Stufe
+
+- `DriverCardImportRepository` und `DriverProfileDao`: ein ausdrücklich gebundenes lokales Profil; unabhängige Profil-/Karten-UUIDs, unveränderliche Kartenidentitäten und zusätzliche Folge-/Ersatzkarten. Die Kartennummer bezeichnet eine Quelle, nie die dauerhafte Fahreridentität.
+- Match ausschließlich über exakt gleiche, vollständige Nachnamen, Vornamen und vorhandenes Geburtsdatum. Teil-/Präfix-/unscharfe Matches, fehlende Daten und möglicherweise abgeschnittene volle 35-Zeichen-Namensfelder verlangen Bestätigung. Unterschiedliche vollständige Namen und Geburtsdaten bei allen bestätigten Karten sperren eine Fremdkarte; nur ein abweichendes Merkmal bleibt unklar. Widersprüchliche Inhaberdaten zu einer bereits zugeordneten konkreten Karte werden gesperrt und überschreiben nichts.
+- Erste eigene Karte und unklare neue/Ersatzkarte verlangen einen eigenen Bestätigungsdialog. Abbrechen und Lesetest speichern nichts. Zuordnung einer belastbar gleichen neuen Karte erfolgt erst beim ausdrücklich ausgelösten Speichern. Eine erkennbar fremde Karte bleibt temporäre Vorschau ohne Speicher-/Zuordnungsaktion und ohne Navigation ihrer Live-Nutzungen in die Profilhistorie.
+- `driver_import_sources` verbindet jede neue `PARTIAL`-Sitzung mit ihrer konkreten Karte und ausgewählten Quellen. Quelle, Dateipaar, zusätzliche Karte und Sitzung werden gemeinsam atomar gespeichert; ein Fehler rollt die komplette neue Speicherung zurück. Derselbe Speicherauftrag ist idempotent, ein neuer Lesevorgang darf eine eigene Sitzung mit bereits vorhandenen Quelldateien erzeugen.
+- Schema 5 ergänzt drei Tabellen ohne Backfill oder Umschreibung alter Karten/Snapshots/Sitzungen. Alte Dateien bleiben im getrennten Quellarchiv. Eine Archivauswahl bleibt read-only und erzeugt keine Profilbindung; bei Navigation bleibt die Fahrzeugvorschau auf diese ausgewählte Datei begrenzt.
+- Die normale Fahrzeughistorie und Standard-Kartenvorschau nutzen bei gebundenem Profil ausschließlich dessen explizit verknüpfte Quellen. Noch kein normalisierter Tagesbestand, vollständiger Kartenimport, dauerhafte Fahrzeugentität oder fachliche Abrechnung.
+- Automatische Regressionen: exakter/unklarer/fremder Match, Bestätigen/Abbrechen, Fremdkartensperre, unveränderte Folge-/Altkarten, Deduplizierung/Retry, atomarer Rollback, Einzelquellen, verschlüsselte Wiederöffnung, Migration 3 → 5 und 4 → 5 sowie Trennung von Archiv und Profilhistorie. Der neue Gerätetest steht aus.
 
 ## Letzte Hardware-/Gerätetests
 
@@ -91,7 +102,7 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 - [CardSourcePairRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardSourcePairRepository.kt): validieren, atomar speichern, exakt zugehörige Quellen lesen.
 - [CardSourcePairDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/CardSourcePairDao.kt): Herkunftstabelle und Fremdschlüssel.
 - [CardActivityImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt) / [CardVehicleImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt): Quell-Snapshots und inhaltliche Deduplizierung.
-- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): Schema 4, additive Migrationen; keine destruktive Migration.
+- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): Schema 5, additive Migrationen; keine destruktive Migration.
 - [CardHardwareTestScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardHardwareTestScreen.kt), [CardSnapshotHistoryScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardSnapshotHistoryScreen.kt), [AppRoot.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/AppRoot.kt): lesen/speichern, Quellenübersicht und Auswahl der Vorschau.
 - [EncryptedDatabaseInstrumentedTest.kt](../data/src/androidTest/kotlin/de/fahrerabrechnung/data/EncryptedDatabaseInstrumentedTest.kt) / [CardSourcePairNavigationTest.kt](../app/src/androidTest/kotlin/de/fahrerabrechnung/app/CardSourcePairNavigationTest.kt): Persistenz-/Migrations- und Navigationsregressionen.
 
@@ -99,13 +110,13 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 
 Der Lesetest speichert weiterhin nur nach ausdrücklicher Bestätigung. Einzeldateien und Dateipaare sind **persistente Teilimporte**, noch keine vollständige Kartenimport-Pipeline.
 
-Offen sind Profil-/Kartenbindung, vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, dauerhafter normalisierter Tagesbestand sowie weitere Dateien für GNSS, Grenzübertritte, Ereignisse/Störungen und Kontrollen. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
+Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, dauerhafter normalisierter Tagesbestand sowie weitere Dateien für GNSS, Grenzübertritte, Ereignisse/Störungen und Kontrollen. Die Profil-/Kartenbindung und neue Teilimport-Sitzungen sind im begrenzten Produktabschnitt implementiert; sein Gerätetest steht aus. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
 
 Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import und sein Datenmodell weiter ausbauen, ausgehend von den gespeicherten Quellen. Einen begrenzten Folgeschritt und seine Migration/Fehlerfälle vor Umsetzung festlegen. Die aktuelle Übergabe ist kein automatischer Auftrag, sämtliche Produktpunkte sofort zu implementieren.
 
 **Profilbindung fachlich festgelegt am 01.10.2026:** Single-Driver-App; erste eigene Karte ausdrücklich bestätigen. Die dauerhafte Fahreridentität ist das lokale Profil, nicht die Kartennummer. Belastbar gleiche Inhaber-Identität erlaubt zusätzliche Folge-/Ersatzkarten; unklare Fälle verlangen Bestätigung. Erkennbar fremde Karten bleiben auf den temporären technischen Lesetest begrenzt. Alte Karten/Imports bleiben erhalten; ältere Teilimporte nicht anhand von Datum, Kartennummer oder Vermutung zuordnen. Zielmodell und vollständige Vorgabe stehen in [CURRENT_RULES.md](CURRENT_RULES.md).
 
-Geplanter begrenzter nächster Schritt: persistente Profil-/Kartenbindung und daran gebundene Teilimport-Sitzungen für die bereits unterstützten Quellen. Additive Migration, explizite Bestätigung und Fremdkartenschutz automatisch prüfen. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
+Aktueller begrenzter Schritt: persistente Profil-/Kartenbindung und daran gebundene Teilimport-Sitzungen für die bereits unterstützten Quellen abschließend prüfen und als Debug-ZIP zum Gerätetest bereitstellen. Danach auf dieser Zuordnung die vollständige Import-Pipeline weiter ausbauen. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
 
 ### Verbindliche Grenzen bei der Fortsetzung
 
@@ -122,4 +133,4 @@ Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardw
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28 ist gemergt; die vollständige Import-Pipeline ist weiterhin offen. Die Profil-/Kartenbindung ist fachlich freigegeben und der nächste begrenzte Implementierungsschritt.
+Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28/#29 sind gemergt; die vollständige Import-Pipeline ist weiterhin offen. Die Profil-/Kartenbindung ist fachlich freigegeben und im Branch `feature/driver-profile-binding` implementiert; CI und Gerätetest gemäß aktuellem PR-Stand abschließen.

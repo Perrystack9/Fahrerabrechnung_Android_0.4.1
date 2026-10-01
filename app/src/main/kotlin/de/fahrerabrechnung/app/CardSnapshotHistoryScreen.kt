@@ -18,6 +18,8 @@ import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
+import de.fahrerabrechnung.data.card.DriverCardImportRepository
+import de.fahrerabrechnung.data.card.SavedDriverImport
 import de.fahrerabrechnung.feature.common.ScreenContent
 import java.time.Instant
 import java.time.ZoneId
@@ -32,7 +34,10 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
                                        onPreviewPair: (SavedCardSourcePair) -> Unit = {},
                                        onPreviewActivity: (SavedCardActivity) -> Unit = {},
                                        onPreviewVehicle: (SavedCardVehicles) -> Unit = {},
-                                       onPreviewVehicleDay: (SavedCardVehicles) -> Unit = {}) {
+                                       onPreviewVehicleDay: (SavedCardVehicles) -> Unit = {},
+                                       driverImports: DriverCardImportRepository? = null) {
+    var ownImports by remember { mutableStateOf<List<SavedDriverImport>>(emptyList()) }
+    var ownStatus by remember { mutableStateOf("Lade Fahrerprofil-Teilimporte …") }
     var sourcePairs by remember { mutableStateOf<List<SavedCardSourcePair>>(emptyList()) }
     var pairStatus by remember { mutableStateOf("Lade gemeinsam gespeicherte Dateien …") }
     var snapshots by remember { mutableStateOf<List<SavedCardActivity>>(emptyList()) }
@@ -41,6 +46,13 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
     var vehicleStatus by remember { mutableStateOf("Lade gespeicherte Fahrzeugdateien …") }
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
+    LaunchedEffect(driverImports) {
+        try {
+            ownImports = driverImports?.all().orEmpty()
+            ownStatus = if (ownImports.isEmpty()) "Noch keine Teilimporte im Fahrerprofil gespeichert."
+                else "${ownImports.size} ausdrücklich gespeicherte Teilimport-Sitzungen."
+        } catch (_: Exception) { ownStatus = "Fahrerprofil-Teilimporte konnten nicht geladen werden." }
+    }
     LaunchedEffect(pairs) {
         try {
             sourcePairs = pairs?.all().orEmpty()
@@ -75,6 +87,25 @@ internal fun CardSnapshotHistoryScreen(padding: PaddingValues,
         Text("Gespeicherte Teilimporte · Vorschau", style = MaterialTheme.typography.titleLarge)
         Text("Hier stehen nur ausdrücklich gespeicherte Fahrerkarten-Dateien. Der Lesetest allein speichert nichts; ein vollständiger Kartenimport ist noch nicht vorhanden.",
             style = MaterialTheme.typography.bodyMedium)
+        if (driverImports != null) {
+            Text("Teilimporte im Fahrerprofil", style = MaterialTheme.typography.titleMedium)
+            Text(ownStatus)
+            ownImports.forEach { saved ->
+                SectionCard {
+                    Text("Teilimport · ${Instant.ofEpochMilli(saved.savedAtEpochMillis).atZone(zone).format(formatter)}")
+                    Text("Neue Quelldateien: ${saved.newSourceCount}; kein vollständiger Kartenimport.")
+                    saved.activity?.let { Text("${it.dayCount} Tagesdatensätze · Fahrerkarte: ${maskCardNumber(it.cardNumber)}") }
+                    saved.vehicles?.let { Text("${it.uses.size} Fahrzeugnutzungen · Fahrerkarte: ${maskCardNumber(it.cardNumber)}") }
+                    val pair = saved.pair
+                    val activity = saved.activity
+                    if (pair != null) OutlinedButton(onClick = { onPreviewPair(pair) }) { Text("Teilimport ansehen") }
+                    else if (activity != null) OutlinedButton(onClick = { onPreviewActivity(activity) }) { Text("Kartentage des Teilimports ansehen") }
+                    else saved.vehicles?.let { vehicles -> OutlinedButton(onClick = { onPreviewVehicle(vehicles) }) { Text("Fahrzeuge des Teilimports ansehen") } }
+                }
+            }
+            Text("Quellarchiv und frühere Teilimporte", style = MaterialTheme.typography.titleMedium)
+            Text("Die Auswahl einer älteren Datei erzeugt keine Profilzuordnung. Vorhandene Quellen bleiben unverändert erhalten.")
+        }
         Text("Gemeinsam gespeicherte Dateien", style = MaterialTheme.typography.titleMedium)
         Text(pairStatus)
         Text("Nur ausdrücklich gemeinsam gespeicherte Dateien aus demselben Lesevorgang stehen hier. Ältere einzelne Dateien werden nicht nachträglich zugeordnet.",

@@ -22,12 +22,16 @@ class CardSourcePairRepository @Inject constructor(
         // Validate and copy both complete files before the first database mutation.
         val activity = activities.prepare(result, now)
         val vehicle = vehicles.prepare(result, now)
-        val pair = CardSourcePairEntity("${activity.id}:${vehicle.id}", activity.id, vehicle.id, now)
-        return database.withTransaction {
+        return storePrepared(activity, vehicle, now)
+    }
+
+    internal suspend fun storePrepared(activity: de.fahrerabrechnung.data.db.CardActivityImportEntity,
+                                       vehicle: de.fahrerabrechnung.data.db.CardVehicleImportEntity,
+                                       savedAt: Long): Boolean = database.withTransaction {
+            val pair = CardSourcePairEntity("${activity.id}:${vehicle.id}", activity.id, vehicle.id, savedAt)
             database.cardActivityImportDao().insert(activity)
             database.cardVehicleImportDao().insert(vehicle)
             database.cardSourcePairDao().insert(pair) != -1L
-        }
     }
 
     suspend fun all(): List<SavedCardSourcePair> = database.withTransaction {

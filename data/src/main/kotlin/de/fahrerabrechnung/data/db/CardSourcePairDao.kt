@@ -30,4 +30,7 @@ interface CardSourcePairDao {
 
     @Query("SELECT * FROM card_source_pairs ORDER BY savedAtEpochMillis DESC, id DESC")
     suspend fun all(): List<CardSourcePairEntity>
+
+    @Query("SELECT * FROM card_source_pairs WHERE id = :id")
+    suspend fun getById(id: String): CardSourcePairEntity?
 }
