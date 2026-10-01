@@ -1,6 +1,8 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 29.09.2026 · technischer Bezugsstand: gemeinsame Quelldatei-Speicherung nach PR #25.** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 01.10.2026 · Produktcode-Basis: `main` nach PR #26 (`fbac9310`).** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+
+Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. Der gemeinsame Speichervorgang aus PR #26 wurde am 01.10.2026 am Gerät bestätigt; es gibt keine uncommitteten Produktcode-Änderungen aus dieser Sitzung.
 
 ## Nachweislich umgesetzt
 
@@ -27,7 +29,7 @@
 | Gespeicherte Dateizeiträume | PR #21–#22 zeigen die belegten Kartentage sowie erste/letzte Fahrzeugnutzung je Snapshot, ohne offene Enden zu erfinden. Kurze Kartennummern sind vollständig maskiert. |
 | Einzelne Fahrzeugdatei ansehen | PR #23–#24 öffnen eine ausdrücklich ausgewählte Fahrzeugdatei in ihrer eigenen Historien- oder Kartentag-Vorschau; sie ist kein vollständiger Import. Drei Fahrzeuge aus 69 Nutzungen wurden am Gerät geprüft. |
 | Startseitenstatus | PR #25 unterscheidet noch fehlende, gespeicherte und nicht prüfbare Teilimporte; die Fachauswertung bleibt offen. Am Gerät bestätigt. |
-| Gemeinsam gespeicherte Quellen | Beide validierten Dateien aus demselben Lesevorgang können ausdrücklich in einer Transaktion gespeichert werden. Die Zuordnung verweist auf die unveränderten deduplizierten Quellen. Gemeinsame Vorschau aus der Dateiübersicht; additive Migration 3 → 4. Alte Einzeldateien bleiben ohne erfundene Zuordnung erhalten. |
+| Gemeinsam gespeicherte Quellen | PR #26: Beide validierten Dateien aus demselben Lesevorgang können ausdrücklich in einer Transaktion gespeichert werden. Die Zuordnung verweist auf die unveränderten deduplizierten Quellen. Gemeinsame Vorschau aus der Dateiübersicht; additive Migration 3 → 4. Alte Einzeldateien bleiben ohne erfundene Zuordnung erhalten. Gemeinsames Speichern und Verfügbarkeit nach Lesertrennung/App-Neustart am 01.10.2026 bestätigt. |
 | Technische Basis | Fünf Haupttabs, Room/SQLCipher-/Keystore-Basis, DataStore, Debug-/Internal-Builds und CI vorhanden. |
 
 Die echte Kartenprobe mit USB-CCID, APDU, Kartenerkennung, vollständiger Aktivitätsdatei und Vorschau **hat bereits stattgefunden**. Der früher hier angekündigte „nächste Hardwaretest“ ist erledigt. Die Probe belegt den getesteten Leser und die getestete Gen2V2-Karte, nicht jede Karten-/Leserkombination.
@@ -45,6 +47,8 @@ Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspei
 
 ## Verifikation
 
-Der [CI-Lauf zu PR #24](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36528989882) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room/SQLCipher-/Compose-Emulatortests nach einem Runner-Neustart wegen fehlendem `/dev/kvm`. Auf dem Galaxy S23 wurden verschlüsselte Aktivitäts- und Fahrzeug-Teilimporte nach Entfernen der Karte und App-Neustart sowie die getrennte Fahrzeugvorschau geprüft. Der Startseitenstatus aus PR #25 wurde anschließend am Gerät bestätigt. Die neue gemeinsame Speicherung erfordert einen erneuten Gerätetest; die zugehörigen CI-Prüfungen sind im aktuellen PR verlinkt.
+Der [CI-Lauf auf `main` nach PR #26](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36743029047) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room-/SQLCipher-/Compose-Emulatortests. Bereits der [Lauf zur getesteten PR-APK](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36568389361) war vollständig grün (13 Daten- und 22 App-Instrumentierungstests). Die zusätzliche [PR-Prüfung nach dem Schemaexport](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36742530657) scheiterte vor den App-Tests bei der Emulator-Beschleunigung; ihr Build-/Test-/Lint-/APK-Job war erfolgreich. Der spätere grüne `main`-Lauf ist der aktuelle vollständige Nachweis.
+
+**Letzter erfolgreicher Gerätetest: 01.10.2026, PR #26.** Galaxy S23/Android 16, CCID-Leser und echte Gen2V2-Fahrerkarte. Gelesen: Aktivitätsdatei 13.776 Bytes, 74 Tagesdatensätze; Fahrzeugdatei 9.600 Bytes, 69 Nutzungen. „Beide Dateien gemeinsam speichern“ meldete Erfolg; die Übersicht zeigte genau ein Dateipaar mit diesen Anzahlen. Der Nutzer bestätigte ausdrücklich Lesertrennung und App-Neustart; im letzten Screenshot war kein Leser angeschlossen und das gespeicherte Dateipaar weiterhin sichtbar. Der Test ist damit für diese Hardware-/Kartenkombination bestanden. Automatische Rollback-/Deduplizierungs-/Migrationsprüfungen und Testgrenzen stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
 
 Die Berichte vom 22.09.2026 beschreiben frühere, inzwischen behobene Build-/Zugriffsblockaden und sind nur historische Nachweise.
