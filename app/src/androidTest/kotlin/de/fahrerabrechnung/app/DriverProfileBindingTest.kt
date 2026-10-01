@@ -2,6 +2,7 @@ package de.fahrerabrechnung.app
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.room.Room
@@ -119,6 +120,27 @@ class DriverProfileBindingTest {
         awaitText("Beim Speichern wird diese Karte")
         compose.onNodeWithTag("request_card_binding").assertDoesNotExist()
         assertTrue(runBlocking { imports.review(replacement).canSave })
+        assertEquals(1, runBlocking { db.driverProfileDao().cards(profileId).size })
+        assertTrue(runBlocking { imports.all().isEmpty() })
+    }
+
+    @Test fun confirmationForPreviousCardCannotCarryOverToAForeignCard() {
+        val profileId = runBlocking { imports.bind(card(), true); imports.profile()!!.id }
+        val selected = mutableStateOf(card("synthetic-uncertain", card().holder.copy(birthDate = null)))
+        compose.setContent {
+            FahrerTagebuchTheme(ThemeMode.LIGHT) {
+                Column { DriverProfileBindingPanel(selected.value, imports) {} }
+            }
+        }
+        awaitText("Eigene Folge-/Ersatzkarte bestätigen")
+        compose.onNodeWithTag("request_card_binding").performClick()
+        compose.onNodeWithTag("confirm_own_card").assertIsDisplayed()
+        compose.runOnIdle {
+            selected.value = card("synthetic-foreign", DriverIdentity("BETA", "OTHER PERSON", LocalDate.of(1980, 1, 1), "en"))
+        }
+        awaitText("Nur temporäre Vorschau")
+        compose.onNodeWithTag("confirm_own_card").assertDoesNotExist()
+        compose.onNodeWithTag("request_card_binding").assertDoesNotExist()
         assertEquals(1, runBlocking { db.driverProfileDao().cards(profileId).size })
         assertTrue(runBlocking { imports.all().isEmpty() })
     }

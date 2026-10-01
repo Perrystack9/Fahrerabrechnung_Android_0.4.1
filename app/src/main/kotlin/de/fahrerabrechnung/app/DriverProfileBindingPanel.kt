@@ -14,6 +14,12 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun DriverProfileBindingPanel(card: DriverCard, repository: DriverCardImportRepository,
                                        onReview: (CardBindingReview?) -> Unit) {
+    key(card, repository) { BindingPanelForCard(card, repository, onReview) }
+}
+
+@Composable
+private fun BindingPanelForCard(card: DriverCard, repository: DriverCardImportRepository,
+                                onReview: (CardBindingReview?) -> Unit) {
     var review by remember(card) { mutableStateOf<CardBindingReview?>(null) }
     var showConfirmation by remember(card) { mutableStateOf(false) }
     var busy by remember(card) { mutableStateOf(false) }
