@@ -46,7 +46,7 @@ Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspei
 3. Tageskennzahlen und fachliche Auswertung von Heimkehr, Reise/Übernachtung, Arbeitszeit, Spesen und Arbeitgeberzuschlägen gemäß Issue #3. Keine Steuerlogik.
 4. PDF-/Exportfunktionen und spätere Komfortfunktionen getrennt umsetzen. Vorbereitete Entities/Interfaces und UI-Platzhalter gelten nicht als fertige Funktion.
 
-Vor der Profil-/Kartenbindung fehlen Fachregeln für die erste Zuordnung, fremde Karten und Ersatzkarten. Das Onboarding legt noch kein dauerhaftes Fahrerprofil an. Die Regeln sind mit dem Produktberater zu klären; eine automatische Bindung wird nicht vorausgesetzt.
+Die Fachregeln zur Profilbindung wurden am 01.10.2026 bestätigt und in CURRENT_RULES dokumentiert: Single-Driver-App, erste Karte ausdrücklich bestätigen, zusätzliche Folge-/Ersatzkarten bei belastbar gleicher Inhaber-Identität, Bestätigung bei unklarem Match und keine Vermischung fremder Karten. Alte Karten und Imports bleiben erhalten; keine vermutete nachträgliche Zuordnung. Die Implementierung dieses begrenzten Schritts folgt; das Onboarding legt bisher noch kein dauerhaftes Fahrerprofil an.
 
 ## Verifikation
 

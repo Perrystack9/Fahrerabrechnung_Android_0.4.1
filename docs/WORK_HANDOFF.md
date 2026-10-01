@@ -103,7 +103,9 @@ Offen sind Profil-/Kartenbindung, vollständige Importhistorie und Status/Fehler
 
 Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import und sein Datenmodell weiter ausbauen, ausgehend von den gespeicherten Quellen. Einen begrenzten Folgeschritt und seine Migration/Fehlerfälle vor Umsetzung festlegen. Die aktuelle Übergabe ist kein automatischer Auftrag, sämtliche Produktpunkte sofort zu implementieren.
 
-**Vor der Profil-/Kartenbindung fachlich zu klären:** Wie wird die erste Karte zugeordnet, und wie werden eine fremde Karte und eine Ersatzkarte behandelt? Issue #3/CURRENT_RULES und die vorhandenen Spezifikationen legen diese Regeln noch nicht fest. Das Onboarding speichert bislang Heimatpunkt und Abschlussstatus, aber kein dauerhaftes Fahrerprofil; `ProfileEntity`/`ProfileRepository` sind vorbereitet. Keine automatische Zuordnungsregel aus Namen oder der ersten gelesenen Karte ableiten.
+**Profilbindung fachlich festgelegt am 01.10.2026:** Single-Driver-App; erste eigene Karte ausdrücklich bestätigen. Die dauerhafte Fahreridentität ist das lokale Profil, nicht die Kartennummer. Belastbar gleiche Inhaber-Identität erlaubt zusätzliche Folge-/Ersatzkarten; unklare Fälle verlangen Bestätigung. Erkennbar fremde Karten bleiben auf den temporären technischen Lesetest begrenzt. Alte Karten/Imports bleiben erhalten; ältere Teilimporte nicht anhand von Datum, Kartennummer oder Vermutung zuordnen. Zielmodell und vollständige Vorgabe stehen in [CURRENT_RULES.md](CURRENT_RULES.md).
+
+Geplanter begrenzter nächster Schritt: persistente Profil-/Kartenbindung und daran gebundene Teilimport-Sitzungen für die bereits unterstützten Quellen. Additive Migration, explizite Bestätigung und Fremdkartenschutz automatisch prüfen. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
 
 ### Verbindliche Grenzen bei der Fortsetzung
 
@@ -120,4 +122,4 @@ Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardw
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28 ist gemergt; die vollständige Import-Pipeline ist noch nicht begonnen. Die nächste Produkt-/Fachklärung betrifft die Profil-/Kartenbindung.
+Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28 ist gemergt; die vollständige Import-Pipeline ist weiterhin offen. Die Profil-/Kartenbindung ist fachlich freigegeben und der nächste begrenzte Implementierungsschritt.

@@ -1,6 +1,15 @@
 # FahrerTagebuch · aktuelle Produktregeln
 
-**Stand: 28.09.2026.** Dieses Dokument und [Issue #3 „Berater-Handoff“](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) bilden zusammen den maßgeblichen Fach-/Produktstand. Bei Widersprüchen haben sie Vorrang vor älteren Design-Handoffs, GPS-Konzepten und Tests. Issue #3 ist eine Produktvorgabe, **kein Auftrag, alle Punkte sofort zu implementieren**. Der tatsächliche Code-Stand steht in [WORK_STATUS.md](../WORK_STATUS.md).
+**Stand: 01.10.2026.** Dieses Dokument und [Issue #3 „Berater-Handoff“](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) bilden zusammen den maßgeblichen Fach-/Produktstand. Die Profilbindung wurde am 01.10.2026 ausdrücklich als Fachvorgabe ergänzt. Bei Widersprüchen haben die aktuellen Regeln Vorrang vor älteren Design-Handoffs, GPS-Konzepten und Tests. Issue #3 ist eine Produktvorgabe, **kein Auftrag, alle Punkte sofort zu implementieren**. Der tatsächliche Code-Stand steht in [WORK_STATUS.md](../WORK_STATUS.md).
+
+## Fahrerprofil, Fahrerkarte und Importzuordnung
+
+- FahrerTagebuch ist zunächst eine **Single-Driver-App**. Die erste eigene Fahrerkarte wird nach **ausdrücklicher Nutzerbestätigung** an das lokale Fahrerprofil gebunden. Die Kartennummer ist **nicht** die dauerhafte Fahreridentität.
+- Zielmodell: **DriverProfile → DriverCard(s) → ImportSession(s)**. Folge-/Ersatzkarten mit belastbar gleicher Karteninhaber-Identität werden als zusätzliche DriverCard demselben DriverProfile zugeordnet.
+- Alte Karten und deren Imports bleiben unverändert erhalten. Keine rückwirkende Umschreibung auf die neue Kartennummer.
+- Bei nicht eindeutigem Identitäts-Match muss der Nutzer bestätigen, dass es seine neue/Ersatzkarte ist. Keine automatische Zusammenführung auf Basis einer teilweisen oder unsicheren Übereinstimmung.
+- Eine erkennbar fremde Fahrerkarte darf niemals mit dem gebundenen Profil, Kalender, der Fahrzeughistorie oder Abrechnung vermischt werden. Für V1 höchstens technischer Lesetest/temporäre Vorschau, ohne dauerhafte Profilbindung.
+- Bereits gespeicherte ältere Teilimporte werden nicht nachträglich anhand von Datum, Kartennummer oder Vermutung einem Profil zugeordnet. Dafür ist eine belastbare Zuordnung oder ausdrückliche Nutzerbestätigung erforderlich.
 
 ## Standort, Karte und Datenquellen
 
