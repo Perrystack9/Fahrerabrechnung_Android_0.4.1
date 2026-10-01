@@ -55,7 +55,7 @@ Schema 6 ergänzt drei Tabellen: Tagesinhalte je physischer Karte, geordnete Tä
 
 Die additive Migration 5 → 6 schreibt keine Altdaten um und befüllt nichts aufgrund einer Vermutung. Ein frischer bestätigter eigener Lesevorgang kann vorhandene identische Rohquellen wiederverwenden und dazu normalisierte Tage erzeugen. Noch kein vollständiger Import, konfliktbereinigter Kalender oder fachliche Arbeitszeitberechnung. Die spätere automatische, einfache Bedienung bleibt gemäß CURRENT_RULES geplant.
 
-Vier neue Unit-Tests und zehn neue SQLCipher-Tests prüfen diese Stufe; vollständige CI am neuen Kopf und [Update-Gerätetest](docs/NORMALIZED_DAYS_DEVICE_TEST.md) stehen noch aus. Ein eigener Buildtyp **FahrerTagebuch Test** mit fester öffentlicher Testsignatur ermöglicht echte Updates statt wechselnder CI-Debug-Zertifikate. CI stellt Schema-5-Ausgangsversion und Schema-6-Update zusammen bereit; siehe [Test-Builds](ci/README.md).
+Vier neue Unit-Tests und zehn neue SQLCipher-Tests prüfen diese Stufe. Der generierte Schema-6-Export ist eingecheckt; die elf bestehenden Entities bleiben unverändert, die Migration entspricht dem generierten Schema. Den vollständigen automatischen Nachweis einschließlich Emulatortests liefern die [Prüfungen des aktuellen PR-32-Kopfs](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/32/checks). Der [Update-Gerätetest](docs/NORMALIZED_DAYS_DEVICE_TEST.md) steht noch aus; PR #32 bis dahin nicht mergen. Ein eigener Buildtyp **FahrerTagebuch Test** mit fester öffentlicher Testsignatur ermöglicht echte Updates statt wechselnder CI-Debug-Zertifikate. CI stellt Schema-5-Ausgangsversion und Schema-6-Update zusammen bereit; siehe [Test-Builds](ci/README.md).
 
 ## Verifikation
 

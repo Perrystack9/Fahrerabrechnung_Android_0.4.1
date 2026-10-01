@@ -61,6 +61,7 @@ JDK 17, Android SDK Platform 37, Build Tools 36.0.0, AGP 9.4.0 und der offiziell
 ./gradlew lint
 ./gradlew assembleDebug
 ./gradlew assembleInternal
+./gradlew :app:assembleDeviceTest
 ```
 
 Room-/SQLCipher- und Compose-Instrumentierung erfordern Emulator/Gerät (`./gradlew connectedDebugAndroidTest`). Der [vollständige CI-Lauf auf `main` nach PR #26](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36743029047) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room-/SQLCipher-/Compose-Emulatortests. Am **01.10.2026** bestätigte der Nutzer auf dem Galaxy S23 mit CCID-Leser und echter Gen2V2-Karte die gemeinsame Speicherung von **74 Tagesdatensätzen und 69 Fahrzeugnutzungen** sowie die weitere Verfügbarkeit des Dateipaars nach Abziehen des Lesers und App-Neustart. Details, Testgrenzen und getestete APK stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
@@ -70,6 +71,8 @@ Der [vollständige PR-28-Lauf 36845103966](https://github.com/Perrystack9/Fahrer
 Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist per Android Keystore/AES-GCM geschützt; kein unverschlüsselter Fallback und kein `fallbackToDestructiveMigration()`. `SafeLogger` darf keine sensiblen Kartendaten, Rohdumps oder vollständigen APDUs ausgeben.
 
 Die erste vollständige [PR-30-CI 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336) bestand 57 Unit-Tests, Lint, APK-Prüfungen sowie 27 Daten-/Transport- und 29 App-Emulatortests. Schemaexport und Kartenwechsel-Absicherung wurden danach ergänzt; vor Auslieferung die [Prüfungen des aktuellen PR-Kopfs](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30/checks) heranziehen. Die finale [PR-30-CI 36859243839](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36859243839) zum Kopf `09ccfdf` ist vollständig grün. Am 01.10.2026 bestätigte der Nutzer Erstbindung, Speicherung, Neustart ohne Leser, Wiedererkennung ohne Erstbestätigung und 0 neue Quelldateien beim erneuten Speichern. Die neue Schema-6-Stufe benötigt ihren eigenen Update-Gerätetest.
+
+PR #32 enthält den generierten Room-Schema-6-Export. Sein erfolgreicher erster Build prüfte 61 Unit-Tests, Lint sowie Debug-, Internal- und Test-APKs einschließlich gleicher Testsignatur und aufsteigender Versionscodes. Für den vollständigen Nachweis am aktuellen Kopf einschließlich Room-/SQLCipher-/Compose-Emulatortests gelten die [PR-32-Prüfungen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/32/checks). Der manuelle Update-Gerätetest bleibt offen; PR #32 wird vorher nicht gemergt.
 
 ## Dokumente lesen
 
