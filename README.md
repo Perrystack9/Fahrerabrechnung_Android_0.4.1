@@ -1,6 +1,6 @@
 # FahrerTagebuch – Android 0.4.1
 
-**Dokumentationsstand: 01.10.2026; Produktcode-Basis: `main` nach PR #26 (`fbac9310`).** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
+**Dokumentationsstand: 01.10.2026; Produktcode-Basis: `main` nach PR #28 (`a0ce8767`).** Verbindlicher Fachstand: [aktuelle Produktregeln](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3). Ältere Design- und GPS-Dokumente sind historische Referenzen, soweit sie dem nicht widersprechen.
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **explizit speicherbaren Aktivitäts- und Fahrzeug-Teilimporten**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md). Für einen neuen Work-Einstieg: [aktuelle Übergabe und letzter Gerätetest](docs/WORK_HANDOFF.md).
 
@@ -27,6 +27,7 @@ Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **expl
 - PR #23–#24: Eine ausgewählte Fahrzeugdatei lässt sich auf sie begrenzt in der Fahrzeughistorie und im Kartentag als Vorschau öffnen; die Rückkehr zur neuesten gespeicherten Datei ist möglich. Es wird weiterhin kein vollständiger Import behauptet.
 - PR #25: Die Startseite benennt vorhandene Aktivitäts- und Fahrzeug-Teilimporte, statt bei gespeicherten Dateien pauschal „Noch keine Fahrerkarte eingelesen“ zu zeigen.
 - PR #26: Die beiden validierten Dateien können aus einem tatsächlichen Lesevorgang ausdrücklich gemeinsam gespeichert werden. Eine SQLCipher-Transaktion sichert beide Dateien und ihre Herkunftszuordnung; identische Quellen bleiben dedupliziert. Die gespeicherte gemeinsame Vorschau öffnet genau dieses Dateipaar. Alte Einzeldateien werden nicht automatisch zugeordnet (Migration 3 → 4).
+- PR #28: Das Geburtsdatum in EF Identification wird korrekt als vier Byte BCD-Kalenderdatum gelesen; alle Nullbytes bleiben ein fehlendes Datum. Zehn neue Regressionstestmethoden decken den Parser und den Leserablauf für Gen1/Gen2/Gen2V2 ab. Keine Änderung an Room-Schema oder UI.
 - Fünf Haupttabs: **Start, Kalender, Auswertung, Abrechnung, Einstellungen**. Room/SQLCipher-/Keystore-Basis, DataStore, Designsystem und CI.
 
 **Wichtig:** Lesen und Dekodieren erfolgen zunächst im Arbeitsspeicher. Erst zusätzliche Knöpfe speichern die Aktivitäts- und Fahrzeugdatei gemeinsam oder einzeln lokal. Die Kartentag-Zeitleiste bleibt eine Vorschau aus diesen Daten, kein abgeschlossener Kartenimport oder berechneter Tagesbericht. Andere Onboarding-Fachfelder und Werte in Grundscreens sind weiterhin Vorschau beziehungsweise Platzhalter.
@@ -61,6 +62,8 @@ JDK 17, Android SDK Platform 37, Build Tools 36.0.0, AGP 9.4.0 und der offiziell
 ```
 
 Room-/SQLCipher- und Compose-Instrumentierung erfordern Emulator/Gerät (`./gradlew connectedDebugAndroidTest`). Der [vollständige CI-Lauf auf `main` nach PR #26](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36743029047) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room-/SQLCipher-/Compose-Emulatortests. Am **01.10.2026** bestätigte der Nutzer auf dem Galaxy S23 mit CCID-Leser und echter Gen2V2-Karte die gemeinsame Speicherung von **74 Tagesdatensätzen und 69 Fahrzeugnutzungen** sowie die weitere Verfügbarkeit des Dateipaars nach Abziehen des Lesers und App-Neustart. Details, Testgrenzen und getestete APK stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
+
+Der [vollständige PR-28-Lauf 36845103966](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36845103966) bestand ebenfalls alle Prüfungen einschließlich 13 Daten- und 22 App-Instrumentierungstests. Nach der PR-28-Debug-ZIP und der Testanleitung meldete der Nutzer am 01.10.2026 „Funktioniert soweit“. Neue Einzelmesswerte wurden nicht nachgemeldet; Details stehen in der Übergabe. Die nächste Umsetzung der Profil-/Kartenbindung benötigt noch Fachregeln zur ersten Zuordnung sowie zu fremden und Ersatzkarten.
 
 Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist per Android Keystore/AES-GCM geschützt; kein unverschlüsselter Fallback und kein `fallbackToDestructiveMigration()`. `SafeLogger` darf keine sensiblen Kartendaten, Rohdumps oder vollständigen APDUs ausgeben.
 

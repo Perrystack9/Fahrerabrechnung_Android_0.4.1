@@ -10,17 +10,18 @@
 
 | Bezug | Stand |
 |---|---|
-| Letzter Produktcode-PR | [PR #26: Kartenquellen gemeinsam atomar speichern und exakt wieder öffnen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/26), gemergt |
-| Produktcode-Basis auf main | [`fbac9310e4c5d127d7cebdd0cda1319b6880ed6d`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/fbac9310e4c5d127d7cebdd0cda1319b6880ed6d); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
-| PR-Kopf einschließlich Schemaexport | `307f1d4e6ee7e8ef49ee275d6aa0e417615933c8` |
+| Letzter Produktcode-PR | [PR #28: Fahrerkarten-Geburtsdatum korrekt als BCD-Kalenderdatum dekodieren](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/28), gemergt |
+| Produktcode-Basis auf main | [`a0ce87675779aa7130473fa847cea76db2a12f82`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/a0ce87675779aa7130473fa847cea76db2a12f82); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
+| Getesteter PR-28-Kopf | `969310b68446437e2214ea07e3e3155a2a72bb86` |
 | Datenbank | Room/SQLCipher, Schema **4**, Migrationen 1 → 2 → 3 → 4, Schemaexport 4.json eingecheckt |
 | Offene lokale Arbeit | Keine uncommitteten Produktcode-Änderungen oder laufenden Builds aus diesem Work zu übernehmen; PR #26 ist abgeschlossen |
-| Letzter manueller Gerätetest | **01.10.2026, PR #26: bestanden**, vom Nutzer bestätigt |
+| Letzter manueller Gerätetest | **01.10.2026, PR #28: vom Nutzer als funktionierend zurückgemeldet**, Details und Grenzen unten |
 
 ## Wirklich implementiert
 
 - Siebenstufiges Onboarding; Heimatpunkt ausdrücklich per Vordergrund-Standort oder Karte wählbar, fester 500-m-Radius.
 - USB-CCID/APDU, USB-Freigabe, ATR-/Slot-Diagnose und Gen1-/Gen2-/Gen2V2-Erkennung.
+- PR #28: Das Geburtsdatum in EF Identification wird als vier Byte BCD-Kalenderdatum (`LocalDate`) gelesen; alle Nullbytes bedeuten ein fehlendes Datum. TimeReal-Zeitstempel bleiben unverändert.
 - Vollständiges Lesen der Aktivitäts- und Fahrzeugdatei, zyklische Tagesdatensätze/Tätigkeitswechsel und Fahrzeugnutzungen dekodieren.
 - Aktivitätsintervalle auf lokale Kalendertage projizieren; fehlende Zeit und Einträge ohne Karte gesondert kennzeichnen.
 - Kompakte Tagesübersicht, zoombare/verschiebbare Detailzeitleiste, Abschnittsauswahl, Zeitmarke und belegte Fahrzeug-Zeitfenster. Offene Fahrzeugenden werden nicht fortgeschrieben.
@@ -33,7 +34,21 @@
 
 Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipaars bezeichnet seine erste gemeinsame Speicherbestätigung; sie ist keine vollständige Historie jedes erneuten Leseversuchs. Getrennt gespeicherte Quellen können weiterhin als Vorschau kombiniert werden, ohne dadurch als derselbe Lesevorgang zu gelten.
 
-## Letzter erfolgreicher Hardware-/Gerätetest
+## Letzte Hardware-/Gerätetests
+
+### PR #28 – aktuelle Nutzerrückmeldung
+
+**01.10.2026, etwa 12:20 Uhr Europe/Berlin:** Nach Bereitstellung der PR-28-Debug-ZIP und einer Anleitung für Installation, „Kartendaten testen“, gemeinsame Speicherung, Lesertrennung, vollständiges Beenden und Wiederöffnen der App meldete der Nutzer: **„Funktioniert soweit“**. Diese Rückmeldung ist als bestandener Gerätetest im bisherigen Galaxy-S23-/Android-16-/CCID-/Gen2V2-Kontext übernommen.
+
+Neue Einzelwerte, Screenshots und Angaben zum Installationsweg wurden nicht nachgemeldet. Die nachstehenden 74 Tagesdatensätze und 69 Fahrzeugnutzungen sind weiterhin die Messwerte aus PR #26. Das Geburtsdatum wird nicht in der Oberfläche angezeigt; seine genaue Dekodierung ist durch automatische Tests abgesichert. Diese Rückmeldung ist keine allgemeine Freigabe anderer Karten oder Leser.
+
+- Ausgeliefert: `FahrerTagebuch-PR28-Datumsparser-Test.zip`, enthält `app-debug.apk`.
+- Herkunft: [vollständig grüner PR-Lauf 36845103966](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36845103966), Debug-Artefakt ID `11153391471`, PR-Kopf `969310b68446437e2214ea07e3e3155a2a72bb86`.
+- ZIP-SHA256: `8d563f345abd90205daa12727a4d758e6170b44d3c4fe3b31462b96ed6362728`.
+- APK-SHA256: `c729cc1a8f35bf78f0a080a28ba8e99546e9579094503193ad0f7207777a5b7e`.
+- Der Zertifikatsvergleich ergab eine andere Debug-Signatur als bei der PR-26-CI-APK. Ein direktes Update über diese PR-26-APK ist damit blockiert; zur Umgehung nicht deinstallieren und gespeicherte Daten verlieren. Die Nutzerrückmeldung erklärt den Installationsweg nicht. PR #28 ändert keine Signierkonfiguration.
+
+### PR #26 – vorheriger Test mit Einzelmesswerten
 
 **Datum:** 01.10.2026, etwa 10:37–10:41 Uhr Europe/Berlin.  
 **Gerät:** Galaxy S23, Android 16; vorhandener USB-CCID-Leser und echte Gen2V2-Fahrerkarte. Das genaue Lesermodell ist in dieser Rückmeldung nicht neu spezifiziert.
@@ -51,7 +66,7 @@ Die Rückmeldung bestand aus drei Screenshots und der ausdrücklichen Nutzerbest
 
 **Testgrenze:** Der Test bestätigt die vorhandene Geräte-/Leser-/Gen2V2-Kombination. Er ist keine Hardwarefreigabe für alle Generationen/Leser und kein Beweis für einen vollständigen Kartenimport. Er ersetzt auch nicht die automatischen Fehlerfalltests. Doppelt wirkende Einträge in früheren langen Handy-Screenshots waren laut Nutzer ein Screenshot-/Handyproblem; die tatsächliche App zeigte drei Fahrzeuge.
 
-### Getestete APK
+### Getestete PR-26-APK
 
 - Ausgeliefert: **Debug-APK als ZIP**, `FahrerTagebuch-PR26-Kartenquellen-Test.zip`.
 - Herkunft: [grüner CI-Lauf 36568389361](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36568389361), Artefakt `Fahrerabrechnung-0.4.1-debug-apk`, ID `11032504544`; enthält `app-debug.apk`.
@@ -63,6 +78,7 @@ Bei Bedarf diese APK über das GitHub-Artefakt wiederherstellen. Eine ältere PR
 
 ## Automatische Verifikation
 
+- [Vollständiger PR-28-Lauf 36845103966](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36845103966) für `969310b`: **grün**, einschließlich Unit-Tests, Lint, Debug-/Internal-APK-Verifikation und Room-/SQLCipher-/Compose-Instrumentierung. **13 Daten- und 22 App-Instrumentierungstests**, keine Fehler oder übersprungenen Tests. Zehn neue Regressionstestmethoden prüfen Datef-Dekodierung, Schaltjahre, Nullwert, ungültige BCD-/Kalenderdaten, Trunkierung und Leserablauf für Gen1/Gen2/Gen2V2.
 - [Vollständiger main-Lauf 36743029047](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36743029047) für `fbac9310`: **grün**, einschließlich Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation und Room-/SQLCipher-/Compose-Instrumentierung.
 - [Lauf 36568389361](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36568389361) zur ausgelieferten APK: vollständig grün; **13 Daten- und 22 App-Instrumentierungstests**, keine Fehler.
 - [Zusätzlicher PR-Lauf 36742530657](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36742530657) nach dem Schemaexport: Build/Tests/Lint/APK grün, Emulatorjob scheiterte vor den App-Tests bei „Enable emulator hardware acceleration“. Der danach erfolgreiche main-Lauf liefert den vollständigen aktuellen Nachweis.
@@ -87,6 +103,8 @@ Offen sind Profil-/Kartenbindung, vollständige Importhistorie und Status/Fehler
 
 Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import und sein Datenmodell weiter ausbauen, ausgehend von den gespeicherten Quellen. Einen begrenzten Folgeschritt und seine Migration/Fehlerfälle vor Umsetzung festlegen. Die aktuelle Übergabe ist kein automatischer Auftrag, sämtliche Produktpunkte sofort zu implementieren.
 
+**Vor der Profil-/Kartenbindung fachlich zu klären:** Wie wird die erste Karte zugeordnet, und wie werden eine fremde Karte und eine Ersatzkarte behandelt? Issue #3/CURRENT_RULES und die vorhandenen Spezifikationen legen diese Regeln noch nicht fest. Das Onboarding speichert bislang Heimatpunkt und Abschlussstatus, aber kein dauerhaftes Fahrerprofil; `ProfileEntity`/`ProfileRepository` sind vorbereitet. Keine automatische Zuordnungsregel aus Namen oder der ersten gelesenen Karte ableiten.
+
 ### Verbindliche Grenzen bei der Fortsetzung
 
 - Keine Smartphone-Routenaufzeichnung, Hintergrundortung oder Smartphone-Kilometer; Heimatpunkt ausdrücklich per Standort/Karte.
@@ -102,4 +120,4 @@ Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardw
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. Zum Übergabezeitpunkt ist kein weiterer Produktcode nach PR #26 begonnen worden.
+Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28 ist gemergt; die vollständige Import-Pipeline ist noch nicht begonnen. Die nächste Produkt-/Fachklärung betrifft die Profil-/Kartenbindung.

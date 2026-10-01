@@ -1,8 +1,8 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
-**Dokumentationsstand: 01.10.2026 · Produktcode-Basis: `main` nach PR #26 (`fbac9310`).** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
+**Dokumentationsstand: 01.10.2026 · Produktcode-Basis: `main` nach PR #28 (`a0ce8767`).** Fachliche Quelle: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
-Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. Der gemeinsame Speichervorgang aus PR #26 wurde am 01.10.2026 am Gerät bestätigt; es gibt keine uncommitteten Produktcode-Änderungen aus dieser Sitzung.
+Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. PR #28 korrigiert ausschließlich den Geburtsdatumsparser und zugehörige Tests. Der Nutzer meldete den anschließenden Gerätetest am 01.10.2026 als funktionierend zurück; neue Einzelmesswerte fehlen. Es gibt keine uncommitteten Produktcode-Änderungen aus dieser Sitzung.
 
 ## Nachweislich umgesetzt
 
@@ -12,6 +12,7 @@ Neue Work-Sitzung: zuerst [WORK_HANDOFF.md](docs/WORK_HANDOFF.md) lesen. Der gem
 | Leser und Karte | USB-CCID/APDU-Kommunikation, USB-Freigabe, Slot/ATR/Reader-Diagnose und Gen1/Gen2/Gen2V2-Erkennung sind vorhanden. Der echte Galaxy-S23-/CCID-/Gen2V2-Test bestätigte die Kommunikation; andere Hardware ist dadurch nicht pauschal verifiziert. |
 | Aktivitätsdatei | PR #4 liest `EF Driver_Activity_Data` bis zur auf der Karte angegebenen Länge vollständig in den Arbeitsspeicher. Am Testgerät: 13.776 Bytes. |
 | Parser | PR #5 dekodiert die zyklischen Tagesdatensätze und Tätigkeitswechsel samt Kartenstatus. Am Testgerät: 74 Datensätze. Parser-Tests prüfen Ringgrenzen und ungültige Daten. |
+| Geburtsdatum | PR #28 dekodiert vier Datef-Bytes als BCD-Kalenderdatum statt Unix-Zeitstempel; Nullwert bleibt ein fehlendes Datum. Zehn neue Regressionstestmethoden, Gen1-/Gen2-/Gen2V2-Leserprüfungen und vollständige CI bestanden. |
 | Ortskalendertage | PR #6 projiziert UTC-Kartenintervalle auf lokale Tage, einschließlich Mitternacht und Sommerzeit. Fehlende Kartenabschnitte werden nicht zu Ruhe ergänzt. |
 | Kartentag-UI | PR #7 zeigt eine kompakte Tagesübersicht und zoombare/verschiebbare Detailansicht mit auswählbaren Abschnitten, Start/Ende/Dauer und Zeitmarke. Die lange Abschnittsliste bleibt zuschaltbar. |
 | Aktivitäts-Teilimport | PR #9 ergänzt ausdrücklich ausgelöstes Speichern der vollständigen Aktivitätsdatei in Room/SQLCipher, Wiederöffnung der jüngsten gespeicherten Vorschau und Deduplizierung identischer Snapshots. Schema-Migration 1 → 2; keine automatische Speicherung durch den Lesetest. |
@@ -45,10 +46,16 @@ Der Button „Kartendaten testen“ liest und dekodiert zunächst im Arbeitsspei
 3. Tageskennzahlen und fachliche Auswertung von Heimkehr, Reise/Übernachtung, Arbeitszeit, Spesen und Arbeitgeberzuschlägen gemäß Issue #3. Keine Steuerlogik.
 4. PDF-/Exportfunktionen und spätere Komfortfunktionen getrennt umsetzen. Vorbereitete Entities/Interfaces und UI-Platzhalter gelten nicht als fertige Funktion.
 
+Vor der Profil-/Kartenbindung fehlen Fachregeln für die erste Zuordnung, fremde Karten und Ersatzkarten. Das Onboarding legt noch kein dauerhaftes Fahrerprofil an. Die Regeln sind mit dem Produktberater zu klären; eine automatische Bindung wird nicht vorausgesetzt.
+
 ## Verifikation
+
+Der [vollständige PR-28-Lauf 36845103966](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36845103966) zum getesteten Kopf `969310b` bestand Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room-/SQLCipher-/Compose-Emulatortests (13 Daten- und 22 App-Tests, keine Fehler oder übersprungenen Tests). Room bleibt Schema 4.
 
 Der [CI-Lauf auf `main` nach PR #26](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36743029047) bestand Build, Unit-Tests, Lint, Debug-/Internal-APK-Verifikation sowie Room-/SQLCipher-/Compose-Emulatortests. Bereits der [Lauf zur getesteten PR-APK](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36568389361) war vollständig grün (13 Daten- und 22 App-Instrumentierungstests). Die zusätzliche [PR-Prüfung nach dem Schemaexport](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36742530657) scheiterte vor den App-Tests bei der Emulator-Beschleunigung; ihr Build-/Test-/Lint-/APK-Job war erfolgreich. Der spätere grüne `main`-Lauf ist der aktuelle vollständige Nachweis.
 
-**Letzter erfolgreicher Gerätetest: 01.10.2026, PR #26.** Galaxy S23/Android 16, CCID-Leser und echte Gen2V2-Fahrerkarte. Gelesen: Aktivitätsdatei 13.776 Bytes, 74 Tagesdatensätze; Fahrzeugdatei 9.600 Bytes, 69 Nutzungen. „Beide Dateien gemeinsam speichern“ meldete Erfolg; die Übersicht zeigte genau ein Dateipaar mit diesen Anzahlen. Der Nutzer bestätigte ausdrücklich Lesertrennung und App-Neustart; im letzten Screenshot war kein Leser angeschlossen und das gespeicherte Dateipaar weiterhin sichtbar. Der Test ist damit für diese Hardware-/Kartenkombination bestanden. Automatische Rollback-/Deduplizierungs-/Migrationsprüfungen und Testgrenzen stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
+**Letzte Gerätetestrückmeldung: 01.10.2026, PR #28.** Nach Bereitstellung der neuen Debug-ZIP und der Testanleitung meldete der Nutzer „Funktioniert soweit“. Als bestanden im bisherigen Galaxy-S23-/Android-16-/CCID-/Gen2V2-Kontext übernommen; keine neuen Einzelmesswerte oder Angaben zum Installationsweg. APK-Herkunft, Signaturhinweis und Testgrenzen stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
+
+**Vorheriger Gerätetest mit Einzelmesswerten: 01.10.2026, PR #26.** Galaxy S23/Android 16, CCID-Leser und echte Gen2V2-Fahrerkarte. Gelesen: Aktivitätsdatei 13.776 Bytes, 74 Tagesdatensätze; Fahrzeugdatei 9.600 Bytes, 69 Nutzungen. „Beide Dateien gemeinsam speichern“ meldete Erfolg; die Übersicht zeigte genau ein Dateipaar mit diesen Anzahlen. Der Nutzer bestätigte ausdrücklich Lesertrennung und App-Neustart; im letzten Screenshot war kein Leser angeschlossen und das gespeicherte Dateipaar weiterhin sichtbar. Der Test ist damit für diese Hardware-/Kartenkombination bestanden. Automatische Rollback-/Deduplizierungs-/Migrationsprüfungen und Testgrenzen stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
 
 Die Berichte vom 22.09.2026 beschreiben frühere, inzwischen behobene Build-/Zugriffsblockaden und sind nur historische Nachweise.
