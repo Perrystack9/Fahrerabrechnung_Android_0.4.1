@@ -10,13 +10,13 @@
 
 | Bezug | Stand |
 |---|---|
-| Letzter Produktcode-PR | [PR #28: Fahrerkarten-Geburtsdatum korrekt als BCD-Kalenderdatum dekodieren](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/28), gemergt |
-| Produktcode-Basis auf main | [`a0ce87675779aa7130473fa847cea76db2a12f82`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/a0ce87675779aa7130473fa847cea76db2a12f82); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
-| Getesteter PR-28-Kopf | `969310b68446437e2214ea07e3e3155a2a72bb86` |
-| Aktueller begrenzter Produktabschnitt | [PR #30](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30), Branch `feature/driver-profile-binding`: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen; auf diesem Stand weiterarbeiten, nicht neu beginnen |
-| Datenbank im Produktabschnitt | Room/SQLCipher, Schema **5**, additive Migrationen 1 → 2 → 3 → 4 → 5, generierter Schemaexport 5.json eingecheckt; ältere Quellen werden nicht nachträglich zugeordnet |
-| Automatischer Nachweis und offene Prüfung | Erste vollständige [PR-30-CI 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336) bestanden; [aktuellen PR-Kopf](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30/checks) vor Debug-ZIP-Auslieferung prüfen. Manueller Gerätetest der neuen Profilbindungs-Stufe noch offen |
-| Letzter manueller Gerätetest | **01.10.2026, PR #28: vom Nutzer als funktionierend zurückgemeldet**, Details und Grenzen unten |
+| Letzter Produktcode-PR | [PR #30: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30), gemergt |
+| Produktcode-Basis auf main | [`7a760bf70a5093a80a48b0043db9b37083a2ef17`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/7a760bf70a5093a80a48b0043db9b37083a2ef17); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
+| Getesteter PR-30-Kopf | `09ccfdf2f270164f4ee9968dc9e022218b53360f` |
+| Aktueller begrenzter Produktabschnitt | Branch `feature/normalized-card-days`: normalisierte, quellenbezogene Kartentage auf main nach PR #30/#31; vorhandene Profilbindung weiterverwenden |
+| Datenbank im Produktabschnitt | Room/SQLCipher, Schema **6**, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6; keine destruktive Migration oder automatische Zuordnung alter Quellen |
+| Automatischer Nachweis und offene Prüfung | [Finale PR-30-CI 36859243839](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36859243839) bestanden. CI und Update-Gerätetest der neuen Schema-6-Stufe getrennt abschließen |
+| Letzter manueller Gerätetest | **01.10.2026, PR #30: geprüfter Profilbindungs-Ablauf bestanden**, Details und Grenzen unten |
 
 ## Wirklich implementiert
 
@@ -43,13 +43,38 @@ Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipa
 - `driver_import_sources` verbindet jede neue `PARTIAL`-Sitzung mit ihrer konkreten Karte und ausgewählten Quellen. Quelle, Dateipaar, zusätzliche Karte und Sitzung werden gemeinsam atomar gespeichert; ein Fehler rollt die komplette neue Speicherung zurück. Derselbe Speicherauftrag ist idempotent, ein neuer Lesevorgang darf eine eigene Sitzung mit bereits vorhandenen Quelldateien erzeugen.
 - Schema 5 ergänzt drei Tabellen ohne Backfill oder Umschreibung alter Karten/Snapshots/Sitzungen. Alte Dateien bleiben im getrennten Quellarchiv. Eine Archivauswahl bleibt read-only und erzeugt keine Profilbindung; bei Navigation bleibt die Fahrzeugvorschau auf diese ausgewählte Datei begrenzt.
 - Die normale Fahrzeughistorie und Standard-Kartenvorschau nutzen bei gebundenem Profil ausschließlich dessen explizit verknüpfte Quellen. Noch kein normalisierter Tagesbestand, vollständiger Kartenimport, dauerhafte Fahrzeugentität oder fachliche Abrechnung.
-- Automatische Regressionen: exakter/unklarer/fremder Match, Bestätigen/Abbrechen, Fremdkartensperre, unveränderte Folge-/Altkarten, Deduplizierung/Retry, atomarer Rollback, Einzelquellen, verschlüsselte Wiederöffnung, Migration 3 → 5 und 4 → 5 sowie Trennung von Archiv und Profilhistorie. Der neue Gerätetest steht aus.
+- Automatische Regressionen: exakter/unklarer/fremder Match, Bestätigen/Abbrechen, Fremdkartensperre, unveränderte Folge-/Altkarten, Deduplizierung/Retry, atomarer Rollback, Einzelquellen, verschlüsselte Wiederöffnung, Migration 3 → 5 und 4 → 5 sowie Trennung von Archiv und Profilhistorie. Der geprüfte Profilbindungs-Gerätetest ist bestanden; Details und Grenzen unten.
 - [Gerätetest-Anleitung](PROFILE_BINDING_DEVICE_TEST.md): Bestätigung/Abbruch, Speichern, Neustart ohne Leser, erneute eigene Karte und getrenntes Altarchiv. Identische ältere Quellen dürfen nach einem frischen Lesevorgang wiederverwendet werden; dadurch werden keine alten Sitzungen rückwirkend umgeschrieben.
 - [Erster vollständig grüner PR-30-Lauf 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336), Kopf `99a29b6`: 57 Unit-Tests, 27 Daten-/Transporttests, 29 App-Tests, Lint und Debug-/Internal-APK-Prüfung bestanden; keine Fehler/übersprungenen Tests. Schemaexport und Kartenwechsel-Absicherung kamen anschließend hinzu. Der aktuelle Kopf muss einschließlich des zusätzlichen achten Compose-Tests vollständig grün sein, bevor seine Debug-ZIP ausgeliefert wird. Bei Kartenwechsel werden der alte Dialog und laufende Prüfungen verworfen; verspätete Ergebnisse einer anderen Karte ändern keine aktuelle Speicherfreigabe.
 
+## Normalisierte Tagesquellen – aktueller Arbeitsschritt
+
+- Drei additive Tabellen speichern unveränderliche UTC-Tagesinhalte, geordnete Tätigkeitswechsel und genaue Karten-/Quelldateiverweise einschließlich Ringposition. Die vorhandene Sitzung liefert die Importherkunft.
+- Tagesinhalte derselben physischen Karte werden unabhängig von der Ringposition dedupliziert. Geänderte Fassungen desselben Datums bleiben zusätzlich erhalten; keine stille Auswahl einer fachlich maßgeblichen Fassung. Folge-/Ersatzkarten bleiben getrennte Karten, auch bei gleicher Nummer und gleichen Tagesinhalten.
+- Normalisierung und bisherige Karten-/Datei-/Sitzungsspeicherung erfolgen atomar. Wiederholter Speicherauftrag bleibt idempotent. UTC, Kartenstatus, Fahrer-/Beifahrerslot, Teamstatus und Reihenfolge einschließlich gleicher Minuten bleiben erhalten. Entfernung der Karte und fehlende Tage werden nicht ergänzt.
+- Die Profilvorschau verwendet gespeicherte normalisierte Tage. Quellen ohne Normalisierung bleiben über den bisherigen Parser lesbar. Lesen/Archivauswahl erzeugt keine Normalisierung oder Profilbindung; erst ein frischer, ausdrücklich gespeicherter eigener Lesevorgang darf passende vorhandene Quelldateien wiederverwenden.
+- Noch kein vollständiger Import, konfliktbereinigter Tageskalender, berechnete Arbeitszeit, neue Fahrzeug-/GNSS-Datei oder automatische USB-Importbedienung. Letztere bleibt gemäß PR #31 verbindliches späteres Ziel.
+- Vier neue Fingerprint-Unit-Tests und zehn neue SQLCipher-Instrumentierungstests prüfen Inhaltstreue, Ringverschiebung, Fassungen, Kartenherkunft, Deduplizierung, Verschlüsselung/Wiederöffnung, Fehler-Rollback und Migration 5 → 6. CI muss am neuen Kopf abgeschlossen werden; [Update-Gerätetest](NORMALIZED_DAYS_DEVICE_TEST.md) danach durchführen.
+- Die separate App **FahrerTagebuch Test** erhält eine gleichbleibende öffentliche Entwicklungssignatur. CI baut/prüft eine Schema-5-Ausgangs-APK und das aktuelle Update mit derselben Paketkennung. Die bisherigen Debug-/Internal-Installationen bleiben getrennt; Details zu Testschlüssel und Buildherkunft in [ci/README.md](../ci/README.md).
+
 ## Letzte Hardware-/Gerätetests
 
-### PR #28 – aktuelle Nutzerrückmeldung
+### PR #30 – letzter bestätigter Profilbindungs-Ablauf
+
+**01.10.2026, etwa 15:00–15:47 Uhr Europe/Berlin:** Galaxy S23 / Android 16, vorhandener USB-CCID-Leser und eigene Gen2V2-Karte. Video, Screenshots und ausdrückliche Rückmeldungen bestätigen:
+
+- Aktivitätsdatei 13.776 Bytes / 74 Tagesdatensätze, Fahrzeugdatei 9.600 Bytes / 69 Nutzungen.
+- Eigene Karte ausdrücklich bestätigt; gemeinsame Speicherung mit zwei neuen Quelldateien und sichtbarer Profil-Teilimport-Sitzung.
+- Sitzung und beide Dateien nach vollständigem App-Neustart ohne Leser verfügbar.
+- Wiederholtes Lesen erkennt die eigene Karte ohne Erstbestätigung; erneutes Speichern meldet Erfolg und **0 neue Quelldateien**.
+
+Der geprüfte Ablauf ist bestanden. Die genaue Sitzungsanzahl nach Wiederholung wurde nicht separat gezeigt. Abbruch, Fremd-/Ersatzkarten, weitere Generationen/Leser und Fehlerfälle wurden nicht als zusätzliche manuelle Erfolge behauptet; synthetische automatische Tests sichern diese Fälle ab. Der vollständige Import bleibt offen.
+
+**Herkunft:** finaler PR-30-Kopf `09ccfdf2f270164f4ee9968dc9e022218b53360f`, vollständig grüner [CI-Lauf 36859243839](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36859243839). Ausgeliefert wurde nach dem Debug-Installationsfehler die parallel installierbare Internal-ZIP `FahrerTagebuch-PR30-Paralleltest-Internal.zip`, Artefakt `11161857220`. ZIP-SHA256 `cb9bd0b7f3f7ddfaf9e794adff24c4a46f585e66e84e5275c58526e0e8ee31c0`; APK-SHA256 `5aaa301d7215694ed2dc9f3f5fa24dead4949ddccf2a9da094770d939500abe4`.
+
+**Installations-/Testgrenze:** Die PR-28- und PR-30-Debug-Zertifikate unterscheiden sich. Die parallel bereitgestellte Internal-App hat eine andere Paketkennung; damit ist kein Erhalt alter App-Daten bei einem echten Update/Migration am Gerät nachgewiesen. Vorhandene Daten nicht zur Umgehung löschen. Der aktuelle Schema-6-Schritt stellt deshalb das oben beschriebene konsistent signierte Test-APK-Paar bereit; sein Update-/Migrationstest steht noch aus.
+
+### PR #28 – vorherige Nutzerrückmeldung
 
 **01.10.2026, etwa 12:20 Uhr Europe/Berlin:** Nach Bereitstellung der PR-28-Debug-ZIP und einer Anleitung für Installation, „Kartendaten testen“, gemeinsame Speicherung, Lesertrennung, vollständiges Beenden und Wiederöffnen der App meldete der Nutzer: **„Funktioniert soweit“**. Diese Rückmeldung ist als bestandener Gerätetest im bisherigen Galaxy-S23-/Android-16-/CCID-/Gen2V2-Kontext übernommen.
 
@@ -104,7 +129,7 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 - [CardSourcePairRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardSourcePairRepository.kt): validieren, atomar speichern, exakt zugehörige Quellen lesen.
 - [CardSourcePairDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/CardSourcePairDao.kt): Herkunftstabelle und Fremdschlüssel.
 - [CardActivityImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt) / [CardVehicleImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt): Quell-Snapshots und inhaltliche Deduplizierung.
-- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): Schema 5, additive Migrationen; keine destruktive Migration.
+- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): Schema 6, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6; keine destruktive Migration.
 - [CardHardwareTestScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardHardwareTestScreen.kt), [CardSnapshotHistoryScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardSnapshotHistoryScreen.kt), [AppRoot.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/AppRoot.kt): lesen/speichern, Quellenübersicht und Auswahl der Vorschau.
 - [EncryptedDatabaseInstrumentedTest.kt](../data/src/androidTest/kotlin/de/fahrerabrechnung/data/EncryptedDatabaseInstrumentedTest.kt) / [CardSourcePairNavigationTest.kt](../app/src/androidTest/kotlin/de/fahrerabrechnung/app/CardSourcePairNavigationTest.kt): Persistenz-/Migrations- und Navigationsregressionen.
 
@@ -112,13 +137,13 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 
 Der Lesetest speichert weiterhin nur nach ausdrücklicher Bestätigung. Einzeldateien und Dateipaare sind **persistente Teilimporte**, noch keine vollständige Kartenimport-Pipeline.
 
-Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, dauerhafter normalisierter Tagesbestand sowie weitere Dateien für GNSS, Grenzübertritte, Ereignisse/Störungen und Kontrollen. Die Profil-/Kartenbindung und neue Teilimport-Sitzungen sind im begrenzten Produktabschnitt implementiert; sein Gerätetest steht aus. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
+Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, vollständiger quellenübergreifender Tagesbestand sowie weitere Dateien für GNSS, Grenzübertritte, Ereignisse/Störungen und Kontrollen. Die Profil-/Kartenbindung und neue Teilimport-Sitzungen sind mit PR #30 gemergt und im beschriebenen Umfang am Gerät bestanden. Im aktuellen Schritt werden Tagesquellen normalisiert gespeichert; der zugehörige Schema-6-Gerätetest steht aus. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
 
 Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import und sein Datenmodell weiter ausbauen, ausgehend von den gespeicherten Quellen. Einen begrenzten Folgeschritt und seine Migration/Fehlerfälle vor Umsetzung festlegen. Die aktuelle Übergabe ist kein automatischer Auftrag, sämtliche Produktpunkte sofort zu implementieren.
 
 **Profilbindung fachlich festgelegt am 01.10.2026:** Single-Driver-App; erste eigene Karte ausdrücklich bestätigen. Die dauerhafte Fahreridentität ist das lokale Profil, nicht die Kartennummer. Belastbar gleiche Inhaber-Identität erlaubt zusätzliche Folge-/Ersatzkarten; unklare Fälle verlangen Bestätigung. Erkennbar fremde Karten bleiben auf den temporären technischen Lesetest begrenzt. Alte Karten/Imports bleiben erhalten; ältere Teilimporte nicht anhand von Datum, Kartennummer oder Vermutung zuordnen. Zielmodell und vollständige Vorgabe stehen in [CURRENT_RULES.md](CURRENT_RULES.md).
 
-Aktueller begrenzter Schritt: persistente Profil-/Kartenbindung und daran gebundene Teilimport-Sitzungen für die bereits unterstützten Quellen abschließend prüfen und als Debug-ZIP zum Gerätetest bereitstellen. Danach auf dieser Zuordnung die vollständige Import-Pipeline weiter ausbauen. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
+Aktueller begrenzter Schritt: normalisierte Tagesquellen mit unveränderlicher Herkunft auf der vorhandenen Profil-/Kartenbindung; automatische Prüfungen und echtes Update von Schema 5 auf 6 abschließen. Danach auf dieser Zuordnung die vollständige Import-Pipeline weiter ausbauen. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
 
 ### Verbindliche Grenzen bei der Fortsetzung
 
@@ -135,4 +160,4 @@ Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardw
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #28/#29 sind gemergt; die vollständige Import-Pipeline ist weiterhin offen. Die Profil-/Kartenbindung ist fachlich freigegeben und im Branch `feature/driver-profile-binding` implementiert; CI und Gerätetest gemäß aktuellem PR-Stand abschließen.
+Bei Unterbrechung den vorhandenen Branch/PR weiterführen, statt erledigte Arbeit neu zu beginnen. PR #30/#31 sind gemergt; die vollständige Import-Pipeline ist weiterhin offen. Auf dem Branch `feature/normalized-card-days` weiterarbeiten, statt Profilbindung oder normalisierte Tagesquellen erneut zu implementieren. Schema-6-CI und Gerätetest am jeweils veröffentlichten Kopf prüfen.

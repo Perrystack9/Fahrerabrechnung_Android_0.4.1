@@ -149,6 +149,7 @@ jobs:
           run_required lint ./gradlew lint --stacktrace
           run_required assembleDebug ./gradlew assembleDebug --stacktrace
           run_required assembleInternal ./gradlew assembleInternal --stacktrace
+          run_required assembleDeviceTest ./gradlew :app:assembleDeviceTest --stacktrace
 
           echo "Required command results:"
           cat ci-logs/required-command-status.tsv
@@ -172,6 +173,10 @@ jobs:
           test -n "$INTERNAL_APK"
           printf 'debug=%s\ninternal=%s\n' "$DEBUG_APK" "$INTERNAL_APK" | tee ci-logs/apk-paths.txt
           sha256sum "$DEBUG_APK" "$INTERNAL_APK" | tee ci-logs/apk-sha256.txt
+
+      - name: Build and verify installable device-test update pair
+        shell: bash
+        run: bash scripts/build_device_test_update.sh
 
       - name: Create source ZIP with committed wrapper and CI
         shell: bash
@@ -218,6 +223,14 @@ jobs:
           path: |
             ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip
             ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip.sha256
+
+      - name: Upload stable device-test APK update pair
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FahrerTagebuch-device-test-update
+          if-no-files-found: error
+          path: ci-artifacts/device-test-update/*
 
   instrumentation:
     name: Room SQLCipher and Compose instrumentation

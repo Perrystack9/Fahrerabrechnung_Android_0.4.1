@@ -9,7 +9,8 @@ import javax.inject.Inject
 
 data class SavedCardActivity(val file: CardActivityFile, val generation: CardGeneration,
                              val dayCount: Int, val importedAtEpochMillis: Long,
-                             val cardNumber: String)
+                             val cardNumber: String,
+                             val days: List<CardActivityDay> = CardActivityParser.parse(file))
 
 /** Stores only the explicitly confirmed activity snapshot in the encrypted Room database. */
 class CardActivityImportRepository @Inject constructor(
@@ -43,16 +44,16 @@ class CardActivityImportRepository @Inject constructor(
         )
     }
 
-    suspend fun latest(): SavedCardActivity? = dao.latest()?.let(::decode)
+    suspend fun latest(): SavedCardActivity? = dao.latest()?.let { decode(it) }
 
-    suspend fun all(): List<SavedCardActivity> = dao.all().map(::decode)
+    suspend fun all(): List<SavedCardActivity> = dao.all().map { decode(it) }
 
-    internal fun decode(entity: CardActivityImportEntity): SavedCardActivity {
+    internal fun decode(entity: CardActivityImportEntity, normalizedDays: List<CardActivityDay>? = null): SavedCardActivity {
         val generation = CardGeneration.valueOf(entity.generation)
         val file = CardActivityFile(entity.oldestDayOffset, entity.newestDayOffset, entity.dailyRecords)
-        val days = CardActivityParser.parse(file)
+        val days = normalizedDays ?: CardActivityParser.parse(file)
         check(days.size == entity.dayCount)
         return SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis,
-            entity.cardNumber)
+            entity.cardNumber, days)
     }
 }

@@ -12,3 +12,5 @@
 *.keystore
 keystore.properties
 secrets.properties
+# Public development-only signing fixture; never a production/release key.
+!/ci/device-test.jks
