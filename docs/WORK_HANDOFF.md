@@ -15,7 +15,7 @@
 | Getesteter PR-28-Kopf | `969310b68446437e2214ea07e3e3155a2a72bb86` |
 | Aktueller begrenzter Produktabschnitt | [PR #30](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30), Branch `feature/driver-profile-binding`: Profil-/Kartenbindung und zugeordnete Teilimport-Sitzungen; auf diesem Stand weiterarbeiten, nicht neu beginnen |
 | Datenbank im Produktabschnitt | Room/SQLCipher, Schema **5**, additive Migrationen 1 → 2 → 3 → 4 → 5, generierter Schemaexport 5.json eingecheckt; ältere Quellen werden nicht nachträglich zugeordnet |
-| Offene Prüfung | Vollständige CI und Debug-ZIP im Produkt-PR; manueller Gerätetest der neuen Profilbindungs-Stufe noch offen |
+| Automatischer Nachweis und offene Prüfung | Erste vollständige [PR-30-CI 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336) bestanden; [aktuellen PR-Kopf](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30/checks) vor Debug-ZIP-Auslieferung prüfen. Manueller Gerätetest der neuen Profilbindungs-Stufe noch offen |
 | Letzter manueller Gerätetest | **01.10.2026, PR #28: vom Nutzer als funktionierend zurückgemeldet**, Details und Grenzen unten |
 
 ## Wirklich implementiert
@@ -45,6 +45,7 @@ Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipa
 - Die normale Fahrzeughistorie und Standard-Kartenvorschau nutzen bei gebundenem Profil ausschließlich dessen explizit verknüpfte Quellen. Noch kein normalisierter Tagesbestand, vollständiger Kartenimport, dauerhafte Fahrzeugentität oder fachliche Abrechnung.
 - Automatische Regressionen: exakter/unklarer/fremder Match, Bestätigen/Abbrechen, Fremdkartensperre, unveränderte Folge-/Altkarten, Deduplizierung/Retry, atomarer Rollback, Einzelquellen, verschlüsselte Wiederöffnung, Migration 3 → 5 und 4 → 5 sowie Trennung von Archiv und Profilhistorie. Der neue Gerätetest steht aus.
 - [Gerätetest-Anleitung](PROFILE_BINDING_DEVICE_TEST.md): Bestätigung/Abbruch, Speichern, Neustart ohne Leser, erneute eigene Karte und getrenntes Altarchiv. Identische ältere Quellen dürfen nach einem frischen Lesevorgang wiederverwendet werden; dadurch werden keine alten Sitzungen rückwirkend umgeschrieben.
+- [Erster vollständig grüner PR-30-Lauf 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336), Kopf `99a29b6`: 57 Unit-Tests, 27 Daten-/Transporttests, 29 App-Tests, Lint und Debug-/Internal-APK-Prüfung bestanden; keine Fehler/übersprungenen Tests. Schemaexport und Kartenwechsel-Absicherung kamen anschließend hinzu. Der aktuelle Kopf muss einschließlich des zusätzlichen achten Compose-Tests vollständig grün sein, bevor seine Debug-ZIP ausgeliefert wird. Bei Kartenwechsel werden der alte Dialog und laufende Prüfungen verworfen; verspätete Ergebnisse einer anderen Karte ändern keine aktuelle Speicherfreigabe.
 
 ## Letzte Hardware-/Gerätetests
 

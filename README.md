@@ -68,6 +68,8 @@ Der [vollständige PR-28-Lauf 36845103966](https://github.com/Perrystack9/Fahrer
 
 Die Room-Datenbank wird über SQLCipher geöffnet. Die zufällige Passphrase ist per Android Keystore/AES-GCM geschützt; kein unverschlüsselter Fallback und kein `fallbackToDestructiveMigration()`. `SafeLogger` darf keine sensiblen Kartendaten, Rohdumps oder vollständigen APDUs ausgeben.
 
+Die erste vollständige [PR-30-CI 36856005336](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36856005336) bestand 57 Unit-Tests, Lint, APK-Prüfungen sowie 27 Daten-/Transport- und 29 App-Emulatortests. Schemaexport und Kartenwechsel-Absicherung wurden danach ergänzt; vor Auslieferung die [Prüfungen des aktuellen PR-Kopfs](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/30/checks) heranziehen. Der manuelle Profilbindungs-Gerätetest steht weiterhin aus.
+
 ## Dokumente lesen
 
 - [docs/WORK_HANDOFF.md](docs/WORK_HANDOFF.md): Einstieg für ein neues Work, technische Ausgangsbasis und letzter erfolgreicher Gerätetest.

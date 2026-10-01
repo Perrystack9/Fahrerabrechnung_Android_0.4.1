@@ -294,7 +294,10 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
                 Text(if (busy) "Lesen läuft …" else "Kartendaten testen")
             }
             if (driverImports != null && readCard != null) {
-                DriverProfileBindingPanel(checkNotNull(readCard), driverImports) { bindingReview = it }
+                val currentCard = checkNotNull(readCard)
+                DriverProfileBindingPanel(currentCard, driverImports) {
+                    if (readCard == currentCard) bindingReview = it
+                }
             }
             if (driverImports != null && (previewSnapshot != null || previewVehicleSnapshot != null))
                 Text("Dateivorschau: Diese Auswahl ordnet ältere Teilimporte keinem Fahrerprofil zu.")
