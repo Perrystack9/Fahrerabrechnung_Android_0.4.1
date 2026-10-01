@@ -78,7 +78,7 @@ class CardSourcePairNavigationTest {
         val identity = CardIdentity("synthetic-card", 13, "Test", Instant.EPOCH,
             Instant.EPOCH, Instant.parse("2030-01-01T00:00:00Z"))
         return CardReadResult(CardRecognition.DRIVER, CardGeneration.GEN2V2,
-            DriverCard(CardGeneration.GEN2V2, identity, DriverIdentity("Test", "Fixture", Instant.EPOCH, "de")),
+            DriverCard(CardGeneration.GEN2V2, identity, DriverIdentity("Test", "Fixture", java.time.LocalDate.of(2000, 2, 29), "de")),
             CardActivityFile(0, 0, day), CardVehiclesFile(0, 1, CardGeneration.GEN2V2, vehicle))
     }
 }

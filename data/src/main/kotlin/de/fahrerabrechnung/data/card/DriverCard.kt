@@ -2,6 +2,7 @@ package de.fahrerabrechnung.data.card
 
 import java.nio.charset.Charset
 import java.time.Instant
+import java.time.LocalDate
 
 enum class CardGeneration { GEN1, GEN2, GEN2V2, UNKNOWN, UNSUPPORTED }
 enum class CardCapability { BASIC_IDENTITY, G2_FILES, V2_FILES }
@@ -12,7 +13,7 @@ val CardGeneration.capabilities: Set<CardCapability> get() = when (this) {
     else -> emptySet()
 }
 enum class CardRecognition { DRIVER, OTHER_CARD, UNKNOWN_CARD, INCONSISTENT }
-data class DriverIdentity(val surname: String, val givenNames: String, val birthDate: Instant,
+data class DriverIdentity(val surname: String, val givenNames: String, val birthDate: LocalDate?,
                           val language: String)
 data class CardIdentity(val number: String, val issuingState: Int, val issuingAuthority: String,
                         val issued: Instant, val validFrom: Instant, val expires: Instant)
@@ -132,7 +133,7 @@ object DriverCardDecoder {
         val expiry = r.epochSeconds("expiry")
         val surname = codedName(r, "surname")
         val given = codedName(r, "givenNames")
-        val birth = r.epochSeconds("birthDate")
+        val birth = r.datef("birthDate")
         val language = r.text(2, Charsets.US_ASCII, "language")
         if (r.remaining != 0 || number.isBlank() || surname.isBlank() || expiry <= start)
             throw ParseError(r.offset, "Identification", "invalid identity or validity")
