@@ -346,13 +346,59 @@ class DriverCardFoundationTest {
         companion object { fun bytesStatic(vararg n: Int) = n.map(Int::toByte).toByteArray() }
     }
 
+    @Test fun controlsAreReadIndependentlyForEverySupportedGeneration() = runBlocking {
+        for (generation in supportedGenerations) {
+            val raw = ByteArray(46).also { it[1] = 1; it[24] = 1 }
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                missingFiles = setOf(DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED), controlBytes = raw)
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertNull(result.activity); assertNull(result.vehicles)
+            assertTrue(result.activityReadFailed); assertTrue(result.vehicleReadFailed)
+            assertArrayEquals(raw, result.controls!!.bytes); assertFalse(result.controlReadFailed)
+            assertNotNull(CardControlParser.parse(result.controls!!)); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun unavailableTruncatedOrInvalidControlsDoNotDiscardOtherFiles() = runBlocking {
+        for (generation in supportedGenerations) for (kind in 0..3) {
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                missingFiles = if (kind == 0) setOf(DriverCardFiles.CONTROL_ACTIVITY) else emptySet(),
+                controlBytes = when (kind) { 1 -> ByteArray(45); 2 -> ByteArray(46).also { it[1] = 1; it[24] = 127 }; else -> ByteArray(46) },
+                controlFailure = if (kind == 3) ReaderException(ReaderFailure.TIMEOUT) else null)
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.activity); assertNotNull(result.vehicles)
+            assertNull(result.controls); assertTrue(result.controlReadFailed); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun unusedControlIsACompleteFileRatherThanAReadFailure() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture())
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.controls); assertFalse(result.controlReadFailed)
+            assertNull(CardControlParser.parse(result.controls!!)); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun cancellationDuringControlReadPropagatesAndClosesTheReader() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                controlFailure = kotlinx.coroutines.CancellationException("fixture"))
+            try { DriverCardReader(fake).read(); throw AssertionError("Expected cancellation") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+        }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
                                        private val missingFiles: Set<Int> = emptySet(),
                                        private val invalidActivityLength: Boolean = false,
                                        private val invalidActivityPointer: Boolean = false,
-                                       private val activityFailure: Exception? = null) : CardReaderTransport {
+                                       private val activityFailure: Exception? = null,
+                                       private val controlBytes: ByteArray = ByteArray(46),
+                                       private val controlFailure: Exception? = null) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -380,6 +426,7 @@ class DriverCardFoundationTest {
             if (ins == 0xB0 && selected) {
                 readFiles += file
                 if (file == DriverCardFiles.DRIVER_ACTIVITY) activityFailure?.let { throw it }
+                if (file == DriverCardFiles.CONTROL_ACTIVITY) controlFailure?.let { throw it }
                 val data = when (file) {
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
@@ -388,6 +435,7 @@ class DriverCardFoundationTest {
                     }
                     DriverCardFiles.VEHICLES_USED -> ByteArray(2 + 2 *
                         (if (generation == CardGeneration.GEN1) 31 else 48))
+                    DriverCardFiles.CONTROL_ACTIVITY -> controlBytes
                     else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1

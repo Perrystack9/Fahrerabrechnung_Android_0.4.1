@@ -46,10 +46,11 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                 Text("Letzter Lesevorgang · $date", style = MaterialTheme.typography.titleMedium)
                 Text(run.status.label())
                 run.files.filter { it.status == CardImportFileStatus.STORED }.forEach {
-                    val label = if (it.kind == CardImportFileKind.ACTIVITIES)
-                        (if (it.decodedCount == 1) "Kartentag" else "Kartentage")
-                        else (if (it.decodedCount == 1) "Fahrzeugnutzung" else "Fahrzeugnutzungen")
-                    Text("${it.decodedCount} $label")
+                    when (it.kind) {
+                        CardImportFileKind.ACTIVITIES -> Text("${it.decodedCount} ${if (it.decodedCount == 1) "Kartentag" else "Kartentage"}")
+                        CardImportFileKind.VEHICLES -> Text("${it.decodedCount} ${if (it.decodedCount == 1) "Fahrzeugnutzung" else "Fahrzeugnutzungen"}")
+                        CardImportFileKind.CONTROLS -> Text("Kontrolldaten übernommen")
+                    }
                 }
                 if (run.sessionId != null) {
                     if (run.newSourceCount == 0) Text("Die gelesenen Daten waren bereits vorhanden.")
@@ -60,7 +61,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
             }
         }
         OutlinedButton(onClick = onOpenHistory) { Text("Importverlauf") }
-        Text("Aktuell werden Kartentage und Fahrzeugnutzungen übernommen. Weitere Kartendaten folgen; die vollständige Auswertung ist noch in Entwicklung.",
+        Text("Aktuell werden Kartentage, Fahrzeugnutzungen und verfügbare Kontrolldaten übernommen. Weitere Kartendaten folgen; die vollständige Auswertung ist noch in Entwicklung.",
             style = MaterialTheme.typography.bodySmall)
     }
     val token = state.confirmationToken
@@ -79,7 +80,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
 
 internal fun CardImportRunStatus.label() = when (this) {
     CardImportRunStatus.IN_PROGRESS -> "Übernahme läuft"
-    CardImportRunStatus.SAVED -> "Aktivitäten und Fahrzeugnutzungen gespeichert"
+    CardImportRunStatus.SAVED -> "Verfügbare Kartendaten gespeichert"
     CardImportRunStatus.PARTIAL -> "Verfügbare Daten gespeichert – einige Daten fehlen"
     CardImportRunStatus.FAILED -> "Keine neuen Daten übernommen"
     CardImportRunStatus.INTERRUPTED -> "Übernahme unterbrochen – keine neuen Daten übernommen"

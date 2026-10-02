@@ -292,7 +292,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 7
         }
         db.close(); open()
-        assertEquals(8, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         assertEquals(profile, imports.profile()); assertEquals(identity, db.driverProfileDao().cards(old.profileId))
         assertEquals(originalSession, db.driverProfileDao().session(old.id, old.profileId))
         assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
@@ -302,6 +302,177 @@ class CardImportPipelineInstrumentedTest {
         assertEquals("TEST OWN", imports.get("old")!!.vehicles!!.uses.single().registrationNumber)
         assertEquals(0, pipeline.process(read(), "fresh").newSourceCount)
         assertEquals(originalSession, db.driverProfileDao().session(old.id, old.profileId))
+    }
+
+    private fun controlFile(generation: CardGeneration = CardGeneration.GEN2V2,
+                            time: Int = 1790000000): CardControlFile = CardControlFile(generation,
+        ByteBuffer.allocate(46).put(0xF8.toByte()).putInt(time).put(3.toByte()).put(13.toByte())
+            .put("TEST CONTROL".padEnd(16).toByteArray()).put(13.toByte()).put(1.toByte())
+            .put("TEST CONTROL".padEnd(13).toByteArray()).putInt(time - 200).putInt(time - 100).array())
+
+    @Test fun allThreeSourcesPersistAndReopenWithExactControlMetadataAndDeduplication() = runBlocking {
+        imports.bind(card(), true)
+        val input = read().copy(controls = controlFile())
+        val first = pipeline.process(input, "three-sources")
+        assertEquals(CardImportRunStatus.SAVED, first.status); assertEquals(3, first.newSourceCount)
+        assertEquals(3, first.files.size)
+        assertEquals(1, first.file(CardImportFileKind.CONTROLS).decodedCount)
+        assertEquals(1790000000L, first.file(CardImportFileKind.CONTROLS).firstUtcEpochSeconds)
+        val saved = checkNotNull(imports.get(first.id)!!.controls)
+        assertArrayEquals(input.controls!!.bytes, saved.file.bytes)
+        assertEquals(first.driverCardId, saved.driverCardId)
+        assertEquals("TEST CONTROL", saved.record!!.controlCardNumber)
+        assertEquals(first, pipeline.process(input, first.id))
+        val repeat = pipeline.process(input, "another-read")
+        assertEquals(0, repeat.newSourceCount); assertEquals(1, count("card_control_imports"))
+        assertEquals(2, count("driver_import_control_sources"))
+        db.close(); open()
+        assertArrayEquals(saved.file.bytes, imports.get(first.id)!!.controls!!.file.bytes)
+        assertEquals(saved.record, imports.get(first.id)!!.controls!!.record)
+        assertEquals(first, pipeline.history().single { it.id == first.id })
+    }
+
+    @Test fun changedControlsRetainBothSourcesAndExactEarlierSession() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(read().copy(controls = controlFile()), "old-control")
+        val next = pipeline.process(read().copy(controls = controlFile(time = 1790000100)), "new-control")
+        assertEquals(1, next.newSourceCount); assertEquals(2, count("card_control_imports"))
+        assertEquals(1790000000L, imports.get(old.id)!!.controls!!.record!!.timeUtc.epochSecond)
+        assertEquals(1790000100L, imports.get(next.id)!!.controls!!.record!!.timeUtc.epochSecond)
+        assertEquals(1, count("card_activity_imports")); assertEquals(1, count("card_vehicle_imports"))
+        db.close(); open()
+        assertEquals(1790000000L, imports.get(old.id)!!.controls!!.record!!.timeUtc.epochSecond)
+    }
+
+    @Test fun unavailableOrInvalidControlsLeaveOtherSourcesAndNoOlderControlAttached() = runBlocking {
+        imports.bind(card(), true)
+        pipeline.process(read().copy(controls = controlFile()), "old")
+        val failed = pipeline.process(read().copy(controlReadFailed = true), "failed-control")
+        assertEquals(CardImportRunStatus.PARTIAL, failed.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, failed.file(CardImportFileKind.CONTROLS).status)
+        assertNotNull(imports.get(failed.id)!!.activity); assertNotNull(imports.get(failed.id)!!.vehicles)
+        assertNull(imports.get(failed.id)!!.controls)
+        val invalid = pipeline.process(read().copy(controls = CardControlFile(card().generation, ByteArray(45))), "invalid-control")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.CONTROLS).status)
+        assertNull(imports.get(invalid.id)!!.controls); assertNotNull(imports.get("old")!!.controls)
+        val wrongGeneration = pipeline.process(read().copy(controls = controlFile(CardGeneration.GEN1)), "wrong-control-generation")
+        assertEquals(CardImportFileStatus.INVALID, wrongGeneration.file(CardImportFileKind.CONTROLS).status)
+        assertNull(imports.get(wrongGeneration.id)!!.controls)
+        assertEquals(1, count("card_control_imports")); assertEquals(1, count("driver_import_control_sources"))
+    }
+
+    @Test fun controlsAloneCreateOnlyTheirExactPartialSessionWithoutInventingDaysOrVehicles() = runBlocking {
+        imports.bind(card(), true); pipeline.process(read(), "older-days")
+        val run = pipeline.process(read().copy(activity = null, vehicles = null,
+            activityReadFailed = true, vehicleReadFailed = true, controls = controlFile()), "control-only")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(1, run.newSourceCount)
+        val saved = imports.get(run.id)!!
+        assertNull(saved.activity); assertNull(saved.vehicles); assertNull(saved.pair); assertNotNull(saved.controls)
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+        db.close(); open()
+        assertNotNull(imports.get(run.id)!!.controls); assertNull(imports.get(run.id)!!.activity)
+        assertNotNull(imports.get("older-days")!!.activity)
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2)) {
+            val own = card("fixture-${generation.name}").copy(generation = generation)
+            val input = CardReadResult(CardRecognition.DRIVER, generation, own, controls = controlFile(generation))
+            val imported = pipeline.process(input, "control-only-${generation.name}")
+            assertEquals(CardImportRunStatus.PARTIAL, imported.status)
+            assertEquals(generation, imports.get(imported.id)!!.controls!!.file.generation)
+            assertEquals(imported.driverCardId, imports.get(imported.id)!!.controls!!.driverCardId)
+            assertNull(imports.get(imported.id)!!.activity); assertNull(imports.get(imported.id)!!.vehicles)
+        }
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+    }
+
+    @Test fun validUnusedControlFileIsStoredWithoutInventingAControl() = runBlocking {
+        imports.bind(card(), true)
+        val raw = CardControlFile(card().generation, ByteArray(46))
+        val run = pipeline.process(read().copy(controls = raw), "unused-control")
+        assertEquals(CardImportRunStatus.SAVED, run.status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.CONTROLS).status)
+        assertEquals(0, run.file(CardImportFileKind.CONTROLS).decodedCount)
+        assertNull(run.file(CardImportFileKind.CONTROLS).firstUtcEpochSeconds)
+        assertArrayEquals(raw.bytes, imports.get(run.id)!!.controls!!.file.bytes)
+        assertNull(imports.get(run.id)!!.controls!!.record)
+        assertEquals(1, count("card_control_imports"))
+    }
+
+    @Test fun foreignAndUnconfirmedControlSourcesCannotBePersistedOrBound() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(read().copy(controls = controlFile()), "unconfirmed-control") }
+        assertEquals(0, count("card_control_imports")); assertNull(imports.profile())
+        imports.bind(card(), true)
+        val foreign = card("fixture-foreign", DriverIdentity("BETA", "OTHER PERSON", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(read(foreign).copy(controls = controlFile()), "foreign-control") }
+        assertEquals(0, count("card_control_imports")); assertEquals(0, count("card_import_runs"))
+        assertEquals(1, count("driver_cards")); assertEquals(0, count("driver_import_control_sources"))
+    }
+
+    @Test fun replacementKeepsControlSourcesUnderItsOwnPhysicalCardWithoutRewritingOldImports() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(read().copy(controls = controlFile()), "old-card-control")
+        val replacement = card().copy(card = card().card.copy(issued = Instant.ofEpochSecond(1)))
+        val second = pipeline.process(read(replacement).copy(controls = controlFile()), "replacement-control")
+        assertNotEquals(first.driverCardId, second.driverCardId)
+        assertEquals(1, second.newSourceCount); assertEquals(2, count("card_control_imports"))
+        val old = imports.get(first.id)!!.controls!!; val newer = imports.get(second.id)!!.controls!!
+        assertNotEquals(old.id, newer.id); assertNotEquals(old.driverCardId, newer.driverCardId)
+        assertArrayEquals(old.file.bytes, newer.file.bytes)
+        assertEquals(first.driverCardId, imports.get(first.id)!!.driverCardId)
+    }
+
+    @Test fun failureAfterControlWritesRollsBackAllSourcesAndPreservesTheFailedReceipt() = runBlocking {
+        imports.bind(card(), true); pipeline.process(read(), "old-data")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_finish_failure BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(read(plate = "TEST CHANGED").copy(controls = controlFile()), "rollback-control")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertEquals("STORAGE_FAILED", failed.failureCode)
+        assertEquals(setOf(CardImportFileStatus.NOT_STORED), failed.files.map { it.status }.toSet())
+        assertEquals(0, count("card_control_imports")); assertEquals(0, count("driver_import_control_sources"))
+        assertEquals(1, count("import_sessions")); assertEquals(1, count("card_vehicle_imports"))
+        assertEquals(1, count("driver_vehicle_uses")); assertEquals("TEST OWN", imports.get("old-data")!!.vehicles!!.uses.single().registrationNumber)
+    }
+
+    @Test fun differentControlBytesOrAttemptScopeCannotReuseAnExistingRequest() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(read().copy(controls = controlFile()), "same-control-request")
+        rejected<IllegalArgumentException> { pipeline.process(read().copy(controls = controlFile(time = 1790000100)), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(read(), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(read().copy(controlReadFailed = true), first.id) }
+        assertEquals(1, count("card_control_imports")); assertEquals(first, pipeline.history().single())
+    }
+
+    @Test fun migrationEightToNinePreservesHistoricCoverageAndAllOldImportsWithoutBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(read(), "schema-eight-run")
+        val source = db.driverProfileDao().sources(old.id)
+        val rows = db.cardImportRunDao().files(old.id)
+        val profile = imports.profile(); val identities = db.driverProfileDao().cards(profile!!.id)
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_control_sources"); execSQL("DROP TABLE card_control_imports")
+            execSQL("DELETE FROM room_master_table"); version = 8
+        }
+        db.close(); open()
+        assertEquals(9, db.openHelper.readableDatabase.version)
+        assertEquals(old, pipeline.history().single()); assertEquals(rows, db.cardImportRunDao().files(old.id))
+        assertEquals(source, db.driverProfileDao().sources(old.id)); assertEquals(profile, imports.profile())
+        assertEquals(identities, db.driverProfileDao().cards(profile.id))
+        assertNull(imports.get(old.id)!!.controls); assertEquals(0, count("card_control_imports"))
+        assertEquals(0, count("driver_import_control_sources")); assertEquals(2, old.files.size)
+        assertEquals(old, pipeline.process(read(), old.id))
+        val fresh = pipeline.process(read().copy(controls = controlFile()), "fresh-schema-nine")
+        assertEquals(1, fresh.newSourceCount); assertEquals(3, fresh.files.size)
+        assertNull(imports.get(old.id)!!.controls); assertEquals(rows, db.cardImportRunDao().files(old.id))
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+    }
+
+    @Test fun corruptControlSourceDoesNotPreventHistoryOrOtherImportsFromOpening() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(read(), "without-control")
+        val run = pipeline.process(read().copy(controls = controlFile()), "corrupt-control")
+        val id = imports.get(run.id)!!.controls!!.id
+        db.openHelper.writableDatabase.execSQL("UPDATE card_control_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(45), id))
+        assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.activity)
+        rejected<IllegalStateException> { imports.get(run.id) }
     }
 
     @Test fun replacementWithSameNumberAndBytesRetainsItsOwnPhysicalProvenance() = runBlocking {

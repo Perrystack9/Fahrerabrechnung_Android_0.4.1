@@ -29,7 +29,8 @@ class CardVehiclesFile(val newestRecordIndex: Int, val recordCount: Int,
 data class CardReadResult(val recognition: CardRecognition, val generation: CardGeneration,
                           val card: DriverCard? = null, val activity: CardActivityFile? = null,
                           val vehicles: CardVehiclesFile? = null, val vehicleReadFailed: Boolean = false,
-                          val activityReadFailed: Boolean = false)
+                          val activityReadFailed: Boolean = false,
+                          val controls: CardControlFile? = null, val controlReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -43,6 +44,7 @@ object DriverCardFiles {
     const val IDENTIFICATION = 0x0520
     const val DRIVER_ACTIVITY = 0x0504
     const val VEHICLES_USED = 0x0505
+    const val CONTROL_ACTIVITY = 0x0508
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -189,8 +191,13 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
                         count * width + 2), count, generation)
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                val controls = try {
+                    CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
+                        CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
-                    vehicleReadFailed = vehicles == null, activityReadFailed = activity == null)
+                    vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
+                    controls = controls, controlReadFailed = controls == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }
