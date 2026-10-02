@@ -16,15 +16,18 @@ import de.fahrerabrechnung.data.card.CardActivityImportRepository
 import de.fahrerabrechnung.data.card.CardSourcePairRepository
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.DriverCardImportRepository
+import de.fahrerabrechnung.data.card.DriverCardImportPipeline
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
+    private val importViewModel: CardImportViewModel by viewModels()
     @Inject lateinit var cardActivityImports: CardActivityImportRepository
     @Inject lateinit var cardSourcePairs: CardSourcePairRepository
     @Inject lateinit var cardVehicleImports: CardVehicleImportRepository
     @Inject lateinit var driverCardImports: DriverCardImportRepository
+    @Inject lateinit var cardImportPipeline: DriverCardImportPipeline
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +35,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val onboardingComplete = viewModel.onboardingComplete.collectAsStateWithLifecycle().value
             val themeMode = viewModel.themeMode.collectAsStateWithLifecycle().value
+            val importState = importViewModel.state.collectAsStateWithLifecycle().value
+            CardImportObserver(importViewModel, onboardingComplete == true)
             val dark = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.DARK -> true
@@ -47,6 +52,11 @@ class MainActivity : ComponentActivity() {
                     cardVehicleImports = cardVehicleImports,
                     cardSourcePairs = cardSourcePairs,
                     driverCardImports = driverCardImports,
+                    cardImportPipeline = cardImportPipeline,
+                    importState = importState,
+                    onConfirmCard = importViewModel::confirm,
+                    onDeclineCard = importViewModel::decline,
+                    onRetryImport = importViewModel::retry,
                     onboardingComplete = onboardingComplete,
                     onFinishOnboarding = viewModel::finishOnboarding,
                     themeMode = themeMode,

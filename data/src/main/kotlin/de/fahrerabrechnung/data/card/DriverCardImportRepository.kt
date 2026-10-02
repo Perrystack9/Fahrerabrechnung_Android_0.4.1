@@ -91,7 +91,18 @@ class DriverCardImportRepository @Inject constructor(
         dao.imports(profile.id).map { decode(it, profile.id) }
     }
 
-    suspend fun latest(): SavedDriverImport? = all().firstOrNull()
+    suspend fun latest(): SavedDriverImport? = database.withTransaction {
+        val profile = dao.localProfile() ?: return@withTransaction null
+        dao.imports(profile.id).firstOrNull()?.let { decode(it, profile.id) }
+    }
+
+    suspend fun get(id: String): SavedDriverImport? = database.withTransaction {
+        val profile = dao.localProfile() ?: return@withTransaction null
+        val sources = dao.sources(id) ?: return@withTransaction null
+        if (dao.session(id, profile.id) == null || dao.card(sources.driverCardId)?.profileId != profile.id)
+            return@withTransaction null
+        decode(sources, profile.id)
+    }
 
     suspend fun vehicleSources(): List<SavedCardVehicles> = database.withTransaction {
         val profile = dao.localProfile() ?: return@withTransaction emptyList()

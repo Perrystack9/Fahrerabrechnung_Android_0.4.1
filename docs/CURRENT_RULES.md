@@ -13,7 +13,7 @@
 
 ## Spätere reguläre Kartenimport-Bedienung
 
-**Nutzervorgabe vom 01.10.2026:** Die aktuelle technische Ansicht ist für Entwicklung und Gerätetests akzeptiert, aber keine Vorlage für die spätere normale Bedienung. Die folgende Vereinfachung ist ein verbindliches Ziel der vollständigen Import-Pipeline und noch nicht implementiert.
+**Nutzervorgabe vom 01.10.2026:** Die aktuelle technische Ansicht ist für Entwicklung und Gerätetests akzeptiert, aber keine Vorlage für die spätere normale Bedienung. Die folgende Vereinfachung ist ein verbindliches Ziel der vollständigen Import-Pipeline. Im Folgebranch vom 02.10.2026 wird der automatische Vordergrund-Ablauf für Aktivitäten/Fahrzeugnutzungen umgesetzt; vollständige Kartenabdeckung bleibt offen. Den tatsächlichen CI-/Geräteteststand in WORK_STATUS prüfen.
 
 - Die App soll einen angeschlossenen Kartenleser erkennen und eine verfügbare Fahrerkarte selbständig lesen. Zulässige Daten der eigenen, bestätigten bzw. zuverlässig zugeordneten Karte sollen automatisch übernommen und gespeichert werden; kein gesonderter Speichern-Schritt im normalen Ablauf.
 - Manuelle Bedienknöpfe wie **„Kartenleser prüfen“**, **„Kartendaten testen“** sowie gemeinsames oder getrenntes Speichern gehören nicht in den späteren normalen Importablauf.
@@ -72,3 +72,5 @@
 ## Aktueller Umsetzungsrahmen
 
 Die technische Fahrerkarte-/Parser-Phase hat bereits echte Teilfunktionen; Aktivitäts- und Fahrzeugdatei werden zunächst im Arbeitsspeicher geprüft und nach gesonderter Bestätigung als verschlüsselte Teilimporte gespeichert. Ein vollständiger Import, weitere Kartendateien, dauerhafte Fahrzeugzuordnung und fachliche Fahrzeugkennzahlen, Abrechnungsberechnungen, PDF und Cloud folgen nur in gesonderten Umsetzungen. Die Fahrzeughistorie ist bereits als Quellvorschau mit Kennzeichen-/VIN-Suche und nachladbaren Nutzungen vorhanden; die Kartentag-Zeiten aus PR #14 sind lediglich Summen belegter Quellenabschnitte, keine berechnete Arbeitszeit oder Ruhefeststellung. Keine ältere Spezifikation darf einen noch nicht implementierten Punkt als vorhanden ausgeben. Die derzeitigen manuellen Lese-/Speicherschritte gelten für diesen Entwicklungsstand; die spätere reguläre Import-Bedienung folgt der oben festgelegten automatischen, vereinfachten Vorgabe.
+
+Technischer Folgestand 02.10.2026: main verwendet den am Gerät bestandenen PR-34-Stand (Schema 7). PR #35 implementiert automatische Vordergrund-Lesung/Übernahme und Importstatus (Schema 8 mit generiertem Export). Dies ändert keine der obigen Profil-/Fachregeln; nicht bestätigte und fremde Karten bleiben temporär, ältere Daten werden nicht zurückwirkend zugeordnet. Automatischen Nachweis über die [Prüfungen am aktuellen PR-Kopf](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/35/checks) prüfen; der neue USB-Gerätetest bleibt vor Merge erforderlich.

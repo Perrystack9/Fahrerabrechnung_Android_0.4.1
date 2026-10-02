@@ -240,6 +240,8 @@ class NormalizedCardActivityInstrumentedTest {
         pairs().save(read(card("synthetic-legacy")))
         val snapshots = db.cardActivityImportDao().all()
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_import_file_results")
+            execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE driver_vehicle_use_sources")
             execSQL("DROP TABLE driver_vehicle_uses")
             execSQL("DROP TABLE driver_activity_day_sources")

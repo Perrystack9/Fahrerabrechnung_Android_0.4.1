@@ -244,6 +244,8 @@ class EncryptedDatabaseInstrumentedTest {
         CardVehicleImportRepository(db.cardVehicleImportDao(), testClock).save(read)
         // Retain the v3 tables; remove the additive v4/v5 tables and Room identity.
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_import_file_results")
+            execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE driver_vehicle_use_sources")
             execSQL("DROP TABLE driver_vehicle_uses")
             execSQL("DROP TABLE driver_activity_day_sources")
