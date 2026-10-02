@@ -355,6 +355,9 @@ class CardImportPipelineInstrumentedTest {
         val invalid = pipeline.process(read().copy(controls = CardControlFile(card().generation, ByteArray(45))), "invalid-control")
         assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.CONTROLS).status)
         assertNull(imports.get(invalid.id)!!.controls); assertNotNull(imports.get("old")!!.controls)
+        val wrongGeneration = pipeline.process(read().copy(controls = controlFile(CardGeneration.GEN1)), "wrong-control-generation")
+        assertEquals(CardImportFileStatus.INVALID, wrongGeneration.file(CardImportFileKind.CONTROLS).status)
+        assertNull(imports.get(wrongGeneration.id)!!.controls)
         assertEquals(1, count("card_control_imports")); assertEquals(1, count("driver_import_control_sources"))
     }
 
@@ -369,6 +372,16 @@ class CardImportPipelineInstrumentedTest {
         db.close(); open()
         assertNotNull(imports.get(run.id)!!.controls); assertNull(imports.get(run.id)!!.activity)
         assertNotNull(imports.get("older-days")!!.activity)
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2)) {
+            val own = card("fixture-${generation.name}").copy(generation = generation)
+            val input = CardReadResult(CardRecognition.DRIVER, generation, own, controls = controlFile(generation))
+            val imported = pipeline.process(input, "control-only-${generation.name}")
+            assertEquals(CardImportRunStatus.PARTIAL, imported.status)
+            assertEquals(generation, imports.get(imported.id)!!.controls!!.file.generation)
+            assertEquals(imported.driverCardId, imports.get(imported.id)!!.controls!!.driverCardId)
+            assertNull(imports.get(imported.id)!!.activity); assertNull(imports.get(imported.id)!!.vehicles)
+        }
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
     }
 
     @Test fun validUnusedControlFileIsStoredWithoutInventingAControl() = runBlocking {
