@@ -175,4 +175,92 @@ class AutomaticCardImportUiTest {
         }
         compose.onNodeWithTag("nav_vehicles").assertDoesNotExist()
     }
+    private fun controlFile(plate: String = "TEST FIRST", number: String = "TEST CONTROL0001", time: Int = 1790000000) =
+        CardControlFile(CardGeneration.GEN2V2, ByteBuffer.allocate(46).put(0xF8.toByte()).putInt(time)
+            .put(3.toByte()).put(13.toByte()).put(number.padEnd(16).toByteArray())
+            .put(13.toByte()).put(1.toByte()).put(plate.padEnd(13).toByteArray())
+            .putInt(time - 200).putInt(time - 100).array())
+
+    @Test fun controlsShowRecordedFactsAndMaskTheControlCardNumberUntilRequested() {
+        val file = controlFile()
+        val saved = SavedCardControl("fixture-source", "physical-own", file, CardControlParser.parse(file), 0)
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) { CardControlScreen(PaddingValues(), saved) } }
+        compose.onNodeWithText("Fahrerkarte heruntergeladen").assertIsDisplayed()
+        compose.onNodeWithText("Kalibrierungsparameter geprüft").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("TEST CONTROL0001", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Kontrollkarte: ••••0001").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartennummer anzeigen").performScrollTo().performClick()
+        compose.onNodeWithText("Kontrollkarte: TEST CONTROL0001").assertIsDisplayed()
+        compose.onNodeWithText("Kartennummer verbergen").performScrollTo().performClick()
+        compose.onNodeWithText("TEST CONTROL0001", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Verstoß", substring = true).assertDoesNotExist()
+    }
+
+    @Test fun missingControlSourceAndAReadUnusedSourceHaveDifferentHonestMessages() {
+        val state = mutableStateOf<SavedCardControl?>(null)
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) { CardControlScreen(PaddingValues(), state.value) } }
+        compose.onNodeWithText("Für diese Übernahme sind keine gespeicherten Kontrolldaten verfügbar.").assertIsDisplayed()
+        compose.runOnIdle { state.value = SavedCardControl("unused", "own", CardControlFile(CardGeneration.GEN2V2, ByteArray(46)), null, 0) }
+        compose.onNodeWithText("In dieser Kartendatei ist keine Kontrolle aufgezeichnet.").assertIsDisplayed()
+        compose.onNodeWithText("Letzte aufgezeichnete Kontrolle").assertDoesNotExist()
+        compose.onNodeWithText("Kartennummer anzeigen").assertDoesNotExist()
+    }
+
+    @Test fun controlNavigationOpensOnlyTheSelectedSessionAndKeepsItsOldSource() {
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read().copy(controls = controlFile()), "first-control")
+            pipeline.process(read().copy(controls = controlFile("TEST LATEST", time = 1790000100)), "latest-control")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_first-control").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("open_import_first-control").performScrollTo().performClick()
+        await("Fahrerkarten-Details")
+        compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Kontrollen").performClick()
+        await("Fahrzeug: TEST FIRST · Staat 13")
+        compose.onNodeWithText("TEST LATEST", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        compose.onNodeWithTag("open_import_latest-control").performScrollTo().performClick()
+        await("Fahrerkarten-Details")
+        compose.onNodeWithText("Fahrerkarten-Details").performClick()
+        compose.onNodeWithText("Kontrollen").performClick()
+        await("Fahrzeug: TEST LATEST · Staat 13")
+        compose.onNodeWithText("TEST FIRST", substring = true).assertDoesNotExist()
+        assertEquals(2, runBlocking { pipeline.history().size })
+    }
+
+    @Test fun archivePreviewDoesNotOfferProfileCardDetailsOrControls() {
+        var opened = false
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            SavedCardPreviewScreen(PaddingValues(), null, null, { _, _, _ -> }, archive = true, onOpenDetails = { opened = true })
+        } }
+        compose.onNodeWithText("Fahrerkarten-Details").assertDoesNotExist()
+        compose.onNodeWithText("Kontrollen").assertDoesNotExist()
+        compose.onNodeWithText("Diese Dateivorschau ordnet ältere Daten keinem Fahrerprofil zu.").assertIsDisplayed()
+        assertFalse(opened)
+    }
+
+    @Test fun controlOnlySavedDataShowsAPartialStartStatusWithoutProminentControlDetails() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read().copy(activity = null, vehicles = null, activityReadFailed = true,
+                vehicleReadFailed = true, controls = controlFile()), "only-control")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(lastRun = run))
+        } }
+        await("Kartendaten teilweise verfügbar")
+        compose.onNodeWithText("Noch keine Kartendaten gespeichert").assertDoesNotExist()
+        compose.onNodeWithText("Letzte aufgezeichnete Kontrolle").assertDoesNotExist()
+        compose.onNodeWithText("Kontrollen").assertDoesNotExist()
+        compose.onNodeWithTag("nav_start").assertIsDisplayed()
+    }
+
 }

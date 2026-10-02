@@ -19,7 +19,7 @@ import de.fahrerabrechnung.core.design.PreviewMetric
 import de.fahrerabrechnung.core.design.SectionCard
 import de.fahrerabrechnung.feature.common.ScreenContent
 
-enum class CardFilesStatus { CHECKING, NONE, ACTIVITY, VEHICLE, BOTH, ERROR }
+enum class CardFilesStatus { CHECKING, NONE, ACTIVITY, VEHICLE, BOTH, PARTIAL, ERROR }
 
 @Composable
 fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnboarding: () -> Unit,
@@ -32,6 +32,7 @@ fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnbo
             val (headline, description) = when (cardFilesStatus) {
                 CardFilesStatus.CHECKING -> "Gespeicherte Kartendaten werden geprüft" to "Bitte kurz warten."
                 CardFilesStatus.NONE -> "Noch keine Kartendaten gespeichert" to "Schließe einen kompatiblen Kartenleser an und lege deine Fahrerkarte ein."
+                CardFilesStatus.PARTIAL -> "Kartendaten teilweise verfügbar" to "Einige Daten sind gespeichert. Kartentage und Fahrzeugnutzungen fehlen für den letzten gespeicherten Vorgang."
                 CardFilesStatus.ACTIVITY -> "Kartentage verfügbar" to "Die gespeicherten Aktivitäten bleiben ohne Leser verfügbar. Fahrzeugnutzungen fehlen für den letzten gespeicherten Vorgang."
                 CardFilesStatus.VEHICLE -> "Fahrzeugnutzungen verfügbar" to "Die gespeicherten Fahrzeugnutzungen bleiben ohne Leser verfügbar. Kartentage fehlen für den letzten gespeicherten Vorgang."
                 CardFilesStatus.BOTH -> "Kartendaten verfügbar" to "Aktivitäten und Fahrzeugnutzungen sind ohne Leser verfügbar. Weitere Kartendaten und die vollständige Auswertung folgen."

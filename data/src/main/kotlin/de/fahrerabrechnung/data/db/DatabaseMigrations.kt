@@ -4,6 +4,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_control_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_control_imports_driverCardId` ON `card_control_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_control_imports_id_driverCardId` ON `card_control_imports` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_control_sources` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `controlId` TEXT NOT NULL, PRIMARY KEY(`sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`controlId`, `driverCardId`) REFERENCES `card_control_imports`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_control_sources_controlId_driverCardId` ON `driver_import_control_sources` (`controlId`, `driverCardId`)")
+        }
+    }
     val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `card_import_runs` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `requestFingerprint` TEXT NOT NULL, `status` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `finishedAtEpochMillis` INTEGER, `sessionId` TEXT, `newSourceCount` INTEGER NOT NULL, `failureCode` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`) REFERENCES `import_sessions`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")

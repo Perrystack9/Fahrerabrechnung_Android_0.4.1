@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -78,12 +78,12 @@ class DriverCardImportPipeline @Inject constructor(
                 if (selection == null) {
                     finishUnstored(current, CardImportRunStatus.FAILED, "NO_USABLE_DATA")
                 } else {
-                    val saved = imports.save(plan.read, requestId, selection)
+                    val saved = imports.save(plan.usableRead, requestId, selection)
                     check(saved.driverCardId == current.driverCardId)
                     dao.updateFiles(dao.files(requestId).map {
                         if (it.status == CardImportFileStatus.READY.name) it.copy(status = CardImportFileStatus.STORED.name) else it
                     })
-                    dao.updateRun(current.copy(status = if (selection == CardImportSelection.PAIR)
+                    dao.updateRun(current.copy(status = if (plan.files.all { it.status == CardImportFileStatus.READY })
                         CardImportRunStatus.SAVED.name else CardImportRunStatus.PARTIAL.name,
                         finishedAtEpochMillis = clock.millis(), sessionId = saved.id, newSourceCount = saved.newSourceCount))
                 }
@@ -135,7 +135,10 @@ class DriverCardImportPipeline @Inject constructor(
         check(checkNotNull(database.driverProfileDao().card(run.driverCardId)).profileId == profile.id)
         val identity = database.driverProfileDao().cards(profile.id).single { it.cardId == run.driverCardId }
         val files = dao.files(run.id)
-        check(files.map { it.kind }.toSet() == CardImportFileKind.entries.map { it.name }.toSet())
+        val kinds = files.map { it.kind }.toSet()
+        // Historic runs attempted only the two original EFs. Do not invent new outcomes for them.
+        check(kinds == setOf(CardImportFileKind.ACTIVITIES.name, CardImportFileKind.VEHICLES.name) ||
+            kinds == CardImportFileKind.entries.map { it.name }.toSet())
         run.sessionId?.let { check(database.driverProfileDao().sources(it)?.driverCardId == run.driverCardId) }
         return CardImportRun(run.id, run.driverCardId, identity.cardNumber, CardGeneration.valueOf(identity.generation),
             CardImportRunStatus.valueOf(run.status), run.startedAtEpochMillis, run.finishedAtEpochMillis,
@@ -148,7 +151,8 @@ class DriverCardImportPipeline @Inject constructor(
     private fun prepare(result: CardReadResult): Plan {
         require(result.recognition == CardRecognition.DRIVER && result.card != null && result.card.generation == result.generation)
         val read = result.copy(activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
-            vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) })
+            vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
+            controls = result.controls?.let { CardControlFile(it.generation, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -164,7 +168,17 @@ class DriverCardImportPipeline @Inject constructor(
                 // An open end remains unknown; do not turn its first-use instant into an end.
                 if (uses.any { it.lastUseUtc == null }) null else uses.maxOf { checkNotNull(it.lastUseUtc).epochSecond }, null)
         }
-        return Plan(read, listOf(activity, vehicle))
+        // A missing field on an older technical result means not attempted, not a failed control read.
+        val control = if (read.controls != null || read.controlReadFailed)
+            inspect(CardImportFileKind.CONTROLS, read.controls != null, read.controlReadFailed) {
+                val file = checkNotNull(read.controls)
+                require(file.generation == read.generation)
+                val record = CardControlParser.parse(file)
+                // A valid unused EF is still a complete source, with zero recorded controls.
+                CardImportFileResult(CardImportFileKind.CONTROLS, CardImportFileStatus.READY,
+                    if (record == null) 0 else 1, record?.timeUtc?.epochSecond, record?.timeUtc?.epochSecond, null)
+            } else null
+        return Plan(read, listOfNotNull(activity, vehicle, control))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -180,11 +194,19 @@ class DriverCardImportPipeline @Inject constructor(
 
     private data class Plan(val read: CardReadResult, val files: List<CardImportFileResult>) {
         val selection: CardImportSelection? get() {
+            if (files.any { it.kind == CardImportFileKind.CONTROLS && it.status == CardImportFileStatus.READY })
+                return CardImportSelection.ALL_AVAILABLE
             val activity = files[0].status == CardImportFileStatus.READY
             val vehicle = files[1].status == CardImportFileStatus.READY
             return when { activity && vehicle -> CardImportSelection.PAIR
                 activity -> CardImportSelection.ACTIVITY; vehicle -> CardImportSelection.VEHICLES; else -> null }
         }
+
+        val usableRead: CardReadResult get() = read.copy(
+            activity = read.activity.takeIf { files[0].status == CardImportFileStatus.READY },
+            vehicles = read.vehicles.takeIf { files[1].status == CardImportFileStatus.READY },
+            controls = read.controls.takeIf { files.any { it.kind == CardImportFileKind.CONTROLS && it.status == CardImportFileStatus.READY } },
+        )
 
         fun fingerprint(cardId: String): String {
             val digest = MessageDigest.getInstance("SHA-256")
@@ -201,6 +223,12 @@ class DriverCardImportPipeline @Inject constructor(
                 digest.update(ByteBuffer.allocate(4).putInt(it.records.size).array()); digest.update(it.records) }
                 ?: digest.update(0.toByte())
             digest.update(if (read.vehicleReadFailed) 1.toByte() else 0.toByte())
+            // Preserve the exact legacy fingerprint when no control EF was attempted.
+            if (read.controls != null || read.controlReadFailed) {
+                read.controls?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.controlReadFailed) 1.toByte() else 0.toByte())
+            }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }
     }

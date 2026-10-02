@@ -17,7 +17,8 @@ import java.time.format.DateTimeFormatter
 /** Pure saved-source preview: no reader operations, saving or guessed pairing. */
 @Composable
 internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardActivity?, vehicles: SavedCardVehicles?,
-                                    onOpenVehicles: (String?, Long?, Int?) -> Unit, archive: Boolean = false) {
+                                    onOpenVehicles: (String?, Long?, Int?) -> Unit, archive: Boolean = false,
+                                    onOpenDetails: (() -> Unit)? = null) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
     var selected by remember(activity) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
@@ -25,6 +26,8 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
     ScreenContent(padding) {
         Text(if (archive) "Gespeicherte Dateivorschau" else "Gespeicherte Kartendaten", style = MaterialTheme.typography.titleLarge)
         if (archive) Text("Diese Dateivorschau ordnet ältere Daten keinem Fahrerprofil zu.")
+        if (!archive && onOpenDetails != null)
+            OutlinedButton(onClick = onOpenDetails) { Text("Fahrerkarten-Details") }
         if (uses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen", style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = { onOpenVehicles(null, null, null) }) { Text("Fahrzeughistorie") }
