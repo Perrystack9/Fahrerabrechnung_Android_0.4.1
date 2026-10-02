@@ -148,8 +148,10 @@ fun AppRoot(
             } catch (_: Exception) { CardFilesStatus.ERROR }
         }
     }
-    LaunchedEffect(importState?.phase, onboardingComplete) {
-        if (onboardingComplete && importState?.phase in listOf(CardImportPhase.USB_PERMISSION_REQUIRED,
+    // An already active import may arrive before NavHost sets its graph. The boolean
+    // restarts this effect once navigation is ready, without reopening it on every back.
+    LaunchedEffect(importState?.phase, onboardingComplete, backStackEntry != null) {
+        if (backStackEntry != null && onboardingComplete && importState?.phase in listOf(CardImportPhase.USB_PERMISSION_REQUIRED,
                 CardImportPhase.WAITING_FOR_CARD, CardImportPhase.READING, CardImportPhase.SAVING,
                 CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT,
                 CardImportPhase.IMPORTED, CardImportPhase.INCOMPLETE, CardImportPhase.FOREIGN_CARD, CardImportPhase.ERROR)) {

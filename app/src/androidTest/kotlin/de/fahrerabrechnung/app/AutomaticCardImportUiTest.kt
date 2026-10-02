@@ -175,6 +175,23 @@ class AutomaticCardImportUiTest {
         }
         compose.onNodeWithTag("nav_vehicles").assertDoesNotExist()
     }
+    @Test fun activeInitialImportWaitsForNavigationAndDoesNotReopenWhenGoingBack() {
+        val state = mutableStateOf(CardImportUiState(CardImportPhase.WAITING_FOR_CARD))
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = state.value)
+        } }
+        await("Fahrerkarte einlegen")
+        compose.onNodeWithTag("card_import_status").assertTextEquals("Fahrerkarte einlegen")
+        compose.onNodeWithTag("back").performClick()
+        compose.onNodeWithTag("nav_start").assertIsDisplayed()
+        compose.waitForIdle()
+        compose.onNodeWithTag("card_import_status").assertDoesNotExist()
+        compose.runOnIdle { state.value = state.value.copy(phase = CardImportPhase.USB_PERMISSION_REQUIRED) }
+        await("USB-Zugriff bestätigen")
+        compose.onNodeWithTag("card_import_status").assertTextEquals("USB-Zugriff bestätigen")
+    }
+
     private fun controlFile(plate: String = "TEST FIRST", number: String = "TEST CONTROL0001", time: Int = 1790000000) =
         CardControlFile(CardGeneration.GEN2V2, ByteBuffer.allocate(46).put(0xF8.toByte()).putInt(time)
             .put(3.toByte()).put(13.toByte()).put(number.padEnd(16).toByteArray())
