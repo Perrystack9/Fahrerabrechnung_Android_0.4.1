@@ -164,6 +164,7 @@ class DriverCardFoundationTest {
             assertEquals(16, result.activity!!.dailyRecords.size)
             assertEquals(4, result.activity!!.newestDayOffset)
             assertNotNull(result.vehicles)
+            assertFalse(result.activityReadFailed)
             assertFalse(result.vehicleReadFailed)
             assertTrue(fake.closed)
         }
@@ -196,6 +197,8 @@ class DriverCardFoundationTest {
             assertNull(result.card)
             assertNull(result.activity)
             assertNull(result.vehicles)
+            assertFalse(fake.readFiles.contains(DriverCardFiles.DRIVER_ACTIVITY))
+            assertFalse(fake.readFiles.contains(DriverCardFiles.VEHICLES_USED))
             assertTrue(fake.closed)
         }
     }
@@ -216,12 +219,84 @@ class DriverCardFoundationTest {
             failure { DriverCardDecoder.activityLength(app, CardGeneration.GEN2) }.field)
     }
 
-    @Test fun truncatedActivityDoesNotReturnPartialCard() = runBlocking {
-        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), truncateActivity = true)
-        try { DriverCardReader(fake).read(); fail("Expected truncated activity failure") }
-        catch (e: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, e.failure) }
-        assertTrue(fake.closed)
+    @Test fun truncatedActivityReturnsOnlyCompleteVehiclesForEveryGeneration() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), truncateActivity = true)
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertEquals(generation, result.card!!.generation)
+            assertNull(result.activity); assertTrue(result.activityReadFailed)
+            assertNotNull(result.vehicles); assertFalse(result.vehicleReadFailed)
+            assertTrue(fake.readFiles.contains(DriverCardFiles.VEHICLES_USED)); assertTrue(fake.closed)
+        }
     }
+
+    @Test fun unavailableActivitiesDoNotPreventCompleteVehicleRead() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), missingFiles = setOf(DriverCardFiles.DRIVER_ACTIVITY))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertEquals(generation, result.generation)
+            assertNull(result.activity); assertTrue(result.activityReadFailed)
+            assertNotNull(result.vehicles); assertFalse(result.vehicleReadFailed)
+            assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun invalidActivityLengthAndPointersLeaveVehiclesReadable() = runBlocking {
+        for (generation in supportedGenerations) {
+            for (badLength in listOf(false, true)) {
+                val fake = CardFixtureTransport(generation, identityFixture(), invalidActivityLength = badLength,
+                    invalidActivityPointer = !badLength)
+                val result = DriverCardReader(fake).read()
+                assertEquals(CardRecognition.DRIVER, result.recognition)
+                assertNull(result.activity); assertTrue(result.activityReadFailed)
+                assertNotNull(result.vehicles); assertFalse(result.vehicleReadFailed)
+                assertTrue(fake.closed)
+            }
+        }
+    }
+
+    @Test fun unavailableVehiclesKeepCompleteActivities() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), missingFiles = setOf(DriverCardFiles.VEHICLES_USED))
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.activity); assertFalse(result.activityReadFailed)
+            assertNull(result.vehicles); assertTrue(result.vehicleReadFailed)
+            assertEquals(CardRecognition.DRIVER, result.recognition); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun twoUnavailableFilesReturnNoRawDataAndTwoExplicitFailures() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), missingFiles =
+                setOf(DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition); assertNotNull(result.card)
+            assertNull(result.activity); assertNull(result.vehicles)
+            assertTrue(result.activityReadFailed); assertTrue(result.vehicleReadFailed); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun activityTransportFailureDoesNotDiscardReadableVehicles() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), activityFailure = ReaderException(ReaderFailure.TIMEOUT))
+            val result = DriverCardReader(fake).read()
+            assertNull(result.activity); assertTrue(result.activityReadFailed)
+            assertNotNull(result.vehicles); assertFalse(result.vehicleReadFailed); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun cancellationDuringActivityDoesNotReadVehiclesOrReturnASuccess() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), activityFailure = kotlinx.coroutines.CancellationException("fixture"))
+            try { DriverCardReader(fake).read(); fail("Cancellation expected") }
+            catch (_: kotlinx.coroutines.CancellationException) { }
+            assertFalse(fake.readFiles.contains(DriverCardFiles.VEHICLES_USED)); assertTrue(fake.closed)
+        }
+    }
+
+    private val supportedGenerations = listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)
 
     @Test fun readerErrorsCloseSessionWithoutReturningPartialIdentity() = runBlocking {
         for (failure in listOf(ReaderFailure.TIMEOUT, ReaderFailure.CARD_REMOVED, ReaderFailure.DISCONNECTED)) {
@@ -273,8 +348,13 @@ class DriverCardFoundationTest {
 
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
-                                       private val truncateActivity: Boolean = false) : CardReaderTransport {
+                                       private val truncateActivity: Boolean = false,
+                                       private val missingFiles: Set<Int> = emptySet(),
+                                       private val invalidActivityLength: Boolean = false,
+                                       private val invalidActivityPointer: Boolean = false,
+                                       private val activityFailure: Exception? = null) : CardReaderTransport {
         var closed = false
+        val readFiles = mutableSetOf<Int>()
         private var selected = false
         private var file = 0
         override suspend fun availability() = SourceAvailability.AVAILABLE
@@ -294,21 +374,24 @@ class DriverCardFoundationTest {
             }
             if (ins == 0xA4 && selected) {
                 file = (apdu[5].toInt() and 255) shl 8 or (apdu[6].toInt() and 255)
+                if (file in missingFiles) return byteArrayOf(0x6A, 0x82.toByte())
                 return byteArrayOf(0x90.toByte(), 0)
             }
             if (ins == 0xB0 && selected) {
+                readFiles += file
+                if (file == DriverCardFiles.DRIVER_ACTIVITY) activityFailure?.let { throw it }
                 val data = when (file) {
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
-                        it[3] = 4 // newest day starts at byte 4 of the ring
+                        it[3] = if (invalidActivityPointer) 16 else 4
                     }
                     DriverCardFiles.VEHICLES_USED -> ByteArray(2 + 2 *
                         (if (generation == CardGeneration.GEN1) 31 else 48))
                     else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
-                        it[6] = 16 // 16-byte activity ring
+                        it[6] = if (invalidActivityLength) 0 else 16
                         it[8] = 2 // two vehicle record slots
                     }
                 }

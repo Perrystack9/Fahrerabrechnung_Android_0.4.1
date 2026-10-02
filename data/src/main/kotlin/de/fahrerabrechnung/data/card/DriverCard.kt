@@ -28,7 +28,8 @@ class CardVehiclesFile(val newestRecordIndex: Int, val recordCount: Int,
 }
 data class CardReadResult(val recognition: CardRecognition, val generation: CardGeneration,
                           val card: DriverCard? = null, val activity: CardActivityFile? = null,
-                          val vehicles: CardVehiclesFile? = null, val vehicleReadFailed: Boolean = false)
+                          val vehicles: CardVehiclesFile? = null, val vehicleReadFailed: Boolean = false,
+                          val activityReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -154,7 +155,7 @@ object DriverCardDecoder {
     }
 }
 
-/** No storage side effects: identity and complete raw activity file are returned together. */
+/** No storage side effects. Each supported EF is independent after validated identification. */
 class DriverCardReader(private val transport: CardReaderTransport) {
     suspend fun read(): CardReadResult {
         try {
@@ -174,19 +175,22 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             if (generation == CardGeneration.GEN2V2) readFile(session, DriverCardFiles.APPLICATION_V2, 10)
             return try {
                 val application = g2 ?: g1!!
-                val activityLength = DriverCardDecoder.activityLength(application, generation)
-                val identity = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
-                val activity = readFile(session, DriverCardFiles.DRIVER_ACTIVITY, activityLength + 4)
-                // An unavailable supplementary EF must not discard a complete activity read.
+                val identity = DriverCardDecoder.identity(
+                    readFile(session, DriverCardFiles.IDENTIFICATION, 143), generation)
+                // Failure of one EF must not prevent trying the other or expose incomplete bytes.
+                val activity = try {
+                    val length = DriverCardDecoder.activityLength(application, generation)
+                    DriverCardDecoder.activity(readFile(session, DriverCardFiles.DRIVER_ACTIVITY,
+                        length + 4), length)
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                 val vehicles = try {
                     val count = DriverCardDecoder.vehicleCount(application, generation)
                     val width = if (generation == CardGeneration.GEN1) 31 else 48
                     DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
                         count * width + 2), count, generation)
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                CardReadResult(recognized, generation, DriverCardDecoder.identity(identity, generation),
-                    DriverCardDecoder.activity(activity, activityLength), vehicles,
-                    vehicleReadFailed = vehicles == null)
+                CardReadResult(recognized, generation, identity, activity, vehicles,
+                    vehicleReadFailed = vehicles == null, activityReadFailed = activity == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

@@ -86,6 +86,12 @@ Der unverändert übernommene Room-Export `data/schemas/de.fahrerabrechnung.data
 
 [Finaler Lauf 36996161264](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36996161264) am unveränderten getesteten Kopf `47ea64cbea72c24c6231af26d451ee59d611b6dd`: 78 Unit-, 64 Daten-/SQLCipher- und 36 App-/Compose-Tests bestanden, keine Fehler oder übersprungenen Tests. Lint, Debug-/Internal-/DeviceTest-Builds sowie Signatur-/Paket-/Versionsprüfungen erfolgreich; generierter Schemaexport im finalen Build byte-identisch. Die Sitzungsauswahl erfolgt auf dem UI-Hauptthread; Navigation bei USB-Freigabe und leerem Leser ist regressionsgeprüft.
 
+## Aktuelle Korrektur: unabhängige Dateilesung
+
+Branch `fix/independent-card-source-reads` baut auf dem unveränderten bestandenen PR-35-Stand und dessen aktualisierter Übergabe auf. Nach gültiger Kartenidentifikation werden die unterstützten Aktivitäts- und Fahrzeugdateien unabhängig gelesen: ein Aktivitäts-Lesefehler verhindert eine vollständige Fahrzeuglesung nicht mehr. Unvollständige Bytes werden verworfen; der Status unterscheidet echten Lesefehler von fehlendem Eingang. Ungültige Identität bleibt gesperrt, Cancellation wird weitergereicht. Alte Daten werden nicht als Ersatz in die neue Sitzung gepaart. Wenn beide Dateien fehlschlagen, bleibt ein eigener Fehlversuch ohne neue Datensitzung; frühere Daten bleiben erhalten.
+
+Sechs zusätzliche APDU-Unit-Tests für Gen1/Gen2/Gen2V2 und drei zusätzliche SQLCipher-Tests prüfen fehlende/abgeschnittene/ungültige Aktivitäten, unabhängige Fahrzeuge, Abbruch, zwei Fehler, Statusunterschied, Deduplizierung und exakte Wiederöffnung. Der bisherige Trunkierungstest erwartet jetzt vollständige verfügbare Fahrzeuge statt Verlust aller Daten. Schema 8, bestehende Parser, Profilregeln und Tabellen bleiben unverändert; vollständige Kartenabdeckung bleibt offen. Finale CI am neuen veröffentlichten Kopf prüfen. Test-App 40103→40104 mit gleicher Testsignatur; vorhandene App nur aktualisieren. [Gerätetest-Anleitung](INDEPENDENT_READ_DEVICE_TEST.md). Diese Korrektur bis zum bestätigten neuen Leser-/Update-Test nicht mergen; der bestandene PR-35-Test bleibt die aktuelle Hardwarebasis.
+
 ## Letzte Hardware-/Gerätetests
 
 ### PR #35 – letzter bestätigter automatischer USB-/Update-Test

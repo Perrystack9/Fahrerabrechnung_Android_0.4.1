@@ -145,6 +145,54 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(0, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
     }
 
+    @Test fun failedActivityReadPersistsOnlyVehiclesAndNeverAttachesAnOlderDay() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(read(), "old")
+        val failedRead = read().copy(activity = null, activityReadFailed = true)
+        val run = pipeline.process(failedRead, "vehicles-after-read-error")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, run.file(CardImportFileKind.ACTIVITIES).status)
+        assertEquals(0, run.file(CardImportFileKind.ACTIVITIES).decodedCount)
+        assertNull(run.file(CardImportFileKind.ACTIVITIES).firstUtcEpochSeconds)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.VEHICLES).status)
+        assertEquals(0, run.newSourceCount)
+        val saved = imports.get(run.sessionId!!)!!
+        assertNull(saved.activity); assertNull(saved.pair)
+        assertEquals("TEST OWN", saved.vehicles!!.uses.single().registrationNumber)
+        assertNotNull(imports.get(old.sessionId!!)!!.activity)
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+        assertEquals(run, pipeline.process(failedRead, "vehicles-after-read-error"))
+        db.close(); open()
+        assertEquals(run, pipeline.history().single { it.id == run.id })
+        assertNull(imports.get(run.sessionId!!)!!.activity)
+        assertNotNull(imports.get(run.sessionId!!)!!.vehicles)
+    }
+
+    @Test fun failedActivityReadIsDistinctFromMissingInputForTheSameRequest() = runBlocking {
+        imports.bind(card(), true)
+        val missing = read().copy(activity = null)
+        val earlier = pipeline.process(missing, "request-missing")
+        assertEquals(CardImportFileStatus.MISSING, earlier.file(CardImportFileKind.ACTIVITIES).status)
+        rejected<IllegalArgumentException> {
+            pipeline.process(missing.copy(activityReadFailed = true), "request-missing")
+        }
+        assertEquals(listOf(earlier), pipeline.history())
+        assertEquals(1, count("import_sessions"))
+    }
+
+    @Test fun twoFailedReadsKeepEarlierDataAndNeverCreateAnEmptyDataSession() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(read(), "old")
+        val empty = read().copy(activity = null, vehicles = null, activityReadFailed = true, vehicleReadFailed = true)
+        val failed = pipeline.process(empty, "two-read-errors")
+        assertEquals(CardImportRunStatus.FAILED, failed.status)
+        assertEquals("NO_USABLE_DATA", failed.failureCode); assertNull(failed.sessionId)
+        assertEquals(setOf(CardImportFileStatus.READ_FAILED), failed.files.map { it.status }.toSet())
+        assertEquals(0, failed.newSourceCount)
+        assertEquals(1, count("import_sessions")); assertEquals(1, count("driver_activity_days"))
+        assertEquals(1, count("driver_vehicle_uses"))
+        assertNotNull(imports.get(old.sessionId!!)!!.activity); assertNotNull(imports.get(old.sessionId!!)!!.vehicles)
+        assertEquals(failed, pipeline.process(empty, "two-read-errors"))
+    }
+
     @Test fun invalidAndEmptyVehicleFilesHaveHonestSeparateStatuses() = runBlocking {
         imports.bind(card(), true)
         val malformed = read().copy(vehicles = CardVehiclesFile(0, 1, CardGeneration.GEN2V2, byteArrayOf(1)))
