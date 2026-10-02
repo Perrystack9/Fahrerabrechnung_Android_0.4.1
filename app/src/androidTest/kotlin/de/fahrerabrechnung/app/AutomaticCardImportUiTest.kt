@@ -66,7 +66,7 @@ class AutomaticCardImportUiTest {
         val run = runBlocking { imports.bind(card(), true); pipeline.process(read(), "saved") }
         screen(CardImportUiState(CardImportPhase.IMPORTED, lastRun = run))
         compose.onNodeWithTag("card_import_status").assertTextEquals("Fahrerkarte aktualisiert")
-        compose.onNodeWithText("1 Kartentage").assertIsDisplayed()
+        compose.onNodeWithText("1 Kartentag").assertIsDisplayed()
         listOf("Kartenleser prüfen", "Kartendaten testen", "Beide Dateien gemeinsam speichern",
             "Aktivitätsdaten lokal speichern", "Fahrzeugdaten lokal speichern").forEach {
             compose.onNodeWithText(it).assertDoesNotExist()
@@ -93,7 +93,7 @@ class AutomaticCardImportUiTest {
         val own = runBlocking { imports.bind(card(), true); pipeline.process(read(), "own") }
         screen(CardImportUiState(CardImportPhase.FOREIGN_CARD, lastRun = own))
         compose.onNodeWithText("Andere Fahrerkarte erkannt").assertIsDisplayed()
-        compose.onNodeWithText("1 Kartentage").assertDoesNotExist()
+        compose.onNodeWithText("1 Kartentag").assertDoesNotExist()
         compose.onNodeWithText("Gespeicherte Daten ansehen").assertDoesNotExist()
         compose.onNodeWithTag("confirm_automatic_own_card").assertDoesNotExist()
         assertEquals(1, runBlocking { pipeline.history().size })

@@ -382,18 +382,22 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.CARD_ARCHIVE) CardSnapshotHistoryScreen(padding,
                     cardActivityImports, cardVehicleImports, pairs = cardSourcePairs,
                     onPreviewPair = { saved ->
+                        previewLoadError = null
                         previewIsArchive = true; selectedSourcePair = saved
                         selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewActivity = { saved ->
+                        previewLoadError = null
                         previewIsArchive = true; selectedSourcePair = null
                         selectedActivitySnapshot = saved; selectedVehicleSnapshot = null
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewVehicle = { saved ->
+                        previewLoadError = null; selectedSourcePair = null; selectedActivitySnapshot = null
                         selectedVehicleSnapshot = saved; vehicleHistoryQuery = ""
                         vehicleHistoryUseStart = null; vehicleHistoryNation = null
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     }, onPreviewVehicleDay = { saved ->
+                        previewLoadError = null
                         previewIsArchive = true; selectedSourcePair = null
                         selectedActivitySnapshot = null; selectedVehicleSnapshot = saved
                         navController.navigate(DetailRoutes.CARD_PREVIEW)

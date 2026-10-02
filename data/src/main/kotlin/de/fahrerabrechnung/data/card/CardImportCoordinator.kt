@@ -156,7 +156,7 @@ class CardImportCoordinator(
     }
 
     private fun freeze(result: CardReadResult) = result.copy(
-        activity = result.activity?.let { it.copy(dailyRecords = it.dailyRecords.copyOf()) },
-        vehicles = result.vehicles?.let { it.copy(records = it.records.copyOf()) },
+        activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
+        vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
     )
 }

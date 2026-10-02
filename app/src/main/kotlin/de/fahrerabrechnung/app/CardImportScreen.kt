@@ -46,7 +46,10 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                 Text("Letzter Lesevorgang · $date", style = MaterialTheme.typography.titleMedium)
                 Text(run.status.label())
                 run.files.filter { it.status == CardImportFileStatus.STORED }.forEach {
-                    Text("${it.decodedCount} ${if (it.kind == CardImportFileKind.ACTIVITIES) "Kartentage" else "Fahrzeugnutzungen"}")
+                    val label = if (it.kind == CardImportFileKind.ACTIVITIES)
+                        (if (it.decodedCount == 1) "Kartentag" else "Kartentage")
+                        else (if (it.decodedCount == 1) "Fahrzeugnutzung" else "Fahrzeugnutzungen")
+                    Text("${it.decodedCount} $label")
                 }
                 if (run.sessionId != null) {
                     if (run.newSourceCount == 0) Text("Die gelesenen Daten waren bereits vorhanden.")

@@ -147,8 +147,8 @@ class DriverCardImportPipeline @Inject constructor(
 
     private fun prepare(result: CardReadResult): Plan {
         require(result.recognition == CardRecognition.DRIVER && result.card != null && result.card.generation == result.generation)
-        val read = result.copy(activity = result.activity?.let { it.copy(dailyRecords = it.dailyRecords.copyOf()) },
-            vehicles = result.vehicles?.let { it.copy(records = it.records.copyOf()) })
+        val read = result.copy(activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
+            vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, false) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
