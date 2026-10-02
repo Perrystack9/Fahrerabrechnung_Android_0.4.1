@@ -1,0 +1,12 @@
+# Gerätetest: unabhängig gelesene Aktivitäten und Fahrzeugnutzungen
+
+Ausgangspunkt ist der bestandene PR-35-Stand (Schema 8, Version 40103). Dieses Update (40104) behält Schema 8, Paket und öffentliche Testsignatur bei. Bei vorhandener **FahrerTagebuch Test**-App ausschließlich `02-FahrerTagebuch-Test-Update.apk` installieren. Nicht deinstallieren oder App-Daten löschen; Ausgangs-APK nicht erneut installieren.
+
+Die Korrektur ermöglicht, eine vollständig lesbare Fahrzeugdatei zu übernehmen, wenn das Lesen der Aktivitätsdatei fehlschlägt. Beide unterstützten Dateien werden nach gültiger Kartenidentifikation unabhängig geprüft. Keine unvollständigen Bytes oder älteren Dateien als Ersatz übernehmen; fehlerhafte Identität bleibt gesperrt. Beide Dateien fehlgeschlagen bedeutet fehlgeschlagener Lesevorgang ohne neue Datensitzung. Abbruch bleibt Abbruch. Dies ist weiterhin kein vollständiger Import aller Kartendateien.
+
+1. **Update/Altdaten:** Leser abziehen, App vollständig beenden, Update installieren. Ohne Leser öffnen: gleiches Profil, kein neues Onboarding, ältere Kartentage und Fahrzeugnutzungen unverändert verfügbar.
+2. **Normales automatisches Lesen:** Mit geöffneter App Leser anschließen, Freigabe bestätigen und eigene Karte einlegen. Einmal automatisch lesen und übernehmen, keine Erstbestätigung/Speichern-Aktion. Normale Kartentage und Fahrzeugnutzungen im neuen Import öffnen. Bei unveränderten Daten weiterhin keine identischen Zusatznutzungen. Karte 20 Sekunden stecken lassen: keine Leseschleife.
+3. **Wiederöffnung:** App vollständig beenden, Leser trennen und ohne Leser neu öffnen. Alten und neuen Import gezielt öffnen; Daten bleiben erhalten.
+4. **Abbruch, wenn am Gerät herstellbar:** Während des Lesens Karte/Leser entfernen. Fehler bzw. verständliches Teilergebnis statt falscher vollständiger Erfolgsmeldung; alte Daten bleiben erhalten. Nach erneutem Anschluss und Karteneinlage wieder lesen können. Entfernung nach abgeschlossenem Lesen verhindert die gültige Speicherung nicht.
+
+Ein reproduzierbarer Ausfall ausschließlich einer EF ist mit einer normalen Karte nicht zuverlässig auslösbar. Synthetische APDU-Tests prüfen fehlende/abgeschnittene/ungültige Aktivitäten und unabhängige Fahrzeuge für Gen1/Gen2/Gen2V2, zwei Dateifehler, ungültige Identität sowie echte Cancellation. SQLCipher-Tests prüfen ehrliche Status, atomare Speicherung, Deduplizierung, exakte Sitzung und Wiederöffnung ohne erfundene Kartentage. Der manuelle Test bestätigt ausschließlich den vorhandenen Leser und die eigene Karte.
