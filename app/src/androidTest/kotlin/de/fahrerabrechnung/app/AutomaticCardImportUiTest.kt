@@ -1,5 +1,6 @@
 package de.fahrerabrechnung.app
 
+import android.os.Looper
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
@@ -15,6 +16,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*
@@ -122,13 +124,18 @@ class AutomaticCardImportUiTest {
             pipeline.process(read().copy(vehicles = null, vehicleReadFailed = true), "new-partial")
         }
         var archiveOpened = false
+        val opened = AtomicReference<Pair<String, Boolean>?>(null)
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
-            CardImportHistoryScreen(PaddingValues(), pipeline, imports, {}, { archiveOpened = true })
+            CardImportHistoryScreen(PaddingValues(), pipeline, imports,
+                { opened.set(it.id to (Looper.myLooper() == Looper.getMainLooper())) }, { archiveOpened = true })
         } }
         await("Früher gespeicherter Lesevorgang")
         compose.onNodeWithText("Fahrzeugnutzungen: Lesen fehlgeschlagen").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("fixture-own-1234", substring = true).assertDoesNotExist()
         compose.onNodeWithText("fixture-archive", substring = true).assertDoesNotExist()
+        compose.onNodeWithTag("open_import_new-partial").performScrollTo().performClick()
+        compose.waitUntil(10_000) { opened.get() != null }
+        assertEquals("new-partial" to true, opened.get())
         compose.onNodeWithText("Früheres Dateiarchiv").performScrollTo().performClick()
         assertTrue(archiveOpened)
         assertEquals(1, runBlocking { db.driverProfileDao().cards(imports.profile()!!.id).size })
@@ -136,11 +143,20 @@ class AutomaticCardImportUiTest {
 
     @Test fun normalNavigationOpensExactSessionAndRetainsFiveMainTabs() {
         val run = runBlocking { imports.bind(card(), true); pipeline.process(read(), "saved") }
+        val state = mutableStateOf(CardImportUiState(lastRun = run))
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
             AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
-                cardImportPipeline = pipeline, importState = CardImportUiState(lastRun = run))
+                cardImportPipeline = pipeline, importState = state.value)
         } }
-        compose.onNodeWithText("Fahrerkarte ansehen", substring = true).performScrollTo().performClick()
+        compose.onNodeWithTag("nav_start").assertIsDisplayed()
+        compose.runOnIdle { state.value = state.value.copy(phase = CardImportPhase.USB_PERMISSION_REQUIRED) }
+        await("USB-Zugriff bestätigen")
+        compose.onNodeWithTag("card_import_status").assertTextEquals("USB-Zugriff bestätigen")
+        compose.runOnIdle { state.value = state.value.copy(phase = CardImportPhase.WAITING_FOR_CARD) }
+        await("Fahrerkarte einlegen")
+        compose.onNodeWithTag("card_import_status").assertTextEquals("Fahrerkarte einlegen")
+        compose.runOnIdle { state.value = state.value.copy(phase = CardImportPhase.IMPORTED) }
+        await("Fahrerkarte aktualisiert")
         compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
         await("Kartentage: 1 gespeichert")
         compose.onNodeWithTag("open_import_saved").performScrollTo().performClick()

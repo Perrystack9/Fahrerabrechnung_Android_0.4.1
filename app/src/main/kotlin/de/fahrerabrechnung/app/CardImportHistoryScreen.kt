@@ -16,6 +16,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,7 +72,7 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
                 entry.sessionId?.let { id ->
                     OutlinedButton(enabled = opening == null, modifier = Modifier.testTag("open_import_${entry.id}"), onClick = {
                         opening = id; previewError = null
-                        scope.launch {
+                        scope.launch(Dispatchers.Main.immediate) {
                             try { onPreview(checkNotNull(imports.get(id))) }
                             catch (cancelled: CancellationException) { throw cancelled }
                             catch (_: Exception) { previewError = entry.id }

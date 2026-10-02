@@ -144,7 +144,8 @@ fun AppRoot(
         }
     }
     LaunchedEffect(importState?.phase, onboardingComplete) {
-        if (onboardingComplete && importState?.phase in listOf(CardImportPhase.READING, CardImportPhase.SAVING,
+        if (onboardingComplete && importState?.phase in listOf(CardImportPhase.USB_PERMISSION_REQUIRED,
+                CardImportPhase.WAITING_FOR_CARD, CardImportPhase.READING, CardImportPhase.SAVING,
                 CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT,
                 CardImportPhase.IMPORTED, CardImportPhase.INCOMPLETE, CardImportPhase.FOREIGN_CARD, CardImportPhase.ERROR)) {
             selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null
