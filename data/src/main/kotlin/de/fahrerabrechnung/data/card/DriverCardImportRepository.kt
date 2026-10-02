@@ -26,6 +26,7 @@ class DriverCardImportRepository @Inject constructor(
 ) {
     private val dao get() = database.driverProfileDao()
     private val normalizedActivities = NormalizedCardActivityStore(database)
+    private val normalizedVehicles = NormalizedCardVehicleStore(database)
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -55,6 +56,10 @@ class DriverCardImportRepository @Inject constructor(
             require(!result.vehicleReadFailed)
             vehicles.prepare(result, now)
         } else null
+        val uses = vehicle?.let {
+            CardVehiclesParser.parse(CardVehiclesFile(it.newestRecordIndex, it.recordCount,
+                CardGeneration.valueOf(it.generation), it.records))
+        }
         return database.withTransaction {
             val cardId = bindInside(card, false)
             val profile = checkNotNull(dao.localProfile())
@@ -76,6 +81,7 @@ class DriverCardImportRepository @Inject constructor(
                 pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0))
             dao.insertSources(sources)
             if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
+            if (vehicle != null) normalizedVehicles.save(cardId, vehicle, checkNotNull(uses))
             decode(sources, profile.id)
         }
     }
@@ -89,9 +95,10 @@ class DriverCardImportRepository @Inject constructor(
 
     suspend fun vehicleSources(): List<SavedCardVehicles> = database.withTransaction {
         val profile = dao.localProfile() ?: return@withTransaction emptyList()
-        dao.imports(profile.id).mapNotNull { it.vehicleId }.distinct().map {
-            vehicles.decode(checkNotNull(database.cardVehicleImportDao().getById(it)))
-        }
+        dao.imports(profile.id).filter { it.vehicleId != null }
+            .distinctBy { it.driverCardId to it.vehicleId }.map {
+                decodeVehicles(it.driverCardId, checkNotNull(it.vehicleId))
+            }
     }
 
     private suspend fun reviewInside(card: DriverCard): CardBindingReview {
@@ -144,7 +151,7 @@ class DriverCardImportRepository @Inject constructor(
             val row = checkNotNull(database.cardActivityImportDao().getById(it))
             activities.decode(row, normalizedActivities.load(sources.driverCardId, row))
         }
-        val vehicle = sources.vehicleId?.let { vehicles.decode(checkNotNull(database.cardVehicleImportDao().getById(it))) }
+        val vehicle = sources.vehicleId?.let { decodeVehicles(sources.driverCardId, it) }
         val pair = sources.pairId?.let { id ->
             val row = checkNotNull(database.cardSourcePairDao().getById(id))
             check(row.activityId == sources.activityId && row.vehicleId == sources.vehicleId)
@@ -152,6 +159,11 @@ class DriverCardImportRepository @Inject constructor(
         }
         return SavedDriverImport(session.id, profileId, sources.driverCardId, session.createdAtEpochMillis,
             sources.newSourceCount, activity, vehicle, pair)
+    }
+
+    private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {
+        val source = checkNotNull(database.cardVehicleImportDao().getById(sourceId))
+        return vehicles.decode(source, normalizedVehicles.load(cardId, source))
     }
 
     private fun validate(card: DriverCard) {

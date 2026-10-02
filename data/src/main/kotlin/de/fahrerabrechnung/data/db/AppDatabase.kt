@@ -19,6 +19,8 @@ import androidx.room.RoomDatabase
         DriverActivityDayEntity::class,
         DriverActivityChangeEntity::class,
         DriverActivityDaySourceEntity::class,
+        DriverVehicleUseEntity::class,
+        DriverVehicleUseSourceEntity::class,
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = true,
@@ -31,9 +33,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardSourcePairDao(): CardSourcePairDao
     abstract fun driverProfileDao(): DriverProfileDao
     abstract fun driverActivityDao(): DriverActivityDao
+    abstract fun driverVehicleUseDao(): DriverVehicleUseDao
 
     companion object {
-        const val SCHEMA_VERSION = 6
+        const val SCHEMA_VERSION = 7
         const val DATABASE_NAME = "fahrerabrechnung.db"
     }
 }
