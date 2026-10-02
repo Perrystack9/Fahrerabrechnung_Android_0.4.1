@@ -4,6 +4,16 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_vehicle_uses` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `firstUseUtcEpochSeconds` INTEGER NOT NULL, `lastUseUtcEpochSeconds` INTEGER, `registrationNation` INTEGER NOT NULL, `registrationNumber` TEXT NOT NULL, `vin` TEXT, `odometerBeginKm` INTEGER NOT NULL, `odometerEndKm` INTEGER, `vuDataBlockCounter` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_vehicle_uses_driverCardId_firstUseUtcEpochSeconds` ON `driver_vehicle_uses` (`driverCardId`, `firstUseUtcEpochSeconds`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_driver_vehicle_uses_id_driverCardId` ON `driver_vehicle_uses` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_vehicle_use_sources` (`driverCardId` TEXT NOT NULL, `vehicleId` TEXT NOT NULL, `recordIndex` INTEGER NOT NULL, `useId` TEXT NOT NULL, `ringIndex` INTEGER NOT NULL, PRIMARY KEY(`driverCardId`, `vehicleId`, `recordIndex`), FOREIGN KEY(`useId`, `driverCardId`) REFERENCES `driver_vehicle_uses`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`vehicleId`) REFERENCES `card_vehicle_imports`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_vehicle_use_sources_vehicleId` ON `driver_vehicle_use_sources` (`vehicleId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_vehicle_use_sources_useId_driverCardId` ON `driver_vehicle_use_sources` (`useId`, `driverCardId`)")
+        }
+    }
     val MIGRATION_5_6 = object : Migration(5, 6) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_activity_days` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `recordDateUtcEpochSeconds` INTEGER NOT NULL, `dailyPresenceCounter` TEXT NOT NULL, `distanceKm` INTEGER NOT NULL, `changeCount` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")

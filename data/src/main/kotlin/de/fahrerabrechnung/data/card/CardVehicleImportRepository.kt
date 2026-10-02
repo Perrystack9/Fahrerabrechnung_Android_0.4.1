@@ -47,10 +47,10 @@ class CardVehicleImportRepository @Inject constructor(
 
     suspend fun all(): List<SavedCardVehicles> = dao.all().map(::decode)
 
-    internal fun decode(entity: CardVehicleImportEntity): SavedCardVehicles {
+    internal fun decode(entity: CardVehicleImportEntity, normalizedUses: List<CardVehicleUse>? = null): SavedCardVehicles {
         val file = CardVehiclesFile(entity.newestRecordIndex, entity.recordCount,
             CardGeneration.valueOf(entity.generation), entity.records)
-        val uses = CardVehiclesParser.parse(file)
+        val uses = normalizedUses ?: CardVehiclesParser.parse(file)
         check(uses.size == entity.useCount)
         return SavedCardVehicles(file, uses, entity.importedAtEpochMillis, entity.cardNumber)
     }

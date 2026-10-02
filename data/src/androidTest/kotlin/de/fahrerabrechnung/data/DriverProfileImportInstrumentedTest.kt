@@ -279,6 +279,8 @@ class DriverProfileImportInstrumentedTest {
         db.driverProfileDao().insertCard(DriverCardEntity("old-card", "old-profile", "legacy-id", "UNASSIGNED", 1, 1))
         db.driverProfileDao().insertSession(ImportSessionEntity("old-session", "old-profile", "LEGACY", 1, 1))
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_vehicle_use_sources")
+            execSQL("DROP TABLE driver_vehicle_uses")
             execSQL("DROP TABLE driver_activity_day_sources")
             execSQL("DROP TABLE driver_activity_changes")
             execSQL("DROP TABLE driver_activity_days")
