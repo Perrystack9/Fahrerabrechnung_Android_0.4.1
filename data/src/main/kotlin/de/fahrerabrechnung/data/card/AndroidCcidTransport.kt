@@ -18,7 +18,8 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
 
     init { require(slot in 0..255) }
 
-    data class DeviceInfo(val vendorId: Int, val productId: Int, val slots: Int?, val permission: Boolean)
+    data class DeviceInfo(val vendorId: Int, val productId: Int, val slots: Int?, val permission: Boolean,
+                          val deviceId: Int = 0)
     private data class Candidate(val device: UsbDevice, val iface: UsbInterface,
                                  val input: UsbEndpoint, val output: UsbEndpoint)
     private var active: Candidate? = null
@@ -30,6 +31,10 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
     private var openedSlots: Int? = null
     private val timeoutMs = 5000
     private var deniedDeviceId: Int? = null
+    private var selectedDeviceId: Int? = null
+
+    /** Pin automatic probing, permission and the following read to the same USB attachment. */
+    fun selectDevice(deviceId: Int?) { selectedDeviceId = deviceId }
 
     private fun candidates(): List<Candidate> = manager.deviceList.values.flatMap { device ->
         (0 until device.interfaceCount).mapNotNull { i ->
@@ -45,7 +50,7 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
     fun devices(): List<DeviceInfo> = candidates().map {
         DeviceInfo(it.device.vendorId, it.device.productId,
             if (active?.device?.deviceId == it.device.deviceId) openedSlots else null,
-            manager.hasPermission(it.device))
+            manager.hasPermission(it.device), it.device.deviceId)
     }
 
     fun requestPermission(device: UsbDevice, resultIntent: PendingIntent) {
@@ -56,7 +61,9 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
 
     /** Request access to the first compatible reader when none is already permitted. */
     fun requestPermission(resultIntent: PendingIntent): Boolean {
-        val candidate = candidates().firstOrNull { !manager.hasPermission(it.device) } ?: return false
+        val candidate = candidates().firstOrNull {
+            (selectedDeviceId == null || it.device.deviceId == selectedDeviceId) && !manager.hasPermission(it.device)
+        } ?: return false
         requestPermission(candidate.device, resultIntent)
         return true
     }
@@ -76,7 +83,7 @@ class AndroidCcidTransport(private val manager: UsbManager, val slot: Int = 0) :
 
     override suspend fun open(): ReaderState = withContext(Dispatchers.IO) {
         close()
-        val found = candidates()
+        val found = candidates().filter { selectedDeviceId == null || it.device.deviceId == selectedDeviceId }
         val candidate = found.firstOrNull { manager.hasPermission(it.device) } ?: found.firstOrNull()
             ?: return@withContext ReaderState.Absent
         if (!manager.hasPermission(candidate.device)) {

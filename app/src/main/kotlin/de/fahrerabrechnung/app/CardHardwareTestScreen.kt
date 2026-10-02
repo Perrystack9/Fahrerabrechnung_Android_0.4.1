@@ -466,7 +466,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
 
 /** Durations of recorded source intervals, without payroll or rest-day inference. */
 @Composable
-private fun CardDaySourceTimes(day: LocalCardDay, zone: ZoneId) {
+internal fun CardDaySourceTimes(day: LocalCardDay, zone: ZoneId) {
     val dayMinutes = Duration.between(
         day.date.atStartOfDay(zone), day.date.plusDays(1).atStartOfDay(zone)
     ).toMinutes()

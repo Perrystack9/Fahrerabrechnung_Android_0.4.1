@@ -50,6 +50,9 @@ import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
 import de.fahrerabrechnung.data.card.DriverCardImportRepository
+import de.fahrerabrechnung.data.card.DriverCardImportPipeline
+import de.fahrerabrechnung.data.card.CardImportUiState
+import de.fahrerabrechnung.data.card.CardImportPhase
 import de.fahrerabrechnung.feature.analytics.AnalyticsScreen
 import de.fahrerabrechnung.feature.calendar.CalendarScreen
 import de.fahrerabrechnung.feature.common.LocalScreenScrollState
@@ -75,6 +78,8 @@ private object DetailRoutes {
     const val DAY_REPORT = "day_report"
     const val CARD_IMPORT = "card_import"
     const val CARD_SNAPSHOTS = "card_snapshots"
+    const val CARD_ARCHIVE = "card_archive"
+    const val CARD_PREVIEW = "card_preview"
     const val VEHICLE_DETAIL = "vehicle_detail"
     const val SETTINGS_SUBPAGE = "settings_subpage"
 }
@@ -89,6 +94,11 @@ fun AppRoot(
     onboardingComplete: Boolean = true,
     onFinishOnboarding: (Double?, Double?, () -> Unit) -> Unit = { _, _, done -> done() },
     driverCardImports: DriverCardImportRepository? = null,
+    cardImportPipeline: DriverCardImportPipeline? = null,
+    importState: CardImportUiState? = null,
+    onConfirmCard: (String) -> Unit = {},
+    onDeclineCard: (String) -> Unit = {},
+    onRetryImport: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     var draft by rememberSaveable(stateSaver = OnboardingDraft.Saver) { mutableStateOf(OnboardingDraft()) }
@@ -104,6 +114,8 @@ fun AppRoot(
     }
     var selectedSourcePair by androidx.compose.runtime.remember { mutableStateOf<SavedCardSourcePair?>(null) }
     var cardFilesStatus by androidx.compose.runtime.remember { mutableStateOf(CardFilesStatus.CHECKING) }
+    var previewIsArchive by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var previewLoadError by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: if (onboardingComplete) TopLevelDestination.START.route else DetailRoutes.ONBOARDING
     // NavHost retains outgoing entries during its AnimatedContent transition, even with
@@ -111,7 +123,7 @@ fun AppRoot(
     val visibleRoute = rememberUpdatedState(currentRoute)
     // Keep each tab's scroll position alive while its outgoing NavHost content is hidden.
     val tabScrollStates = TopLevelDestination.entries.associate { it.route to rememberScrollState() }
-    LaunchedEffect(currentRoute, cardActivityImports, cardVehicleImports, driverCardImports) {
+    LaunchedEffect(currentRoute, cardActivityImports, cardVehicleImports, driverCardImports, importState?.lastRun?.id) {
         if (currentRoute == TopLevelDestination.START.route) {
             cardFilesStatus = CardFilesStatus.CHECKING
             cardFilesStatus = try {
@@ -131,12 +143,35 @@ fun AppRoot(
             } catch (_: Exception) { CardFilesStatus.ERROR }
         }
     }
+    LaunchedEffect(importState?.phase, onboardingComplete) {
+        if (onboardingComplete && importState?.phase in listOf(CardImportPhase.READING, CardImportPhase.SAVING,
+                CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT,
+                CardImportPhase.IMPORTED, CardImportPhase.INCOMPLETE, CardImportPhase.FOREIGN_CARD, CardImportPhase.ERROR)) {
+            selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null
+            previewLoadError = null
+            navController.navigate(DetailRoutes.CARD_IMPORT) { launchSingleTop = true }
+        }
+    }
+    LaunchedEffect(currentRoute, importState?.lastRun?.sessionId) {
+        if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null) {
+            try {
+                val saved = importState?.lastRun?.sessionId?.let { driverCardImports?.get(it) }
+                    ?: driverCardImports?.latest()
+                selectedSourcePair = saved?.pair
+                selectedActivitySnapshot = saved?.activity
+                selectedVehicleSnapshot = saved?.vehicles
+                if (saved == null) previewLoadError = "Noch keine gespeicherten Kartendaten vorhanden."
+            } catch (_: Exception) { previewLoadError = "Die gespeicherten Kartendaten konnten nicht geöffnet werden." }
+        }
+    }
     val topLevel = TopLevelDestination.entries.firstOrNull { it.route == currentRoute }
     val title = if (topLevel == TopLevelDestination.START) FahrerBrand.NAME else topLevel?.label ?: when (currentRoute) {
         DetailRoutes.ONBOARDING -> FahrerBrand.NAME
         DetailRoutes.DAY_REPORT -> "Tagesübersicht"
         DetailRoutes.CARD_IMPORT -> "Fahrerkarte"
-        DetailRoutes.CARD_SNAPSHOTS -> "Gespeicherte Dateien"
+        DetailRoutes.CARD_SNAPSHOTS -> if (cardImportPipeline != null) "Importverlauf" else "Gespeicherte Dateien"
+        DetailRoutes.CARD_ARCHIVE -> "Früheres Dateiarchiv"
+        DetailRoutes.CARD_PREVIEW -> "Kartendaten"
         DetailRoutes.VEHICLE_DETAIL -> "Fahrzeug"
         DetailRoutes.SETTINGS_SUBPAGE -> settingsTitle
         else -> FahrerBrand.NAME
@@ -256,7 +291,20 @@ fun AppRoot(
                 if (visibleRoute.value == DetailRoutes.DAY_REPORT) DayReportScreen(padding)
             }
             composable(DetailRoutes.CARD_IMPORT) {
-                if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
+                if (visibleRoute.value == DetailRoutes.CARD_IMPORT && importState != null) CardImportScreen(
+                    padding, importState, onConfirmCard, onDeclineCard, onRetryImport,
+                    onOpenHistory = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
+                    onOpenLatest = {
+                        previewIsArchive = false; previewLoadError = null
+                        selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null
+                        navController.navigate(DetailRoutes.CARD_PREVIEW)
+                    },
+                    onOpenVehicles = {
+                        selectedVehicleSnapshot = null; selectedSourcePair = null
+                        vehicleHistoryQuery = ""; vehicleHistoryUseStart = null; vehicleHistoryNation = null
+                        navController.navigate(DetailRoutes.VEHICLE_DETAIL)
+                    })
+                else if (visibleRoute.value == DetailRoutes.CARD_IMPORT) CardHardwareTestScreen(
                     padding, cardActivityImports, cardVehicleImports,
                     sourcePairs = cardSourcePairs, previewPair = selectedSourcePair,
                     driverImports = driverCardImports,
@@ -291,7 +339,14 @@ fun AppRoot(
                     })
             }
             composable(DetailRoutes.CARD_SNAPSHOTS) {
-                if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
+                if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS && cardImportPipeline != null && driverCardImports != null)
+                    CardImportHistoryScreen(padding, cardImportPipeline, driverCardImports,
+                        onPreview = { saved ->
+                            previewIsArchive = false; previewLoadError = null
+                            selectedSourcePair = saved.pair; selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles
+                            navController.navigate(DetailRoutes.CARD_PREVIEW)
+                        }, onOpenArchive = { navController.navigate(DetailRoutes.CARD_ARCHIVE) })
+                else if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
                     CardSnapshotHistoryScreen(padding, cardActivityImports, cardVehicleImports,
                         pairs = cardSourcePairs,
                         driverImports = driverCardImports,
@@ -322,6 +377,37 @@ fun AppRoot(
                             selectedActivitySnapshot = null
                             navController.popBackStack()
                         })
+            }
+            composable(DetailRoutes.CARD_ARCHIVE) {
+                if (visibleRoute.value == DetailRoutes.CARD_ARCHIVE) CardSnapshotHistoryScreen(padding,
+                    cardActivityImports, cardVehicleImports, pairs = cardSourcePairs,
+                    onPreviewPair = { saved ->
+                        previewIsArchive = true; selectedSourcePair = saved
+                        selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles
+                        navController.navigate(DetailRoutes.CARD_PREVIEW)
+                    }, onPreviewActivity = { saved ->
+                        previewIsArchive = true; selectedSourcePair = null
+                        selectedActivitySnapshot = saved; selectedVehicleSnapshot = null
+                        navController.navigate(DetailRoutes.CARD_PREVIEW)
+                    }, onPreviewVehicle = { saved ->
+                        selectedVehicleSnapshot = saved; vehicleHistoryQuery = ""
+                        vehicleHistoryUseStart = null; vehicleHistoryNation = null
+                        navController.navigate(DetailRoutes.VEHICLE_DETAIL)
+                    }, onPreviewVehicleDay = { saved ->
+                        previewIsArchive = true; selectedSourcePair = null
+                        selectedActivitySnapshot = null; selectedVehicleSnapshot = saved
+                        navController.navigate(DetailRoutes.CARD_PREVIEW)
+                    })
+            }
+            composable(DetailRoutes.CARD_PREVIEW) {
+                if (visibleRoute.value == DetailRoutes.CARD_PREVIEW) {
+                    if (previewLoadError != null) de.fahrerabrechnung.feature.common.ScreenContent(padding) { Text(checkNotNull(previewLoadError)) }
+                    else SavedCardPreviewScreen(padding, selectedActivitySnapshot, selectedVehicleSnapshot,
+                        archive = previewIsArchive, onOpenVehicles = { query, useStart, nation ->
+                            vehicleHistoryQuery = query.orEmpty(); vehicleHistoryUseStart = useStart; vehicleHistoryNation = nation
+                            navController.navigate(DetailRoutes.VEHICLE_DETAIL)
+                        })
+                }
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)

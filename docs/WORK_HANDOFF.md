@@ -10,13 +10,13 @@
 
 | Bezug | Stand |
 |---|---|
-| Letzter Produktcode-PR | [PR #32: Kartentage mit unveränderlicher Karten- und Quellenherkunft](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/32), nach bestandenem Gerätetest gemergt |
-| Produktcode-Basis auf main | [`b0583a6ea8b15b7260b76c19e56f5166608bb898`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/b0583a6ea8b15b7260b76c19e56f5166608bb898); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
-| Getesteter PR-32-Kopf | `7194869bdc2a45ae79e1e88c823a2cdf2d7a6182`; Merge-Tree entspricht exakt diesem getesteten Stand |
-| Abgeschlossener begrenzter Produktabschnitt | Normalisierte, quellenbezogene Kartentage auf main; vorhandene Profilbindung und Speicherung weiterverwenden |
-| Datenbank auf main / im Folgeschritt | Room/SQLCipher, main Schema **6**, Folgebranch Schema **7** mit additiver Migration 6 → 7; keine destruktive Migration oder automatische Zuordnung alter Quellen |
-| Automatischer Nachweis | [PR-32-Lauf 36911258471, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36911258471/attempts/2): vollständig grün, 61 Unit-Tests und 67 Emulatortests. Generierter Schema-6-Export und Migration geprüft |
-| Letzter manueller Gerätetest | **02.10.2026, PR #32: echtes Schema-5→6-Update und Wiederöffnung bestanden**, Details und Grenzen unten |
+| Letzter Produktcode-PR | [PR #34: Fahrzeugnutzungen mit unveränderlicher Karten- und Quellenherkunft](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/34), nach bestandenem Gerätetest gemergt |
+| Produktcode-Basis auf main | [`7eb2c6fa8aaba38a09e89fa292a6bf9265248684`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/7eb2c6fa8aaba38a09e89fa292a6bf9265248684); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
+| Getesteter PR-34-Kopf | `c4392761a5db904ec9ad5b4ea9a3d999be68053c`; Merge-Tree entspricht exakt diesem getesteten Stand |
+| Abgeschlossener begrenzter Produktabschnitt | Normalisierte Kartentage und Fahrzeugnutzungsquellen auf main; vorhandene Profilbindung und Speicherung weiterverwenden |
+| Datenbank auf main / im Folgeschritt | Room/SQLCipher, main Schema **7**, Folgebranch Schema **8** mit additiver Migration 7 → 8; keine destruktive Migration oder automatische Zuordnung alter Quellen |
+| Automatischer Nachweis | [PR-34-Lauf 36978402626](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36978402626): vollständig grün, 66 Unit-Tests und 79 Emulatortests (49 Daten/SQLCipher, 30 App/Compose). Generierter Schema-7-Export und Migration geprüft |
+| Letzter manueller Gerätetest | **02.10.2026, PR #34: echtes Schema-6→7-Update und Wiederöffnung bestanden**, Details und Grenzen unten |
 
 ## Wirklich implementiert
 
@@ -58,21 +58,47 @@ Die Dateien und identische Dateipaare bleiben dedupliziert. Die Zeit des Dateipa
 - Der unverändert übernommene Room-Export `data/schemas/de.fahrerabrechnung.data.db.AppDatabase/6.json` stammt aus dem erfolgreichen Build von [Lauf 36876124448, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36876124448/attempts/2), Produktkopf `ad9e558`. Seine elf bisherigen Entities sind identisch zu Schema 5; ausschließlich die drei beschriebenen Tabellen kommen hinzu. SQLite-Spalten, Indizes und Fremdschlüssel nach Migration entsprechen dem Export; keine Fremdschlüsselverletzung. Schema-SHA256: `4e0a5e5f70db778d5f0426c3ab26839e9e1b47ce09a823178d2cc36a0b250ed0`.
 - Die separate App **FahrerTagebuch Test** erhält eine gleichbleibende öffentliche Entwicklungssignatur. Für PR #32 baute/prüfte CI eine Schema-5-Ausgangs-APK und das Schema-6-Update mit derselben Paketkennung. Die bisherigen Debug-/Internal-Installationen bleiben getrennt; aktuelle Folgetests, Testschlüssel und Buildherkunft in [ci/README.md](../ci/README.md).
 
-## Folgeschritt: normalisierte Fahrzeugnutzungen
+## Abgeschlossene normalisierte Fahrzeugnutzungen (PR #34)
 
 [PR #34](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/34), Branch `feature/normalized-vehicle-sources`, baut auf dem bestandenen PR-32-Stand auf. Zwei additive Tabellen in Schema 7 speichern jeden dekodierten Fahrzeugnutzungsinhalt sowie dessen genaue Herkunft aus physischer Karte, Quelldatei, Datensatzreihenfolge und Ringslot. Identische Inhalte derselben Karte werden unabhängig vom Ringslot dedupliziert; geänderte Nutzungsfassungen und Ersatzkarten bleiben getrennt und schreiben frühere Imports nicht um.
 
 Normalisierung, Kartentage, Rohquellen, Dateipaar, konkrete Karte und Sitzung werden gemeinsam atomar gespeichert. Profilvorschau und Fahrzeughistorie lesen die gespeicherten Nutzungen. Ältere unnormalisierte Quellen bleiben read-only über den bisherigen Parser verfügbar; weder Migration noch Öffnen oder Wiederholen eines alten Speicherauftrags erzeugt eine neue Zuordnung. Erst ein frischer eigener Lese-/Speichervorgang darf vorhandene identische Rohdateien wiederverwenden und zusätzlich normalisieren.
 
-Keine aufgelöste dauerhafte Fahrzeugentität, neue Fahrzeugdarstellung, Kilometerberechnung, Tätigkeitszuordnung oder automatische USB-Bedienung in diesem Schritt. Fünf neue Fingerprint-Unit-Tests und zwölf SQLCipher-Instrumentierungstests decken exakte Quellwerte/offene Enden, Gen1, Ringverschiebung, Fassungen, Ersatz-/Fremdkarten, Wiederöffnung, Deduplizierung, Rollback und Migration 6 → 7 ab. Vollständigen automatischen Nachweis am veröffentlichten Kopf über die [PR-34-Prüfungen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/34/checks) heranziehen. Der [Update-Gerätetest](NORMALIZED_VEHICLES_DEVICE_TEST.md) steht aus; PR bis zum bestandenen Gerätetest nicht mergen.
+Keine aufgelöste dauerhafte Fahrzeugentität, neue Fahrzeugdarstellung, Kilometerberechnung, Tätigkeitszuordnung oder automatische USB-Bedienung in diesem Schritt. Fünf neue Fingerprint-Unit-Tests und zwölf SQLCipher-Instrumentierungstests decken exakte Quellwerte/offene Enden, Gen1, Ringverschiebung, Fassungen, Ersatz-/Fremdkarten, Wiederöffnung, Deduplizierung, Rollback und Migration 6 → 7 ab. Vollständigen automatischen Nachweis am veröffentlichten Kopf über die [PR-34-Prüfungen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/34/checks) heranziehen. Der [Update-Gerätetest](NORMALIZED_VEHICLES_DEVICE_TEST.md) wurde am 02.10.2026 um 10:53 Uhr bestätigt; PR #34 danach mit unverändertem Kopf gemergt. Finale CI 36978402626: 66 Unit-, 49 Daten-/SQLCipher- und 30 App-/Compose-Tests, keine Fehler/übersprungenen Tests.
 
 Der unverändert übernommene Room-Export `data/schemas/de.fahrerabrechnung.data.db.AppDatabase/7.json` stammt aus dem erfolgreichen Build von [Lauf 36976965131](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36976965131), Produktkopf `50327a1`. Alle 14 bisherigen Entities sind exakt identisch zu Schema 6; nur die beiden beschriebenen Tabellen kommen hinzu. Spalten, Indizes und Fremdschlüssel nach Migration entsprechen dem generierten Export; keine Fremdschlüsselverletzung. Schema-SHA256: `6d7a2837b83e9ccf549e45d0154abc4c3b17fdc94c86e82d90608e2bd8ff7cf0`. Der Build bestand 66 Unit-Tests, Lint und die APK-/Signatur-/Versionsprüfung; die vollständige Emulatorverifikation ist über den jeweils aktuellen PR-Kopf nachzuweisen.
 
 Das neue Testpaar verwendet Schema 6 aus dem unveränderten PR-32-Merge `b0583a6ea8b15b7260b76c19e56f5166608bb898` als Ausgangscode (40101) und Schema 7 als Update (40102). Nutzer mit eingerichteter PR-32-Test-App installieren nur die Update-APK; kein erneutes Onboarding oder Löschen vorhandener Daten.
 
+## Aktueller Folgebranch: automatischer Vordergrund-Import
+
+`feature/card-import-lifecycle` baut auf dem unveränderten PR-34-Merge auf. Der normale Ablauf erkennt vorhandene/angeschlossene Leser und eingelegte Karten in der geöffneten App. Android-USB-Freigabe bleibt notwendig. Einmal pro beobachteter Einlage lesen; keine automatische Leseschleife bei unveränderter eingesteckter Karte. Karte herausnehmen und erneut einlegen löst einen frischen Lesevorgang aus. Nach Rückkehr in den Vordergrund wird die Karte frisch geprüft. Kein Hintergrunddienst, kein Lesen bei geschlossener App, keine Smartphone-Ortung.
+
+Bekannte/reliabel eigene Karten werden ohne Speichern-Knopf übernommen. Erste eigene/unklare Ersatzkarte verlangt Bestätigung; davor wird die tatsächlich eingesteckte Karte nochmals vollständig gelesen. Stimmen Karte/Inhaber nicht mit dem Dialog überein, wird die alte Bestätigung verworfen und die aktuelle Karte erneut geprüft. Fremde/unbestätigte Karten erzeugen weder Profilbindung noch dauerhaften Importlauf oder Datensitzung. Der zuletzt eigene Import wird während fremder/noch ungeklärter Live-Karten nicht als deren Daten angezeigt.
+
+Schema 8 ergänzt ausschließlich `card_import_runs` und `card_import_file_results`. Eigene akzeptierte Übernahmen erhalten exakte unterstützte Datenstatus (gespeichert/fehlend/Lesefehler/ungültig/leer/nicht gespeichert), Kartengeneration und Quellzählungen/Zeitraum. Rohquellen, normalisierte Inhalte, Sitzung und erfolgreicher Ergebnisbeleg werden gemeinsam atomar gespeichert. Ein Speicherfehler rollt alle neuen Datenschreibvorgänge zurück und bleibt als eigener Fehlversuch ohne Datensitzung sichtbar. Prozessabbruch wird beim nächsten Prozessstart einmal als unterbrochen beendet; es werden keine gelesenen Daten rekonstruiert. Neue requestId ist ein neuer Versuch, derselbe Auftrag bleibt inhaltlich geprüft idempotent. Unveränderte Daten werden weiterhin dedupliziert.
+
+Importverlauf verwendet Metadaten und öffnet nur die ausgewählte Sitzung; defekte Rohdaten verhindern nicht die ganze Metadatenübersicht. Frühere explizite eigene Sitzungen bleiben sichtbar, ohne erfundene neue Fehler-/Zeitdetails. Unzugeordnete Dateien bleiben im getrennten read-only Archiv. Die normale gespeicherte Vorschau führt keine Leser-/Speicheraktion aus. Fünf Haupttabs, APDUs, Dateiparser, Tages-/Fahrzeugquellen, Fachlogik und Produktgrenzen bleiben erhalten. Weitere Kartenfiles, kanonischer Kalender, Fahrzeugentität, Kilometer-/Arbeitszeit-/Spesenberechnung und vollständiger Import fehlen.
+
+Zwölf neue Unit-Tests des Koordinators, fünfzehn neue reale SQLCipher- und sechs neue Compose-Tests sind vorhanden. CI/Schema-8-Export noch zu verifizieren. Der neue [USB-/Update-Gerätetest](AUTOMATIC_IMPORT_DEVICE_TEST.md) ist erforderlich, weil Anschluss, Slotzustand, Freigabe und Lesen jetzt automatisch zusammenarbeiten. Test-APK: Schema-7-Ausgangscode `7eb2c6fa8aaba38a09e89fa292a6bf9265248684`, 40102, Update 40103, gleicher öffentlicher Testschlüssel/Paketkennung. Nutzer mit PR-34-Test-App nur das Update installieren. Folge-PR bis zum bestätigten neuen Gerätetest nicht mergen.
+
 ## Letzte Hardware-/Gerätetests
 
-### PR #32 – letzter bestätigter Update-/Persistenztest
+### PR #34 – letzter bestätigter Update-/Persistenztest
+
+**02.10.2026, 10:53 Uhr Europe/Berlin:** Nutzer bestätigte **„Hat alles geklappt“** zu den unmittelbar zuvor im Chat bereitgestellten PR-34-Testschritten: echtes Update Schema 6→7 ohne Deinstallation, bestehendes Profil/ältere Kartentage und Fahrzeugnutzungen erhalten; eigene Karte erneut ohne Erstbestätigung lesen und gemeinsam speichern; alte und neue Sitzungen/Daten nach vollständigem Neustart ohne Leser öffnen; unveränderte Wiederholung erzeugt keine zusätzlichen identischen Fahrzeugnutzungen. Dies gilt im vorhandenen Galaxy-S23-/Android-16-/USB-CCID-/Gen2V2-Kontext. Keine neuen Einzelmesswerte, zusätzliche Karten-/Leserkombinationen oder Fremd-/Ersatzkarten manuell behauptet.
+
+**Herkunft:** `FahrerTagebuch-PR34-Update-Test.zip`, finales CI-Artefakt `FahrerTagebuch-device-test-update`, ID `11214921515`, [Lauf 36978402626](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/36978402626), getesteter Kopf `c4392761a5db904ec9ad5b4ea9a3d999be68053c`. Schema-6-Ausgangscode `b0583a6ea8b15b7260b76c19e56f5166608bb898`, Version 40101; Schema-7-Update 40102. Paket `de.fahrerabrechnung.app.devicetest` und Entwicklungssignatur gleich.
+
+- ZIP-SHA256: `917bf5c61eabd221dfcb62b55fc62ef923701ebcc055375f53b4f703c6637c32`.
+- Ausgangs-APK-SHA256: `87436270c797fc82f31c158caaa6bfa3659e71e93c16e0e5353e6a800ae82884`.
+- Update-APK-SHA256: `592435fd14f5a1c238d3bb8b12162dcc727debe65caa3de3d957bde4fa7e44cd`.
+
+PR #34 wurde mit unverändertem Kopf gemergt: `7eb2c6fa8aaba38a09e89fa292a6bf9265248684`, Tree `be841b982792b02b8ae07e1f3ad2b1f3f134242e`, exakt der getestete Kopf. Dieser Test ersetzt PR #32 als aktuelle Hardwarebasis.
+
+In derselben Nachricht erlaubte der Nutzer: **„mach bitte erstmal ein gutes Stück alleine weiter, und melde dich bitte erst wenn ein Hardware test wirklich erforderlich ist“**. Das autorisiert gebündelte begrenzte Folgeschritte mit vollständiger automatischer Verifikation bis zum sachlich notwendigen Hardware-Prüfpunkt; kein erneutes Nachfragen nach jedem PR. Der neue automatische USB-Ablauf braucht eine echte Leserprobe, die bisherigen erfolgreichen Tests werden nicht allein wegen einer Work-Unterbrechung wiederholt.
+
+### PR #32 – vorheriger bestätigter Update-/Persistenztest
 
 **02.10.2026, 08:25 Uhr Europe/Berlin:** Der Nutzer bestätigte mit **„Alle Punkte funktionieren perfekt“** sämtliche vier im Chat bereitgestellten Testschritte. Die Rückmeldung gilt im bisherigen Galaxy-S23-/Android-16-/USB-CCID-/Gen2V2-Kontext:
 
@@ -89,7 +115,7 @@ Damit ist der vorgesehene Schema-5→6-Gerätetest bestanden. Neue Byte-/Datensa
 - Ausgangs-APK-SHA256: `76fda42afb378ea97766647c397d5c08deddc8957bc27d7c5695681f0104adc5`.
 - Update-APK-SHA256: `87436270c797fc82f31c158caaa6bfa3659e71e93c16e0e5353e6a800ae82884`.
 
-PR #32 wurde nach dieser Bestätigung mit unverändertem Kopf gemergt. Dieser Test ist der neue Ausgangspunkt für weitere import-/persistenzrelevante Änderungen.
+PR #32 wurde nach dieser Bestätigung mit unverändertem Kopf gemergt. Dieser Test war bis zum bestandenen PR-34-Test der Ausgangspunkt für weitere import-/persistenzrelevante Änderungen.
 
 ### PR #30 – vorheriger bestätigter Profilbindungs-Ablauf
 
@@ -162,7 +188,7 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 - [CardSourcePairRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardSourcePairRepository.kt): validieren, atomar speichern, exakt zugehörige Quellen lesen.
 - [CardSourcePairDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/CardSourcePairDao.kt): Herkunftstabelle und Fremdschlüssel.
 - [CardActivityImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt) / [CardVehicleImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt): Quell-Snapshots und inhaltliche Deduplizierung.
-- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 6, Folgebranch Schema 7, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7; keine destruktive Migration.
+- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 7, Folgebranch Schema 8, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8; keine destruktive Migration.
 - [NormalizedCardVehicleStore.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/NormalizedCardVehicleStore.kt) / [DriverVehicleUseDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DriverVehicleUseDao.kt): Folgeschritt mit unveränderlichen Fahrzeugnutzungen und additiver Migration 6 → 7; bisherige Tabellen unverändert.
 - [CardHardwareTestScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardHardwareTestScreen.kt), [CardSnapshotHistoryScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardSnapshotHistoryScreen.kt), [AppRoot.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/AppRoot.kt): lesen/speichern, Quellenübersicht und Auswahl der Vorschau.
 - [EncryptedDatabaseInstrumentedTest.kt](../data/src/androidTest/kotlin/de/fahrerabrechnung/data/EncryptedDatabaseInstrumentedTest.kt) / [CardSourcePairNavigationTest.kt](../app/src/androidTest/kotlin/de/fahrerabrechnung/app/CardSourcePairNavigationTest.kt): Persistenz-/Migrations- und Navigationsregressionen.
@@ -177,7 +203,7 @@ Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import
 
 **Profilbindung fachlich festgelegt am 01.10.2026:** Single-Driver-App; erste eigene Karte ausdrücklich bestätigen. Die dauerhafte Fahreridentität ist das lokale Profil, nicht die Kartennummer. Belastbar gleiche Inhaber-Identität erlaubt zusätzliche Folge-/Ersatzkarten; unklare Fälle verlangen Bestätigung. Erkennbar fremde Karten bleiben auf den temporären technischen Lesetest begrenzt. Alte Karten/Imports bleiben erhalten; ältere Teilimporte nicht anhand von Datum, Kartennummer oder Vermutung zuordnen. Zielmodell und vollständige Vorgabe stehen in [CURRENT_RULES.md](CURRENT_RULES.md).
 
-Abgeschlossen: normalisierte Tagesquellen mit unveränderlicher Herkunft auf der vorhandenen Profil-/Kartenbindung, vollständige CI und echtes Update von Schema 5 auf 6. Aktueller begrenzter Folgeschritt: Fahrzeugnutzungsquellen analog dauerhaft speichern, ohne Fahrzeugidentitäten oder Fachwerte zu raten. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
+Abgeschlossen: normalisierte Tagesquellen mit unveränderlicher Herkunft auf der vorhandenen Profil-/Kartenbindung, vollständige CI und echtes Update von Schema 5 auf 6. Normalisierte Fahrzeugnutzungsquellen aus PR #34 sind ebenfalls abgeschlossen. Aktueller begrenzter Folgeschritt: automatische Vordergrund-Übernahme mit nachvollziehbaren Import-/Quellenstatus; keine weiteren Fachwerte oder Identitäten raten. Das Onboarding speichert bisher nur Heimatpunkt und Abschlussstatus; die übrigen Profil-/Fachfelder bleiben Vorschau.
 
 ### Verbindliche Grenzen bei der Fortsetzung
 
@@ -190,8 +216,8 @@ Abgeschlossen: normalisierte Tagesquellen mit unveränderlicher Herkunft auf der
 
 ### Test- und Arbeitsvereinbarungen
 
-Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardware, Import, Parser, Persistenz oder Datenbank betroffen sind. Mehrere PRs bis zu einem späteren Test nur nach konkreter Nutzerfreigabe zusammenfassen. Der bestandene PR-32-Test ist der aktuelle Ausgangspunkt; frühere Testaufschübe sind keine dauerhafte Ausnahme.
+Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardware, Import, Parser, Persistenz oder Datenbank betroffen sind. Mehrere PRs bis zu einem späteren Test nur nach konkreter Nutzerfreigabe zusammenfassen. Der bestandene PR-34-Test ist der aktuelle Ausgangspunkt. Die ausdrücklich am 02.10.2026 erlaubte Bündelung ist oben festgehalten; kein schematischer Testaufruf nach jedem Folge-PR. Frühere Aufschübe sind keine allgemeine dauerhafte Ausnahme.
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung zuerst lokale unveröffentlichte Änderungen und den aktuellen GitHub-Stand prüfen und vorhandene Folgearbeit fortführen. PR #30/#31/#32 sind gemergt; Profilbindung und normalisierte Tagesquellen nicht erneut implementieren. Aktueller Folgebranch: `feature/normalized-vehicle-sources`; dort vorhandene Implementierung und Schema-7-/CI-Stand prüfen. Die vollständige Import-Pipeline ist weiterhin offen. Der bestandene PR-32-Gerätetest bleibt bis zum nächsten bestätigten Test die Ausgangsbasis.
+Bei Unterbrechung zuerst lokale unveröffentlichte Änderungen und den aktuellen GitHub-Stand prüfen und vorhandene Folgearbeit fortführen. PR #30/#31/#32 sind gemergt; Profilbindung und normalisierte Tagesquellen nicht erneut implementieren. PR #34 ist nach bestandenem Test gemergt. Aktueller Folgebranch: `feature/card-import-lifecycle`; dessen vorhandene Implementierung und Schema-8-/CI-Stand prüfen. Automatischen Import nicht nochmals implementieren. Vollständige Kartenabdeckung und Fachauswertung bleiben offen. Der bestandene PR-34-Gerätetest bleibt bis zum nächsten bestätigten Test die Ausgangsbasis.

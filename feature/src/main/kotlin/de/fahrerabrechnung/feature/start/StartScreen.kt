@@ -30,12 +30,12 @@ fun StartScreen(padding: PaddingValues, onOpenCardImport: () -> Unit, onOpenOnbo
 
         SectionCard(title = "Fahrerkarte") {
             val (headline, description) = when (cardFilesStatus) {
-                CardFilesStatus.CHECKING -> "Gespeicherte Kartendateien werden geprüft" to "Bitte kurz warten."
-                CardFilesStatus.NONE -> "Noch keine Kartendatei gespeichert" to "Der Lesetest allein speichert nichts."
-                CardFilesStatus.ACTIVITY -> "Aktivitätsdatei gespeichert" to "Ein Aktivitäts-Teilimport liegt vor; weitere Kartendateien und der vollständige Import fehlen noch."
-                CardFilesStatus.VEHICLE -> "Fahrzeugdatei gespeichert" to "Ein Fahrzeug-Teilimport liegt vor; weitere Kartendateien und der vollständige Import fehlen noch."
-                CardFilesStatus.BOTH -> "Aktivitäts- und Fahrzeugdatei gespeichert" to "Die Teilimporte sind ohne eingelegte Karte verfügbar. Ein vollständiger Kartenimport und die Auswertung fehlen noch."
-                CardFilesStatus.ERROR -> "Status der Kartendateien nicht verfügbar" to "Gespeicherte Daten konnten gerade nicht geprüft werden."
+                CardFilesStatus.CHECKING -> "Gespeicherte Kartendaten werden geprüft" to "Bitte kurz warten."
+                CardFilesStatus.NONE -> "Noch keine Kartendaten gespeichert" to "Schließe einen kompatiblen Kartenleser an und lege deine Fahrerkarte ein."
+                CardFilesStatus.ACTIVITY -> "Kartentage verfügbar" to "Die gespeicherten Aktivitäten bleiben ohne Leser verfügbar. Fahrzeugnutzungen fehlen für den letzten gespeicherten Vorgang."
+                CardFilesStatus.VEHICLE -> "Fahrzeugnutzungen verfügbar" to "Die gespeicherten Fahrzeugnutzungen bleiben ohne Leser verfügbar. Kartentage fehlen für den letzten gespeicherten Vorgang."
+                CardFilesStatus.BOTH -> "Kartendaten verfügbar" to "Aktivitäten und Fahrzeugnutzungen sind ohne Leser verfügbar. Weitere Kartendaten und die vollständige Auswertung folgen."
+                CardFilesStatus.ERROR -> "Kartendaten gerade nicht verfügbar" to "Gespeicherte Daten konnten gerade nicht geprüft werden."
             }
             Text(headline, style = MaterialTheme.typography.titleSmall)
             Text(description, style = MaterialTheme.typography.bodyMedium,

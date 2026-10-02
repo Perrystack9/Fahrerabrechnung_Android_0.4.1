@@ -4,6 +4,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_import_runs` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `requestFingerprint` TEXT NOT NULL, `status` TEXT NOT NULL, `startedAtEpochMillis` INTEGER NOT NULL, `finishedAtEpochMillis` INTEGER, `sessionId` TEXT, `newSourceCount` INTEGER NOT NULL, `failureCode` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`) REFERENCES `import_sessions`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_import_runs_driverCardId` ON `card_import_runs` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_import_runs_sessionId` ON `card_import_runs` (`sessionId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_import_runs_startedAtEpochMillis` ON `card_import_runs` (`startedAtEpochMillis`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_import_file_results` (`runId` TEXT NOT NULL, `kind` TEXT NOT NULL, `status` TEXT NOT NULL, `decodedCount` INTEGER NOT NULL, `firstUtcEpochSeconds` INTEGER, `lastUtcEpochSeconds` INTEGER, `failureCode` TEXT, PRIMARY KEY(`runId`, `kind`), FOREIGN KEY(`runId`) REFERENCES `card_import_runs`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+        }
+    }
     val MIGRATION_6_7 = object : Migration(6, 7) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_vehicle_uses` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `firstUseUtcEpochSeconds` INTEGER NOT NULL, `lastUseUtcEpochSeconds` INTEGER, `registrationNation` INTEGER NOT NULL, `registrationNumber` TEXT NOT NULL, `vin` TEXT, `odometerBeginKm` INTEGER NOT NULL, `odometerEndKm` INTEGER, `vuDataBlockCounter` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
