@@ -25,6 +25,7 @@ class DriverCardImportRepository @Inject constructor(
     private val clock: Clock,
 ) {
     private val dao get() = database.driverProfileDao()
+    private val normalizedActivities = NormalizedCardActivityStore(database)
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -47,6 +48,9 @@ class DriverCardImportRepository @Inject constructor(
         val now = clock.millis()
         // Validate/copy selected files before any profile, card or source mutation.
         val activity = if (selection != CardImportSelection.VEHICLES) activities.prepare(result, now) else null
+        val days = activity?.let {
+            CardActivityParser.parse(CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords))
+        }
         val vehicle = if (selection != CardImportSelection.ACTIVITY) {
             require(!result.vehicleReadFailed)
             vehicles.prepare(result, now)
@@ -71,6 +75,7 @@ class DriverCardImportRepository @Inject constructor(
             val sources = DriverImportSourcesEntity(requestId, cardId, activity?.id, vehicle?.id,
                 pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0))
             dao.insertSources(sources)
+            if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
             decode(sources, profile.id)
         }
     }
@@ -135,7 +140,10 @@ class DriverCardImportRepository @Inject constructor(
     private suspend fun decode(sources: DriverImportSourcesEntity, profileId: String): SavedDriverImport {
         val session = checkNotNull(dao.session(sources.sessionId, profileId))
         check(checkNotNull(dao.card(sources.driverCardId)).profileId == profileId)
-        val activity = sources.activityId?.let { activities.decode(checkNotNull(database.cardActivityImportDao().getById(it))) }
+        val activity = sources.activityId?.let {
+            val row = checkNotNull(database.cardActivityImportDao().getById(it))
+            activities.decode(row, normalizedActivities.load(sources.driverCardId, row))
+        }
         val vehicle = sources.vehicleId?.let { vehicles.decode(checkNotNull(database.cardVehicleImportDao().getById(it))) }
         val pair = sources.pairId?.let { id ->
             val row = checkNotNull(database.cardSourcePairDao().getById(id))

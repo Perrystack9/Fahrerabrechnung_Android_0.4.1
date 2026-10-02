@@ -31,6 +31,14 @@ android {
     }
 
     signingConfigs {
+        // Intentionally public test identity, exclusively for the separate deviceTest package.
+        create("deviceTest") {
+            storeFile = rootProject.file("ci/device-test.jks")
+            storeType = "PKCS12"
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (releaseSigningPropertiesFile.exists()) {
             create("releaseExternal") {
                 storeFile = rootProject.file(releaseSigningProperties.getProperty("storeFile"))
@@ -55,6 +63,13 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
             buildConfigField("boolean", "ENABLE_VERBOSE_LOGGING", "false")
+        }
+        create("deviceTest") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".devicetest"
+            versionNameSuffix = "-device-test"
+            signingConfig = signingConfigs.getByName("deviceTest")
+            matchingFallbacks += listOf("debug")
         }
         release {
             if (releaseSigningPropertiesFile.exists()) signingConfig = signingConfigs.getByName("releaseExternal")

@@ -4,6 +4,17 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_activity_days` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `recordDateUtcEpochSeconds` INTEGER NOT NULL, `dailyPresenceCounter` TEXT NOT NULL, `distanceKm` INTEGER NOT NULL, `changeCount` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_activity_days_driverCardId_recordDateUtcEpochSeconds` ON `driver_activity_days` (`driverCardId`, `recordDateUtcEpochSeconds`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_driver_activity_days_id_driverCardId` ON `driver_activity_days` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_activity_changes` (`dayId` TEXT NOT NULL, `changeIndex` INTEGER NOT NULL, `minuteOfDay` INTEGER NOT NULL, `activity` TEXT NOT NULL, `slot` TEXT NOT NULL, `crewDriving` INTEGER NOT NULL, `cardInserted` INTEGER NOT NULL, PRIMARY KEY(`dayId`, `changeIndex`), FOREIGN KEY(`dayId`) REFERENCES `driver_activity_days`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_activity_day_sources` (`driverCardId` TEXT NOT NULL, `activityId` TEXT NOT NULL, `recordIndex` INTEGER NOT NULL, `dayId` TEXT NOT NULL, `ringOffset` INTEGER NOT NULL, PRIMARY KEY(`driverCardId`, `activityId`, `recordIndex`), FOREIGN KEY(`dayId`, `driverCardId`) REFERENCES `driver_activity_days`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`activityId`) REFERENCES `card_activity_imports`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_activity_day_sources_activityId` ON `driver_activity_day_sources` (`activityId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_activity_day_sources_dayId_driverCardId` ON `driver_activity_day_sources` (`dayId`, `driverCardId`)")
+        }
+    }
     val MIGRATION_4_5 = object : Migration(4, 5) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `local_driver_profile` (`id` INTEGER NOT NULL, `profileId` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")

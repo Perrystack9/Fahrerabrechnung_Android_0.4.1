@@ -133,7 +133,7 @@ fun CardHardwareTestScreen(padding: PaddingValues, imports: CardActivityImportRe
             val selectedVehicleOnly = driverImports != null && previewVehicleSnapshot != null && previewSnapshot == null
             (previewSnapshot ?: if (selectedVehicleOnly) null else if (bound) driverImports?.latest()?.activity else imports.latest())?.let { saved ->
                 displayZone = ZoneId.systemDefault()
-                localDays = CardDayTimeline.build(CardActivityParser.parse(saved.file), displayZone)
+                localDays = CardDayTimeline.build(saved.days, displayZone)
                 activityCardNumber = saved.cardNumber
                 selectedDay = localDays.lastIndex.coerceAtLeast(0)
                 savedStatus = "${if (previewSnapshot != null) "Ausgewählter" else "Gespeicherter"} Aktivitäts-Teilimport: ${saved.dayCount} Tagesdatensätze (${saved.generation.label()})."
