@@ -464,6 +464,60 @@ class DriverCardFoundationTest {
         }
     }
 
+    @Test fun specificConditionsAreReadCompletelyEvenWhenAllOtherDataFilesFail() = runBlocking {
+        for (generation in supportedGenerations) {
+            val count = if (generation == CardGeneration.GEN1) 56 else 112
+            val raw = ByteArray(CardSpecificConditionParser.fileLength(generation, count)).also {
+                val offset = (if (generation == CardGeneration.GEN1) 0 else 2) + (count - 1) * 5
+                java.nio.ByteBuffer.wrap(it).position(offset).putInt(1790000001).put(1.toByte())
+            }
+            val fake = CardFixtureTransport(generation, identityFixture(), missingFiles = setOf(
+                DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED, DriverCardFiles.CONTROL_ACTIVITY,
+                CardEventFaultKind.EVENTS.fileId, CardEventFaultKind.FAULTS.fileId), specificConditionBytes = raw)
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertArrayEquals(raw, result.specificConditions!!.bytes)
+            assertFalse(result.specificConditionReadFailed)
+            assertEquals(count - 1, CardSpecificConditionParser.parse(result.specificConditions!!).single().slotIndex)
+            assertTrue(fake.readFiles.contains(DriverCardFiles.SPECIFIC_CONDITIONS)); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun missingTruncatedOrTimedOutSpecificConditionsKeepAllOtherCompleteFiles() = runBlocking {
+        for (generation in supportedGenerations) for (failure in 0..2) {
+            val length = if (generation == CardGeneration.GEN1) 280 else 562
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                missingFiles = if (failure == 0) setOf(DriverCardFiles.SPECIFIC_CONDITIONS) else emptySet(),
+                specificConditionBytes = if (failure == 1) ByteArray(length - 1) else null,
+                specificConditionFailure = if (failure == 2) ReaderException(ReaderFailure.TIMEOUT) else null)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.specificConditions); assertTrue(result.specificConditionReadFailed)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.controls)
+            assertNotNull(result.events); assertNotNull(result.faults); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun invalidSpecificConditionCapacityOrRingPointerDoesNotDiscardOtherSources() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) for (invalidCount in listOf(true, false)) {
+            val fake = CardFixtureTransport(generation, identityFixture(), invalidSpecificConditionCount = invalidCount,
+                specificConditionBytes = ByteArray(562).also { it[1] = 112 })
+            val result = DriverCardReader(fake).read()
+            assertNull(result.specificConditions); assertTrue(result.specificConditionReadFailed)
+            assertEquals(!invalidCount, fake.readFiles.contains(DriverCardFiles.SPECIFIC_CONDITIONS))
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.events); assertNotNull(result.faults)
+            assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun cancellationDuringSpecificConditionReadPropagatesAndClosesReader() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                specificConditionFailure = kotlinx.coroutines.CancellationException("fixture"))
+            try { DriverCardReader(fake).read(); throw AssertionError("Cancellation expected") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+        }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -477,7 +531,10 @@ class DriverCardFoundationTest {
                                        private val faultBytes: ByteArray? = null,
                                        private val eventFailure: Exception? = null,
                                        private val faultFailure: Exception? = null,
-                                       private val invalidEventCount: Boolean = false) : CardReaderTransport {
+                                       private val invalidEventCount: Boolean = false,
+                                       private val specificConditionBytes: ByteArray? = null,
+                                       private val specificConditionFailure: Exception? = null,
+                                       private val invalidSpecificConditionCount: Boolean = false) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -508,6 +565,7 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.CONTROL_ACTIVITY) controlFailure?.let { throw it }
                 if (file == CardEventFaultKind.EVENTS.fileId) eventFailure?.let { throw it }
                 if (file == CardEventFaultKind.FAULTS.fileId) faultFailure?.let { throw it }
+                if (file == DriverCardFiles.SPECIFIC_CONDITIONS) specificConditionFailure?.let { throw it }
                 val data = when (file) {
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
@@ -519,12 +577,15 @@ class DriverCardFoundationTest {
                     DriverCardFiles.CONTROL_ACTIVITY -> controlBytes
                     CardEventFaultKind.EVENTS.fileId -> eventBytes ?: ByteArray(CardEventFaultParser.fileLength(CardEventFaultKind.EVENTS, generation, 12))
                     CardEventFaultKind.FAULTS.fileId -> faultBytes ?: ByteArray(1152)
+                    DriverCardFiles.SPECIFIC_CONDITIONS -> specificConditionBytes ?: ByteArray(
+                        CardSpecificConditionParser.fileLength(generation, if (generation == CardGeneration.GEN1) 56 else 112))
                     else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
                         it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
                         it[6] = if (invalidActivityLength) 0 else 16
                         it[8] = 2 // two vehicle record slots
+                        if (it.size == 15) it[14] = if (invalidSpecificConditionCount) 0 else 112
                     }
                 }
                 val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)

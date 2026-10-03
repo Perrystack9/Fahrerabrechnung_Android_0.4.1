@@ -161,5 +161,6 @@ class CardImportCoordinator(
         controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
         events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
         faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
+        specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) },
     )
 }

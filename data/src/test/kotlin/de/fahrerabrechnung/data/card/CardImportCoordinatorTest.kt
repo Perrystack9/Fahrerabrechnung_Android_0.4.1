@@ -18,6 +18,39 @@ class CardImportCoordinatorTest {
     private fun run(id: String, status: CardImportRunStatus = CardImportRunStatus.SAVED) = CardImportRun(id,
         "physical-card", "fixture-own", CardGeneration.GEN2V2, status, 1, 2, id, 0, null, emptyList())
 
+    @Test fun mutableConditionBytesAreFrozenBeforeSuspendingForCardReview() = runBlocking {
+        val file = CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(562).also { it[6] = 1 })
+        val expected = file.bytes.copyOf()
+        val reached = CompletableDeferred<Unit>(); val proceed = CompletableDeferred<Unit>()
+        var saved = false
+        val c = CardImportCoordinator({ result().copy(specificConditions = file) }, {
+            reached.complete(Unit); proceed.await(); CardBindingReview(CardBindingKind.KNOWN_CARD, "Fixture")
+        }, { error("Known card") }, { read, id ->
+            assertArrayEquals(expected, read.specificConditions!!.bytes)
+            assertEquals(1, CardSpecificConditionParser.parse(read.specificConditions!!).single().type)
+            saved = true; run(id)
+        })
+        val job = launch { c.observe(CardReaderObservation.Present(1)) }
+        reached.await(); file.bytes[6] = 2; proceed.complete(Unit); job.join()
+        assertTrue(saved)
+    }
+
+    @Test fun confirmingOwnCardSavesOnlyTheFreshConditionFileFromTheSecondRead() = runBlocking {
+        var reads = 0; var bound = false; var saves = 0
+        val c = CardImportCoordinator({
+            reads++
+            result().copy(specificConditions = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
+                ByteArray(562).also { it[6] = reads.toByte() }))
+        }, { CardBindingReview(if (bound) CardBindingKind.KNOWN_CARD else CardBindingKind.FIRST_CARD, null) },
+            { bound = true }, { read, id ->
+                assertTrue(bound); assertEquals(2, CardSpecificConditionParser.parse(read.specificConditions!!).single().type)
+                saves++; run(id)
+            })
+        c.observe(CardReaderObservation.Present(1)); assertEquals(0, saves)
+        c.confirm(c.state.value.confirmationToken!!)
+        assertEquals(2, reads); assertEquals(1, saves)
+    }
+
     @Test fun knownCardImportsAutomaticallyOncePerObservedInsertion() = runBlocking {
         var reads = 0; val saves = mutableListOf<String>()
         val c = CardImportCoordinator({ reads++; result() }, { CardBindingReview(CardBindingKind.KNOWN_CARD, "Fixture") },
