@@ -1,6 +1,6 @@
 # Gerätetest: Fähre/Zug und Out of Scope
 
-Der neue Importschritt liest zusätzlich die auf der Fahrerkarte gespeicherten Sonderbedingungen. Wegen neuer Kartendatei und Migration ist dieser begrenzte Gerätetest erforderlich. Die bestandenen PR-41-Tests werden nicht wiederholt.
+Der neue Importschritt liest zusätzlich die auf der Fahrerkarte gespeicherten Sonderbedingungen. Wegen neuer Kartendatei und Migration war dieser begrenzte Gerätetest vorgesehen. **Status 03.10.2026: vom Nutzer ausdrücklich übersprungen**, weil seine Karte weder Fähre/Zug noch Out of Scope enthält; er hat erneute Codeprüfung und Fortsetzung beauftragt. Die untenstehende ursprüngliche Anleitung dokumentiert die bereitgestellten Prüfpunkte, keine bestandene Prüfung. Weder leere Lesung noch Schema-11-Update wurden bestätigt. Letzte bestätigte Hardwarebasis bleibt PR #41. PR #44 wurde nach erneuter Codeprüfung und vollständig grüner CI am unveränderten Kopf gemergt.
 
 ## Installation
 
@@ -13,4 +13,4 @@ ZIP entpacken. Bei vorhandener **FahrerTagebuch Test** ausschließlich `02-Fahre
 3. **Wiederholung und genaue Historie:** Karte unverändert erneut einlegen/lesen. Identische Dateien erzeugen keine neuen Quelldateien. Die Übernahme bleibt verfügbar. Einen älteren Import vor diesem Schritt öffnen: dessen Sonderbedingungen sind weiterhin nicht gespeichert; keine späteren Meldungen hineinkopiert. Bisherige Quellansichten bleiben erhalten.
 4. **Neustart ohne Leser:** Leser entfernen, App vollständig beenden und neu starten. Die neue Übernahme und ihre Sonderbedingungen bzw. ihre ausdrückliche Leermeldung bleiben aus der verschlüsselten Speicherung verfügbar. Ältere Übernahmen lassen sich weiterhin getrennt öffnen.
 
-Bei Fehlern genügen Prüfpunknummer und sichtbare Meldung; keine Rohkartendaten oder Kartennummer schicken. Eine Karte ohne Fähre-/Zug-/Out-of-Scope-Belege kann den vollständigen Lese-/Speicher-/Leertest bestätigen. Nichtleere Belege, andere Karten/Leser und künstliche Fehlerfälle gelten dann nur als automatisch geprüft, nicht als zusätzlicher Hardwareerfolg. Weitere Kartenabdeckung, GNSS/Grenzen, neue Timeline-Marker und Fachauswertung bleiben offen.
+Bei Fehlern genügen Prüfpunknummer und sichtbare Meldung; keine Rohkartendaten oder Kartennummer schicken. Eine Karte ohne Fähre-/Zug-/Out-of-Scope-Belege kann den vollständigen Lese-/Speicher-/Leertest bestätigen. Nichtleere Belege, andere Karten/Leser und künstliche Fehlerfälle gelten dann nur als automatisch geprüft, nicht als zusätzlicher Hardwareerfolg. Weitere Kartenabdeckung, GNSS/Grenzen und Fachauswertung bleiben offen. Sonderbedingungsmarker folgen in einem eigenen Projektions-/UI-Schritt; diese ursprüngliche Anleitung gehört zur bereitgestellten PR-44-Test-ZIP mit Version 40108.

@@ -442,6 +442,7 @@ fun AppRoot(
                     else SavedCardPreviewScreen(padding, selectedActivitySnapshot, selectedVehicleSnapshot,
                         archive = previewIsArchive,
                         driverCardId = selectedPreviewDriverCardId, events = selectedEventSnapshot, faults = selectedFaultSnapshot,
+                        specificConditions = selectedConditionsSnapshot,
                         onOpenDetails = if (previewIsArchive || driverCardImports == null) null else ({ navController.navigate(DetailRoutes.CARD_DETAILS) }),
                         onOpenVehicles = { query, useStart, nation ->
                             vehicleHistoryQuery = query.orEmpty(); vehicleHistoryUseStart = useStart; vehicleHistoryNation = nation

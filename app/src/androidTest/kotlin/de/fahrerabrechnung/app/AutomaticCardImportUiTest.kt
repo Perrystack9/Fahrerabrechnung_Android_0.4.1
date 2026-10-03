@@ -430,7 +430,7 @@ class AutomaticCardImportUiTest {
         open("latest-conditions"); await("Out of Scope · Ende")
         compose.onNodeWithText("Out of Scope · Beginn").assertDoesNotExist()
         assertEquals(3, runBlocking { pipeline.history().size })
-        compose.onNodeWithTag("nav_fahrzeuge").assertDoesNotExist()
+        compose.onNodeWithTag("nav_vehicles").assertDoesNotExist()
     }
 
     @Test fun aConditionOnlyImportShowsPartialDataOnStartWithoutTechnicalRecords() {
@@ -483,6 +483,45 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithTag("day_issue_list").performScrollTo().performClick()
         compose.onNodeWithText("Fahrzeug: TEST NEWEST").assertIsDisplayed()
         compose.onNodeWithText("Fahrzeug: TEST EARLY").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    @Test fun conditionTimelineUsesOnlyTheSelectedSessionAndDoesNotBackfillAnOlderImport() {
+        val localDay = CardDayTimeline.build(CardActivityParser.parse(read().activity!!), ZoneId.systemDefault()).last()
+        val point = localDay.segments.first().start.plusSeconds(30).epochSecond.toInt()
+        fun atDay(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
+            ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(point); put(type.toByte()) } })
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-condition-markers")
+            pipeline.process(read().copy(specificConditions = atDay(1)), "early-condition-markers")
+            pipeline.process(read().copy(specificConditions = atDay(4)), "latest-condition-markers")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+        }
+        open("early-condition-markers")
+        compose.onNodeWithTag("day_condition_list").performScrollTo().performClick()
+        compose.onNodeWithText("Out of Scope · Beginn").assertIsDisplayed()
+        compose.onNodeWithText("Fähre/Zug · Ende").assertDoesNotExist()
+        compose.onNodeWithText("Schließen").performClick()
+        compose.onNodeWithTag("back").performClick()
+        open("before-condition-markers")
+        compose.onNodeWithTag("timeline_condition_overview").assertDoesNotExist()
+        compose.onNodeWithTag("day_condition_list").assertDoesNotExist()
+        compose.onNodeWithTag("back").performClick()
+        open("latest-condition-markers")
+        compose.onNodeWithTag("day_condition_list").performScrollTo().performClick()
+        compose.onNodeWithText("Fähre/Zug · Ende").assertIsDisplayed()
+        compose.onNodeWithText("Out of Scope · Beginn").assertDoesNotExist()
         assertEquals(3, runBlocking { pipeline.history().size })
     }
 }
