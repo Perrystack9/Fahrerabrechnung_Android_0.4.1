@@ -92,3 +92,7 @@ PR #32 enthält den generierten Room-Schema-6-Export. Die [finale CI 36911258471
 - `docs/design-handoff-v2/` und `docs/UI_REFINEMENT_0.4.1_V2.md`: historische Design-/Zwischenstände; enthalten teils überholte Smartphone-GPS- und Acht-Schritte-Vorgaben.
 
 Der letzte bestätigte PR-39-Gerätetest und die ausdrückliche Freigabe zum gebündelten Weiterarbeiten stehen in [WORK_HANDOFF.md](docs/WORK_HANDOFF.md). Den bestandenen Test nicht allein wegen einer Work-Unterbrechung wiederholen; nach relevanten neuen Änderungen den nächsten notwendigen Hardware-Prüfpunkt festlegen.
+
+## Aktueller Arbeitsbranch: Sonderbedingungen (PR #44)
+
+Der begrenzte Folgeschritt auf Basis von PR #43 ergänzt die unabhängige Datei für Fähre/Zug und Out of Scope, ihre verschlüsselte Speicherung je physischer Karte und genaue eigene Sitzung sowie eine read-only Detailansicht. Schema 11 ergänzt zwei Tabellen; die bisherigen 22 bleiben unverändert. Der Arbeitsbranch ist noch keine Hardwarefreigabe: main bleibt bis zur Testbestätigung beim Schema-10-Stand. [Format und Grenzen](docs/SPECIFIC_CONDITION_IMPORT_FORMAT.md), [vierteiliger Gerätetest](docs/SPECIFIC_CONDITION_DEVICE_TEST.md). CI und echter Schemaexport müssen vor APK-Ausgabe abgeschlossen sein; kein Merge vor Gerätetest.

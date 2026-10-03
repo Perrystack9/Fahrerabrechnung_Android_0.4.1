@@ -8,8 +8,8 @@ Die PR-28-/PR-30-Debug-APKs und die bisher ausgelieferte PR-30-Internal-APK besi
 
 `scripts/build_device_test_update.sh` erzeugt ein überprüftes Paar für den echten Update-Test:
 
-1. Schema-10-Produktcode aus dem festgehaltenen main-Commit `e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5` (bestandener PR-41-Gerätetest), mit demselben Testpaket/Schlüssel und kleinerem Test-Versionscode **40106**.
-2. Aktueller `deviceTest`-Build mit Ereignis-/Störungsmarkern aus den gespeicherten Quellen, unverändert Schema 10, Versionscode **40107** oder höher.
+1. Schema-10-Produktcode aus dem festgehaltenen main-Commit `10eefb6d8b33f119948349d3ffea63f0c55c25cf` (PR #43, vollständige CI mit 262 Tests; Hardwarebasis PR #41), mit demselben Testpaket/Schlüssel und kleinerem Test-Versionscode **40107**.
+2. Aktueller `deviceTest`-Build mit zusätzlicher Sonderbedingungsquelle, Schema 11, Versionscode **40108** oder höher.
 
 Für die Ausgangsversion werden ausschließlich Buildkonfiguration, Testlabel und Testschlüssel aus dem aktuellen Stand übernommen. Ihr Produktcode und Room-Schema stammen vollständig aus dem genannten Schema-10-Stand. Nach Installation des Updates die Ausgangsversion nicht erneut installieren. Mit der bereits eingerichteten PR-41-Test-App nur die aktuelle Update-APK verwenden; keine neue Ausgangsinstallation oder Löschung vorhandener Daten.
 
@@ -22,3 +22,5 @@ Das bestandene PR-34-Paar aktualisierte Schema 6 (40101) auf Schema 7 (40102). P
 PR #41 aktualisiert 40105→40106 mit Schema 9→10 und ist seit 03.10.2026 um 08:06 Uhr am Gerät bestanden: alle vier Anleitungspunkte bestätigt, Screenshot mit echtem Ereignisbeleg und gelesener Störungsquelle ohne Störung. [Anleitung](../docs/EVENT_FAULT_IMPORT_DEVICE_TEST.md), genaue Herkunft und Grenzen in WORK_HANDOFF. CI zum getesteten Kopf vollständig grün (248 Tests); PR unverändert gemergt. Diese vorhandene Test-App ist die Grundlage künftiger Updates; bestandene Tests nicht wiederholen.
 
 Der Marker-Folgeschritt ist reine Quellenprojektion/UI: keine neue Lesung, Speicherung oder Migration. Acht neue Unit- und sechs neue Compose-Tests ergänzen die vollständige CI. [Darstellung, Grenzen und optionale Prüfung ohne Leser](../docs/EVENT_FAULT_TIMELINE_CHECK.md). Der bestandene PR-41-Hardwaretest bleibt die aktuelle Grundlage.
+
+Der Sonderbedingungs-Importschritt (PR #44) verwendet Schema 11 auf dem Arbeitsbranch; vollständige CI samt KSP-Schemaexport vor Auslieferung. Der Hardwaretest ist wegen neuer EF und Migration erforderlich; PR bis zur Bestätigung ungemergt. [Anleitung](../docs/SPECIFIC_CONDITION_DEVICE_TEST.md).

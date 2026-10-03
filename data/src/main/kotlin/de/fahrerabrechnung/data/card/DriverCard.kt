@@ -32,7 +32,9 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val activityReadFailed: Boolean = false,
                           val controls: CardControlFile? = null, val controlReadFailed: Boolean = false,
                           val events: CardEventFaultFile? = null, val eventReadFailed: Boolean = false,
-                          val faults: CardEventFaultFile? = null, val faultReadFailed: Boolean = false)
+                          val faults: CardEventFaultFile? = null, val faultReadFailed: Boolean = false,
+                          val specificConditions: CardSpecificConditionFile? = null,
+                          val specificConditionReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -47,6 +49,7 @@ object DriverCardFiles {
     const val DRIVER_ACTIVITY = 0x0504
     const val VEHICLES_USED = 0x0505
     const val CONTROL_ACTIVITY = 0x0508
+    const val SPECIFIC_CONDITIONS = 0x0522
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -119,6 +122,16 @@ object DriverCardDecoder {
         val offset = if (kind == CardEventFaultKind.EVENTS) 3 else 4
         val count = application[offset].toInt() and 255
         CardEventFaultParser.fileLength(kind, generation, count)
+        return count
+    }
+
+    /** Gen1 has 56 fixed slots and no pointer; Gen2 capacity is at offsets 13..14. */
+    fun specificConditionCount(application: ByteArray, generation: CardGeneration): Int {
+        val expected = if (generation == CardGeneration.GEN1) 10 else 15
+        if (application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        val count = if (generation == CardGeneration.GEN1) 56 else
+            (application[13].toInt() and 255) shl 8 or (application[14].toInt() and 255)
+        CardSpecificConditionParser.fileLength(generation, count)
         return count
     }
 
@@ -214,10 +227,16 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                 val events = eventFault(CardEventFaultKind.EVENTS)
                 val faults = eventFault(CardEventFaultKind.FAULTS)
+                val specificConditions = try {
+                    val count = DriverCardDecoder.specificConditionCount(application, generation)
+                    CardSpecificConditionFile(generation, count, readFile(session, DriverCardFiles.SPECIFIC_CONDITIONS,
+                        CardSpecificConditionParser.fileLength(generation, count))).also { CardSpecificConditionParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
-                    events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null)
+                    events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null,
+                    specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

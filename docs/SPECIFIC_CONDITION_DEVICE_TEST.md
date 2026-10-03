@@ -1,0 +1,16 @@
+# Gerätetest: Fähre/Zug und Out of Scope
+
+Der neue Importschritt liest zusätzlich die auf der Fahrerkarte gespeicherten Sonderbedingungen. Wegen neuer Kartendatei und Migration ist dieser begrenzte Gerätetest erforderlich. Die bestandenen PR-41-Tests werden nicht wiederholt.
+
+## Installation
+
+ZIP entpacken. Bei vorhandener **FahrerTagebuch Test** ausschließlich `02-FahrerTagebuch-Test-Update.apk` darüber installieren. Nicht deinstallieren oder Daten löschen. Die installierte PR-41-Version 40106 und die PR-43-Version 40107 verwenden beide Schema 10; das Update 40108 führt additiv zu Schema 11. Paket und fester Testschlüssel bleiben gleich. `01-FahrerTagebuch-Test-Schema10.apk` (40107) ist nur für eine neue getrennte Testinstallation ohne vorhandene Test-App bestimmt.
+
+## Vier Prüfpunkte
+
+1. **Update und Altdaten:** Ohne Leser starten. Vorhandenes Profil sowie bisherige Übernahmen, Kartentage, Fahrzeughistorie und Ereignisübersicht sind weiterhin verfügbar. Kein erneutes Onboarding und keine neue Erstbestätigung.
+2. **Zusätzliche Kartenquelle:** Eigene Karte im vorhandenen Leser einlegen/anschließen. Die App liest und speichert automatisch. Neueste eigene Übernahme öffnen → **Fahrerkarten-Details → Fähre/Zug und Out of Scope**. Erwartet: vorhandene Meldungen mit aufgezeichneten Zeitpunkten, oder ausdrücklich **„In dieser Kartendatei sind keine Sonderbedingungen aufgezeichnet.“**. Eine leere gelesene Datei ist korrekt; **„keine gespeicherten Sonderbedingungen verfügbar“** oder **„Lesen fehlgeschlagen“** nach der neuen Lesung bitte melden. Keine künstliche Dauer, Ruhefeststellung oder Verstoßbewertung.
+3. **Wiederholung und genaue Historie:** Karte unverändert erneut einlegen/lesen. Identische Dateien erzeugen keine neuen Quelldateien. Die Übernahme bleibt verfügbar. Einen älteren Import vor diesem Schritt öffnen: dessen Sonderbedingungen sind weiterhin nicht gespeichert; keine späteren Meldungen hineinkopiert. Bisherige Quellansichten bleiben erhalten.
+4. **Neustart ohne Leser:** Leser entfernen, App vollständig beenden und neu starten. Die neue Übernahme und ihre Sonderbedingungen bzw. ihre ausdrückliche Leermeldung bleiben aus der verschlüsselten Speicherung verfügbar. Ältere Übernahmen lassen sich weiterhin getrennt öffnen.
+
+Bei Fehlern genügen Prüfpunknummer und sichtbare Meldung; keine Rohkartendaten oder Kartennummer schicken. Eine Karte ohne Fähre-/Zug-/Out-of-Scope-Belege kann den vollständigen Lese-/Speicher-/Leertest bestätigen. Nichtleere Belege, andere Karten/Leser und künstliche Fehlerfälle gelten dann nur als automatisch geprüft, nicht als zusätzlicher Hardwareerfolg. Weitere Kartenabdeckung, GNSS/Grenzen, neue Timeline-Marker und Fachauswertung bleiben offen.

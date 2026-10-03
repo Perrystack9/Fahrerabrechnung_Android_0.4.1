@@ -66,10 +66,12 @@ class AutomaticCardImportUiTest {
     }
 
     @Test fun normalSuccessfulImportHasNoManualReadOrSaveControls() {
-        val run = runBlocking { imports.bind(card(), true); pipeline.process(read(), "saved") }
+        val run = runBlocking { imports.bind(card(), true); pipeline.process(read().copy(
+            specificConditions = CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(562))), "saved") }
         screen(CardImportUiState(CardImportPhase.IMPORTED, lastRun = run))
         compose.onNodeWithTag("card_import_status").assertTextEquals("Fahrerkarte aktualisiert")
         compose.onNodeWithText("1 Kartentag").assertIsDisplayed()
+        compose.onNodeWithText("Fähre/Zug und Out of Scope übernommen").performScrollTo().assertIsDisplayed()
         listOf("Kartenleser prüfen", "Kartendaten testen", "Beide Dateien gemeinsam speichern",
             "Aktivitätsdaten lokal speichern", "Fahrzeugdaten lokal speichern").forEach {
             compose.onNodeWithText(it).assertDoesNotExist()
@@ -392,6 +394,58 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithText("Noch keine Kartendaten gespeichert").assertDoesNotExist()
         compose.onNodeWithText("Zeitüberschneidung").assertDoesNotExist()
         compose.onNodeWithText("Ereignisse und Störungen").assertDoesNotExist()
+        compose.onNodeWithTag("nav_start").assertIsDisplayed()
+    }
+
+    private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
+        ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
+
+    @Test fun conditionNavigationUsesOnlyTheSelectedImportAndClearsForAnOlderSource() {
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-conditions")
+            pipeline.process(read().copy(specificConditions = conditions(1)), "early-conditions")
+            pipeline.process(read().copy(specificConditions = conditions(2)), "latest-conditions")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Fähre/Zug und Out of Scope").performScrollTo().performClick()
+        }
+        open("early-conditions"); await("Out of Scope · Beginn")
+        compose.onNodeWithText("Out of Scope · Ende").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-conditions"); await("Für diese Übernahme sind keine gespeicherten Sonderbedingungen verfügbar.")
+        compose.onNodeWithText("Out of Scope · Beginn").assertDoesNotExist()
+        compose.onNodeWithText("Out of Scope · Ende").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-conditions"); await("Out of Scope · Ende")
+        compose.onNodeWithText("Out of Scope · Beginn").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+        compose.onNodeWithTag("nav_fahrzeuge").assertDoesNotExist()
+    }
+
+    @Test fun aConditionOnlyImportShowsPartialDataOnStartWithoutTechnicalRecords() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read().copy(activity = null, vehicles = null, activityReadFailed = true,
+                vehicleReadFailed = true, specificConditions = conditions(1)), "condition-only")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(lastRun = run))
+        } }
+        await("Kartendaten teilweise verfügbar")
+        compose.onNodeWithText("Noch keine Kartendaten gespeichert").assertDoesNotExist()
+        compose.onNodeWithText("Out of Scope · Beginn").assertDoesNotExist()
         compose.onNodeWithTag("nav_start").assertIsDisplayed()
     }
 

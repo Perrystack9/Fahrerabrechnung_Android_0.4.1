@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -154,7 +154,8 @@ class DriverCardImportPipeline @Inject constructor(
             vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
             controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
             events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
-            faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) })
+            faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
+            specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -190,9 +191,18 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.beginUtc == null }) null else records.minOfOrNull { checkNotNull(it.beginUtc).epochSecond },
                     if (records.any { it.endUtc == null }) null else records.maxOfOrNull { checkNotNull(it.endUtc).epochSecond }, null)
             } else null
+        val conditions = if (read.specificConditions != null || read.specificConditionReadFailed)
+            inspect(CardImportFileKind.SPECIFIC_CONDITIONS, read.specificConditions != null, read.specificConditionReadFailed) {
+                val file = checkNotNull(read.specificConditions)
+                require(file.generation == read.generation)
+                val records = CardSpecificConditionParser.parse(file)
+                CardImportFileResult(CardImportFileKind.SPECIFIC_CONDITIONS, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.timeUtc == null }) null else records.minOfOrNull { checkNotNull(it.timeUtc).epochSecond },
+                    if (records.any { it.timeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.timeUtc).epochSecond }, null)
+            } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS)))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -222,6 +232,7 @@ class DriverCardImportPipeline @Inject constructor(
             controls = read.controls.takeIf { files.any { it.kind == CardImportFileKind.CONTROLS && it.status == CardImportFileStatus.READY } },
             events = read.events.takeIf { files.any { it.kind == CardImportFileKind.EVENTS && it.status == CardImportFileStatus.READY } },
             faults = read.faults.takeIf { files.any { it.kind == CardImportFileKind.FAULTS && it.status == CardImportFileStatus.READY } },
+            specificConditions = read.specificConditions.takeIf { files.any { it.kind == CardImportFileKind.SPECIFIC_CONDITIONS && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -257,6 +268,14 @@ class DriverCardImportPipeline @Inject constructor(
             }
             extra(CardEventFaultKind.EVENTS, read.events, read.eventReadFailed)
             extra(CardEventFaultKind.FAULTS, read.faults, read.faultReadFailed)
+            // No addition to the fingerprint of a historical request that never attempted this EF.
+            if (read.specificConditions != null || read.specificConditionReadFailed) {
+                text("SPECIFIC_CONDITIONS")
+                read.specificConditions?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array())
+                    digest.update(it.bytes) }
+                digest.update(if (read.specificConditionReadFailed) 1.toByte() else 0.toByte())
+            }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }
     }

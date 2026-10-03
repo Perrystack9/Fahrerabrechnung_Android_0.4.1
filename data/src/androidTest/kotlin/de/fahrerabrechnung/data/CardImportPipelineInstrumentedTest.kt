@@ -625,7 +625,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 9
         }
         db.close(); open()
-        assertEquals(10, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         for (run in listOf(two, three)) {
             assertEquals(before[run.id], db.cardImportRunDao().run(run.id))
             assertNull(imports.get(run.id)!!.events); assertNull(imports.get(run.id)!!.faults)
@@ -662,6 +662,158 @@ class CardImportPipelineInstrumentedTest {
                 CardEventFaultKind.EVENTS.name, "other-physical-card", source.id))
         }
         assertNull(imports.get(second.id)!!.events); assertNull(imports.get(second.id)!!.faults)
+    }
+
+    private fun conditionFile(time: Long = 1790000001L, type: Int = 1, empty: Boolean = false) =
+        CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(562).also {
+            if (!empty) ByteBuffer.wrap(it).apply { position(2); putInt(time.toInt()); put(type.toByte()) }
+        })
+    private fun sixFiles() = allFiles().copy(specificConditions = conditionFile())
+
+    @Test fun sixSourcesPersistExactMetadataDeduplicateAndReopenEncrypted() = runBlocking {
+        imports.bind(card(), true)
+        val input = sixFiles(); val first = pipeline.process(input, "six")
+        assertEquals(CardImportRunStatus.SAVED, first.status); assertEquals(6, first.newSourceCount)
+        assertEquals(6, first.files.size); assertEquals(1, first.file(CardImportFileKind.SPECIFIC_CONDITIONS).decodedCount)
+        assertEquals(1790000001L, first.file(CardImportFileKind.SPECIFIC_CONDITIONS).firstUtcEpochSeconds)
+        val source = imports.get(first.id)!!.specificConditions!!
+        assertEquals(first.driverCardId, source.driverCardId); assertArrayEquals(input.specificConditions!!.bytes, source.file.bytes)
+        assertEquals(first, pipeline.process(input, first.id))
+        assertEquals(0, pipeline.process(input, "six-again").newSourceCount)
+        assertEquals(1, count("card_specific_condition_imports")); assertEquals(2, count("driver_import_specific_condition_sources"))
+        db.close(); open()
+        assertEquals(first, pipeline.history().single { it.id == first.id })
+        assertEquals(source.records, imports.get(first.id)!!.specificConditions!!.records)
+        assertFalse(context.getDatabasePath(AppDatabase.DATABASE_NAME).readBytes().take(16).toByteArray()
+            .contentEquals("SQLite format 3\u0000".toByteArray()))
+    }
+
+    @Test fun emptyAndUnknownTimeConditionSourcesRemainDistinctHonestStoredSources() = runBlocking {
+        imports.bind(card(), true)
+        val empty = sixFiles().copy(specificConditions = conditionFile(empty = true))
+        val first = pipeline.process(empty, "empty-condition")
+        val result = first.file(CardImportFileKind.SPECIFIC_CONDITIONS)
+        assertEquals(CardImportFileStatus.STORED, result.status); assertEquals(0, result.decodedCount)
+        assertNull(result.firstUtcEpochSeconds); assertNull(result.lastUtcEpochSeconds)
+        assertTrue(imports.get(first.id)!!.specificConditions!!.records.isEmpty())
+        assertEquals(0, pipeline.process(empty, "empty-repeat").newSourceCount)
+        val unknown = pipeline.process(sixFiles().copy(specificConditions = conditionFile(time = 0)), "unknown-time")
+        assertEquals(1, unknown.newSourceCount); assertEquals(1, unknown.file(CardImportFileKind.SPECIFIC_CONDITIONS).decodedCount)
+        assertNull(unknown.file(CardImportFileKind.SPECIFIC_CONDITIONS).firstUtcEpochSeconds)
+        assertNull(unknown.file(CardImportFileKind.SPECIFIC_CONDITIONS).lastUtcEpochSeconds)
+        assertNull(imports.get(unknown.id)!!.specificConditions!!.records.single().timeUtc)
+    }
+
+    @Test fun failedInvalidWrongGenerationOrPointerConditionsKeepTheOtherFiveSources() = runBlocking {
+        imports.bind(card(), true)
+        val failures = listOf(
+            sixFiles().copy(specificConditions = null, specificConditionReadFailed = true),
+            sixFiles().copy(specificConditions = CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(561))),
+            sixFiles().copy(specificConditions = CardSpecificConditionFile(CardGeneration.GEN1, 56, ByteArray(280))),
+            sixFiles().copy(specificConditions = CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(562).also { it[1] = 112 })),
+            sixFiles().copy(specificConditionReadFailed = true))
+        for ((index, input) in failures.withIndex()) {
+            val run = pipeline.process(input, "condition-error-$index")
+            assertEquals(CardImportRunStatus.PARTIAL, run.status)
+            assertEquals(if (input.specificConditionReadFailed) CardImportFileStatus.READ_FAILED else CardImportFileStatus.INVALID,
+                run.file(CardImportFileKind.SPECIFIC_CONDITIONS).status)
+            val saved = imports.get(run.id)!!
+            assertNotNull(saved.activity); assertNotNull(saved.vehicles); assertNotNull(saved.controls)
+            assertNotNull(saved.events); assertNotNull(saved.faults); assertNull(saved.specificConditions)
+        }
+        assertEquals(0, count("card_specific_condition_imports"))
+    }
+
+    @Test fun conditionOnlySourcePersistsWhenAllOtherAttemptedFilesFail() = runBlocking {
+        imports.bind(card(), true)
+        val input = sixFiles().copy(activity = null, vehicles = null, controls = null, events = null, faults = null,
+            activityReadFailed = true, vehicleReadFailed = true, controlReadFailed = true, eventReadFailed = true, faultReadFailed = true)
+        val run = pipeline.process(input, "condition-only")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(1, run.newSourceCount)
+        assertNotNull(imports.get(run.id)!!.specificConditions); assertNull(imports.get(run.id)!!.activity)
+        assertEquals(1, count("import_sessions")); assertEquals(0, count("driver_activity_days"))
+    }
+
+    @Test fun olderRequestsKeepCoverageFingerprintAndSourcesWhileNewVersionsRemainSeparate() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(allFiles(), "before-conditions")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val first = pipeline.process(sixFiles(), "condition-first")
+        assertEquals(1, first.newSourceCount); assertNull(imports.get(old.id)!!.specificConditions)
+        assertEquals(old, pipeline.process(allFiles(), old.id))
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        rejected<IllegalArgumentException> { pipeline.process(sixFiles(), old.id) }
+        rejected<IllegalArgumentException> { pipeline.process(sixFiles().copy(specificConditions = conditionFile(type = 2)), first.id) }
+        rejected<IllegalStateException> { imports.save(sixFiles().copy(specificConditions = conditionFile(type = 2)), first.id, CardImportSelection.ALL_AVAILABLE) }
+        val next = pipeline.process(sixFiles().copy(specificConditions = conditionFile(type = 2)), "condition-next")
+        assertEquals(1, next.newSourceCount)
+        assertNotEquals(imports.get(first.id)!!.specificConditions!!.id, imports.get(next.id)!!.specificConditions!!.id)
+        assertEquals(1, imports.get(first.id)!!.specificConditions!!.records.single().type)
+        assertEquals(2, imports.get(next.id)!!.specificConditions!!.records.single().type)
+    }
+
+    @Test fun unconfirmedForeignAndUnclearCardsCannotWriteConditionsAndReplacementsStaySeparate() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(sixFiles(), "unconfirmed-conditions") }
+        imports.bind(card(), true)
+        val foreign = card("fixture-foreign-condition", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(sixFiles().copy(card = foreign), "foreign-conditions") }
+        val unclear = card("fixture-unclear-condition", card().holder.copy(birthDate = null))
+        rejected<CardBindingRequired> { pipeline.process(sixFiles().copy(card = unclear), "unclear-conditions") }
+        assertEquals(0, count("card_specific_condition_imports")); assertEquals(0, count("card_import_runs"))
+        val old = pipeline.process(sixFiles(), "physical-first")
+        val new = pipeline.process(sixFiles().copy(card = card("fixture-replacement")), "physical-new")
+        val a = imports.get(old.id)!!.specificConditions!!; val b = imports.get(new.id)!!.specificConditions!!
+        assertNotEquals(a.driverCardId, b.driverCardId); assertNotEquals(a.id, b.id)
+        assertArrayEquals(a.file.bytes, b.file.bytes)
+        assertEquals(old.driverCardId, imports.get(old.id)!!.specificConditions!!.driverCardId)
+        assertEquals(2, count("card_specific_condition_imports"))
+    }
+
+    @Test fun conditionWriteRollsBackWithTheOtherSourcesOnStorageFailure() = runBlocking {
+        imports.bind(card(), true); pipeline.process(allFiles(), "before-condition-rollback")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_condition_fail BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(sixFiles().copy(vehicles = read(plate = "TEST CHANGE").vehicles), "condition-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertEquals("STORAGE_FAILED", failed.failureCode)
+        assertNull(failed.sessionId); assertTrue(failed.files.all { it.status == CardImportFileStatus.NOT_STORED })
+        assertEquals(0, count("card_specific_condition_imports")); assertEquals(0, count("driver_import_specific_condition_sources"))
+        assertEquals(1, count("import_sessions")); assertEquals(1, count("card_vehicle_imports"))
+        assertNotNull(imports.get("before-condition-rollback")!!.events)
+    }
+
+    @Test fun migrationTenToElevenKeepsOldReceiptsSourcesAndProfilesWithoutBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(allFiles(), "schema-ten")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val identities = db.driverProfileDao().cards(imports.profile()!!.id)
+        val eventBytes = imports.get(old.id)!!.events!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_specific_condition_sources"); execSQL("DROP TABLE card_specific_condition_imports")
+            execSQL("DELETE FROM room_master_table"); version = 10
+        }
+        db.close(); open()
+        assertEquals(11, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertEquals(identities, db.driverProfileDao().cards(imports.profile()!!.id))
+        assertArrayEquals(eventBytes, imports.get(old.id)!!.events!!.file.bytes)
+        assertNull(imports.get(old.id)!!.specificConditions); assertEquals(old, pipeline.process(allFiles(), old.id))
+        assertEquals(0, count("card_specific_condition_imports")); assertEquals(0, count("driver_import_specific_condition_sources"))
+        val fresh = pipeline.process(sixFiles(), "schema-eleven")
+        assertEquals(1, fresh.newSourceCount); assertNotNull(imports.get(fresh.id)!!.specificConditions)
+        assertNull(imports.get(old.id)!!.specificConditions)
+    }
+
+    @Test fun corruptedConditionsKeepHistoryUsableAndWrongPhysicalSourceLinksAreRejected() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(allFiles(), "safe-before-condition")
+        val new = pipeline.process(sixFiles(), "corrupt-condition")
+        val source = imports.get(new.id)!!.specificConditions!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardSpecificConditionDao().insertSource(DriverImportSpecificConditionSourceEntity(old.id, "wrong-physical-card", source.id))
+        }
+        assertNull(imports.get(old.id)!!.specificConditions)
+        db.openHelper.writableDatabase.execSQL("UPDATE card_specific_condition_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(4), source.id))
+        assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.events)
+        rejected<IllegalStateException> { imports.get(new.id) }
     }
 
     @Test fun corruptControlSourceDoesNotPreventHistoryOrOtherImportsFromOpening() = runBlocking {
