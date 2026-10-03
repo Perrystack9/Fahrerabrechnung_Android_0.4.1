@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -136,9 +136,9 @@ class DriverCardImportPipeline @Inject constructor(
         val identity = database.driverProfileDao().cards(profile.id).single { it.cardId == run.driverCardId }
         val files = dao.files(run.id)
         val kinds = files.map { it.kind }.toSet()
-        // Historic runs attempted only the two original EFs. Do not invent new outcomes for them.
-        check(kinds == setOf(CardImportFileKind.ACTIVITIES.name, CardImportFileKind.VEHICLES.name) ||
-            kinds == CardImportFileKind.entries.map { it.name }.toSet())
+        // Historic two/three-file receipts retain their original coverage and fingerprint.
+        check(kinds.containsAll(setOf(CardImportFileKind.ACTIVITIES.name, CardImportFileKind.VEHICLES.name)) &&
+            kinds.all { it in CardImportFileKind.entries.map { kind -> kind.name } } && files.size == kinds.size)
         run.sessionId?.let { check(database.driverProfileDao().sources(it)?.driverCardId == run.driverCardId) }
         return CardImportRun(run.id, run.driverCardId, identity.cardNumber, CardGeneration.valueOf(identity.generation),
             CardImportRunStatus.valueOf(run.status), run.startedAtEpochMillis, run.finishedAtEpochMillis,
@@ -152,7 +152,9 @@ class DriverCardImportPipeline @Inject constructor(
         require(result.recognition == CardRecognition.DRIVER && result.card != null && result.card.generation == result.generation)
         val read = result.copy(activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
             vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
-            controls = result.controls?.let { CardControlFile(it.generation, it.bytes) })
+            controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
+            events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
+            faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -178,7 +180,19 @@ class DriverCardImportPipeline @Inject constructor(
                 CardImportFileResult(CardImportFileKind.CONTROLS, CardImportFileStatus.READY,
                     if (record == null) 0 else 1, record?.timeUtc?.epochSecond, record?.timeUtc?.epochSecond, null)
             } else null
-        return Plan(read, listOfNotNull(activity, vehicle, control))
+        fun eventFault(file: CardEventFaultFile?, failed: Boolean, kind: CardImportFileKind,
+                       expected: CardEventFaultKind): CardImportFileResult? = if (file != null || failed)
+            inspect(kind, file != null, failed) {
+                val complete = checkNotNull(file)
+                require(complete.generation == read.generation && complete.kind == expected)
+                val records = CardEventFaultParser.parse(complete)
+                CardImportFileResult(kind, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.beginUtc == null }) null else records.minOfOrNull { checkNotNull(it.beginUtc).epochSecond },
+                    if (records.any { it.endUtc == null }) null else records.maxOfOrNull { checkNotNull(it.endUtc).epochSecond }, null)
+            } else null
+        return Plan(read, listOfNotNull(activity, vehicle, control,
+            eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS)))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -194,7 +208,7 @@ class DriverCardImportPipeline @Inject constructor(
 
     private data class Plan(val read: CardReadResult, val files: List<CardImportFileResult>) {
         val selection: CardImportSelection? get() {
-            if (files.any { it.kind == CardImportFileKind.CONTROLS && it.status == CardImportFileStatus.READY })
+            if (files.any { it.kind !in setOf(CardImportFileKind.ACTIVITIES, CardImportFileKind.VEHICLES) && it.status == CardImportFileStatus.READY })
                 return CardImportSelection.ALL_AVAILABLE
             val activity = files[0].status == CardImportFileStatus.READY
             val vehicle = files[1].status == CardImportFileStatus.READY
@@ -206,6 +220,8 @@ class DriverCardImportPipeline @Inject constructor(
             activity = read.activity.takeIf { files[0].status == CardImportFileStatus.READY },
             vehicles = read.vehicles.takeIf { files[1].status == CardImportFileStatus.READY },
             controls = read.controls.takeIf { files.any { it.kind == CardImportFileKind.CONTROLS && it.status == CardImportFileStatus.READY } },
+            events = read.events.takeIf { files.any { it.kind == CardImportFileKind.EVENTS && it.status == CardImportFileStatus.READY } },
+            faults = read.faults.takeIf { files.any { it.kind == CardImportFileKind.FAULTS && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -229,6 +245,18 @@ class DriverCardImportPipeline @Inject constructor(
                     digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
                 digest.update(if (read.controlReadFailed) 1.toByte() else 0.toByte())
             }
+            // Append only attempted new EFs; existing two/three-file requests stay byte-identical.
+            fun extra(kind: CardEventFaultKind, file: CardEventFaultFile?, failed: Boolean) {
+                if (file != null || failed) {
+                    text(kind.name)
+                    file?.let { text(it.kind.name); text(it.generation.name)
+                        digest.update(ByteBuffer.allocate(8).putInt(it.recordsPerType).putInt(it.bytes.size).array())
+                        digest.update(it.bytes) }
+                    digest.update(if (failed) 1.toByte() else 0.toByte())
+                }
+            }
+            extra(CardEventFaultKind.EVENTS, read.events, read.eventReadFailed)
+            extra(CardEventFaultKind.FAULTS, read.faults, read.faultReadFailed)
             return digest.digest().joinToString("") { "%02x".format(it) }
         }
     }

@@ -49,6 +49,7 @@ import de.fahrerabrechnung.data.card.SavedCardSourcePair
 import de.fahrerabrechnung.data.card.CardVehicleImportRepository
 import de.fahrerabrechnung.data.card.SavedCardActivity
 import de.fahrerabrechnung.data.card.SavedCardVehicles
+import de.fahrerabrechnung.data.card.SavedCardEventFault
 import de.fahrerabrechnung.data.card.SavedCardControl
 import de.fahrerabrechnung.data.card.DriverCardImportRepository
 import de.fahrerabrechnung.data.card.DriverCardImportPipeline
@@ -83,6 +84,7 @@ private object DetailRoutes {
     const val CARD_PREVIEW = "card_preview"
     const val CARD_DETAILS = "card_details"
     const val CARD_CONTROLS = "card_controls"
+    const val CARD_EVENTS_FAULTS = "card_events_faults"
     const val VEHICLE_DETAIL = "vehicle_detail"
     const val SETTINGS_SUBPAGE = "settings_subpage"
 }
@@ -116,6 +118,8 @@ fun AppRoot(
         mutableStateOf<SavedCardVehicles?>(null)
     }
     var selectedControlSnapshot by androidx.compose.runtime.remember { mutableStateOf<SavedCardControl?>(null) }
+    var selectedEventSnapshot by androidx.compose.runtime.remember { mutableStateOf<SavedCardEventFault?>(null) }
+    var selectedFaultSnapshot by androidx.compose.runtime.remember { mutableStateOf<SavedCardEventFault?>(null) }
     var selectedSourcePair by androidx.compose.runtime.remember { mutableStateOf<SavedCardSourcePair?>(null) }
     var cardFilesStatus by androidx.compose.runtime.remember { mutableStateOf(CardFilesStatus.CHECKING) }
     var previewIsArchive by androidx.compose.runtime.remember { mutableStateOf(false) }
@@ -141,7 +145,7 @@ fun AppRoot(
                         activity && vehicle -> CardFilesStatus.BOTH
                         activity -> CardFilesStatus.ACTIVITY
                         vehicle -> CardFilesStatus.VEHICLE
-                        own?.controls != null -> CardFilesStatus.PARTIAL
+                        own?.controls != null || own?.events != null || own?.faults != null -> CardFilesStatus.PARTIAL
                         else -> CardFilesStatus.NONE
                     }
                 }
@@ -155,13 +159,13 @@ fun AppRoot(
                 CardImportPhase.WAITING_FOR_CARD, CardImportPhase.READING, CardImportPhase.SAVING,
                 CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT,
                 CardImportPhase.IMPORTED, CardImportPhase.INCOMPLETE, CardImportPhase.FOREIGN_CARD, CardImportPhase.ERROR)) {
-            selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null
+            selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
             previewLoadError = null
             navController.navigate(DetailRoutes.CARD_IMPORT) { launchSingleTop = true }
         }
     }
     LaunchedEffect(currentRoute, importState?.lastRun?.sessionId) {
-        if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null && selectedControlSnapshot == null) {
+        if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null && selectedControlSnapshot == null && selectedEventSnapshot == null && selectedFaultSnapshot == null) {
             try {
                 val saved = importState?.lastRun?.sessionId?.let { driverCardImports?.get(it) }
                     ?: driverCardImports?.latest()
@@ -169,6 +173,7 @@ fun AppRoot(
                 selectedActivitySnapshot = saved?.activity
                 selectedVehicleSnapshot = saved?.vehicles
                 selectedControlSnapshot = saved?.controls
+                selectedEventSnapshot = saved?.events; selectedFaultSnapshot = saved?.faults
                 if (saved == null) previewLoadError = "Noch keine gespeicherten Kartendaten vorhanden."
             } catch (_: Exception) { previewLoadError = "Die gespeicherten Kartendaten konnten nicht geöffnet werden." }
         }
@@ -183,6 +188,7 @@ fun AppRoot(
         DetailRoutes.CARD_PREVIEW -> "Kartendaten"
         DetailRoutes.CARD_DETAILS -> "Fahrerkarte · Details"
         DetailRoutes.CARD_CONTROLS -> "Kontrollen"
+        DetailRoutes.CARD_EVENTS_FAULTS -> "Ereignisse und Störungen"
         DetailRoutes.VEHICLE_DETAIL -> "Fahrzeug"
         DetailRoutes.SETTINGS_SUBPAGE -> settingsTitle
         else -> FahrerBrand.NAME
@@ -307,11 +313,11 @@ fun AppRoot(
                     onOpenHistory = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenLatest = {
                         previewIsArchive = false; previewLoadError = null
-                        selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null
+                        selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     },
                     onOpenVehicles = {
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedSourcePair = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedSourcePair = null
                         vehicleHistoryQuery = ""; vehicleHistoryUseStart = null; vehicleHistoryNation = null
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     })
@@ -322,18 +328,18 @@ fun AppRoot(
                     onShowLatestPair = {
                         selectedSourcePair = null
                         selectedActivitySnapshot = null
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                     },
                     previewSnapshot = selectedActivitySnapshot,
                     onShowLatestSnapshot = {
                         selectedActivitySnapshot = null
                         selectedSourcePair = null
                         if (driverCardImports != null) selectedVehicleSnapshot = null
-                        selectedControlSnapshot = null
+                        selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                     },
                     previewVehicleSnapshot = selectedVehicleSnapshot,
                     onShowLatestVehicleSnapshot = {
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                         selectedSourcePair = null
                         if (driverCardImports != null) selectedActivitySnapshot = null
                     },
@@ -342,7 +348,7 @@ fun AppRoot(
                         // An explicitly selected archive stays within its own source file.
                         if (driverCardImports == null || selectedVehicleSnapshot == null) {
                             selectedSourcePair = null
-                            selectedVehicleSnapshot = null; selectedControlSnapshot = null
+                            selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                         }
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
@@ -356,6 +362,7 @@ fun AppRoot(
                         onPreview = { saved ->
                             previewIsArchive = false; previewLoadError = null
                             selectedSourcePair = saved.pair; selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles; selectedControlSnapshot = saved.controls
+                            selectedEventSnapshot = saved.events; selectedFaultSnapshot = saved.faults
                             navController.navigate(DetailRoutes.CARD_PREVIEW)
                         }, onOpenArchive = { navController.navigate(DetailRoutes.CARD_ARCHIVE) })
                 else if (visibleRoute.value == DetailRoutes.CARD_SNAPSHOTS)
@@ -372,7 +379,7 @@ fun AppRoot(
                             selectedSourcePair = null
                             selectedActivitySnapshot = saved
                             if (driverCardImports != null) selectedVehicleSnapshot = null
-                            selectedControlSnapshot = null
+                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null
                             navController.popBackStack()
                         },
                         onPreviewVehicle = { saved ->
@@ -396,12 +403,12 @@ fun AppRoot(
                     cardActivityImports, cardVehicleImports, pairs = cardSourcePairs,
                     onPreviewPair = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedSourcePair = saved
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedSourcePair = saved
                         selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewActivity = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedSourcePair = null
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedSourcePair = null
                         selectedActivitySnapshot = saved; selectedVehicleSnapshot = null
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewVehicle = { saved ->
@@ -411,7 +418,7 @@ fun AppRoot(
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     }, onPreviewVehicleDay = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedSourcePair = null
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedSourcePair = null
                         selectedActivitySnapshot = null; selectedVehicleSnapshot = saved
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     })
@@ -430,11 +437,16 @@ fun AppRoot(
             }
             composable(DetailRoutes.CARD_DETAILS) {
                 if (visibleRoute.value == DetailRoutes.CARD_DETAILS && !previewIsArchive && driverCardImports != null)
-                    CardDetailsScreen(padding) { navController.navigate(DetailRoutes.CARD_CONTROLS) }
+                    CardDetailsScreen(padding, onControls = { navController.navigate(DetailRoutes.CARD_CONTROLS) },
+                        onEventsFaults = { navController.navigate(DetailRoutes.CARD_EVENTS_FAULTS) })
             }
             composable(DetailRoutes.CARD_CONTROLS) {
                 if (visibleRoute.value == DetailRoutes.CARD_CONTROLS && !previewIsArchive && driverCardImports != null)
                     CardControlScreen(padding, selectedControlSnapshot)
+            }
+            composable(DetailRoutes.CARD_EVENTS_FAULTS) {
+                if (visibleRoute.value == DetailRoutes.CARD_EVENTS_FAULTS && !previewIsArchive && driverCardImports != null)
+                    CardEventFaultScreen(padding, selectedEventSnapshot, selectedFaultSnapshot)
             }
             composable(DetailRoutes.VEHICLE_DETAIL) {
                 if (visibleRoute.value == DetailRoutes.VEHICLE_DETAIL)
