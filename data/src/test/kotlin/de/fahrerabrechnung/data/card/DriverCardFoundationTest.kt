@@ -469,7 +469,7 @@ class DriverCardFoundationTest {
             val count = if (generation == CardGeneration.GEN1) 56 else 112
             val raw = ByteArray(CardSpecificConditionParser.fileLength(generation, count)).also {
                 val offset = (if (generation == CardGeneration.GEN1) 0 else 2) + (count - 1) * 5
-                java.nio.ByteBuffer.wrap(it).position(offset).putInt(1790000001).put(1.toByte())
+                java.nio.ByteBuffer.wrap(it).apply { position(offset); putInt(1790000001); put(1.toByte()) }
             }
             val fake = CardFixtureTransport(generation, identityFixture(), missingFiles = setOf(
                 DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED, DriverCardFiles.CONTROL_ACTIVITY,

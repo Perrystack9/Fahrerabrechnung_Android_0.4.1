@@ -13,7 +13,10 @@ class CardSpecificConditionParserTest {
         val b = ByteBuffer.wrap(bytes)
         val header = if (g == CardGeneration.GEN1) 0 else 2
         if (header != 0) b.putShort(newest.toShort())
-        for ((slot, time, type) in entries) b.position(header + 5 * slot).putInt(time.toInt()).put(type.toByte())
+        for ((slot, time, type) in entries) {
+            b.position(header + 5 * slot)
+            b.putInt(time.toInt()).put(type.toByte())
+        }
         return CardSpecificConditionFile(g, n, bytes)
     }
     private fun rejected(block: () -> Unit) {

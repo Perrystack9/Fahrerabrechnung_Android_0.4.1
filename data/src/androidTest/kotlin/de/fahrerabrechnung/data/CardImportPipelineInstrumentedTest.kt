@@ -666,7 +666,7 @@ class CardImportPipelineInstrumentedTest {
 
     private fun conditionFile(time: Long = 1790000001L, type: Int = 1, empty: Boolean = false) =
         CardSpecificConditionFile(CardGeneration.GEN2V2, 112, ByteArray(562).also {
-            if (!empty) ByteBuffer.wrap(it).position(2).putInt(time.toInt()).put(type.toByte())
+            if (!empty) ByteBuffer.wrap(it).apply { position(2); putInt(time.toInt()); put(type.toByte()) }
         })
     private fun sixFiles() = allFiles().copy(specificConditions = conditionFile())
 

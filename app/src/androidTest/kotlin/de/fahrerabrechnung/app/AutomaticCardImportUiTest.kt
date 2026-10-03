@@ -398,7 +398,7 @@ class AutomaticCardImportUiTest {
     }
 
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
-        ByteArray(562).also { ByteBuffer.wrap(it).position(2).putInt(1790000015).put(type.toByte()) })
+        ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 
     @Test fun conditionNavigationUsesOnlyTheSelectedImportAndClearsForAnOlderSource() {
         val newest = runBlocking {
