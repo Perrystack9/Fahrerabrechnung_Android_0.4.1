@@ -61,12 +61,14 @@ object CardEventFaultParser {
                     if (type in setOf(0, 255) && begin == null && end == null && nation == null && blankPlate)
                         return@slotLoop
                     val plate = if (blankPlate) null else {
-                        val charset = when (page) {
+                        val charset = try { when (page) {
                             0, 1 -> Charsets.ISO_8859_1
                             2, 3, 5, 7, 9, 13, 15, 16 -> Charset.forName("ISO-8859-$page")
                             80 -> Charset.forName("KOI8-R")
                             85 -> Charset.forName("KOI8-U")
                             else -> throw ParseError(offset + 10, "registrationNumber.codePage", "unsupported code page")
+                        } } catch (_: IllegalArgumentException) {
+                            throw ParseError(offset + 10, "registrationNumber.codePage", "unavailable code page")
                         }
                         plateBytes.toString(charset).trimEnd('\u0000', ' ').ifBlank { null }
                     }
