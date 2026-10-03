@@ -280,4 +280,114 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithTag("nav_start").assertIsDisplayed()
     }
 
+    private fun issueFile(kind: CardEventFaultKind, plate: String = "TEST EVENT", type: Int = 3,
+                          begin: Int = 1790000200, end: Int = 1790000100,
+                          generation: CardGeneration = CardGeneration.GEN2V2): CardEventFaultFile {
+        val perType = if (kind == CardEventFaultKind.EVENTS) 12 else 24
+        val bytes = ByteArray(CardEventFaultParser.fileLength(kind, generation, perType))
+        ByteBuffer.allocate(24).put(type.toByte()).putInt(begin).putInt(end).put(13.toByte()).put(1.toByte())
+            .put(plate.padEnd(13).toByteArray()).array().copyInto(bytes)
+        return CardEventFaultFile(kind, generation, perType, bytes)
+    }
+    private fun savedIssue(file: CardEventFaultFile, id: String = "fixture-issue") =
+        SavedCardEventFault(id, "own-physical", file, CardEventFaultParser.parse(file), 0)
+
+    @Test fun eventOverviewKeepsRecordedInvertedTimesAndNeutralHumanLabels() {
+        val event = savedIssue(issueFile(CardEventFaultKind.EVENTS))
+        val fault = savedIssue(issueFile(CardEventFaultKind.FAULTS, "TEST FAULT", 0x40, end = 0))
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) { CardEventFaultScreen(PaddingValues(), event, fault) } }
+        compose.onNodeWithText("Zeitüberschneidung").assertIsDisplayed()
+        val format = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
+        val zone = java.time.ZoneId.systemDefault()
+        compose.onNodeWithText("Beginn: ${Instant.ofEpochSecond(1790000200).atZone(zone).format(format)}").assertIsDisplayed()
+        compose.onNodeWithText("Ende: ${Instant.ofEpochSecond(1790000100).atZone(zone).format(format)}").assertIsDisplayed()
+        compose.onNodeWithText("Fahrzeug: TEST EVENT").assertIsDisplayed()
+        compose.onNodeWithText("Kartenstörung ohne nähere Angaben").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Ende: nicht angegeben").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Verstoß", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Dauer", substring = true).assertDoesNotExist()
+    }
+
+    @Test fun missingNewSourcesAndValidEmptyFilesHaveSeparateHonestMessages() {
+        val state = mutableStateOf<SavedCardEventFault?>(null)
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) { CardEventFaultScreen(PaddingValues(), state.value, null) } }
+        compose.onNodeWithText("Für diese Übernahme sind keine gespeicherten Ereignisdaten verfügbar.").assertIsDisplayed()
+        compose.onNodeWithText("Für diese Übernahme sind keine gespeicherten Störungsdaten verfügbar.").assertIsDisplayed()
+        compose.runOnIdle { state.value = savedIssue(CardEventFaultFile(CardEventFaultKind.EVENTS,
+            CardGeneration.GEN2V2, 12, ByteArray(3168)), "empty-event") }
+        compose.onNodeWithText("In dieser Kartendatei sind keine Ereignisse aufgezeichnet.").assertIsDisplayed()
+        compose.onNodeWithText("Für diese Übernahme sind keine gespeicherten Ereignisdaten verfügbar.").assertDoesNotExist()
+        compose.onNodeWithText("Für diese Übernahme sind keine gespeicherten Störungsdaten verfügbar.").assertIsDisplayed()
+        compose.onNodeWithText("Zeitüberschneidung").assertDoesNotExist()
+    }
+
+    @Test fun generationSpecificTypesDoNotApplyV2LabelsToOlderCardsAndUnknownCodesStayNeutral() {
+        val state = mutableStateOf(savedIssue(issueFile(CardEventFaultKind.EVENTS, type = 0x0F)))
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) { CardEventFaultScreen(PaddingValues(), state.value, null) } }
+        compose.onNodeWithText("GNSS-Anomalie").assertIsDisplayed()
+        compose.runOnIdle { state.value = savedIssue(issueFile(CardEventFaultKind.EVENTS, type = 0x0F,
+            generation = CardGeneration.GEN2), "older-g2") }
+        compose.onNodeWithText("Nicht zugeordnete Meldung (Code 0F)").assertIsDisplayed()
+        compose.onNodeWithText("GNSS-Anomalie").assertDoesNotExist()
+        compose.runOnIdle { state.value = savedIssue(issueFile(CardEventFaultKind.EVENTS, type = 0xF1), "unknown-code") }
+        compose.onNodeWithText("Nicht zugeordnete Meldung (Code F1)").assertIsDisplayed()
+        compose.onNodeWithText("Verstoß", substring = true).assertDoesNotExist()
+        assertEquals("Störung des internen GNSS-Empfängers", eventFaultLabel(CardGeneration.GEN2, 0x36))
+        assertEquals("Nicht zugeordnete Meldung (Code 36)", eventFaultLabel(CardGeneration.GEN1, 0x36))
+        assertEquals("Störung des internen Sensors", eventFaultLabel(CardGeneration.GEN2V2, 0x3A))
+        assertEquals("Nicht zugeordnete Meldung (Code 3A)", eventFaultLabel(CardGeneration.GEN2, 0x3A))
+    }
+
+    @Test fun eventNavigationOpensTheExactSelectedSessionIncludingOneBeforeTheseFilesWereImported() {
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read().copy(controls = controlFile()), "without-events")
+            pipeline.process(read().copy(events = issueFile(CardEventFaultKind.EVENTS, "TEST EARLY E"),
+                faults = issueFile(CardEventFaultKind.FAULTS, "TEST EARLY F", 0x40)), "early-events")
+            pipeline.process(read().copy(events = issueFile(CardEventFaultKind.EVENTS, "TEST LATE E"),
+                faults = issueFile(CardEventFaultKind.FAULTS, "TEST LATE F", 0x40)), "late-events")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Ereignisse und Störungen").performClick()
+        }
+        open("early-events"); await("Fahrzeug: TEST EARLY E")
+        compose.onNodeWithText("Fahrzeug: TEST EARLY F").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("TEST LATE E", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("without-events"); await("Für diese Übernahme sind keine gespeicherten Ereignisdaten verfügbar.")
+        compose.onNodeWithText("TEST EARLY E", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("TEST LATE E", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("late-events"); await("Fahrzeug: TEST LATE E")
+        compose.onNodeWithText("TEST EARLY E", substring = true).assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    @Test fun onlyEventAndFaultSourcesProduceAPartialStartStatusWithoutShowingTechnicalRecordsOnStart() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read().copy(activity = null, vehicles = null, activityReadFailed = true,
+                vehicleReadFailed = true, events = issueFile(CardEventFaultKind.EVENTS),
+                faults = issueFile(CardEventFaultKind.FAULTS, "TEST FAULT", 0x40)), "only-issues")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(lastRun = run))
+        } }
+        await("Kartendaten teilweise verfügbar")
+        compose.onNodeWithText("Noch keine Kartendaten gespeichert").assertDoesNotExist()
+        compose.onNodeWithText("Zeitüberschneidung").assertDoesNotExist()
+        compose.onNodeWithText("Ereignisse und Störungen").assertDoesNotExist()
+        compose.onNodeWithTag("nav_start").assertIsDisplayed()
+    }
 }

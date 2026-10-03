@@ -4,6 +4,8 @@
 
 Die App ist eine lokale Android-Basis mit echtem Fahrerkarte-Lesetest und **automatisch gespeicherten, profilgebundenen Aktivitäts-, Fahrzeug- und Kontrollquellen**. Ein vollständig nutzbarer Kartenimport und die Arbeitgeberabrechnung sind noch nicht fertig. Der genaue Fortschritt steht in [WORK_STATUS.md](WORK_STATUS.md). Für einen neuen Work-Einstieg: [aktuelle Übergabe und letzter Gerätetest](docs/WORK_HANDOFF.md).
 
+PR #41 erweitert diesen Stand im separaten Prüfbranch um Ereignis-/Störungsquellen und eine gemeinsame Detailübersicht, Schema 10. CI/Schemaexport und ein neuer Gerätetest sind vor Merge erforderlich. [Begrenzter Umfang](docs/EVENT_FAULT_IMPORT_FORMAT.md), [Testanleitung](docs/EVENT_FAULT_IMPORT_DEVICE_TEST.md). main bleibt zunächst beim bestandenen PR-39-Stand.
+
 ## Tatsächlich vorhanden
 
 - Siebenstufiges Onboarding mit expliziter Heimatpunktwahl per Vordergrund-Standort oder Karte; gespeicherter 500-m-Heimbereich. Kein Smartphone-Routentracking.

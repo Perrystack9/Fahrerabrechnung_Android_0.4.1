@@ -30,7 +30,9 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val card: DriverCard? = null, val activity: CardActivityFile? = null,
                           val vehicles: CardVehiclesFile? = null, val vehicleReadFailed: Boolean = false,
                           val activityReadFailed: Boolean = false,
-                          val controls: CardControlFile? = null, val controlReadFailed: Boolean = false)
+                          val controls: CardControlFile? = null, val controlReadFailed: Boolean = false,
+                          val events: CardEventFaultFile? = null, val eventReadFailed: Boolean = false,
+                          val faults: CardEventFaultFile? = null, val faultReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -108,6 +110,16 @@ object DriverCardDecoder {
         if (newest !in 0 until count) throw ParseError(0, "Vehicles_Used", "pointer outside record ring")
         return CardVehiclesFile(newest, count, generation,
             r.slice(count * width, "cardVehicleRecords"))
+    }
+
+    /** Counts at offsets 3 and 4 in Application_Identification, not in the V2 extension. */
+    fun eventFaultCount(application: ByteArray, generation: CardGeneration, kind: CardEventFaultKind): Int {
+        val expected = if (generation == CardGeneration.GEN1) 10 else 15
+        if (application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        val offset = if (kind == CardEventFaultKind.EVENTS) 3 else 4
+        val count = application[offset].toInt() and 255
+        CardEventFaultParser.fileLength(kind, generation, count)
+        return count
     }
 
     /** EF Driver_Activity_Data has two two-byte offsets into its cyclic data area. */
@@ -195,9 +207,17 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
                         CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                suspend fun eventFault(kind: CardEventFaultKind): CardEventFaultFile? = try {
+                    val count = DriverCardDecoder.eventFaultCount(application, generation, kind)
+                    CardEventFaultFile(kind, generation, count, readFile(session, kind.fileId,
+                        CardEventFaultParser.fileLength(kind, generation, count))).also { CardEventFaultParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                val events = eventFault(CardEventFaultKind.EVENTS)
+                val faults = eventFault(CardEventFaultKind.FAULTS)
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
-                    controls = controls, controlReadFailed = controls == null)
+                    controls = controls, controlReadFailed = controls == null,
+                    events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

@@ -452,7 +452,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 8
         }
         db.close(); open()
-        assertEquals(9, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         assertEquals(old, pipeline.history().single()); assertEquals(rows, db.cardImportRunDao().files(old.id))
         assertEquals(source, db.driverProfileDao().sources(old.id)); assertEquals(profile, imports.profile())
         assertEquals(identities, db.driverProfileDao().cards(profile.id))
@@ -463,6 +463,205 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(1, fresh.newSourceCount); assertEquals(3, fresh.files.size)
         assertNull(imports.get(old.id)!!.controls); assertEquals(rows, db.cardImportRunDao().files(old.id))
         assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+    }
+
+    private fun issueFile(kind: CardEventFaultKind, seconds: Int = 1790000000,
+                          plate: String = "TEST EVENT", generation: CardGeneration = CardGeneration.GEN2V2,
+                          empty: Boolean = false): CardEventFaultFile {
+        val perType = if (kind == CardEventFaultKind.EVENTS) 12 else 24
+        val raw = ByteArray(CardEventFaultParser.fileLength(kind, generation, perType))
+        if (!empty) ByteBuffer.allocate(24).put((if (kind == CardEventFaultKind.EVENTS) 3 else 0x40).toByte())
+            .putInt(seconds).putInt(seconds - 100).put(13.toByte()).put(1.toByte())
+            .put(plate.padEnd(13).toByteArray()).array().copyInto(raw, 24)
+        return CardEventFaultFile(kind, generation, perType, raw)
+    }
+    private fun allFiles(card: DriverCard = card()) = read(card).copy(controls = controlFile(),
+        events = issueFile(CardEventFaultKind.EVENTS), faults = issueFile(CardEventFaultKind.FAULTS, plate = "TEST FAULT"))
+
+    @Test fun allFiveSourcesPersistEncryptedReopenExactlyAndDeduplicateWithoutLosingSessionLinks() = runBlocking {
+        imports.bind(card(), true)
+        val input = allFiles(); val first = pipeline.process(input, "five-first")
+        assertEquals(CardImportRunStatus.SAVED, first.status); assertEquals(5, first.files.size)
+        assertEquals(5, first.newSourceCount)
+        val saved = imports.get(first.id)!!
+        assertArrayEquals(input.events!!.bytes, saved.events!!.file.bytes)
+        assertArrayEquals(input.faults!!.bytes, saved.faults!!.file.bytes)
+        assertEquals(1790000000L, saved.events!!.records.single().beginUtc!!.epochSecond)
+        assertEquals(1789999900L, saved.events!!.records.single().endUtc!!.epochSecond)
+        assertEquals(1, saved.events!!.records.single().slotIndex)
+        assertEquals("TEST FAULT", saved.faults!!.records.single().registrationNumber)
+        assertEquals(0, pipeline.process(input, "five-again").newSourceCount)
+        assertEquals(first, pipeline.process(input, first.id))
+        assertEquals(2, count("card_event_fault_imports")); assertEquals(4, count("driver_import_event_fault_sources"))
+        assertFalse(context.getDatabasePath(AppDatabase.DATABASE_NAME).readBytes().take(16).toByteArray()
+            .contentEquals("SQLite format 3\u0000".toByteArray()))
+        db.close(); open()
+        assertArrayEquals(saved.events!!.file.bytes, imports.get(first.id)!!.events!!.file.bytes)
+        assertEquals(saved.events!!.records, imports.get(first.id)!!.events!!.records)
+        assertEquals(saved.faults!!.records, imports.get(first.id)!!.faults!!.records)
+        assertEquals(first, pipeline.history().first { it.id == first.id })
+    }
+
+    @Test fun changedEventsAndFaultsRetainBothVersionsAndNeverAttachToOlderThreeFileSessions() = runBlocking {
+        imports.bind(card(), true)
+        val legacy = pipeline.process(read().copy(controls = controlFile()), "legacy-three")
+        val old = pipeline.process(allFiles(), "issues-old")
+        val next = pipeline.process(allFiles().copy(events = issueFile(CardEventFaultKind.EVENTS, seconds = 1790000100),
+            faults = issueFile(CardEventFaultKind.FAULTS, seconds = 1790000200)), "issues-new")
+        assertEquals(2, old.newSourceCount); assertEquals(2, next.newSourceCount)
+        assertNull(imports.get(legacy.id)!!.events); assertNull(imports.get(legacy.id)!!.faults)
+        assertEquals(3, pipeline.history().first { it.id == legacy.id }.files.size)
+        assertEquals(1790000000L, imports.get(old.id)!!.events!!.records.single().beginUtc!!.epochSecond)
+        assertEquals(1790000100L, imports.get(next.id)!!.events!!.records.single().beginUtc!!.epochSecond)
+        assertEquals(4, count("card_event_fault_imports"))
+        db.close(); open()
+        assertEquals(1790000000L, imports.get(old.id)!!.faults!!.records.single().beginUtc!!.epochSecond)
+        assertNull(imports.get(legacy.id)!!.faults)
+    }
+
+    @Test fun missingInvalidWrongKindOrGenerationOfEitherNewFileLeavesTheOtherSourcesUsable() = runBlocking {
+        imports.bind(card(), true); pipeline.process(allFiles(), "prior-issues")
+        for (kind in CardEventFaultKind.entries) for (problem in 0..3) {
+            val file = when (problem) {
+                0 -> null
+                1 -> CardEventFaultFile(kind, card().generation, if (kind == CardEventFaultKind.EVENTS) 12 else 24, ByteArray(23))
+                2 -> issueFile(if (kind == CardEventFaultKind.EVENTS) CardEventFaultKind.FAULTS else CardEventFaultKind.EVENTS)
+                else -> issueFile(kind, generation = CardGeneration.GEN1)
+            }
+            val input = if (kind == CardEventFaultKind.EVENTS) allFiles().copy(events = file, eventReadFailed = problem == 0)
+                else allFiles().copy(faults = file, faultReadFailed = problem == 0)
+            val run = pipeline.process(input, "problem-${kind.name}-$problem")
+            assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(5, run.files.size)
+            val status = run.file(if (kind == CardEventFaultKind.EVENTS) CardImportFileKind.EVENTS else CardImportFileKind.FAULTS).status
+            assertEquals(if (problem == 0) CardImportFileStatus.READ_FAILED else CardImportFileStatus.INVALID, status)
+            val saved = imports.get(run.id)!!
+            assertNotNull(saved.activity); assertNotNull(saved.vehicles); assertNotNull(saved.controls)
+            if (kind == CardEventFaultKind.EVENTS) { assertNull(saved.events); assertNotNull(saved.faults) }
+            else { assertNull(saved.faults); assertNotNull(saved.events) }
+            assertEquals(0, run.newSourceCount)
+        }
+        assertEquals(2, count("card_event_fault_imports"))
+    }
+
+    @Test fun validUnusedNewSourcesAreStoredEvenWithoutAnyUsableCoreSourceAndDoNotInventDays() = runBlocking {
+        imports.bind(card(), true)
+        val input = allFiles().copy(activity = null, vehicles = null, controls = null,
+            activityReadFailed = true, vehicleReadFailed = true, controlReadFailed = true,
+            events = issueFile(CardEventFaultKind.EVENTS, empty = true), faults = issueFile(CardEventFaultKind.FAULTS, empty = true))
+        val run = pipeline.process(input, "unused-new")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(2, run.newSourceCount)
+        for (kind in listOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS)) {
+            assertEquals(CardImportFileStatus.STORED, run.file(kind).status); assertEquals(0, run.file(kind).decodedCount)
+            assertNull(run.file(kind).firstUtcEpochSeconds); assertNull(run.file(kind).lastUtcEpochSeconds)
+        }
+        assertTrue(imports.get(run.id)!!.events!!.records.isEmpty()); assertTrue(imports.get(run.id)!!.faults!!.records.isEmpty())
+        assertEquals(0, count("driver_activity_days")); assertEquals(0, count("driver_vehicle_uses"))
+        assertEquals(0, pipeline.process(input, "unused-again").newSourceCount)
+    }
+
+    @Test fun allFiveReadFailuresRetainTheFailedReceiptWithoutAnyNewDataSession() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(allFiles(), "good-five")
+        val input = allFiles().copy(activity = null, vehicles = null, controls = null, events = null, faults = null,
+            activityReadFailed = true, vehicleReadFailed = true, controlReadFailed = true, eventReadFailed = true, faultReadFailed = true)
+        val failed = pipeline.process(input, "bad-five")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertEquals(5, failed.files.size); assertTrue(failed.files.all { it.status == CardImportFileStatus.READ_FAILED })
+        assertEquals(1, count("import_sessions")); assertEquals(2, count("card_event_fault_imports"))
+        assertNotNull(imports.get(old.id)!!.events); assertEquals(failed, pipeline.process(input, failed.id))
+    }
+
+    @Test fun unconfirmedForeignAndUnclearCardsCannotPersistTheNewFiles() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(allFiles(), "new-unconfirmed") }
+        assertEquals(0, count("card_event_fault_imports")); assertNull(imports.profile())
+        imports.bind(card(), true)
+        val foreign = card("other-card", DriverIdentity("OTHER", "OTHER PERSON", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(allFiles(foreign), "new-foreign") }
+        val unclear = card("unclear-card", card().holder.copy(birthDate = null))
+        rejected<CardBindingRequired> { pipeline.process(allFiles(unclear), "new-unclear") }
+        assertEquals(0, count("card_event_fault_imports")); assertEquals(0, count("driver_import_event_fault_sources"))
+        assertEquals(0, count("card_import_runs")); assertEquals(1, count("driver_cards"))
+    }
+
+    @Test fun replacementCardsKeepSeparatePhysicalEventAndFaultSourcesUnderTheSameDriverProfile() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(allFiles(), "own-old")
+        val next = pipeline.process(allFiles(card("replacement-card")), "own-replacement")
+        val a = imports.get(old.id)!!; val b = imports.get(next.id)!!
+        assertEquals(a.profileId, b.profileId); assertNotEquals(a.driverCardId, b.driverCardId)
+        assertNotEquals(a.events!!.id, b.events!!.id); assertNotEquals(a.faults!!.id, b.faults!!.id)
+        assertArrayEquals(a.events!!.file.bytes, b.events!!.file.bytes)
+        assertEquals(old.driverCardId, imports.get(old.id)!!.events!!.driverCardId)
+        assertEquals(4, count("card_event_fault_imports"))
+    }
+
+    @Test fun failureAfterEventAndFaultWritesRollsBackEveryNewSourceAndKeepsOldData() = runBlocking {
+        imports.bind(card(), true); pipeline.process(read().copy(controls = controlFile()), "before-new-files")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_new_finish_failure BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(allFiles().copy(vehicles = read(plate = "TEST CHANGE").vehicles), "rollback-new-files")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertEquals("STORAGE_FAILED", failed.failureCode); assertTrue(failed.files.all { it.status == CardImportFileStatus.NOT_STORED })
+        assertEquals(0, count("card_event_fault_imports")); assertEquals(0, count("driver_import_event_fault_sources"))
+        assertEquals(1, count("import_sessions")); assertEquals(1, count("card_control_imports"))
+        assertEquals(1, count("card_vehicle_imports")); assertEquals(1, count("driver_vehicle_uses"))
+        assertNotNull(imports.get("before-new-files")!!.controls)
+    }
+
+    @Test fun changedNewFilesOrAttemptCoverageCannotReuseAnExistingRequest() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(allFiles(), "immutable-five")
+        rejected<IllegalArgumentException> { pipeline.process(allFiles().copy(events = issueFile(CardEventFaultKind.EVENTS, seconds = 1790000200)), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(allFiles().copy(faults = issueFile(CardEventFaultKind.FAULTS, seconds = 1790000300)), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(read().copy(controls = controlFile()), first.id) }
+        assertEquals(first, pipeline.history().single()); assertEquals(2, count("card_event_fault_imports"))
+    }
+
+    @Test fun migrationNineToTenPreservesTwoAndThreeFileReceiptsAndDoesNotBackfillNewSources() = runBlocking {
+        imports.bind(card(), true)
+        val two = pipeline.process(read(), "old-two")
+        val three = pipeline.process(read().copy(controls = controlFile()), "old-three")
+        val before = listOf(two, three).associate { it.id to db.cardImportRunDao().run(it.id) }
+        val identities = db.driverProfileDao().cards(imports.profile()!!.id)
+        val control = imports.get(three.id)!!.controls!!
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_event_fault_sources"); execSQL("DROP TABLE card_event_fault_imports")
+            execSQL("DELETE FROM room_master_table"); version = 9
+        }
+        db.close(); open()
+        assertEquals(10, db.openHelper.readableDatabase.version)
+        for (run in listOf(two, three)) {
+            assertEquals(before[run.id], db.cardImportRunDao().run(run.id))
+            assertNull(imports.get(run.id)!!.events); assertNull(imports.get(run.id)!!.faults)
+        }
+        assertEquals(two, pipeline.process(read(), two.id))
+        assertEquals(three, pipeline.process(read().copy(controls = controlFile()), three.id))
+        assertEquals(identities, db.driverProfileDao().cards(imports.profile()!!.id))
+        assertArrayEquals(control.file.bytes, imports.get(three.id)!!.controls!!.file.bytes)
+        assertEquals(0, count("card_event_fault_imports")); assertEquals(0, count("driver_import_event_fault_sources"))
+        val fresh = pipeline.process(allFiles(), "new-five")
+        assertEquals(2, fresh.newSourceCount); assertEquals(5, fresh.files.size)
+        assertNull(imports.get(three.id)!!.events); assertEquals(before[two.id], db.cardImportRunDao().run(two.id))
+    }
+
+    @Test fun corruptNewRawSourceDoesNotHideHistoryOrUnrelatedSavedSessions() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(read().copy(controls = controlFile()), "safe-legacy")
+        val run = pipeline.process(allFiles(), "corrupt-event")
+        val id = imports.get(run.id)!!.events!!.id
+        db.openHelper.writableDatabase.execSQL("UPDATE card_event_fault_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(23), id))
+        assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.controls)
+        rejected<IllegalStateException> { imports.get(run.id) }
+    }
+
+    @Test fun newSourceForeignKeysRejectWrongPhysicalCardOrFileKindLinks() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(allFiles(), "source-fk")
+        val second = pipeline.process(read(), "empty-link")
+        val source = imports.get(first.id)!!.events!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardEventFaultDao().insertSource(DriverImportEventFaultSourceEntity(second.id,
+                CardEventFaultKind.FAULTS.name, second.driverCardId, source.id))
+        }
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardEventFaultDao().insertSource(DriverImportEventFaultSourceEntity(second.id,
+                CardEventFaultKind.EVENTS.name, "other-physical-card", source.id))
+        }
+        assertNull(imports.get(second.id)!!.events); assertNull(imports.get(second.id)!!.faults)
     }
 
     @Test fun corruptControlSourceDoesNotPreventHistoryOrOtherImportsFromOpening() = runBlocking {

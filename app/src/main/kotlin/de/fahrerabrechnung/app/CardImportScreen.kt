@@ -50,6 +50,8 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.ACTIVITIES -> Text("${it.decodedCount} ${if (it.decodedCount == 1) "Kartentag" else "Kartentage"}")
                         CardImportFileKind.VEHICLES -> Text("${it.decodedCount} ${if (it.decodedCount == 1) "Fahrzeugnutzung" else "Fahrzeugnutzungen"}")
                         CardImportFileKind.CONTROLS -> Text("Kontrolldaten übernommen")
+                        CardImportFileKind.EVENTS -> Text("${it.decodedCount} Ereignisse übernommen")
+                        CardImportFileKind.FAULTS -> Text("${it.decodedCount} Störungen übernommen")
                     }
                 }
                 if (run.sessionId != null) {
@@ -61,7 +63,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
             }
         }
         OutlinedButton(onClick = onOpenHistory) { Text("Importverlauf") }
-        Text("Aktuell werden Kartentage, Fahrzeugnutzungen und verfügbare Kontrolldaten übernommen. Weitere Kartendaten folgen; die vollständige Auswertung ist noch in Entwicklung.",
+        Text("Die App übernimmt die verfügbaren Kartendaten automatisch. Weitere Kartendaten folgen; die vollständige Auswertung ist noch in Entwicklung.",
             style = MaterialTheme.typography.bodySmall)
     }
     val token = state.confirmationToken
@@ -109,7 +111,7 @@ private fun CardImportPhase.description(failure: ReaderFailure?) = when (this) {
     CardImportPhase.CONFIRM_FIRST_CARD -> "Deine erste Karte wird erst nach deiner Bestätigung dem lokalen Fahrerprofil zugeordnet."
     CardImportPhase.CONFIRM_REPLACEMENT -> "Die Inhaberdaten sind nicht eindeutig. Bestätige nur deine eigene neue oder Ersatzkarte."
     CardImportPhase.SAVING -> "Die verfügbaren Daten werden verschlüsselt gespeichert."
-    CardImportPhase.IMPORTED -> "Die verfügbaren Aktivitäten und Fahrzeugnutzungen sind gespeichert. Du kannst den Leser entfernen."
+    CardImportPhase.IMPORTED -> "Die verfügbaren Kartendaten sind gespeichert. Du kannst den Leser entfernen."
     CardImportPhase.INCOMPLETE -> "Die lesbaren Daten sind gespeichert. Andere Daten konnten nicht übernommen werden. Details stehen im Importverlauf."
     CardImportPhase.FOREIGN_CARD -> "Diese Karte gehört nicht zum gebundenen Fahrerprofil. Ihre Daten werden nicht gespeichert."
     CardImportPhase.CANCELLED -> "Es wurden keine Daten übernommen. Entferne die Karte oder versuche es erneut."

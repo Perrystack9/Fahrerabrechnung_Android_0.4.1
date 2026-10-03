@@ -390,6 +390,80 @@ class DriverCardFoundationTest {
         }
     }
 
+    @Test fun eventAndFaultFilesReadCompletelyForAllGenerationsAndCoreFileFailures() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                missingFiles = setOf(DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED, DriverCardFiles.CONTROL_ACTIVITY))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertEquals(CardEventFaultParser.fileLength(CardEventFaultKind.EVENTS, generation, 12), result.events!!.bytes.size)
+            assertEquals(1152, result.faults!!.bytes.size)
+            assertTrue(CardEventFaultParser.parse(result.events!!).isEmpty())
+            assertTrue(CardEventFaultParser.parse(result.faults!!).isEmpty())
+            assertFalse(result.eventReadFailed); assertFalse(result.faultReadFailed); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun unavailableTruncatedInvalidAndTimedOutNewFilesNeverDiscardOtherCompleteFiles() = runBlocking {
+        for (generation in supportedGenerations) for (kind in CardEventFaultKind.entries) for (failure in 0..3) {
+            val length = CardEventFaultParser.fileLength(kind, generation, if (kind == CardEventFaultKind.EVENTS) 12 else 24)
+            val raw = when (failure) {
+                1 -> ByteArray(length - 1)
+                2 -> ByteArray(length).also { it[0] = 3; it[10] = 127; it[11] = 65 }
+                else -> null
+            }
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                missingFiles = if (failure == 0) setOf(kind.fileId) else emptySet(),
+                eventBytes = raw.takeIf { kind == CardEventFaultKind.EVENTS },
+                faultBytes = raw.takeIf { kind == CardEventFaultKind.FAULTS },
+                eventFailure = if (kind == CardEventFaultKind.EVENTS && failure == 3) ReaderException(ReaderFailure.TIMEOUT) else null,
+                faultFailure = if (kind == CardEventFaultKind.FAULTS && failure == 3) ReaderException(ReaderFailure.TIMEOUT) else null)
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.controls)
+            if (kind == CardEventFaultKind.EVENTS) {
+                assertNull(result.events); assertTrue(result.eventReadFailed)
+                assertNotNull(result.faults); assertFalse(result.faultReadFailed)
+            } else {
+                assertNull(result.faults); assertTrue(result.faultReadFailed)
+                assertNotNull(result.events); assertFalse(result.eventReadFailed)
+            }
+            assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun invalidEventCountDoesNotPreventFaultOrExistingFileReads() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), invalidEventCount = true)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.events); assertTrue(result.eventReadFailed)
+            assertNotNull(result.faults); assertFalse(result.faultReadFailed)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.controls)
+            assertFalse(CardEventFaultKind.EVENTS.fileId in fake.readFiles); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun cancellationDuringEitherNewFilePropagatesAndClosesTheReader() = runBlocking {
+        for (generation in supportedGenerations) for (kind in CardEventFaultKind.entries) {
+            val cancellation = kotlinx.coroutines.CancellationException("fixture")
+            val fake = CardFixtureTransport(generation, identityFixture(),
+                eventFailure = cancellation.takeIf { kind == CardEventFaultKind.EVENTS },
+                faultFailure = cancellation.takeIf { kind == CardEventFaultKind.FAULTS })
+            try { DriverCardReader(fake).read(); throw AssertionError("Expected cancellation") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+        }
+    }
+
+    @Test fun invalidIdentityDoesNotAttemptEventsOrFaults() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(bytes(0x20, 0x01, 0x02, 0x29)))
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.INCONSISTENT, result.recognition)
+            assertNull(result.events); assertNull(result.faults)
+            assertFalse(CardEventFaultKind.EVENTS.fileId in fake.readFiles)
+            assertFalse(CardEventFaultKind.FAULTS.fileId in fake.readFiles); assertTrue(fake.closed)
+        }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -398,7 +472,12 @@ class DriverCardFoundationTest {
                                        private val invalidActivityPointer: Boolean = false,
                                        private val activityFailure: Exception? = null,
                                        private val controlBytes: ByteArray = ByteArray(46),
-                                       private val controlFailure: Exception? = null) : CardReaderTransport {
+                                       private val controlFailure: Exception? = null,
+                                       private val eventBytes: ByteArray? = null,
+                                       private val faultBytes: ByteArray? = null,
+                                       private val eventFailure: Exception? = null,
+                                       private val faultFailure: Exception? = null,
+                                       private val invalidEventCount: Boolean = false) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -427,6 +506,8 @@ class DriverCardFoundationTest {
                 readFiles += file
                 if (file == DriverCardFiles.DRIVER_ACTIVITY) activityFailure?.let { throw it }
                 if (file == DriverCardFiles.CONTROL_ACTIVITY) controlFailure?.let { throw it }
+                if (file == CardEventFaultKind.EVENTS.fileId) eventFailure?.let { throw it }
+                if (file == CardEventFaultKind.FAULTS.fileId) faultFailure?.let { throw it }
                 val data = when (file) {
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
@@ -436,9 +517,12 @@ class DriverCardFoundationTest {
                     DriverCardFiles.VEHICLES_USED -> ByteArray(2 + 2 *
                         (if (generation == CardGeneration.GEN1) 31 else 48))
                     DriverCardFiles.CONTROL_ACTIVITY -> controlBytes
+                    CardEventFaultKind.EVENTS.fileId -> eventBytes ?: ByteArray(CardEventFaultParser.fileLength(CardEventFaultKind.EVENTS, generation, 12))
+                    CardEventFaultKind.FAULTS.fileId -> faultBytes ?: ByteArray(1152)
                     else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
+                        it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
                         it[6] = if (invalidActivityLength) 0 else 16
                         it[8] = 2 // two vehicle record slots
                     }

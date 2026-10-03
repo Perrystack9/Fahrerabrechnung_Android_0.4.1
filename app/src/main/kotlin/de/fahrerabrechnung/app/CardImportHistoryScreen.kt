@@ -44,7 +44,7 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
     val formatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm") }
     ScreenContent(padding) {
         Text("Importverlauf", style = MaterialTheme.typography.titleLarge)
-        Text("Lesevorgänge deiner zugeordneten Fahrerkarten. Aktuell werden Kartentage, Fahrzeugnutzungen und verfügbare Kontrolldaten übernommen.")
+        Text("Lesevorgänge deiner zugeordneten Fahrerkarten mit den jeweils verfügbaren Daten.")
         if (loading) Text("Importverlauf wird geladen …")
         error?.let { Text(it) }
         if (!loading && error == null && sorted.isEmpty()) Text("Noch keine Daten im Fahrerprofil gespeichert.")
@@ -98,10 +98,14 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.ACTIVITIES -> "Kartentage"
         CardImportFileKind.VEHICLES -> "Fahrzeugnutzungen"
         CardImportFileKind.CONTROLS -> "Kontrolldaten"
+        CardImportFileKind.EVENTS -> "Ereignisse"
+        CardImportFileKind.FAULTS -> "Störungen"
     }
     return when (status) {
         CardImportFileStatus.STORED -> if (kind == CardImportFileKind.CONTROLS && decodedCount == 0)
-            "Kontrolldaten: übernommen, keine Kontrolle aufgezeichnet" else "$label: $decodedCount gespeichert"
+            "Kontrolldaten: übernommen, keine Kontrolle aufgezeichnet"
+            else if (kind in setOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS) && decodedCount == 0)
+                "$label: übernommen, keine Aufzeichnung" else "$label: $decodedCount gespeichert"
         CardImportFileStatus.READY -> "$label: Übernahme läuft"
         CardImportFileStatus.MISSING -> "$label: nicht verfügbar"
         CardImportFileStatus.READ_FAILED -> "$label: Lesen fehlgeschlagen"

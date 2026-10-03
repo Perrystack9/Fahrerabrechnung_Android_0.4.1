@@ -15,6 +15,8 @@ data class SavedDriverImport(
     val activity: SavedCardActivity?, val vehicles: SavedCardVehicles?,
     val pair: SavedCardSourcePair?,
     val controls: SavedCardControl? = null,
+    val events: SavedCardEventFault? = null,
+    val faults: SavedCardEventFault? = null,
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -29,6 +31,7 @@ class DriverCardImportRepository @Inject constructor(
     private val normalizedActivities = NormalizedCardActivityStore(database)
     private val normalizedVehicles = NormalizedCardVehicleStore(database)
     private val controls = CardControlStore(database.cardControlDao())
+    private val eventFaults = CardEventFaultStore(database.cardEventFaultDao())
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -71,7 +74,15 @@ class DriverCardImportRepository @Inject constructor(
             require(!result.controlReadFailed && it.generation == result.generation)
             CardControlFile(it.generation, it.bytes).also { file -> CardControlParser.parse(file) }
         } else null
-        require(activity != null || vehicle != null || control != null)
+        fun prepareEventFault(file: CardEventFaultFile?, kind: CardEventFaultKind, failed: Boolean): CardEventFaultFile? =
+            if (selection == CardImportSelection.ALL_AVAILABLE) file?.let {
+                require(!failed && it.kind == kind && it.generation == result.generation)
+                CardEventFaultFile(kind, it.generation, it.recordsPerType, it.bytes).also { frozen -> CardEventFaultParser.parse(frozen) }
+            } else null
+        val events = prepareEventFault(result.events, CardEventFaultKind.EVENTS, result.eventReadFailed)
+        val faults = prepareEventFault(result.faults, CardEventFaultKind.FAULTS, result.faultReadFailed)
+        val extraFiles = listOfNotNull(events, faults)
+        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty())
         return database.withTransaction {
             val cardId = bindInside(card, false)
             val profile = checkNotNull(dao.localProfile())
@@ -81,11 +92,15 @@ class DriverCardImportRepository @Inject constructor(
                     existing.vehicleId == vehicle?.id && existing.pairId == pairId)
                 check(database.cardControlDao().source(requestId)?.controlId ==
                     control?.let { CardControlStore.fingerprint(cardId, it) })
+                for ((kind, file) in listOf(CardEventFaultKind.EVENTS to events, CardEventFaultKind.FAULTS to faults))
+                    check(database.cardEventFaultDao().source(requestId, kind.name)?.sourceId ==
+                        file?.let { CardEventFaultStore.fingerprint(cardId, it) })
                 return@withTransaction decode(existing, profile.id)
             }
             val newActivity = activity != null && database.cardActivityImportDao().getById(activity.id) == null
             val newVehicle = vehicle != null && database.cardVehicleImportDao().getById(vehicle.id) == null
             val newControl = control != null && database.cardControlDao().get(CardControlStore.fingerprint(cardId, control)) == null
+            val newExtras = extraFiles.count { database.cardEventFaultDao().get(CardEventFaultStore.fingerprint(cardId, it)) == null }
             if (activity != null && vehicle != null) pairs.storePrepared(activity, vehicle, now)
             else {
                 activity?.let { database.cardActivityImportDao().insert(it) }
@@ -93,11 +108,14 @@ class DriverCardImportRepository @Inject constructor(
             }
             dao.insertSession(ImportSessionEntity(requestId, profile.id, "PARTIAL", now, now))
             val sources = DriverImportSourcesEntity(requestId, cardId, activity?.id, vehicle?.id,
-                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0))
+                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras)
             dao.insertSources(sources)
             if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
             if (vehicle != null) normalizedVehicles.save(cardId, vehicle, checkNotNull(uses))
             if (control != null) check(controls.save(cardId, requestId, control, now) == newControl)
+            var storedExtras = 0
+            for (file in extraFiles) if (eventFaults.save(cardId, requestId, file, now)) storedExtras++
+            check(storedExtras == newExtras)
             decode(sources, profile.id)
         }
     }
@@ -185,7 +203,9 @@ class DriverCardImportRepository @Inject constructor(
             SavedCardSourcePair(id, checkNotNull(activity), checkNotNull(vehicle), row.savedAtEpochMillis)
         }
         return SavedDriverImport(session.id, profileId, sources.driverCardId, session.createdAtEpochMillis,
-            sources.newSourceCount, activity, vehicle, pair, controls.load(sources.driverCardId, session.id))
+            sources.newSourceCount, activity, vehicle, pair, controls.load(sources.driverCardId, session.id),
+            eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.EVENTS),
+            eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.FAULTS))
     }
 
     private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {
