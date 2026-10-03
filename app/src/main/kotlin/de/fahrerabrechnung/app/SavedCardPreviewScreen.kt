@@ -18,7 +18,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardActivity?, vehicles: SavedCardVehicles?,
                                     onOpenVehicles: (String?, Long?, Int?) -> Unit, archive: Boolean = false,
-                                    onOpenDetails: (() -> Unit)? = null) {
+                                    onOpenDetails: (() -> Unit)? = null,
+                                    driverCardId: String? = null,
+                                    events: SavedCardEventFault? = null, faults: SavedCardEventFault? = null) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
     var selected by remember(activity) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
@@ -43,13 +45,16 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
             val day = days[selected.coerceIn(days.indices)]
             val dayUses = if (activity?.cardNumber == vehicles?.cardNumber)
                 CardDayVehicles.forDate(day.date, zone, uses) else emptyList()
+            val dayIssues = remember(day.date, zone, archive, driverCardId, events, faults) {
+                if (archive) emptyList() else CardDayEventFaultMarkers.forDate(day.date, zone, driverCardId, events, faults)
+            }
             SectionCard {
                 Text(day.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(enabled = selected > 0, onClick = { selected-- }) { Text("‹") }
                     OutlinedButton(enabled = selected < days.lastIndex, onClick = { selected++ }) { Text("›") }
                 }
-                CardTimelinePreview(day, zone, dayUses, onOpenVehicles)
+                CardTimelinePreview(day, zone, dayUses, onOpenVehicles, eventFaultMarkers = dayIssues)
                 CardDaySourceTimes(day, zone)
                 Text("Ortszeit (${zone.id}). Fehlende Zeiten bleiben offen und belegen keine Ruhe oder Heimkehr.",
                     style = MaterialTheme.typography.bodySmall)

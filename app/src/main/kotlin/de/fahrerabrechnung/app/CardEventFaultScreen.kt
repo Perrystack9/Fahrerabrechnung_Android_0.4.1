@@ -29,17 +29,7 @@ internal fun CardEventFaultScreen(padding: PaddingValues, events: SavedCardEvent
                 // Slot order is evidence, not a claimed chronology. Unknown/inverted times are not repaired.
                 source.records.take(visible).forEach { record ->
                     SectionCard {
-                        Text(eventFaultLabel(source.file.generation, record.type), style = MaterialTheme.typography.titleMedium)
-                        Text("Beginn: ${record.beginUtc?.atZone(zone)?.format(format) ?: "nicht angegeben"}")
-                        Text("Ende: ${record.endUtc?.atZone(zone)?.format(format) ?: "nicht angegeben"}")
-                        record.registrationNumber?.let { Text("Fahrzeug: $it") }
-                        record.registrationNation?.let { Text("Zulassungsstaat: $it") }
-                        if (source.file.kind == CardEventFaultKind.EVENTS && record.type == 0x03)
-                            Text("Die Zeitpunkte beziehen sich auf Kartenentnahme im vorherigen Fahrzeug und Einlegen im aktuellen Fahrzeug.",
-                                style = MaterialTheme.typography.bodySmall)
-                        else if (source.file.kind == CardEventFaultKind.EVENTS && record.type == 0x06)
-                            Text("Die Zeitpunkte beziehen sich auf das Einlegen in der früheren und in der aktuellen Kartensitzung.",
-                                style = MaterialTheme.typography.bodySmall)
+                        CardEventFaultRecordDetails(source.file.generation, source.file.kind, record, zone, format)
                     }
                 }
                 if (visible < source.records.size) OutlinedButton(onClick = {
@@ -50,6 +40,22 @@ internal fun CardEventFaultScreen(padding: PaddingValues, events: SavedCardEvent
         Text("Ortszeit (${zone.id}). Nicht angegebene Zeiten bleiben offen. Die Ansicht bewertet die Meldungen nicht.",
             style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@Composable
+internal fun CardEventFaultRecordDetails(generation: CardGeneration, kind: CardEventFaultKind,
+                                         record: CardEventFaultRecord, zone: ZoneId, format: DateTimeFormatter) {
+    Text(eventFaultLabel(generation, record.type), style = MaterialTheme.typography.titleMedium)
+    Text("Beginn: ${record.beginUtc?.atZone(zone)?.format(format) ?: "nicht angegeben"}")
+    Text("Ende: ${record.endUtc?.atZone(zone)?.format(format) ?: "nicht angegeben"}")
+    record.registrationNumber?.let { Text("Fahrzeug: $it") }
+    record.registrationNation?.let { Text("Zulassungsstaat: $it") }
+    if (kind == CardEventFaultKind.EVENTS && record.type == 0x03)
+        Text("Die Zeitpunkte beziehen sich auf Kartenentnahme im vorherigen Fahrzeug und Einlegen im aktuellen Fahrzeug.",
+            style = MaterialTheme.typography.bodySmall)
+    else if (kind == CardEventFaultKind.EVENTS && record.type == 0x06)
+        Text("Die Zeitpunkte beziehen sich auf das Einlegen in der früheren und in der aktuellen Kartensitzung.",
+            style = MaterialTheme.typography.bodySmall)
 }
 
 /** Current Appendix 1 2.70: Gen2 codes follow the 2018/502 amendment, V2 the 2021/1228 additions. */

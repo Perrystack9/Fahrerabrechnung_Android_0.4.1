@@ -393,4 +393,41 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithText("Ereignisse und Störungen").assertDoesNotExist()
         compose.onNodeWithTag("nav_start").assertIsDisplayed()
     }
+
+    @Test fun timelineMarkersUseOnlyTheExactSelectedSessionAndClearWhenOpeningAnOlderImport() {
+        val localDay = CardDayTimeline.build(CardActivityParser.parse(read().activity!!), ZoneId.systemDefault()).last()
+        val point = localDay.segments.first().start.plusSeconds(30).epochSecond.toInt()
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-markers")
+            pipeline.process(read().copy(events = issueFile(CardEventFaultKind.EVENTS, "TEST EARLY", 5, point, point)), "early-markers")
+            pipeline.process(read().copy(events = issueFile(CardEventFaultKind.EVENTS, "TEST NEWEST", 5, point, point)), "newest-markers")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+        }
+        open("early-markers")
+        compose.onNodeWithTag("day_issue_list").performScrollTo().performClick()
+        compose.onNodeWithText("Fahrzeug: TEST EARLY").assertIsDisplayed()
+        compose.onNodeWithText("Fahrzeug: TEST NEWEST").assertDoesNotExist()
+        compose.onNodeWithText("Schließen").performClick()
+        compose.onNodeWithTag("back").performClick()
+        open("before-markers")
+        compose.onNodeWithTag("timeline_issue_overview").assertDoesNotExist()
+        compose.onNodeWithTag("day_issue_list").assertDoesNotExist()
+        compose.onNodeWithTag("back").performClick()
+        open("newest-markers")
+        compose.onNodeWithTag("day_issue_list").performScrollTo().performClick()
+        compose.onNodeWithText("Fahrzeug: TEST NEWEST").assertIsDisplayed()
+        compose.onNodeWithText("Fahrzeug: TEST EARLY").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
 }
