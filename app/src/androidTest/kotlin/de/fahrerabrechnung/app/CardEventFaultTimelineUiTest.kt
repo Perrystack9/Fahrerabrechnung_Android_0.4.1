@@ -2,7 +2,6 @@ package de.fahrerabrechnung.app
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
@@ -33,9 +32,9 @@ class CardEventFaultTimelineUiTest {
             ScreenContent(PaddingValues()) { CardTimelinePreview(LocalCardDay(date, emptyList()), zone, eventFaultMarkers = points) }
         } }
     }
-    private fun tapTrack(tag: String, fraction: Float = 0.5f) {
+    private fun tapTrack(tag: String) {
         compose.onNodeWithTag(tag).performScrollTo().performTouchInput {
-            click(Offset(size.width * fraction, size.height * 0.5f))
+            click()
         }
     }
 
