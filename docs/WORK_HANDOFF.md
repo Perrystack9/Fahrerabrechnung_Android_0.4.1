@@ -1,6 +1,6 @@
 # Work-Übergabe – FahrerTagebuch
 
-**Stand: 02.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
+**Stand: 03.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
 
 ## Einstieg und Ausgangsbasis
 
@@ -10,13 +10,13 @@
 
 | Bezug | Stand |
 |---|---|
-| Letzter Produktcode-PR | [PR #39: Kontrollquellen sitzungsgenau übernehmen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/39), nach bestandenem Gerätetest gemergt |
-| Produktcode-Basis auf main | [`13d3a31786a2d915bc365ae517c03713de179e51`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/13d3a31786a2d915bc365ae517c03713de179e51); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
-| Getesteter PR-39-Kopf | `0e8a87df866b28203ee093ef9c87b06b0a7e3d7d`; Merge-Tree `f20f108a63802456843ba8917f841b8d667a2592` entspricht exakt diesem getesteten Stand |
-| Abgeschlossener begrenzter Produktabschnitt | Automatische Vordergrund-Lesung eigener Aktivitäts-, Fahrzeug- und Kontrollquellen mit dauerhafter Importhistorie für diese unterstützten Dateien; vorhandene Profilbindung und Normalisierung weiterverwenden |
-| Datenbank auf main | Room/SQLCipher, Schema **9**, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9; keine destruktive Migration oder automatische Zuordnung alter Quellen |
-| Automatischer Nachweis | [PR-39-Lauf 37013517721](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37013517721): vollständig grün, 96 Unit-Tests und 120 Emulatortests (78 Daten/SQLCipher, 42 App/Compose), keine Fehler/übersprungenen Tests. Generierter Schema-9-Export im finalen Build byte-identisch |
-| Letzter manueller Gerätetest | **02.10.2026, 18:29 Uhr, PR #39: Update Schema 8→9, automatische Übernahme und Wiederöffnung bestanden; Screenshot zeigt leeren Kontrollbeleg**, Details und Grenzen unten |
+| Letzter Produktcode-PR | [PR #41: Ereignis-/Störungsquellen sitzungsgenau übernehmen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/41), nach bestandenem Gerätetest gemergt |
+| Produktcode-Basis auf main | [`e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5); spätere reine Dokumentationscommits ändern diese technische Basis nicht |
+| Getesteter PR-41-Kopf | `69b3566638e6759b544b3470f95d83059a89ae56`; Merge-Tree `0de278c6e235823fc34c1e4f896bde2c800ee1d9` entspricht exakt diesem getesteten Stand |
+| Abgeschlossener begrenzter Produktabschnitt | Automatische Vordergrund-Lesung eigener Aktivitäts-, Fahrzeug-, Kontroll-, Ereignis- und Störungsquellen mit dauerhafter Importhistorie für diese unterstützten Dateien; vorhandene Profilbindung und Normalisierung weiterverwenden |
+| Datenbank auf main | Room/SQLCipher, Schema **10**, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10; keine destruktive Migration oder automatische Zuordnung alter Quellen |
+| Automatischer Nachweis | [PR-41-Lauf 37083192466](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37083192466): vollständig grün, 111 Unit-Tests und 137 Emulatortests (90 Daten/SQLCipher, 47 App/Compose), insgesamt 248 ohne Fehler/übersprungene Tests. Generierter Schema-10-Export im finalen Build byte-identisch |
+| Letzter manueller Gerätetest | **03.10.2026, 08:06 Uhr, PR #41: Update Schema 9→10, automatische Übernahme, exakte Historie und Wiederöffnung bestanden; Screenshot zeigt echten Ereignisbeleg und leere Störungsquelle**, Details und Grenzen unten |
 
 ## Wirklich implementiert
 
@@ -102,7 +102,21 @@ Generierter Schema-9-Export aus dem erfolgreichen Build 37010358221 unverändert
 
 ## Letzte Hardware-/Gerätetests
 
-### PR #39 – letzter bestätigter Leser-/Update-Test
+### PR #41 – letzter bestätigter Leser-/Update-Test
+
+**03.10.2026, 08:06 Uhr Europe/Berlin:** Nutzer bestätigte ausdrücklich **„Alle 4 Punkte funktionieren“** zur zuvor im Chat ausgegebenen vierteiligen [Anleitung](EVENT_FAULT_IMPORT_DEVICE_TEST.md): Update 40105→40106 (Schema 9→10) ohne Deinstallation/Datenlöschen mit Profil und Altdaten; eigene Karte automatisch ohne neue Erstbestätigung übernehmen; erneute Lesung/Deduplizierung und getrenntes Öffnen der exakten älteren/neuen Übernahmen; Wiederöffnung nach vollständigem Neustart ohne Leser. Der Screenshot zeigt einen echten Beleg **„Karte während der Fahrt eingelegt“** mit Beginn und Ende am 19.08.2026 um 18:40:15 Uhr sowie Fahrzeugangabe; ausdrücklich **keine Störungen aufgezeichnet**. Gleiche Beginn-/Endzeit bleibt als Quellangabe erhalten, keine daraus erfundene Dauer oder Verstoßbewertung.
+
+Bestanden im vorhandenen Galaxy-S23-/Android-16-/USB-CCID-/Gen2V2-Kontext. Nichtleere Störungsdaten, Gen1/Gen2, weitere Leser, Fremd-/Ersatzkarten und gezielte Dateifehler sind nicht als zusätzliche manuelle Erfolge behauptet; diese Fälle sind synthetisch automatisch geprüft. Neue Byte-/Gesamtanzahlen wurden nicht nachgemeldet. Vollständige Kartenabdeckung bleibt offen.
+
+**Herkunft:** `FahrerTagebuch-PR41-Ereignisse-Stoerungen-Test.zip`, finales CI-Artefakt `FahrerTagebuch-device-test-update`, ID `11259429931`, [Lauf 37083192466](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37083192466), Kopf `69b3566638e6759b544b3470f95d83059a89ae56`. Schema-9-Ausgangs-APK 40105 byte-identisch zur bestandenen PR-39-Update-APK; Schema-10-Update 40106, gleiche Paketkennung `de.fahrerabrechnung.app.devicetest` und feste öffentliche Entwicklungssignatur.
+
+- ZIP-SHA256: `b6c8f370b41d595044bce11c33cab090460b49f6790e6ed7dafa812239dd3abb` (50.333.809 Bytes).
+- Ausgangs-APK-SHA256: `ab2da7280af44d74caa2e15c587911ac32a91c2720fc49688e9e949792596e8a`.
+- Update-APK-SHA256: `369d5e0e2c9f7975679baf902421677a2bb9a23c25f30380ad8bb104c1984bca`.
+
+PR #41 am unveränderten getesteten Kopf gemergt: `e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5`, Tree `0de278c6e235823fc34c1e4f896bde2c800ee1d9`. Dieser bestandene Ablauf ist die aktuelle Hardwarebasis; die Freigabe zum gebündelten Weiterarbeiten besteht fort.
+
+### PR #39 – vorheriger bestätigter Leser-/Update-Test
 
 **02.10.2026, 18:29 Uhr Europe/Berlin:** Nutzer bestätigte **„Passt 👍“** zur unmittelbar zuvor im Chat bereitgestellten vierteiligen [Anleitung](CONTROL_IMPORT_DEVICE_TEST.md): Update 40104→40105 (Schema 8→9) ohne Deinstallation/Datenlöschen, Profil und bisherige Daten erhalten; eigene Karte automatisch ohne neue Erstbestätigung übernehmen; alte und neue Imports einzeln öffnen, identische Quellen deduplizieren; Wiederöffnung nach vollständigem Neustart ohne Leser. Der Screenshot zeigt ausdrücklich **„In dieser Kartendatei ist keine Kontrolle aufgezeichnet.“** und bestätigt den vorgesehenen Fall einer gelesenen Quelle ohne Kontrollbeleg.
 
@@ -114,7 +128,7 @@ Vorhandener Galaxy-S23-/Android-16-/USB-CCID-/Gen2V2-Kontext. Keine neuen Byte-/
 - Ausgangs-APK-SHA256: `821eba8989256aa66026af7a8e56bde5d8ac505e00f5ceab58fb2c6b52b38220`.
 - Update-APK-SHA256: `ab2da7280af44d74caa2e15c587911ac32a91c2720fc49688e9e949792596e8a`.
 
-PR #39 am unveränderten getesteten Kopf gemergt: `13d3a31786a2d915bc365ae517c03713de179e51`, Tree `f20f108a63802456843ba8917f841b8d667a2592`. Dieser bestandene Ablauf ist die aktuelle Hardwarebasis. Die Freigabe zum gebündelten Weiterarbeiten bleibt bestehen; erfolgreiche Tests nicht allein wegen einer Work-Unterbrechung wiederholen.
+PR #39 am unveränderten getesteten Kopf gemergt: `13d3a31786a2d915bc365ae517c03713de179e51`, Tree `f20f108a63802456843ba8917f841b8d667a2592`. Dieser bestandene Ablauf ist die vorherige Hardwarebasis. Erfolgreiche Tests nicht allein wegen einer Work-Unterbrechung wiederholen.
 
 ### PR #37 – vorheriger bestätigter Leser-/Update-Test
 
@@ -244,16 +258,16 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 - [CardSourcePairRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardSourcePairRepository.kt): validieren, atomar speichern, exakt zugehörige Quellen lesen.
 - [CardSourcePairDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/CardSourcePairDao.kt): Herkunftstabelle und Fremdschlüssel.
 - [CardActivityImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt) / [CardVehicleImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt): Quell-Snapshots und inhaltliche Deduplizierung.
-- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 9, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9; keine destruktive Migration.
+- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 10, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10; keine destruktive Migration.
 - [NormalizedCardVehicleStore.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/NormalizedCardVehicleStore.kt) / [DriverVehicleUseDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DriverVehicleUseDao.kt): Folgeschritt mit unveränderlichen Fahrzeugnutzungen und additiver Migration 6 → 7; bisherige Tabellen unverändert.
 - [CardHardwareTestScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardHardwareTestScreen.kt), [CardSnapshotHistoryScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardSnapshotHistoryScreen.kt), [AppRoot.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/AppRoot.kt): lesen/speichern, Quellenübersicht und Auswahl der Vorschau.
 - [EncryptedDatabaseInstrumentedTest.kt](../data/src/androidTest/kotlin/de/fahrerabrechnung/data/EncryptedDatabaseInstrumentedTest.kt) / [CardSourcePairNavigationTest.kt](../app/src/androidTest/kotlin/de/fahrerabrechnung/app/CardSourcePairNavigationTest.kt): Persistenz-/Migrations- und Navigationsregressionen.
 
 ## Noch offen und empfohlene Fortsetzung
 
-Die normale Vordergrund-Lesung übernimmt unterstützte eigene Daten automatisch. Erste eigene/unklare Ersatzkarten verlangen weiterhin Bestätigung. Aktivitäts-, Fahrzeug- und Kontrollquellen sind **persistente, profilgebundene Quellen**, noch keine vollständige Kartenabdeckung oder fachliche Tageszusammenführung.
+Die normale Vordergrund-Lesung übernimmt unterstützte eigene Daten automatisch. Erste eigene/unklare Ersatzkarten verlangen weiterhin Bestätigung. Aktivitäts-, Fahrzeug-, Kontroll-, Ereignis- und Störungsquellen sind **persistente, profilgebundene Quellen**, noch keine vollständige Kartenabdeckung oder fachliche Tageszusammenführung.
 
-Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, vollständiger quellenübergreifender Tagesbestand sowie weitere Dateien für GNSS, Grenzübertritte und Ereignisse/Störungen. Der letzte Kontrollbeleg ist seit PR #39 im beschriebenen Umfang gespeichert und darstellbar. Die Profil-/Kartenbindung aus PR #30 und normalisierten Tagesquellen aus PR #32 sind gemergt und im beschriebenen Umfang am Gerät bestanden. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
+Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, vollständiger quellenübergreifender Tagesbestand sowie weitere Dateien für GNSS und Grenzübertritte. Der letzte Kontrollbeleg ist seit PR #39, Ereignisse/Störungen samt Übersicht seit PR #41 im beschriebenen Umfang gespeichert und darstellbar; zusätzliche Timeline-Marker stehen noch aus. Die Profil-/Kartenbindung aus PR #30 und normalisierten Tagesquellen aus PR #32 sind gemergt und im beschriebenen Umfang am Gerät bestanden. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
 
 Empfohlener nächster Arbeitsabschnitt: den zuverlässigen vollständigen Import und sein Datenmodell weiter ausbauen, ausgehend von den gespeicherten Quellen. Einen begrenzten Folgeschritt und seine Migration/Fehlerfälle vor Umsetzung festlegen. Die aktuelle Übergabe ist kein automatischer Auftrag, sämtliche Produktpunkte sofort zu implementieren.
 
@@ -272,18 +286,18 @@ Abgeschlossen: normalisierte Tagesquellen mit unveränderlicher Herkunft auf der
 
 ### Test- und Arbeitsvereinbarungen
 
-Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardware, Import, Parser, Persistenz oder Datenbank betroffen sind. Mehrere PRs bis zu einem späteren Test nur nach konkreter Nutzerfreigabe zusammenfassen. Der bestandene PR-39-Test ist der aktuelle Ausgangspunkt. Die ausdrücklich am 02.10.2026 erlaubte Bündelung ist oben festgehalten; kein schematischer Testaufruf nach jedem Folge-PR. Frühere Aufschübe sind keine allgemeine dauerhafte Ausnahme.
+Manueller Gerätetest **spätestens bei jedem dritten PR**, früher sobald Hardware, Import, Parser, Persistenz oder Datenbank betroffen sind. Mehrere PRs bis zu einem späteren Test nur nach konkreter Nutzerfreigabe zusammenfassen. Der bestandene PR-41-Test ist der aktuelle Ausgangspunkt. Die ausdrücklich am 02.10.2026 erlaubte Bündelung ist oben festgehalten; kein schematischer Testaufruf nach jedem Folge-PR. Frühere Aufschübe sind keine allgemeine dauerhafte Ausnahme.
 
 Auf dem bestandenen Test aufbauen; ihn nicht allein wegen des Work-Wechsels wiederholen. Nach neuen Änderungen die passenden automatischen Prüfungen und den nächsten erforderlichen Gerätetest planen. Der Nutzer kann Bildduplikate durch lange Handy-Screenshots haben; vor einer Datenkorrektur echte App-Einträge prüfen.
 
-Bei Unterbrechung zuerst lokale unveröffentlichte Änderungen und den aktuellen GitHub-Stand prüfen und vorhandene Folgearbeit fortführen. PR #30/#31/#32 sind gemergt; Profilbindung und normalisierte Tagesquellen nicht erneut implementieren. PR #34 und PR #35 sind nach bestandenen Tests gemergt. Automatischen Import, normalisierte Quellen und die Kontrollquellen aus Schema 9 nicht nochmals implementieren. Lokale/unveröffentlichte Folgeänderungen zuerst prüfen und exakt dort fortsetzen. Vollständige Kartenabdeckung und Fachauswertung bleiben offen. Der bestandene PR-39-Gerätetest ist die Ausgangsbasis für weitere relevante Änderungen.
+Bei Unterbrechung zuerst lokale unveröffentlichte Änderungen und den aktuellen GitHub-Stand prüfen und vorhandene Folgearbeit fortführen. PR #30/#31/#32 sind gemergt; Profilbindung und normalisierte Tagesquellen nicht erneut implementieren. PR #34 und PR #35 sind nach bestandenen Tests gemergt. Automatischen Import, normalisierte Quellen und die Kontrollquellen aus Schema 9 nicht nochmals implementieren. Lokale/unveröffentlichte Folgeänderungen zuerst prüfen und exakt dort fortsetzen. Vollständige Kartenabdeckung und Fachauswertung bleiben offen. Der bestandene PR-41-Gerätetest ist die Ausgangsbasis für weitere relevante Änderungen.
 
-## PR #41 – Ereignis-/Störungsquellen in Prüfung
+## Abgeschlossene Ereignis-/Störungsquellen (PR #41)
 
 Der Pausenstand vom 02.10.2026 wurde am 03.10.2026 auf dem aktuellen PR-40-Merge `169e0c607537953ca9d24c02516a858393a83856` fortgesetzt; vorhandene Implementierung nicht wiederholt. Branch `feature/card-event-fault-sources` ergänzt unabhängig Events_Data (0502) und Faults_Data (0503), exakte verschlüsselte eigene Quellen/Sitzungszuordnung und eine gemeinsame read-only Übersicht in den Kartendetails. Keine Rückfüllung alter Zwei-/Drei-Datei-Imports, keine Verstoß-/Dauerberechnung. Schema 10 ergänzt zwei Tabellen ohne Änderung der bisherigen 20 Entities. [Format und Grenzen](EVENT_FAULT_IMPORT_FORMAT.md), [Gerätetest](EVENT_FAULT_IMPORT_DEVICE_TEST.md). Timeline-Marker bleiben gesondert offen.
 
-Automatische Verifikation und generierter Schema-10-Export sind vor Auslieferung vollständig abzuschließen. Der PR bleibt bis zum neuen Geräte-/Update-Test ungemergt. main und der letzte bestätigte Hardwarestand bleiben PR #39 / Schema 9; Ausgangs-APK und Testpaket unverändert aus diesem getesteten Stand, Updateversion 40106.
+Automatische Verifikation, generierter Schema-10-Export und Geräte-/Update-Test sind vollständig abgeschlossen. PR #41 ist nach Nutzerbestätigung am unveränderten Kopf gemergt; main verwendet Schema 10. Ausgangs-APK und Testpaket stammen unverändert aus dem zuvor bestandenen PR-39-Stand, Updateversion 40106.
 
-Der generierte Schema-10-Export stammt unverändert aus dem erfolgreichen Build von [Lauf 37080786615](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37080786615), Produktkopf `bf9021023786099a5022a5ced3ac801bb6cb7a88`. SHA256 `50b4564e1676d2e84cda1d1b7f1e328c03d0a5b0868e2c9e0c668a686a46cce4`, Room-Identität `0cce5ad464a42f3f21ce0ac68159c1eb`. Alle bisherigen 20 Entities sind exakt unverändert; nur die zwei beschriebenen Tabellen kommen hinzu. SQLite-Spalten/Indizes/Fremdschlüssel nach Migration stimmen mit dem Export überein. Build, 111 Unit-Tests ohne Fehler/übersprungene Tests, Lint und APK-/Signatur-/Versionsprüfung bestanden; Emulator und finale CI weiterhin gesondert abschließen.
+Der generierte Schema-10-Export stammt unverändert aus dem erfolgreichen Build von [Lauf 37080786615](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37080786615), Produktkopf `bf9021023786099a5022a5ced3ac801bb6cb7a88`. SHA256 `50b4564e1676d2e84cda1d1b7f1e328c03d0a5b0868e2c9e0c668a686a46cce4`, Room-Identität `0cce5ad464a42f3f21ce0ac68159c1eb`. Alle bisherigen 20 Entities sind exakt unverändert; nur die zwei beschriebenen Tabellen kommen hinzu. SQLite-Spalten/Indizes/Fremdschlüssel nach Migration stimmen mit dem Export überein. [Finale CI 37083192466](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37083192466) zum getesteten Kopf `69b3566638e6759b544b3470f95d83059a89ae56` vollständig grün: 111 Unit-, 90 Daten-/SQLCipher- und 47 App-/Compose-Tests, insgesamt 248 ohne Fehler oder übersprungene Tests; alle sieben vorgeschriebenen Gradle-Prüfungen, Lint und APK-/Signatur-/Versionsprüfung bestanden. Schemaexport im letzten Build byte-identisch. Der oben dokumentierte Update-/Lesertest ist seit 03.10.2026 um 08:06 Uhr bestanden.
 
 Der erste Emulatorjob dieses Laufs scheiterte vor den Tests an der Gradle-Wrapper-Prüfung der offiziellen Distributions-URL (Infrastruktur, kein Testresultat). Der finale Kopf enthält den exportierten Schema-10-Stand und muss einschließlich aller Emulatorprüfungen grün werden. Ein auf der Plattform nicht verfügbarer Kennzeichenzeichensatz wird als Fehler ausschließlich seiner Datei behandelt.
