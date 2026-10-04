@@ -70,7 +70,8 @@ class Api:
 
     def download(self, path, destination):
         # Capture the redirect ourselves: never forward the GitHub token to blob storage.
-        with self.request(self.prefix + path, accept='application/octet-stream') as response:
+        accept = 'application/vnd.github+json' if path.startswith('/actions/artifacts/') else 'application/octet-stream'
+        with self.request(self.prefix + path, accept=accept) as response:
             if response.code == 200:
                 with destination.open('wb') as stream:
                     shutil.copyfileobj(response, stream)

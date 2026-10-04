@@ -215,6 +215,20 @@ class SafetyTests(unittest.TestCase):
         self.assertNotIn('Authorization', requests[0].headers)
         self.assertEqual((Path(self.temp.name) / 'redirect.zip').read_bytes(), b'test')
 
+    def test_artifact_redirect_uses_json_api_header(self):
+        client = worker.Api(CONFIG)
+        observed = []
+        class Direct(io.BytesIO):
+            code = 200
+            headers = {}
+        def request(*args, **kwargs):
+            observed.append(kwargs['accept'])
+            return Direct(b'synthetic bytes')
+        client.request = request
+        client.download('/actions/artifacts/1/zip', Path(self.temp.name) / 'artifact.zip')
+        client.download('/releases/assets/1', Path(self.temp.name) / 'release.zip')
+        self.assertEqual(observed, ['application/vnd.github+json', 'application/octet-stream'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
