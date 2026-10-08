@@ -10,9 +10,11 @@ on:
 permissions:
   contents: read
 
+# Superseded PR commits cancel their own verification. Every main/dispatch run has
+# a unique group so that neither a running nor a pending authoritative run is lost.
 concurrency:
-  group: android-0.4.1-${{ github.ref }}
-  cancel-in-progress: false
+  group: android-0.4.1-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   GRADLE_VERSION: "9.6.1"
@@ -22,101 +24,48 @@ env:
   ANDROID_BUILD_TOOLS: "36.0.0"
 
 jobs:
-  build-and-verify:
-    name: Build, test, lint and APK verification
+  changes:
+    name: Project boundaries and CI scope
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    timeout-minutes: 5
+    outputs:
+      android: ${{ steps.scope.outputs.android }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Classify changed paths conservatively
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+          HEAD_SHA: ${{ github.sha }}
+        run: python3 scripts/classify_ci_changes.py --base "$BASE_SHA" --head "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Verify project boundaries
+        run: bash scripts/verify_project_boundary.sh
+
+      - name: Verify CI routing and schema guard regressions
+        run: python3 -m unittest discover -s scripts/tests -v
+
+      - name: Check shell syntax
+        run: bash -n scripts/build_device_test_update.sh scripts/run_instrumentation.sh scripts/verify_room_schemas.sh
+
+  build-and-verify:
+    name: Build, test, lint and APK verification
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          distribution: temurin
-          java-version: "17"
+          fetch-depth: 0
 
-      - name: Set up Gradle 9.6.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.6.1"
-
-      - name: Generate and verify official Gradle wrapper
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          project_dir="$PWD"
-          bootstrap_dir="$(mktemp -d)"
-          printf 'rootProject.name = "wrapper-bootstrap"\n' > "${bootstrap_dir}/settings.gradle.kts"
-          (cd "${bootstrap_dir}" && gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin)
-
-          mkdir -p gradle/wrapper
-          cp "${bootstrap_dir}/gradlew" gradlew
-          cp "${bootstrap_dir}/gradlew.bat" gradlew.bat
-          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
-          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.properties" gradle/wrapper/gradle-wrapper.properties
-          chmod +x gradlew
-          rm -rf "${bootstrap_dir}"
-
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path("gradle/wrapper/gradle-wrapper.properties")
-          lines = path.read_text(encoding="utf-8").splitlines()
-          wanted = "distributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14"
-          lines = [line for line in lines if not line.startswith("distributionSha256Sum=")]
-          insert_at = next((i + 1 for i, line in enumerate(lines) if line.startswith("distributionUrl=")), len(lines))
-          lines.insert(insert_at, wanted)
-          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-          PY
-
-          echo "${GRADLE_WRAPPER_SHA256}  gradle/wrapper/gradle-wrapper.jar" | sha256sum --check --strict
-          grep -F "distributionUrl=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" gradle/wrapper/gradle-wrapper.properties
-          grep -F "distributionSha256Sum=${GRADLE_DIST_SHA256}" gradle/wrapper/gradle-wrapper.properties
-          ./gradlew --version | tee ci-logs/wrapper-version.log
-          ./gradlew --version | grep -F "Gradle ${GRADLE_VERSION}"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: "15859902"
-          log-accepted-android-sdk-licenses: false
-          packages: platform-tools
-
-      - name: Install Android SDK Platform 37 and Build Tools 36.0.0
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          sdkmanager --list 2>&1 | tee ci-logs/sdk-packages.log
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-${ANDROID_PLATFORM}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}" 2>&1 | tee ci-logs/sdk-install.log
-
-      - name: Verify toolchain
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          {
-            echo "=== java ==="
-            java -version
-            echo "=== gradle ==="
-            gradle --version
-            echo "=== sdkmanager ==="
-            sdkmanager --version
-            echo "=== installed Android packages ==="
-            sdkmanager --list_installed
-          } 2>&1 | tee ci-logs/toolchain.log
-          java -version 2>&1 | grep -Eq 'version "17\.|openjdk version "17\.'
-          gradle --version | grep -F "Gradle ${GRADLE_VERSION}"
-          test -d "${ANDROID_SDK_ROOT}/platforms/android-${ANDROID_PLATFORM}"
-          test -d "${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}"
+      - name: Set up verified Android toolchain
+        uses: ./.github/actions/android-toolchain
 
       - name: Verify 0.4.1 project boundary
         shell: bash
@@ -178,66 +127,29 @@ jobs:
         shell: bash
         run: bash scripts/build_device_test_update.sh
 
-      - name: Create source ZIP with committed wrapper and CI
+      - name: Verify generated Room schema exports
         shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ci-artifacts
-          zip -qr ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip . \
-            -x '.git/*' '.gradle/*' '**/build/*' 'ci-artifacts/*'
-          sha256sum ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip > ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip.sha256
+        run: bash scripts/verify_room_schemas.sh
 
-      - name: Upload build logs and reports
-        if: always()
+      - name: Upload failed build diagnostics
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: android-0.4.1-build-logs
+          name: android-build-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 3
           if-no-files-found: warn
           path: |
             ci-logs/
             **/build/reports/
             data/schemas/
 
-      - name: Upload Debug APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Fahrerabrechnung-0.4.1-debug-apk
-          if-no-files-found: error
-          path: app/build/outputs/apk/debug/*.apk
-
-      - name: Upload Internal APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Fahrerabrechnung-0.4.1-internal-apk
-          if-no-files-found: error
-          path: app/build/outputs/apk/internal/*.apk
-
-      - name: Upload complete verified project ZIP
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Fahrerabrechnung-Android-0.4.1-project
-          if-no-files-found: error
-          path: |
-            ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip
-            ci-artifacts/Fahrerabrechnung_Android_0.4.1-ci.zip.sha256
-
-      - name: Upload stable device-test APK update pair
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: FahrerTagebuch-device-test-update
-          if-no-files-found: error
-          path: ci-artifacts/device-test-update/*
-
   instrumentation:
     name: Room SQLCipher and Compose instrumentation
-    needs: build-and-verify
+    needs: [changes, build-and-verify]
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -248,51 +160,12 @@ jobs:
           set -euo pipefail
           mkdir -p ci-logs
           df -h / | tee ci-logs/disk-before-cleanup.log
-          # Only unused preinstalled toolchains on this disposable Android runner.
-          # Keep the Android SDK, JDK, Gradle cache and checked-out project intact.
+          # Only unused toolchains on the disposable runner; keep the project and SDK.
           sudo rm -rf /usr/share/dotnet /opt/ghc
           df -h / | tee ci-logs/disk-after-cleanup.log
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Gradle 9.6.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.6.1"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: "15859902"
-          log-accepted-android-sdk-licenses: false
-          packages: platform-tools
-
-      - name: Install compile SDK and regenerate verified wrapper if checkout predates wrapper commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-${ANDROID_PLATFORM}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}"
-
-          bootstrap_dir="$(mktemp -d)"
-          printf 'rootProject.name = "wrapper-bootstrap"\n' > "${bootstrap_dir}/settings.gradle.kts"
-          (cd "${bootstrap_dir}" && gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin)
-          mkdir -p gradle/wrapper
-          cp "${bootstrap_dir}/gradlew" gradlew
-          cp "${bootstrap_dir}/gradlew.bat" gradlew.bat
-          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/gradle-wrapper.jar
-          cp "${bootstrap_dir}/gradle/wrapper/gradle-wrapper.properties" gradle/wrapper/gradle-wrapper.properties
-          chmod +x gradlew
-          rm -rf "${bootstrap_dir}"
-          printf 'distributionSha256Sum=%s\n' "${GRADLE_DIST_SHA256}" >> gradle/wrapper/gradle-wrapper.properties
-          echo "${GRADLE_WRAPPER_SHA256}  gradle/wrapper/gradle-wrapper.jar" | sha256sum --check --strict
+      - name: Set up verified Android toolchain
+        uses: ./.github/actions/android-toolchain
 
       - name: Enable emulator hardware acceleration
         run: |
@@ -316,11 +189,17 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/run_instrumentation.sh
 
-      - name: Upload instrumentation reports
-        if: always()
+      - name: Verify generated Room schema exports
+        shell: bash
+        run: bash scripts/verify_room_schemas.sh
+
+      - name: Upload failed instrumentation diagnostics
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: android-0.4.1-instrumentation-results
+          name: android-instrumentation-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 3
           if-no-files-found: warn
           path: |
             ci-logs/
@@ -328,3 +207,30 @@ jobs:
             app/build/outputs/androidTest-results/
             data/build/reports/androidTests/
             data/build/outputs/androidTest-results/
+
+  verification:
+    name: Android verification
+    needs: [changes, build-and-verify, instrumentation]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require the complete verification appropriate to this change
+        env:
+          SCOPE_RESULT: ${{ needs.changes.result }}
+          ANDROID_REQUIRED: ${{ needs.changes.outputs.android }}
+          BUILD_RESULT: ${{ needs.build-and-verify.result }}
+          INSTRUMENTATION_RESULT: ${{ needs.instrumentation.result }}
+        run: |
+          set -euo pipefail
+          test "$SCOPE_RESULT" = success
+          if [ "$ANDROID_REQUIRED" = true ]; then
+            test "$BUILD_RESULT" = success
+            test "$INSTRUMENTATION_RESULT" = success
+            echo 'Complete Android verification passed.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            test "$ANDROID_REQUIRED" = false
+            test "$BUILD_RESULT" = skipped
+            test "$INSTRUMENTATION_RESULT" = skipped
+            echo 'Documentation-only change: project boundaries and CI guards passed; Android verification intentionally skipped.' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -12,5 +12,7 @@
 *.keystore
 keystore.properties
 secrets.properties
+__pycache__/
+*.py[cod]
 # Public development-only signing fixture; never a production/release key.
 !/ci/device-test.jks

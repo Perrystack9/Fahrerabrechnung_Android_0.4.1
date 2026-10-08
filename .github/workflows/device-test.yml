@@ -1,0 +1,143 @@
+name: FahrerTagebuch targeted device-test package
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact full product commit SHA to build (must already have complete green CI).
+        required: true
+        type: string
+      include_baseline:
+        description: Include the schema-10 baseline only if a fresh migration installation is needed.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: fahrer-device-test-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  GRADLE_VERSION: "9.6.1"
+  GRADLE_DIST_SHA256: "9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14"
+  GRADLE_WRAPPER_SHA256: "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7"
+  ANDROID_PLATFORM: "37.0"
+  ANDROID_BUILD_TOOLS: "36.0.0"
+
+jobs:
+  package:
+    name: Build the requested stable test update
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout workflow infrastructure
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate exact source commit
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git cat-file -t "$SOURCE_SHA")" = commit
+
+      - name: Require a successful full Android CI for the exact source
+        uses: actions/github-script@v7
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        with:
+          script: |
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              workflow_id: 'android-ci.yml', head_sha: process.env.SOURCE_SHA,
+              status: 'completed', per_page: 100
+            });
+            let verified = false;
+            for (const run of runs.filter(run => run.conclusion === 'success')) {
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner: context.repo.owner, repo: context.repo.repo,
+                run_id: run.id, filter: 'latest', per_page: 100
+              });
+              const names = ['Build, test, lint and APK verification', 'Room SQLCipher and Compose instrumentation'];
+              if (names.every(name => jobs.some(job => job.name === name && job.conclusion === 'success'))) {
+                core.info(`Complete verification: run ${run.id}, attempt ${run.run_attempt}`);
+                verified = true;
+                break;
+              }
+            }
+            if (!verified) core.setFailed('No complete green Android CI for the requested exact source; do not distribute this APK.');
+
+      - name: Checkout exact product source separately
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: product
+          fetch-depth: 0
+
+      - name: Set up verified Android toolchain
+        uses: ./.github/actions/android-toolchain
+        with:
+          project-directory: product
+
+      - name: Build and verify stable test update and migration pair
+        working-directory: product
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/verify_project_boundary.sh
+          ./gradlew :app:assembleDeviceTest --stacktrace 2>&1 | tee ci-logs/device-test-build.log
+          bash scripts/build_device_test_update.sh
+          bash "$GITHUB_WORKSPACE/scripts/verify_room_schemas.sh" "$PWD"
+          keytool -exportcert -keystore ci/device-test.jks -storepass android -alias androiddebugkey |
+            sha256sum | grep -F 9ffc4c280b390a1699567f5cc381dfd7a0e221ef9766af6fe937f6500ee9ad58
+
+      - name: Package only requested device-test files
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          WORKFLOW_SHA: ${{ github.sha }}
+          INCLUDE_BASELINE: ${{ inputs.include_baseline }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p device-package
+          pair=product/ci-artifacts/device-test-update
+          cp "$pair/02-FahrerTagebuch-Test-Update.apk" "$pair/ANLEITUNG.md" device-package/
+          if [ "$INCLUDE_BASELINE" = true ]; then
+            cp "$pair/01-FahrerTagebuch-Test-Schema10.apk" device-package/
+          fi
+          printf 'product_commit=%s\nworkflow_commit=%s\nrun_id=%s\nrun_attempt=%s\nbaseline_included=%s\n' \
+            "$SOURCE_SHA" "$WORKFLOW_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$INCLUDE_BASELINE" \
+            > device-package/BUILD_INFO.txt
+          (cd device-package && sha256sum ./*.apk > SHA256SUMS.txt)
+          zip -j -9 FahrerTagebuch-Test-Update.zip device-package/*
+          sha256sum FahrerTagebuch-Test-Update.zip > FahrerTagebuch-Test-Update.zip.sha256
+          echo "Stable device-test ZIP for product commit $SOURCE_SHA; retention 7 days." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload requested stable test ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: FahrerTagebuch-device-test-${{ inputs.source_sha }}-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            FahrerTagebuch-Test-Update.zip
+            FahrerTagebuch-Test-Update.zip.sha256
+
+      - name: Upload failed device-build diagnostics
+        if: failure()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: fahrer-device-build-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 3
+          if-no-files-found: warn
+          path: |
+            product/ci-logs/
+            product/**/build/reports/

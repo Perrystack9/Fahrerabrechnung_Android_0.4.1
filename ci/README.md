@@ -1,5 +1,7 @@
 # Dauerhaft aktualisierbare Gerätetest-App
 
+**CI-Speicherstrategie ab 08.10.2026:** Normale erfolgreiche PR-/main-Prüfungen bauen und prüfen die APKs einschließlich des stabilen Update-Paars, laden aber keine Artefakte hoch. Benötigte Test-ZIPs werden gezielt über den manuellen `device-test.yml`-Workflow erzeugt (7 Tage; Fehlerdiagnosen 3 Tage). Vollständige Prüfungen, feste Signatur und Versionskontinuität bleiben erhalten. [Workflow, Startparameter und PR-45-Grenzen](../docs/CI_ARTIFACT_POLICY.md). Die nachstehenden älteren Produkt-/Gerätestände sind historische Herkunft; maßgeblich sind der tatsächliche Git-Stand und die aktuelle Übergabe.
+
 `device-test.jks` ist eine **absichtlich öffentliche, ausschließlich für Entwicklung bestimmte Test-Signieridentität** (PKCS12, Alias `androiddebugkey`, Passwort `android`). Sie ist kein Geheimnis und darf niemals als Release-/Produktionsschlüssel verwendet werden. Die Ausnahme in `.gitignore` gilt nur für diese eine Testdatei. Alle echten Keystores/Signierzugänge bleiben außerhalb des Repositorys.
 
 Nur der debuggable Buildtyp `deviceTest` verwendet sie: Paket `de.fahrerabrechnung.app.devicetest`, sichtbarer Name **FahrerTagebuch Test**. Debug, Internal und Release behalten ihre bisherigen Signierkonfigurationen. Testschlüssel und Paketkennung nicht mit jedem Build wechseln; dadurch bleiben zukünftige Gerätetests als Updates mit vorhandener Datenbank installierbar. Dieses Testpaket ist keine Produktionsauslieferung.
