@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -160,7 +160,8 @@ class DriverCardImportPipeline @Inject constructor(
             gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) },
             places = result.places?.let { CardPlacesFile(it.generation, it.recordCount, it.bytes) },
             placesAuthentication = result.placesAuthentication?.let { CardPlacesAuthenticationFile(it.generation, it.bytes) },
-            borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) })
+            borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) },
+            loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -250,9 +251,18 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.positionTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond },
                     if (records.any { it.positionTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond }, null)
             } else null
+        val loads = if (read.loadUnload != null || read.loadUnloadReadFailed)
+            inspect(CardImportFileKind.LOAD_UNLOAD_OPERATIONS, read.loadUnload != null, read.loadUnloadReadFailed) {
+                val file = checkNotNull(read.loadUnload)
+                require(file.generation == read.generation)
+                val records = CardLoadUnloadParser.parse(file)
+                CardImportFileResult(CardImportFileKind.LOAD_UNLOAD_OPERATIONS, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.operationTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.operationTimeUtc).epochSecond },
+                    if (records.any { it.operationTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.operationTimeUtc).epochSecond }, null)
+            } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -288,6 +298,7 @@ class DriverCardImportPipeline @Inject constructor(
             places = read.places.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES && it.status == CardImportFileStatus.READY } },
             placesAuthentication = read.placesAuthentication.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION && it.status == CardImportFileStatus.READY } },
             borderCrossings = read.borderCrossings.takeIf { files.any { it.kind == CardImportFileKind.BORDER_CROSSINGS && it.status == CardImportFileStatus.READY } },
+            loadUnload = read.loadUnload.takeIf { files.any { it.kind == CardImportFileKind.LOAD_UNLOAD_OPERATIONS && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -362,6 +373,13 @@ class DriverCardImportPipeline @Inject constructor(
                 read.borderCrossings?.let { text(it.generation.name)
                     digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
                 digest.update(if (read.borderCrossingsReadFailed) 1.toByte() else 0.toByte())
+            }
+            // No changes to historical requests that never attempted the new source.
+            if (read.loadUnload != null || read.loadUnloadReadFailed) {
+                text("LOAD_UNLOAD_OPERATIONS")
+                read.loadUnload?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.loadUnloadReadFailed) 1.toByte() else 0.toByte())
             }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }

@@ -44,7 +44,9 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val placesAuthentication: CardPlacesAuthenticationFile? = null,
                           val placesAuthenticationReadFailed: Boolean = false,
                           val borderCrossings: CardBorderCrossingsFile? = null,
-                          val borderCrossingsReadFailed: Boolean = false)
+                          val borderCrossingsReadFailed: Boolean = false,
+                          val loadUnload: CardLoadUnloadFile? = null,
+                          val loadUnloadReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -65,6 +67,7 @@ object DriverCardFiles {
     const val PLACES = 0x0506
     const val PLACES_AUTHENTICATION = 0x0526
     const val BORDER_CROSSINGS = 0x0528
+    const val LOAD_UNLOAD = 0x0529
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -173,6 +176,19 @@ object DriverCardDecoder {
             throw ParseError(0, "lengthOfFollowingData", "unsupported V2 extension")
         val count = reader.u16be("noOfBorderCrossingRecords")
         CardBorderCrossingsParser.fileLength(generation, count)
+        return count
+    }
+
+    /** Gen2V2 independent capacity at offsets 4..5, not the border/source capacity. */
+    fun loadUnloadCount(applicationV2: ByteArray, generation: CardGeneration): Int {
+        if (generation != CardGeneration.GEN2V2 || applicationV2.size != 10)
+            throw ParseError(0, "Application_Identification_V2", "unsupported generation or length")
+        val reader = BinaryReader(applicationV2)
+        if (reader.u16be("lengthOfFollowingData") != 8)
+            throw ParseError(0, "lengthOfFollowingData", "unsupported V2 extension")
+        reader.u16be("noOfBorderCrossingRecords")
+        val count = reader.u16be("noOfLoadUnloadRecords")
+        CardLoadUnloadParser.fileLength(generation, count)
         return count
     }
 
@@ -310,6 +326,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
                         CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val loadUnload = if (supportsAuthentication) try {
+                    val count = DriverCardDecoder.loadUnloadCount(applicationV2
+                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable load/unload capacity"), generation)
+                    CardLoadUnloadFile(generation, count, readFile(session, DriverCardFiles.LOAD_UNLOAD,
+                        CardLoadUnloadParser.fileLength(generation, count))).also { CardLoadUnloadParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -321,7 +343,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     placesAuthentication = placesAuthentication,
                     placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null,
                     borderCrossings = borderCrossings,
-                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null)
+                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null,
+                    loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

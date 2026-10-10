@@ -434,6 +434,43 @@ class AutomaticCardImportUiTest {
         assertEquals(3, runBlocking { pipeline.history().size })
     }
 
+    @Test fun loadUnloadNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(operation: Int): CardLoadUnloadFile {
+            val bytes = ByteArray(32482)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000020).put(operation.toByte()).putInt(1790000030)
+                .put(10.toByte()).put(byteArrayOf(0, 0, 1, 0, 0, 2)).put(1.toByte()).put(byteArrayOf(0, 0, 3))
+            return CardLoadUnloadFile(CardGeneration.GEN2V2, 1624, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-loads")
+            pipeline.process(read().copy(activity = null, vehicles = null, loadUnload = load(1)), "early-loads-only")
+            pipeline.process(read().copy(loadUnload = load(2)), "latest-loads")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Be- und Entladeeinträge").performScrollTo().performClick()
+        }
+        open("early-loads-only"); await("Art: Beladen")
+        compose.onNodeWithText("Art: Entladen").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-loads"); await("Für diese Übernahme ist keine gespeicherte Be-/Entladedatei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Vorgang").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-loads"); await("Art: Entladen")
+        compose.onNodeWithText("Art: Beladen").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 

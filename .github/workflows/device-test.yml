@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       include_baseline:
-        description: Include the schema-13 baseline only if a fresh migration installation is needed.
+        description: Include the schema-14 baseline only if a fresh migration installation is needed.
         required: false
         default: false
         type: boolean
@@ -110,7 +110,7 @@ jobs:
           pair=product/ci-artifacts/device-test-update
           cp "$pair/02-FahrerTagebuch-Test-Update.apk" "$pair/ANLEITUNG.md" device-package/
           if [ "$INCLUDE_BASELINE" = true ]; then
-            cp "$pair/01-FahrerTagebuch-Test-Schema13.apk" device-package/
+            cp "$pair/01-FahrerTagebuch-Test-Schema14.apk" device-package/
           fi
           printf 'product_commit=%s\nworkflow_commit=%s\nrun_id=%s\nrun_attempt=%s\nbaseline_included=%s\n' \
             "$SOURCE_SHA" "$WORKFLOW_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$INCLUDE_BASELINE" \

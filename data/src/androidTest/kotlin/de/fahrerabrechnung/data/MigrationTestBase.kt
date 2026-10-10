@@ -102,4 +102,21 @@ class MigrationTestBase {
         }
     }
 
+    @Test fun migration_14_15_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "loads-migration-test"
+        helper.createDatabase(name, 14).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 15, true, DatabaseMigrations.MIGRATION_14_15).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_load_unload_imports", "driver_import_load_unload_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
 }

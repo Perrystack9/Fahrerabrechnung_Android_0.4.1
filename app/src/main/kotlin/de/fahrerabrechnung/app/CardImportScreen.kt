@@ -55,6 +55,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.GNSS_POSITIONS -> Text("GNSS-Punkte übernommen")
                         CardImportFileKind.GNSS_AUTHENTICATION -> Text("GNSS-Authentisierungsstatus übernommen")
                         CardImportFileKind.BORDER_CROSSINGS -> Text("Grenz- und Ländereinträge übernommen")
+                        CardImportFileKind.LOAD_UNLOAD_OPERATIONS -> Text("Be- und Entladeeinträge übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")

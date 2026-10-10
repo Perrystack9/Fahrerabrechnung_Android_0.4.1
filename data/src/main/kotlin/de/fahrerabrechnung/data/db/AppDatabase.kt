@@ -35,6 +35,8 @@ import androidx.room.RoomDatabase
         DriverImportPlacesSourceEntity::class,
         CardBorderCrossingsImportEntity::class,
         DriverImportBorderCrossingsSourceEntity::class,
+        CardLoadUnloadImportEntity::class,
+        DriverImportLoadUnloadSourceEntity::class,
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = true,
@@ -56,9 +58,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardGnssDao(): CardGnssDao
     abstract fun cardPlacesDao(): CardPlacesDao
     abstract fun cardBorderCrossingsDao(): CardBorderCrossingsDao
+    abstract fun cardLoadUnloadDao(): CardLoadUnloadDao
 
     companion object {
-        const val SCHEMA_VERSION = 14
+        const val SCHEMA_VERSION = 15
         const val DATABASE_NAME = "fahrerabrechnung.db"
     }
 }

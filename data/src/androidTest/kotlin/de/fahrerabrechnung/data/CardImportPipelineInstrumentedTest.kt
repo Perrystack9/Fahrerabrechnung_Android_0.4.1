@@ -1159,6 +1159,109 @@ class CardImportPipelineInstrumentedTest {
         rejected<IllegalStateException> { imports.get(fresh.id) }
     }
 
+    private fun loadRead(time: Int = 1790000030): CardReadResult {
+        val bytes = ByteArray(32482)
+        ByteBuffer.wrap(bytes).putShort(0).putInt(time - 10).put(1.toByte()).putInt(time).put(10.toByte())
+            .put(byteArrayOf(0, 0, 1, 0, 0, 2)).put(1.toByte()).put(byteArrayOf(0, 0, 3))
+        return borderRead().copy(loadUnload = CardLoadUnloadFile(CardGeneration.GEN2V2, 1624, bytes))
+    }
+
+    @Test fun loadsPersistExactOwnCardSessionAcrossEncryptedReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(borderRead(), "before-loads")
+        val fresh = pipeline.process(loadRead(), "with-loads")
+        assertEquals(1, fresh.newSourceCount); assertEquals(12, fresh.files.size)
+        val source = imports.get(fresh.id)!!.loadUnload!!
+        assertEquals(fresh.driverCardId, source.driverCardId)
+        assertEquals(1790000020L, source.records.single().operationTimeRaw)
+        db.close(); open()
+        assertArrayEquals(source.file.bytes, imports.get(fresh.id)!!.loadUnload!!.file.bytes)
+        assertNull(imports.get(old.id)!!.loadUnload)
+        assertEquals(old, pipeline.process(borderRead(), old.id))
+    }
+    @Test fun loadsDeduplicateButChangedRequestsAndPhysicalReplacementCardsStayDistinct() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(loadRead(), "loads-first")
+        assertEquals(first, pipeline.process(loadRead(), first.id))
+        assertEquals(0, pipeline.process(loadRead(), "loads-repeat").newSourceCount)
+        assertEquals(1, count("card_load_unload_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(loadRead(1790000035), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(borderRead(), first.id) }
+        val changed = pipeline.process(loadRead(1790000035), "loads-changed")
+        assertEquals(1, changed.newSourceCount)
+        val replacement = pipeline.process(loadRead().copy(card = card("replacement-loads")), "loads-replacement")
+        assertEquals(12, replacement.newSourceCount)
+        assertNotEquals(first.driverCardId, replacement.driverCardId)
+        assertNotEquals(imports.get(first.id)!!.loadUnload!!.id, imports.get(replacement.id)!!.loadUnload!!.id)
+        assertEquals(1790000030L, imports.get(first.id)!!.loadUnload!!.records.single().positionTimeRaw)
+    }
+    @Test fun loadFileFailuresAndInvalidPointerAreIndependentAndValidEmptySourceCanStandAlone() = runBlocking {
+        imports.bind(card(), true)
+        val partial = pipeline.process(loadRead().copy(loadUnload = null, loadUnloadReadFailed = true), "loads-partial")
+        assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.LOAD_UNLOAD_OPERATIONS).status)
+        assertNotNull(imports.get(partial.id)!!.borderCrossings)
+        val invalidBytes = ByteArray(32482).also { it[0] = 6; it[1] = 88 }
+        val invalid = pipeline.process(loadRead().copy(loadUnload = CardLoadUnloadFile(CardGeneration.GEN2V2, 1624, invalidBytes)), "loads-invalid")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.LOAD_UNLOAD_OPERATIONS).status)
+        assertNull(imports.get(invalid.id)!!.loadUnload); assertNotNull(imports.get(invalid.id)!!.borderCrossings)
+        val only = read().copy(activity = null, vehicles = null,
+            loadUnload = CardLoadUnloadFile(CardGeneration.GEN2V2, 1624, ByteArray(32482)))
+        val empty = pipeline.process(only, "loads-empty")
+        assertNotNull(empty.sessionId); assertEquals(1, empty.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, empty.file(CardImportFileKind.LOAD_UNLOAD_OPERATIONS).status)
+        assertEquals(0, empty.file(CardImportFileKind.LOAD_UNLOAD_OPERATIONS).decodedCount)
+        assertTrue(imports.get(empty.id)!!.loadUnload!!.records.isEmpty())
+    }
+    @Test fun loadsForeignUnconfirmedAndUnclearCardsCannotCreatePersistentSources() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(loadRead(), "loads-unconfirmed") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-loads", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(loadRead().copy(card = foreign), "loads-foreign") }
+        rejected<CardBindingRequired> { pipeline.process(loadRead().copy(card = card("unclear-loads", card().holder.copy(birthDate = null))), "loads-unclear") }
+        assertEquals(0, count("card_load_unload_imports")); assertEquals(0, count("driver_import_load_unload_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun loadSourceWriteFailureRollsBackTheEntireOwnImport() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_load_fail BEFORE INSERT ON card_load_unload_imports BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(loadRead(), "loads-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        for (table in listOf("card_load_unload_imports", "driver_import_load_unload_sources", "card_place_imports",
+            "card_gnss_imports", "import_sessions", "card_activity_imports", "card_specific_condition_imports"))
+            assertEquals(0, count(table))
+    }
+    @Test fun schemaFourteenUpgradeKeepsOldReceiptsAndSourcesWithoutLoadBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(borderRead(), "schema-fourteen-loads")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.places!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_load_unload_sources"); execSQL("DROP TABLE card_load_unload_imports")
+            execSQL("DELETE FROM room_master_table"); version = 14
+        }
+        db.close(); open()
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.places!!.file.bytes)
+        assertNull(imports.get(old.id)!!.loadUnload); assertEquals(old, pipeline.process(borderRead(), old.id))
+        assertEquals(0, count("card_load_unload_imports"))
+        assertEquals(1, pipeline.process(loadRead(), "loads-after-upgrade").newSourceCount)
+    }
+    @Test fun loadWrongCardLinksAndAlteredBytesCannotLeakIntoAnotherSession() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(borderRead(), "loads-safe-old")
+        val fresh = pipeline.process(loadRead(), "loads-corrupt-new")
+        val source = imports.get(fresh.id)!!.loadUnload!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardLoadUnloadDao().insertSource(DriverImportLoadUnloadSourceEntity(old.id, "wrong-card", source.id))
+        }
+        val altered = source.file.bytes.also { it[3] = 7 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_load_unload_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
+        assertEquals(2, pipeline.history().size); assertNull(imports.get(old.id)!!.loadUnload)
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+    }
+
     @Test fun replacementWithSameNumberAndBytesRetainsItsOwnPhysicalProvenance() = runBlocking {
         imports.bind(card(), true)
         val first = pipeline.process(read(), "original")
