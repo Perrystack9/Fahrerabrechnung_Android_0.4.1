@@ -1,0 +1,39 @@
+name: One requested PR51 device-test dispatch
+
+# Kept outside main and all product PRs. Creating this exact branch is the
+# explicit one-shot request; no schedule and no ordinary product-CI uploads.
+on:
+  create:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/device-test-pr51-e3f404fd'
+    name: Start the requested verified PR51 test ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm exact successful full CI and dispatch existing package workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const source = 'e3f404fd73f13cc80bb9bd667e6146acfb8a2c3a';
+            const verification = 38046259050;
+            const repository = { owner: context.repo.owner, repo: context.repo.repo };
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...repository, run_id: verification });
+            if (run.head_sha !== source || run.status !== 'completed' || run.conclusion !== 'success') {
+              throw new Error('The requested exact source has no completed successful verification.');
+            }
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun,
+              { ...repository, run_id: verification, filter: 'latest', per_page: 100 });
+            const required = ['Project boundaries and CI scope', 'Build, test, lint and APK verification',
+              'Room SQLCipher and Compose instrumentation', 'Android verification'];
+            if (!required.every(name => jobs.some(job => job.name === name && job.conclusion === 'success'))) {
+              throw new Error('Full Android CI, including instrumentation, is required.');
+            }
+            await github.rest.actions.createWorkflowDispatch({ ...repository, workflow_id: 'device-test.yml',
+              ref: 'feature/card-gnss-import', inputs: { source_sha: source, include_baseline: 'false' } });
+            core.info(`Requested one existing manual device-test workflow for ${source}; baseline excluded.`);
