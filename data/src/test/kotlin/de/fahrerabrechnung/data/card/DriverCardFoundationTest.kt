@@ -656,6 +656,19 @@ class DriverCardFoundationTest {
             assertTrue(fake.closed)
         }
     }
+    @Test fun unavailableV2ExtensionOnlyFailsTheDependentBorderSource() = runBlocking {
+        for (missing in listOf(true, false)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                missingFiles = if (missing) setOf(DriverCardFiles.APPLICATION_V2) else emptySet(),
+                extensionBytes = if (!missing) ByteArray(9) else null)
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertNull(result.borderCrossings); assertTrue(result.borderCrossingsReadFailed)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.places)
+            assertNotNull(result.gnssPositions); assertNotNull(result.gnssAuthentication)
+            assertFalse(DriverCardFiles.BORDER_CROSSINGS in fake.readFiles); assertTrue(fake.closed)
+        }
+    }
     @Test fun earlierReadFailuresDoNotPreventTheBorderAttempt() = runBlocking {
         val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
             missingFiles = setOf(DriverCardFiles.PLACES, DriverCardFiles.GNSS_AUTHENTICATION,

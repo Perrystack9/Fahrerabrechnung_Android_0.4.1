@@ -16,7 +16,7 @@ Stand 10.10.2026. Ausgangsbasis: der nach Tobis Gerätetest unverändert gemergt
 | aufgezeichneter GNSS-Authentisierungsstatus | 1 | 13 |
 | Kilometerstand als Kartenwert | 3 | 14 |
 
-Vollständige Datei: 2-Byte-Zeiger plus 1120 × 17 Bytes = 19042 Bytes. Kapazität aus der bereits gelesenen 10-Byte-EF Application_Identification_V2 (0525): 2-Byte-Folgelänge 8, danach 2-Byte-Kapazität an Offset 2–3. Eine ungültige neue Kapazität betrifft nur Border_Crossings. Ringreihenfolge beginnt nach dem neuesten physischen Slot; alle vollständigen Einträge einschließlich Duplikaten und ungeordneten Zeiten bleiben erhalten. Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Unbekannte Einzelwerte bleiben unverändert im Rohdatensatz, ohne erfundene Zeit/Position. Gen1/Gen2 versuchen diese Datei nicht.
+Vollständige Datei: 2-Byte-Zeiger plus 1120 × 17 Bytes = 19042 Bytes. Kapazität aus der bereits gelesenen 10-Byte-EF Application_Identification_V2 (0525): 2-Byte-Folgelänge 8, danach 2-Byte-Kapazität an Offset 2–3. Eine fehlende/verkürzte V2-Erweiterung oder ungültige neue Kapazität betrifft nur Border_Crossings; die übrigen EFs bleiben unabhängig lesbar. Ringreihenfolge beginnt nach dem neuesten physischen Slot; alle vollständigen Einträge einschließlich Duplikaten und ungeordneten Zeiten bleiben erhalten. Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Unbekannte Einzelwerte bleiben unverändert im Rohdatensatz, ohne erfundene Zeit/Position. Gen1/Gen2 versuchen diese Datei nicht.
 
 Die Datei enthält ausdrücklich auch Ländereinträge beim Einlegen der Karte. `countryLeft=00` bedeutet keine Information; `countryEntered=FF` bedeutet Rest der Welt, nicht fehlendes Land. Deshalb heißt die Ansicht „Grenz- und Ländereinträge“ und weist Karteneinlage als mögliche Herkunft aus. Keine automatische Behauptung, jeder Datensatz beweise einen Grenzübertritt. Der GNSS-Status ist im Datensatz enthalten, wird nicht mit einer anderen Statusdatei verbunden und ist keine kryptografische Prüfung dieser App.
 
@@ -30,6 +30,6 @@ Die Detailansicht nutzt ausschließlich die ausgewählte eigene Sitzung. Positio
 
 ## Prüfung und notwendiger Gerätetest
 
-16 vorbereitete Parser-Tests weitergeführt, fünf Reader-Tests, sieben echte SQLCipher-Quellen-/Rollback-/Upgrade-Tests, ein Room-Migrationstest und drei Compose-Tests ergänzt. Vollständige CI einschließlich SQLCipher/Room/Compose am finalen Kopf und echter KSP-Export 14.json sind vor Ausgabe nachzuweisen. Kein handgeschriebener Schemaexport. Aktueller Nachweis im Draft-PR und WORK_HANDOFF.
+16 vorbereitete Parser-Tests weitergeführt, sechs Reader-Tests, sieben echte SQLCipher-Quellen-/Rollback-/Upgrade-Tests, ein Room-Migrationstest und vier Compose-Tests ergänzt. Vollständige CI einschließlich SQLCipher/Room/Compose am finalen Kopf und echter KSP-Export 14.json sind vor Ausgabe nachzuweisen. Kein handgeschriebener Schemaexport. Aktueller Nachweis im Draft-PR und WORK_HANDOFF.
 
 Testversion 40112, unverändertes Paket `de.fahrerabrechnung.app.devicetest` und festes öffentliches Testzertifikat. CI prüft das Schema-13/40111→Schema-14/40112-Paar; ausgegebene ZIP enthält ausschließlich das Update sowie Anleitung, Buildherkunft und Prüfsummen. [Gerätetest](BORDER_CROSSINGS_DEVICE_TEST.md) vor Merge erforderlich. Keine erfolgreiche Hardwareprüfung dieser neuen Quelle behaupten.

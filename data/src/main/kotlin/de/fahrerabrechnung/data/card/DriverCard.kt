@@ -248,8 +248,10 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
-            val applicationV2 = if (generation == CardGeneration.GEN2V2)
-                readFile(session, DriverCardFiles.APPLICATION_V2, 10) else null
+            // The V2 extension supplies the new EF's capacity. A failure must not discard legacy EFs.
+            val applicationV2 = if (generation == CardGeneration.GEN2V2) try {
+                readFile(session, DriverCardFiles.APPLICATION_V2, 10)
+            } catch (_: ReaderException) { null } else null
             return try {
                 val application = g2 ?: g1!!
                 val identity = DriverCardDecoder.identity(
@@ -303,7 +305,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                         CardPlacesAuthenticationParser.fileLength(generation))).also { CardPlacesAuthenticationParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 val borderCrossings = if (supportsAuthentication) try {
-                    val count = DriverCardDecoder.borderCrossingCount(checkNotNull(applicationV2), generation)
+                    val count = DriverCardDecoder.borderCrossingCount(applicationV2
+                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable border capacity"), generation)
                     CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
                         CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
