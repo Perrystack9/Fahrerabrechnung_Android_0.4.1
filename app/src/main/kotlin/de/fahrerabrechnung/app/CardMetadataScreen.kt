@@ -15,6 +15,8 @@ internal fun CardMetadataKind.metadataTitle(): String = when (this) {
     CardMetadataKind.DRIVING_LICENCE -> "Führerschein"
     CardMetadataKind.CURRENT_USAGE -> "Karten-Nutzungseintrag"
     CardMetadataKind.LAST_CARD_DOWNLOAD -> "Download-Zeitpunkt"
+    CardMetadataKind.ICC_IDENTIFICATION -> "Kartenkennung"
+    CardMetadataKind.IC_IDENTIFICATION -> "Chipkennung"
 }
 
 /** Read-only snapshot from the exact selected own-card session, with no inferred facts. */
@@ -64,11 +66,39 @@ internal fun CardMetadataScreen(padding: PaddingValues, kind: CardMetadataKind, 
                         Text("Der Kartenwert ist kein Nachweis eines Downloads durch diese App.",
                             style = MaterialTheme.typography.bodySmall)
                     }
+                    is CardIccIdentificationRecord -> {
+                        Text(if (showNumber) "Kartenseriennummer: ${record.serialNumberRaw}" else "Kartenseriennummer: verborgen")
+                        OutlinedButton(onClick = { showNumber = !showNumber }) {
+                            Text(if (showNumber) "Kennung verbergen" else "Kennung anzeigen")
+                        }
+                        Text("Taktstopp-Code: Kartenwert ${record.clockStopRaw}")
+                        Text("Herstellercode der Karte: Kartenwert ${record.manufacturerCodeRaw}")
+                        Text("Kartentyp-Code: Kartenwert ${record.equipmentTypeRaw}")
+                        Text(record.monthYearText?.let { "Monat/Jahr-Code: $it (Jahr zweistellig)" }
+                            ?: "Monat/Jahr-Code: nicht lesbar (Rohwert ${record.monthYearRaw.joinToString(" ") { "%02X".format(it) }})")
+                        Text(record.approvalNumberText?.let { "Bauartgenehmigung: $it" }
+                            ?: "Bauartgenehmigung: nicht angegeben oder nicht lesbar")
+                        Text("Personalisierer-Code: Kartenwert ${record.personaliserIdRaw}")
+                        Text("Einbettungsland-Rohwert: ${record.embedderCountryRaw.joinToString(" ") { "%02X".format(it) }}")
+                        Text("Modul-Einbetter-Code: Kartenwert ${record.moduleEmbedderRaw}")
+                        Text("Herstellerinformation-Rohwert: ${record.manufacturerInformationRaw.joinToString(" ") { "%02X".format(it) }}")
+                        Text("IC-Kennung-Rohwert: ${record.icIdentifierRaw.joinToString(" ") { "%02X".format(it) }}")
+                        Text("Der Monat/Jahr-Code bezeichnet Herstellung oder Serienvergabe; er legt kein vollständiges Datum fest.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    is CardChipIdentificationRecord -> {
+                        Text(if (showNumber) "Chipkennung: ${record.identifierHex}" else "Chipkennung: verborgen")
+                        OutlinedButton(onClick = { showNumber = !showNumber }) {
+                            Text(if (showNumber) "Kennung verbergen" else "Kennung anzeigen")
+                        }
+                        Text("Die Chipkennung besteht aus Serienbytes und Herstellerreferenz.", style = MaterialTheme.typography.bodySmall)
+                    }
                     null -> Unit
                 }
             }
         }
-        if (kind != CardMetadataKind.DRIVING_LICENCE)
+        if (kind.inMasterFile) Text("Diese Kartenwerte sind kein kryptografischer Echtheitsnachweis.", style = MaterialTheme.typography.bodySmall)
+        if (kind in setOf(CardMetadataKind.CURRENT_USAGE, CardMetadataKind.LAST_CARD_DOWNLOAD))
             Text("Ortszeit (${zone.id}).", style = MaterialTheme.typography.bodySmall)
     }
 }

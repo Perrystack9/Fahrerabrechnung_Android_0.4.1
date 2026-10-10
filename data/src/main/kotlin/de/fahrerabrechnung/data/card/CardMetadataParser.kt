@@ -5,8 +5,9 @@ import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
 import java.time.Instant
 
-enum class CardMetadataKind(val fileId: Int, val fileLength: Int) {
-    DRIVING_LICENCE(0x0521, 53), CURRENT_USAGE(0x0507, 19), LAST_CARD_DOWNLOAD(0x050E, 4)
+enum class CardMetadataKind(val fileId: Int, val fileLength: Int, val inMasterFile: Boolean = false) {
+    DRIVING_LICENCE(0x0521, 53), CURRENT_USAGE(0x0507, 19), LAST_CARD_DOWNLOAD(0x050E, 4),
+    ICC_IDENTIFICATION(0x0002, 25, true), IC_IDENTIFICATION(0x0005, 8, true)
 }
 
 /** Original complete read-only metadata EF in the selected card application. */
@@ -90,6 +91,7 @@ object CardMetadataParser {
                 }
             }
             CardMetadataKind.LAST_CARD_DOWNLOAD -> CardDownloadRecord(r.u32be("lastCardDownload"))
+            CardMetadataKind.ICC_IDENTIFICATION, CardMetadataKind.IC_IDENTIFICATION -> CardMasterFileParser.parse(file)
         }
     }
 }

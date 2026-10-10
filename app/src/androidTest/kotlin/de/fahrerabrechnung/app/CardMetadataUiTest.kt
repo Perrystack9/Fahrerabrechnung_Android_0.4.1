@@ -28,6 +28,8 @@ class CardMetadataUiTest {
                 "TEST OWN".toByteArray().copyInto(bytes, 6)
             }
             CardMetadataKind.LAST_CARD_DOWNLOAD -> ByteBuffer.wrap(bytes).putInt(1790000200)
+            CardMetadataKind.ICC_IDENTIFICATION -> bytes[8] = 253.toByte()
+            CardMetadataKind.IC_IDENTIFICATION -> bytes[0] = 127
         }
         val file = CardMetadataFile(kind, CardGeneration.GEN2V2, bytes)
         return SavedCardMetadata(id, "own", file, CardMetadataParser.parse(file), 0)

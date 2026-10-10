@@ -109,6 +109,8 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.DRIVING_LICENCE_INFO -> "Führerscheininformation"
         CardImportFileKind.CURRENT_USAGE -> "Karten-Nutzungseintrag"
         CardImportFileKind.LAST_CARD_DOWNLOAD -> "Download-Zeitpunkt"
+        CardImportFileKind.ICC_IDENTIFICATION -> "Kartenkennung"
+        CardImportFileKind.IC_IDENTIFICATION -> "Chipkennung"
         CardImportFileKind.WORK_PERIOD_PLACES -> "Beginn-/Ende-Orte"
         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> "Orts-Authentisierungsstatus"
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
@@ -116,7 +118,7 @@ private fun CardImportFileResult.description(): String {
     return when (status) {
         CardImportFileStatus.STORED -> if (kind == CardImportFileKind.CONTROLS && decodedCount == 0)
             "Kontrolldaten: übernommen, keine Kontrolle aufgezeichnet"
-            else if (kind in setOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS, CardImportFileKind.SPECIFIC_CONDITIONS, CardImportFileKind.GNSS_POSITIONS, CardImportFileKind.GNSS_AUTHENTICATION, CardImportFileKind.WORK_PERIOD_PLACES, CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION, CardImportFileKind.BORDER_CROSSINGS, CardImportFileKind.LOAD_UNLOAD_OPERATIONS, CardImportFileKind.LOAD_TYPE_ENTRIES, CardImportFileKind.VEHICLE_UNITS_USED, CardImportFileKind.DRIVING_LICENCE_INFO, CardImportFileKind.CURRENT_USAGE, CardImportFileKind.LAST_CARD_DOWNLOAD) && decodedCount == 0)
+            else if (kind in setOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS, CardImportFileKind.SPECIFIC_CONDITIONS, CardImportFileKind.GNSS_POSITIONS, CardImportFileKind.GNSS_AUTHENTICATION, CardImportFileKind.WORK_PERIOD_PLACES, CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION, CardImportFileKind.BORDER_CROSSINGS, CardImportFileKind.LOAD_UNLOAD_OPERATIONS, CardImportFileKind.LOAD_TYPE_ENTRIES, CardImportFileKind.VEHICLE_UNITS_USED, CardImportFileKind.DRIVING_LICENCE_INFO, CardImportFileKind.CURRENT_USAGE, CardImportFileKind.LAST_CARD_DOWNLOAD, CardImportFileKind.ICC_IDENTIFICATION, CardImportFileKind.IC_IDENTIFICATION) && decodedCount == 0)
                 "$label: übernommen, keine Aufzeichnung" else "$label: $decodedCount gespeichert"
         CardImportFileStatus.READY -> "$label: Übernahme läuft"
         CardImportFileStatus.MISSING -> "$label: nicht verfügbar"

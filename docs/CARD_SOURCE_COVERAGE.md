@@ -1,4 +1,4 @@
-# Abdeckung der Fahrerkarte nach den festen Kartenquellen
+# Abdeckung der Fahrerkarte nach den MF-Identifikationsquellen
 
 Stand10.10.2026: getesteter Main-Stand PR53, neue Be-/Entlade-, Ladungsart-, Fahrtenschreiber- und Metadatenquellen in ungemergten Folge-Entwürfen. „Implementiert“ beschreibt den Codeumfang; Gerätebestätigung und vollständige CI stehen für die neuen Quellen separat aus. Vollständige Kartenabdeckung wird noch nicht behauptet.
 
@@ -20,7 +20,9 @@ Stand10.10.2026: getesteter Main-Stand PR53, neue Be-/Entlade-, Ladungsart-, Fah
 | VehicleUnits_Used | `0523` | Gen2/Gen2V2 | PR56, eigene Quelle und unabhängiger Zähler |
 | Driving_Licence_Info | `0521` | Gen1/Gen2/Gen2V2 | neuer unabhängiger Entwurf,53Byte; Nummer zunächst verborgen |
 | Current_Usage | `0507` | Gen1/Gen2/Gen2V2 | neuer unabhängiger Entwurf,19Byte; historischer Kartenstand |
-| Card_Download | `050E` | Gen1/Gen2/Gen2V2 | neuer unabhängiger Entwurf,4Byte; ausschließlich lesen |
+| Card_Download | `050E` | Gen1/Gen2/Gen2V2 | PR57,4Byte; ausschließlich lesen |
+| ICC-Identifikation | `0002` unter MF | Gen1/Gen2/Gen2V2 | neuer unabhängiger Entwurf,25Byte; vor AID, Serienwert verborgen |
+| IC-Identifikation | `0005` unter MF | Gen1/Gen2/Gen2V2 | neuer unabhängiger Entwurf,8Originalbytes; vor AID, Kennung verborgen |
 
 Application_Identification (`0501`), Application_Identification_V2 (`0525`) und Identification (`0520`) werden zur Generation, Kapazität und Profil-/Kartenbindung gelesen. Das ist nicht gleichbedeutend mit einer eigenen unveränderten Rohdatei-Archivierung sämtlicher Metadaten.
 
@@ -44,3 +46,7 @@ Die amtlichen ASN.1-, Byte- und Kapazitätstabellen sind vollständig visuell ge
 ## Feste Kartenquellen
 
 Die drei amtlichen Dateien sind unabhängig angebunden. Rohtext, Zeichensatzcodes und Originalzeiten bleiben erhalten; Führerscheinnummer nur auf ausdrückliches Anzeigen. Kein Live-Status, keine Führerschein-Gültigkeitsprüfung und keine Aktualisierung von Card_Download. [CARD_METADATA_IMPORT.md](CARD_METADATA_IMPORT.md) beschreibt Format, Herkunft und Tests. Abdeckung jetzt17 Quellen; finale Compiler-/CI-Prüfung und Hardwarebestätigung stehen separat aus.
+
+## MF-Identifikation
+
+EF ICC und EF IC sind nun nach amtlich geprüfter Reset-/Vor-AID-Reihenfolge angebunden; Originaldateien getrennt zur exakt gewählten eigenen Karte/Sitzung. Kein neues Profilmatching aus diesen Werten, kein Echtzeit-/Datum-/Echtheitsbeleg. [CARD_MASTER_FILE_IMPORT.md](CARD_MASTER_FILE_IMPORT.md). Abdeckung jetzt19 Quellen. Schema18 unverändert; finale CI und spätere Hardwarebestätigung stehen aus. EF DIR sowie bedingte ATR/INFO- und Extended_Length-Information sind weitere offene MF-Metadaten.

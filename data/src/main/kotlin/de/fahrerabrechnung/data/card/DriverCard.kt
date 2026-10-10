@@ -291,6 +291,11 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             }
             AtrDecoder.parse(transport.powerOn())
             val session = ApduSession(transport)
+            // TCS18: MF is the current directory immediately after ATR. Read its EFs before
+            // selecting either application; retain only temporary bytes until driver identification.
+            val masterFiles = CardMetadataKind.entries.filter { it.inMasterFile }.associateWith { kind ->
+                try { readFile(session, kind.fileId, kind.fileLength) } catch (_: ReaderException) { null }
+            }
             val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
@@ -375,11 +380,15 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardVehicleUnitsFile(generation, count, readFile(session, DriverCardFiles.VEHICLE_UNITS,
                         CardVehicleUnitsParser.fileLength(generation, count))).also { CardVehicleUnitsParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val metadata = CardMetadataKind.entries.associateWith { kind ->
+                val metadata = CardMetadataKind.entries.filter { !it.inMasterFile }.associateWith { kind ->
                     val file = try {
                         CardMetadataFile(kind, generation, readFile(session, kind.fileId, kind.fileLength))
                             .also { CardMetadataParser.parse(it) }
                     } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                    CardMetadataRead(file, readFailed = file == null)
+                } + masterFiles.mapValues { (kind, bytes) ->
+                    val file = try { bytes?.let { CardMetadataFile(kind, generation, it).also { frozen -> CardMetadataParser.parse(frozen) } } }
+                    catch (_: ParseError) { null }
                     CardMetadataRead(file, readFailed = file == null)
                 }
                 CardReadResult(recognized, generation, identity, activity, vehicles,

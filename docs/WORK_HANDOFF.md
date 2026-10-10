@@ -1,3 +1,13 @@
+# Aktueller MF-Entwurf im laufenden zweiten Arbeitsblock
+
+Neuer Branch feature/card-master-file-import auf PR57-Head48d7e0053b2eaef56f6ed9de54a7e06f70e26db1 (inklusive PR56-Korrektur79d79ab4bde565c7851e2291dcc7c0b43c188089). Zwei neue unabhängige MF-Quellen EF ICC0002/25Byte und EF IC0005/8Byte. Amtliche ASN.1-/Byte-/Reset-/SELECT-Tabellen visuell geprüft: beide nach ATR vor erster AID lesen, keine neue MF-Select-Variante, keine Kartenbindung aus Serien-/Chipwerten. Nummern/Kennungen verborgen bis Antippen. Schema18 unverändert, version40117,19Quellen möglich.37 neue synthetische Tests. Keine Nachbefüllung, keine Kartenschreibbefehle.
+
+PR55 vollständig grün. PR56-CI38087221502 und PR57-CI38087497362 laufen. Authentischer Schema18-Export70340ea11ae74941615f56e0297b5c711fb7d3acf44a63bc981daccccfb8ac3b erhalten. Neuer MF-Entwurf braucht eigene vollständige CI einschließlich Room/SQLCipher/Compose und Updatepaar; noch kein Gerätebeleg, ungemergt lassen. Spätere kumulative Anleitung CARD_MASTER_FILE_DEVICE_TEST.md. Ausgangspunkt weiter PR53/40112/Schema14 und feste deviceTest-Signatur/Paketkennung.
+
+Zweiter Arbeitsblock nach Nutzerwunsch endet22:34:51UTC /11.10.00:34:51Berlin. Hardware/APK-Ausgabe unverändert frühestens22:56:06UTC /00:56:06Berlin; Ausgabetask00:57Berlin darf ausschließlich neuestes vollständig grünes exaktes Head verwenden, keine parallele Implementierung starten.
+
+---
+
 # Echter Schema18-Export und korrigierte Dateigrenze
 
 KSP-Compilerexport18 aus CI38086827094 Versuch1, Artifact11682788686 unverändert übernommen: ZIP322904Byte, SHA256626cdbf5b155cbf54791d7cc8f0a054fdb36ecebfc293537de535d833cd0593d; Schema99557Byte, SHA25670340ea11ae74941615f56e0297b5c711fb7d3acf44a63bc981daccccfb8ac3b. Alle36 alten Entitäten identisch zu17; Migration17→18 stimmt mit allen38 Tabellen einschließlich Spalten, Schlüssel und Indizes überein. Keine Nachbefüllung.

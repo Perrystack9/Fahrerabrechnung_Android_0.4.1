@@ -61,6 +61,8 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.DRIVING_LICENCE_INFO -> Text("Führerscheininformation übernommen")
                         CardImportFileKind.CURRENT_USAGE -> Text("Karten-Nutzungseintrag übernommen")
                         CardImportFileKind.LAST_CARD_DOWNLOAD -> Text("Download-Zeitpunkt übernommen")
+                        CardImportFileKind.ICC_IDENTIFICATION -> Text("Kartenkennung übernommen")
+                        CardImportFileKind.IC_IDENTIFICATION -> Text("Chipkennung übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")

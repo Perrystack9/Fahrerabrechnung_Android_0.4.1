@@ -984,7 +984,12 @@ class DriverCardFoundationTest {
             ByteBuffer.wrap(it).putInt(1790000100).put(13.toByte()).put(1.toByte())
             "TEST OWN".toByteArray().copyInto(it, 6)
         },
-        CardMetadataKind.LAST_CARD_DOWNLOAD to ByteBuffer.allocate(4).putInt(1790000200).array())
+        CardMetadataKind.LAST_CARD_DOWNLOAD to ByteBuffer.allocate(4).putInt(1790000200).array(),
+        CardMetadataKind.ICC_IDENTIFICATION to ByteBuffer.allocate(25).put(253.toByte()).putInt(0x80000001.toInt())
+            .put(byteArrayOf(0x10, 0x26)).put(254.toByte()).put(253.toByte()).put("AB-01234".toByteArray())
+            .put(252.toByte()).put("DE".toByteArray()).put(251.toByte()).put(byteArrayOf(255.toByte(), 128.toByte()))
+            .put(byteArrayOf(0, 127)).array(),
+        CardMetadataKind.IC_IDENTIFICATION to byteArrayOf(0, 127, 128.toByte(), 255.toByte(), 222.toByte(), 173.toByte(), 190.toByte(), 239.toByte()))
 
     @Test fun threeFixedMetadataFilesUseExactLengthsInEverySupportedGenerationAndOnlyReadCommands() = runBlocking {
         for (g in supportedGenerations) {
@@ -1061,10 +1066,10 @@ class DriverCardFoundationTest {
         assertEquals(3, fake.metadataReads.getValue(CardMetadataKind.CURRENT_USAGE.fileId).size)
         assertEquals(1, fake.metadataReads.getValue(CardMetadataKind.LAST_CARD_DOWNLOAD.fileId).size)
     }
-    @Test fun unknownCardDoesNotAttemptDriverMetadata() = runBlocking {
+    @Test fun unknownCardDoesNotAttemptApplicationMetadataOrRetainMasterBytes() = runBlocking {
         val fake = CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())
         assertTrue(DriverCardReader(fake).read().metadata.isEmpty())
-        assertTrue(CardMetadataKind.entries.none { it.fileId in fake.readFiles }); assertTrue(fake.closed)
+        assertTrue(CardMetadataKind.entries.filter { !it.inMasterFile }.none { it.fileId in fake.readFiles }); assertTrue(fake.closed)
     }
 
     @Test fun sixteenByteApplicationIsRejectedInsteadOfBecomingLegacyFifteen() = runBlocking {
@@ -1090,6 +1095,73 @@ class DriverCardFoundationTest {
         try { DriverCardReader(fake).read(); fail("Timeout expected") }
         catch (error: ReaderException) { assertEquals(ReaderFailure.TIMEOUT, error.failure) }
         assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+
+    @Test fun masterEfsAreReadOnlyBeforeAnyApplicationSelectionInAllThreeGenerations() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), metadataBytes = metadataFixtureBytes())
+            val result = DriverCardReader(fake).read()
+            assertEquals(listOf(0xA4 to 0x0002, 0xB0 to 0x0002, 0xA4 to 0x0005, 0xB0 to 0x0005), fake.commandOrder.take(4))
+            assertEquals(0xA4 to 0, fake.commandOrder[4])
+            for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) {
+                assertArrayEquals(metadataFixtureBytes().getValue(kind), result.metadata.getValue(kind).file!!.bytes)
+                assertEquals(generation, result.metadata.getValue(kind).file!!.generation)
+            }
+            assertTrue(fake.instructions.all { it == 0xA4 || it == 0xB0 }); assertTrue(fake.closed)
+        }
+    }
+    @Test fun masterSourceFailureNeverPreventsTheOtherMasterOrApplicationSources() = runBlocking {
+        for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), metadataBytes = metadataFixtureBytes(),
+                metadataFailures = mapOf(kind to ReaderException(ReaderFailure.TIMEOUT)))
+            val result = DriverCardReader(fake).read()
+            assertNull(result.metadata.getValue(kind).file); assertTrue(result.metadata.getValue(kind).readFailed)
+            assertTrue(result.metadata.filterKeys { it != kind }.values.all { !it.readFailed && it.file != null })
+            assertNotNull(result.activity); assertNotNull(result.vehicleUnits); assertNotNull(result.places)
+        }
+    }
+    @Test fun masterBytesCannotBeRetainedOnUnknownOrNonDriverApplications() = runBlocking {
+        for (generation in listOf(CardGeneration.UNKNOWN, CardGeneration.GEN2)) {
+            val app = if (generation == CardGeneration.GEN2) ByteArray(17).also { it[0] = 4; it[1] = 1 } else null
+            val fake = CardFixtureTransport(generation, identityFixture(), metadataBytes = metadataFixtureBytes(), applicationBytes = app)
+            val result = DriverCardReader(fake).read()
+            assertNotEquals(CardRecognition.DRIVER, result.recognition); assertTrue(result.metadata.isEmpty())
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun inconsistentDriverIdentityDiscardsTemporaryMasterBytes() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, ByteArray(143), metadataBytes = metadataFixtureBytes())
+        val result = DriverCardReader(fake).read()
+        assertEquals(CardRecognition.INCONSISTENT, result.recognition); assertTrue(result.metadata.isEmpty()); assertTrue(fake.closed)
+    }
+    @Test fun applicationSelectionFailureDiscardsTemporaryMasterBytesAndClosesReader() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), metadataBytes = metadataFixtureBytes(),
+            applicationTailFailure = ReaderException(ReaderFailure.DISCONNECTED))
+        try { DriverCardReader(fake).read(); fail("Disconnection expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.DISCONNECTED, error.failure) }
+        assertTrue(fake.closed)
+    }
+    @Test fun masterCancellationPropagatesBeforeApplicationSelectionAtEitherFile() = runBlocking {
+        for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                metadataFailures = mapOf(kind to kotlinx.coroutines.CancellationException("fixture")))
+            try { DriverCardReader(fake).read(); fail("Cancellation expected") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertFalse(fake.aidSelected); assertTrue(fake.closed) }
+        }
+    }
+    @Test fun shortMasterResponsesContinueToExactTwentyFiveAndEightByteFiles() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN1, identityFixture(), metadataBytes = metadataFixtureBytes(), metadataChunkLimit = 3)
+        val result = DriverCardReader(fake).read()
+        for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) assertArrayEquals(metadataFixtureBytes().getValue(kind), result.metadata.getValue(kind).file!!.bytes)
+        assertEquals(9, fake.metadataReads.getValue(0x0002).size); assertEquals(3, fake.metadataReads.getValue(0x0005).size)
+    }
+    @Test fun malformedMasterLengthsRemainIndependentFromDriverRecognitionAndOtherMetadata() = runBlocking {
+        for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) {
+            val input = metadataFixtureBytes().toMutableMap(); input[kind] = input.getValue(kind).copyOf(kind.fileLength - 1)
+            val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2, identityFixture(), metadataBytes = input)).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition); assertTrue(result.metadata.getValue(kind).readFailed)
+            assertTrue(result.metadata.filterKeys { it != kind }.values.all { it.file != null && !it.readFailed })
+        }
     }
 
     private class CardFixtureTransport(private val generation: CardGeneration,
@@ -1149,6 +1221,8 @@ class DriverCardFoundationTest {
         val metadataReads = mutableMapOf<Int, MutableList<Pair<Int, Int>>>()
         val instructions = mutableListOf<Int>()
         private var selected = false
+        var aidSelected = false
+        val commandOrder = mutableListOf<Pair<Int, Int>>()
         private var file = 0
         override suspend fun availability() = SourceAvailability.AVAILABLE
         override suspend fun open() = ReaderState.Open
@@ -1157,6 +1231,8 @@ class DriverCardFoundationTest {
             val ins = apdu[1].toInt() and 255
             instructions += ins
             if (ins == 0xA4 && apdu[2].toInt() == 4) {
+                aidSelected = true
+                commandOrder += ins to 0
                 val aid = apdu.copyOfRange(5, apdu.size)
                 selected = when {
                     generation == CardGeneration.UNKNOWN -> false
@@ -1166,12 +1242,18 @@ class DriverCardFoundationTest {
                 }
                 return if (selected) byteArrayOf(0x90.toByte(), 0) else byteArrayOf(0x6A, 0x82.toByte())
             }
-            if (ins == 0xA4 && selected) {
+            if (ins == 0xA4) {
                 file = (apdu[5].toInt() and 255) shl 8 or (apdu[6].toInt() and 255)
+                commandOrder += ins to file
+                val master = CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                if ((master && aidSelected) || (!master && !selected)) return byteArrayOf(0x6A, 0x82.toByte())
                 if (file in missingFiles) return byteArrayOf(0x6A, 0x82.toByte())
                 return byteArrayOf(0x90.toByte(), 0)
             }
-            if (ins == 0xB0 && selected) {
+            if (ins == 0xB0) {
+                commandOrder += ins to file
+                val master = CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                if ((master && aidSelected) || (!master && !selected)) throw AssertionError("Wrong card directory")
                 readFiles += file
                 if (file == DriverCardFiles.DRIVER_ACTIVITY) activityFailure?.let { throw it }
                 if (file == DriverCardFiles.CONTROL_ACTIVITY) controlFailure?.let { throw it }
@@ -1189,6 +1271,8 @@ class DriverCardFoundationTest {
                 val metadataKind = CardMetadataKind.entries.firstOrNull { it.fileId == file }
                 metadataKind?.let { metadataFailures[it]?.let { failure -> throw failure } }
                 val data = when (file) {
+                    CardMetadataKind.ICC_IDENTIFICATION.fileId -> metadataBytes[CardMetadataKind.ICC_IDENTIFICATION] ?: ByteArray(25)
+                    CardMetadataKind.IC_IDENTIFICATION.fileId -> metadataBytes[CardMetadataKind.IC_IDENTIFICATION] ?: ByteArray(8)
                     CardMetadataKind.DRIVING_LICENCE.fileId -> metadataBytes[CardMetadataKind.DRIVING_LICENCE] ?: ByteArray(53)
                     CardMetadataKind.CURRENT_USAGE.fileId -> metadataBytes[CardMetadataKind.CURRENT_USAGE] ?: ByteArray(19)
                     CardMetadataKind.LAST_CARD_DOWNLOAD.fileId -> metadataBytes[CardMetadataKind.LAST_CARD_DOWNLOAD] ?: ByteArray(4)

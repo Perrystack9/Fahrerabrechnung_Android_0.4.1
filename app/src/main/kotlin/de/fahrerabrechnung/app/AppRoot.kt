@@ -105,6 +105,8 @@ private object DetailRoutes {
     const val CARD_LICENCE = "card_licence"
     const val CARD_USAGE = "card_usage"
     const val CARD_DOWNLOAD = "card_download"
+    const val CARD_ICC = "card_icc"
+    const val CARD_IC = "card_ic"
     const val CARD_SPECIFIC_CONDITIONS = "card_specific_conditions"
     const val VEHICLE_DETAIL = "vehicle_detail"
     const val SETTINGS_SUBPAGE = "settings_subpage"
@@ -495,6 +497,8 @@ fun AppRoot(
                             CardMetadataKind.DRIVING_LICENCE -> DetailRoutes.CARD_LICENCE
                             CardMetadataKind.CURRENT_USAGE -> DetailRoutes.CARD_USAGE
                             CardMetadataKind.LAST_CARD_DOWNLOAD -> DetailRoutes.CARD_DOWNLOAD
+                            CardMetadataKind.ICC_IDENTIFICATION -> DetailRoutes.CARD_ICC
+                            CardMetadataKind.IC_IDENTIFICATION -> DetailRoutes.CARD_IC
                         }) })
             }
             composable(DetailRoutes.CARD_CONTROLS) {
@@ -506,7 +510,8 @@ fun AppRoot(
                     CardEventFaultScreen(padding, selectedEventSnapshot, selectedFaultSnapshot)
             }
             for ((route, kind) in listOf(DetailRoutes.CARD_LICENCE to CardMetadataKind.DRIVING_LICENCE,
-                DetailRoutes.CARD_USAGE to CardMetadataKind.CURRENT_USAGE, DetailRoutes.CARD_DOWNLOAD to CardMetadataKind.LAST_CARD_DOWNLOAD)) {
+                DetailRoutes.CARD_USAGE to CardMetadataKind.CURRENT_USAGE, DetailRoutes.CARD_DOWNLOAD to CardMetadataKind.LAST_CARD_DOWNLOAD, DetailRoutes.CARD_ICC to CardMetadataKind.ICC_IDENTIFICATION,
+                DetailRoutes.CARD_IC to CardMetadataKind.IC_IDENTIFICATION)) {
                 composable(route) {
                     if (visibleRoute.value == route && !previewIsArchive && driverCardImports != null)
                         CardMetadataScreen(padding, kind, selectedMetadata[kind])

@@ -556,6 +556,8 @@ class AutomaticCardImportUiTest {
                     "TEST OWN".toByteArray().copyInto(bytes, 6)
                 }
                 CardMetadataKind.LAST_CARD_DOWNLOAD -> ByteBuffer.wrap(bytes).putInt(if (code == 1) 0 else 1790000200)
+                CardMetadataKind.ICC_IDENTIFICATION -> bytes[8] = code.toByte()
+                CardMetadataKind.IC_IDENTIFICATION -> bytes[0] = code.toByte()
             }
             return CardMetadataRead(CardMetadataFile(kind, CardGeneration.GEN2V2, bytes))
         }
@@ -578,7 +580,12 @@ class AutomaticCardImportUiTest {
             compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
             compose.onNodeWithText(title).performScrollTo().performClick()
         }
-        open("early-metadata-only"); await(firstText)
+        open("early-metadata-only")
+        if (kind == CardMetadataKind.IC_IDENTIFICATION) {
+            compose.onNodeWithText("Chipkennung: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("Kennung anzeigen").performScrollTo().performClick()
+        }
+        await(firstText)
         compose.onNodeWithText(lastText, substring = true).assertDoesNotExist()
         if (kind == CardMetadataKind.DRIVING_LICENCE) {
             compose.onNodeWithText("Führerscheinnummer: verborgen").assertIsDisplayed()
@@ -592,6 +599,10 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithText("TEST-LICENCE-01", substring = true).assertDoesNotExist()
         repeat(3) { compose.onNodeWithTag("back").performClick() }
         open("latest-metadata")
+        if (kind == CardMetadataKind.IC_IDENTIFICATION) {
+            compose.onNodeWithText("Chipkennung: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("Kennung anzeigen").performScrollTo().performClick()
+        }
         compose.waitUntil(10_000) { compose.onAllNodesWithText(lastText, substring = true).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText(lastText, substring = true).assertIsDisplayed()
         compose.onNodeWithText(firstText, substring = true).assertDoesNotExist()
@@ -610,6 +621,13 @@ class AutomaticCardImportUiTest {
     @Test fun downloadHistoryNavigationKeepsEmptyAndMissingAndOriginalTimesDistinct() =
         metadataHistoryNavigation(CardMetadataKind.LAST_CARD_DOWNLOAD, "Download-Zeitpunkt",
             "In dieser Kartendatei ist kein Eintrag aufgezeichnet.", "Download-Zeitpunkt auf der Karte: ")
+
+    @Test fun iccHistoryNavigationUsesOnlyTheSelectedMasterSource() =
+        metadataHistoryNavigation(CardMetadataKind.ICC_IDENTIFICATION, "Kartenkennung",
+            "Herstellercode der Karte: Kartenwert 1", "Herstellercode der Karte: Kartenwert 7")
+    @Test fun chipHistoryNavigationUsesOnlyTheSelectedMasterSourceAndMasksItInitially() =
+        metadataHistoryNavigation(CardMetadataKind.IC_IDENTIFICATION, "Chipkennung",
+            "Chipkennung: 01 00 00 00 00 00 00 00", "Chipkennung: 07 00 00 00 00 00 00 00")
 
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
