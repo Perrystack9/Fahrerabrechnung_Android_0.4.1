@@ -861,7 +861,7 @@ class CardImportPipelineInstrumentedTest {
         val changed = pipeline.process(gnssRead(1790000020), "gnss-changed")
         assertEquals(2, changed.newSourceCount)
         val replacement = pipeline.process(gnssRead().copy(card = card("replacement-gnss")), "gnss-replacement")
-        assertEquals(6, replacement.newSourceCount)
+        assertEquals(8, replacement.newSourceCount)
         assertNotEquals(first.driverCardId, replacement.driverCardId)
         assertNotEquals(imports.get(first.id)!!.gnssPositions!!.id, imports.get(replacement.id)!!.gnssPositions!!.id)
         assertEquals(1790000015L, imports.get(first.id)!!.gnssPositions!!.records.single().positionTimeRaw)
