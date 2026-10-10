@@ -471,9 +471,6 @@ class AutomaticCardImportUiTest {
         assertEquals(3, runBlocking { pipeline.history().size })
     }
 
-    private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
-        ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
-
     @Test fun loadTypeNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
         fun load(type: Int): CardLoadTypeFile {
             val bytes = ByteArray(1682)

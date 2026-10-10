@@ -1,3 +1,5 @@
+Aktuelle Nutzerkorrektur10.10.2026 22:34:51 Europe/Berlin: Pause beendet, zweiter Block22:34:51–11.10.00:34:51. Doppelter Fortsetzungslauf22:56 deaktiviert; Ausgabe00:57 und früheste Hardware-/Paketzeit00:56:06 bleiben. Zuerst konkrete PR55-Instrumentationsursache beheben: versehentlich doppelte conditions(Int)-Testdefinition; kein Produkt-/Schemafehler im erfolgreichen Build behauptet. Neueste PR-Köpfe/CI prüfen. Der ursprüngliche Zeitplan darunter ist historisch.
+
 # Entwicklungspause und späteres gemeinsames Testupdate
 
 Tobi hat am10.10.2026 um19:56:06 Europe/Berlin angewiesen: eine Stunde weiterentwickeln, zwei Stunden Pause, noch zwei Stunden entwickeln, erst danach frühestens Hardwaretest. Erster Block endet20:56:06; Wiederaufnahme22:56:06; zweiter Block endet11.10.00:56:06. Die Fortsetzung ist für22:56:06 und die spätere Ausgabe für00:57 geplant. Keine aktive Entwicklung oder neue Gerätetestanforderung während der Pause. Laufende GitHub-CI muss nicht erneut angestoßen werden.
