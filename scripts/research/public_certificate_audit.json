@@ -1,0 +1,46 @@
+{
+  "archive_sha256": "b8ed453eb99f2a889b888c02b17eed33ee1e5c9c8dd0a6c182ced74a39b0ae5c",
+  "structurally_complete_public_examples": 115,
+  "malformed_framing_examples_rejected": 352,
+  "length_distribution": {
+    "204": 22,
+    "205": 23,
+    "237": 1,
+    "266": 22,
+    "270": 23,
+    "304": 1,
+    "337": 14,
+    "341": 9
+  },
+  "curve_distribution": {
+    "Brainpool P256r1": 23,
+    "Brainpool P384r1": 24,
+    "Brainpool P512r1": 13,
+    "NIST P-256": 22,
+    "NIST P-384": 22,
+    "NIST P-521": 11
+  },
+  "mixed_subject_and_issuer_sizes": [
+    [
+      237,
+      "Brainpool P384r1",
+      97,
+      64
+    ],
+    [
+      304,
+      "Brainpool P512r1",
+      129,
+      96
+    ],
+    [
+      337,
+      "NIST P-521",
+      133,
+      128
+    ]
+  ],
+  "mathematical_example_signatures": 115,
+  "production_trust_or_current_validity_checked": false,
+  "structurally_complete_changed_expiry_rejects_signature": true
+}
