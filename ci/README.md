@@ -10,10 +10,10 @@ Die PR-28-/PR-30-Debug-APKs und die bisher ausgelieferte PR-30-Internal-APK besi
 
 `scripts/build_device_test_update.sh` erzeugt ein überprüftes Paar für den echten Update-Test:
 
-1. Schema-10-Produktcode aus dem festgehaltenen main-Commit `10eefb6d8b33f119948349d3ffea63f0c55c25cf` (PR #43, vollständige CI mit 262 Tests; Hardwarebasis PR #41), mit demselben Testpaket/Schlüssel und kleinerem Test-Versionscode **40107**.
-2. Aktueller `deviceTest`-Build mit zusätzlicher Sonderbedingungsquelle, Schema 11, Versionscode **40108** oder höher.
+1. Schema-11-Produktcode aus dem gemergten PR-45-Commit `9f24a48845367502e585c87b1eb8e63f370b3dfb`, mit demselben Testpaket/Schlüssel und kleinerem Test-Versionscode **40109**.
+2. Aktueller `deviceTest`-Build mit zusätzlichen GNSS-Quellen, Schema 12, Versionscode **40110**.
 
-Für die Ausgangsversion werden ausschließlich Buildkonfiguration, Testlabel und Testschlüssel aus dem aktuellen Stand übernommen. Ihr Produktcode und Room-Schema stammen vollständig aus dem genannten Schema-10-Stand. Nach Installation des Updates die Ausgangsversion nicht erneut installieren. Mit der bereits eingerichteten PR-41-Test-App nur die aktuelle Update-APK verwenden; keine neue Ausgangsinstallation oder Löschung vorhandener Daten.
+Für die Ausgangsversion werden ausschließlich Buildkonfiguration, Testlabel und Testschlüssel aus dem aktuellen Stand übernommen. Ihr Produktcode und Room-Schema stammen vollständig aus dem genannten Schema-11-Stand. Nach Installation des Updates die Ausgangsversion nicht erneut installieren. Mit der bereits eingerichteten PR-41-Test-App nur die aktuelle Update-APK verwenden; keine neue Ausgangsinstallation oder Löschung vorhandener Daten.
 
 Das zuvor ausgelieferte PR-32-Paar enthielt Schema 5 aus `6587515d4afa5d20c6c5dc6a227eb863695b6519` mit Versionscode 40100 und Schema 6 mit 40101. Sein echtes Update wurde am 02.10.2026 bestanden; Herkunft und Prüfsummen stehen in WORK_HANDOFF.
 
@@ -28,3 +28,5 @@ Der Marker-Folgeschritt ist reine Quellenprojektion/UI: keine neue Lesung, Speic
 Der Sonderbedingungs-Importschritt (PR #44) verwendet Schema 11 auf main; finale CI samt KSP-Schemaexport grün, 292 Tests. Test-ZIP 40107→40108 bereitgestellt. Der Nutzer hat den vorgesehenen Hardwaretest ausdrücklich übersprungen; PR nach erneuter Codeprüfung unverändert gemergt. Kein bestätigtes Schema-11-Update oder Leerdaten-Lesen. [Ursprüngliche Anleitung und Status](../docs/SPECIFIC_CONDITION_DEVICE_TEST.md). Der reine Marker-Folgeschritt hat Version 40109, unverändertes Schema 11 und zusätzliche Projektions-/UI-Tests. Die CI-Paarung behält die Schema-10-Ausgangs-APK 40107; aktuelle Anleitung beschreibt die Markerprüfung und die fehlende Hardwarebestätigung ausdrücklich. [Darstellung und optionale Softwareprüfung](../docs/SPECIFIC_CONDITION_TIMELINE_CHECK.md).
 
 PR #45 ist seit 10.10.2026 nach grüner vollständiger CI (308 Tests) und bestätigtem kurzen Bestandstest zur Updateversion **40109** gemergt. Daten nach Schließen/Wiederöffnen erhalten; kein erneutes Lesen, keine separat beobachtete Ausgangsversion und keine realen Sonderbedingungsmarker bestätigt. Die ausgegebene ZIP enthält nur die Update-APK. Letzter vollständiger Leser-/Kartentest bleibt PR #41. [Abschluss, Prüfsummen und genaue Grenzen](../docs/WORK_HANDOFF.md).
+
+Der neue GNSS-Importschritt ist noch unbestätigt; [Anbindung und CI-Status](../docs/GNSS_IMPORT_IMPLEMENTATION.md), [vorgesehener Gerätetest](../docs/GNSS_IMPORT_DEVICE_TEST.md). Die obigen früheren Updatepaar-Stände dokumentieren historische Tests.

@@ -1,6 +1,8 @@
 # GNSS-Einzelpunkte – begrenzte Decoder-Grundlage
 
-Stand: 10.10.2026. Ausgangsbasis ist main nach PR #45 und dem Dokumentationsabschluss PR #48. Dieser Schritt ergänzt ausschließlich einen Decoder und synthetische Unit-Tests für die vollständige Generation-2-Datei **EF GNSS_Places**. Er ist noch kein neuer Kartenimport: Leser/APDU, Importrequests, Datenbank/Schema 11, Signatur/Version und Oberfläche verwenden den Decoder noch nicht.
+Stand: 10.10.2026. Die nachstehenden Decodergrenzen beschreiben die Grundlage aus PR #49/#50. Die neue Leser-/Speicheranbindung ist im [separaten Integrationsschritt](GNSS_IMPORT_IMPLEMENTATION.md) dokumentiert.
+
+Stand der ursprünglichen Decoder-Grundlage: 10.10.2026. Ausgangsbasis ist main nach PR #45 und dem Dokumentationsabschluss PR #48. Dieser Schritt ergänzt ausschließlich einen Decoder und synthetische Unit-Tests für die vollständige Generation-2-Datei **EF GNSS_Places**. Er ist noch kein neuer Kartenimport: Leser/APDU, Importrequests, Datenbank/Schema 11, Signatur/Version und Oberfläche verwenden den Decoder noch nicht.
 
 ## Geprüfte Primärquellen
 
@@ -36,7 +38,7 @@ Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Ein teilweis
 
 ## Separate Authentisierungsquelle (Generation 2 Version 2)
 
-EF **GNSS_Places_Authentication** bleibt eine eigene Datei. EU 2021/1228, Anlage 1 §§2.79a/b und 2.117a sowie die Layouttabelle L 273/48, beschreibt 336 Slots mit je 5 Bytes und einem eigenen 2-Byte-Neuestzeiger: vollständig **1682 Bytes**. Generation 2 Version 1 hat diese Quelle nicht. Eine EF-ID wird hier nicht vorausgesetzt; die spätere Leseranbindung muss sie gesondert prüfen.
+EF **GNSS_Places_Authentication** bleibt eine eigene Datei. EU 2021/1228, Anlage 1 §§2.79a/b und 2.117a sowie die Layouttabelle L 273/48, beschreibt 336 Slots mit je 5 Bytes und einem eigenen 2-Byte-Neuestzeiger: vollständig **1682 Bytes**. Generation 2 Version 1 hat diese Quelle nicht. Die Leseranbindung hat EF **0527** gesondert anhand TCS_152, L 273/45 bestätigt; siehe Integrationsdokumentation.
 
 | Offset im Authentisierungsslot | Breite | Quellfeld |
 | --- | --- | --- |

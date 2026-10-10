@@ -34,7 +34,11 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val events: CardEventFaultFile? = null, val eventReadFailed: Boolean = false,
                           val faults: CardEventFaultFile? = null, val faultReadFailed: Boolean = false,
                           val specificConditions: CardSpecificConditionFile? = null,
-                          val specificConditionReadFailed: Boolean = false)
+                          val specificConditionReadFailed: Boolean = false,
+                          val gnssPositions: CardGnssAccumulatedDrivingFile? = null,
+                          val gnssPositionReadFailed: Boolean = false,
+                          val gnssAuthentication: CardGnssAuthenticationFile? = null,
+                          val gnssAuthenticationReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -50,11 +54,13 @@ object DriverCardFiles {
     const val VEHICLES_USED = 0x0505
     const val CONTROL_ACTIVITY = 0x0508
     const val SPECIFIC_CONDITIONS = 0x0522
+    const val GNSS_PLACES = 0x0524
+    const val GNSS_AUTHENTICATION = 0x0527
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
         CardFile(IDENTIFICATION, "Identification", CardGeneration.GEN1, true, 143, "DriverIdentity"),
-        CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN2, true, 15, "ApplicationIdG2"),
+        CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN2, true, 17, "ApplicationIdG2"),
         CardFile(IDENTIFICATION, "Identification", CardGeneration.GEN2, true, 143, "DriverIdentity"),
         CardFile(APPLICATION_V2, "Application_Identification_V2", CardGeneration.GEN2V2, true, 10, "ApplicationIdV2")
     )
@@ -63,7 +69,7 @@ object DriverCardFiles {
 object DriverCardDecoder {
     fun generation(g1: ByteArray?, g2: ByteArray?): Pair<CardRecognition, CardGeneration> {
         if (g2 != null) {
-            if (g2.size != 15) return CardRecognition.INCONSISTENT to CardGeneration.UNKNOWN
+            if (g2.size !in setOf(15, 17)) return CardRecognition.INCONSISTENT to CardGeneration.UNKNOWN
             if (g2[0].toInt() and 255 != 1) return CardRecognition.OTHER_CARD to CardGeneration.UNSUPPORTED
             return when (g2[1].toInt() and 255 to (g2[2].toInt() and 255)) {
                 1 to 0 -> CardRecognition.DRIVER to CardGeneration.GEN2
@@ -84,7 +90,7 @@ object DriverCardDecoder {
     fun activityLength(application: ByteArray, generation: CardGeneration): Int {
         val expected = if (generation == CardGeneration.GEN1) 10 else 15
         if (generation !in setOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2) ||
-            application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+            (application.size != expected && !(generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) && application.size == 17))) throw ParseError(0, "Application_Identification", "invalid length")
         val length = (application[5].toInt() and 255) shl 8 or (application[6].toInt() and 255)
         // READ BINARY uses a 15-bit offset; do not silently truncate larger card files.
         if (length !in 12..32764) throw ParseError(5, "activityStructureLength", "unsupported length")
@@ -95,7 +101,7 @@ object DriverCardDecoder {
     fun vehicleCount(application: ByteArray, generation: CardGeneration): Int {
         val expected = if (generation == CardGeneration.GEN1) 10 else 15
         if (generation !in setOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2) ||
-            application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+            (application.size != expected && !(generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) && application.size == 17))) throw ParseError(0, "Application_Identification", "invalid length")
         val count = (application[7].toInt() and 255) shl 8 or (application[8].toInt() and 255)
         val width = if (generation == CardGeneration.GEN1) 31 else 48
         if (count !in 1..200 || count * width + 2 > 32768)
@@ -118,7 +124,7 @@ object DriverCardDecoder {
     /** Counts at offsets 3 and 4 in Application_Identification, not in the V2 extension. */
     fun eventFaultCount(application: ByteArray, generation: CardGeneration, kind: CardEventFaultKind): Int {
         val expected = if (generation == CardGeneration.GEN1) 10 else 15
-        if (application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        if ((application.size != expected && !(generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) && application.size == 17))) throw ParseError(0, "Application_Identification", "invalid length")
         val offset = if (kind == CardEventFaultKind.EVENTS) 3 else 4
         val count = application[offset].toInt() and 255
         CardEventFaultParser.fileLength(kind, generation, count)
@@ -128,10 +134,18 @@ object DriverCardDecoder {
     /** Gen1 has 56 fixed slots and no pointer; Gen2 capacity is at offsets 13..14. */
     fun specificConditionCount(application: ByteArray, generation: CardGeneration): Int {
         val expected = if (generation == CardGeneration.GEN1) 10 else 15
-        if (application.size != expected) throw ParseError(0, "Application_Identification", "invalid length")
+        if ((application.size != expected && !(generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) && application.size == 17))) throw ParseError(0, "Application_Identification", "invalid length")
         val count = if (generation == CardGeneration.GEN1) 56 else
             (application[13].toInt() and 255) shl 8 or (application[14].toInt() and 255)
         CardSpecificConditionParser.fileLength(generation, count)
+        return count
+    }
+
+    /** Full Gen2 Application_Identification: NoOfGNSSADRecords at offsets 11..12. */
+    fun gnssCount(application: ByteArray, generation: CardGeneration): Int {
+        if (application.size != 17) throw ParseError(0, "Application_Identification", "expected full Gen2 file")
+        val count = (application[11].toInt() and 255) shl 8 or (application[12].toInt() and 255)
+        CardGnssAccumulatedDrivingParser.fileLength(generation, count)
         return count
     }
 
@@ -195,7 +209,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             }
             AtrDecoder.parse(transport.powerOn())
             val session = ApduSession(transport)
-            val g2 = readApplication(session, DriverCardFiles.gen2Aid, 15)
+            val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
@@ -232,11 +246,24 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardSpecificConditionFile(generation, count, readFile(session, DriverCardFiles.SPECIFIC_CONDITIONS,
                         CardSpecificConditionParser.fileLength(generation, count))).also { CardSpecificConditionParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                val supportsPositions = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+                val positions = if (supportsPositions) try {
+                    val count = DriverCardDecoder.gnssCount(application, generation)
+                    CardGnssAccumulatedDrivingFile(generation, count, readFile(session, DriverCardFiles.GNSS_PLACES,
+                        CardGnssAccumulatedDrivingParser.fileLength(generation, count))).also { CardGnssAccumulatedDrivingParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val supportsAuthentication = generation == CardGeneration.GEN2V2
+                val authentication = if (supportsAuthentication) try {
+                    CardGnssAuthenticationFile(generation, readFile(session, DriverCardFiles.GNSS_AUTHENTICATION,
+                        CardGnssAuthenticationParser.fileLength(generation))).also { CardGnssAuthenticationParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
                     events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null,
-                    specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null)
+                    specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null,
+                    gnssPositions = positions, gnssPositionReadFailed = supportsPositions && positions == null,
+                    gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

@@ -18,6 +18,8 @@ data class SavedDriverImport(
     val events: SavedCardEventFault? = null,
     val faults: SavedCardEventFault? = null,
     val specificConditions: SavedCardSpecificConditions? = null,
+    val gnssPositions: SavedCardGnssPositions? = null,
+    val gnssAuthentication: SavedCardGnssAuthentication? = null,
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -34,6 +36,8 @@ class DriverCardImportRepository @Inject constructor(
     private val controls = CardControlStore(database.cardControlDao())
     private val eventFaults = CardEventFaultStore(database.cardEventFaultDao())
     private val specificConditions = CardSpecificConditionStore(database.cardSpecificConditionDao())
+
+    private val gnss = CardGnssStore(database.cardGnssDao())
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -87,8 +91,16 @@ class DriverCardImportRepository @Inject constructor(
             require(!result.specificConditionReadFailed && it.generation == result.generation)
             CardSpecificConditionFile(it.generation, it.recordCount, it.bytes).also { frozen -> CardSpecificConditionParser.parse(frozen) }
         } else null
+        val positions = if (selection == CardImportSelection.ALL_AVAILABLE) result.gnssPositions?.let {
+            require(!result.gnssPositionReadFailed && it.generation == result.generation)
+            CardGnssAccumulatedDrivingFile(it.generation, it.recordCount, it.bytes).also { frozen -> CardGnssAccumulatedDrivingParser.parse(frozen) }
+        } else null
+        val authentication = if (selection == CardImportSelection.ALL_AVAILABLE) result.gnssAuthentication?.let {
+            require(!result.gnssAuthenticationReadFailed && it.generation == result.generation)
+            CardGnssAuthenticationFile(it.generation, it.bytes).also { frozen -> CardGnssAuthenticationParser.parse(frozen) }
+        } else null
         val extraFiles = listOfNotNull(events, faults)
-        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null)
+        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null)
         return database.withTransaction {
             val cardId = bindInside(card, false)
             val profile = checkNotNull(dao.localProfile())
@@ -103,6 +115,10 @@ class DriverCardImportRepository @Inject constructor(
                         file?.let { CardEventFaultStore.fingerprint(cardId, it) })
                 check(database.cardSpecificConditionDao().source(requestId)?.sourceId ==
                     conditions?.let { CardSpecificConditionStore.fingerprint(cardId, it) })
+                check(database.cardGnssDao().source(requestId, CardGnssFileKind.POSITIONS.name)?.sourceId ==
+                    positions?.let { CardGnssStore.fingerprint(cardId, it) })
+                check(database.cardGnssDao().source(requestId, CardGnssFileKind.AUTHENTICATION.name)?.sourceId ==
+                    authentication?.let { CardGnssStore.fingerprint(cardId, it) })
                 return@withTransaction decode(existing, profile.id)
             }
             val newActivity = activity != null && database.cardActivityImportDao().getById(activity.id) == null
@@ -110,6 +126,8 @@ class DriverCardImportRepository @Inject constructor(
             val newControl = control != null && database.cardControlDao().get(CardControlStore.fingerprint(cardId, control)) == null
             val newExtras = extraFiles.count { database.cardEventFaultDao().get(CardEventFaultStore.fingerprint(cardId, it)) == null }
             val newConditions = conditions != null && database.cardSpecificConditionDao().get(CardSpecificConditionStore.fingerprint(cardId, conditions)) == null
+            val newPositions = positions != null && database.cardGnssDao().get(CardGnssStore.fingerprint(cardId, positions)) == null
+            val newAuthentication = authentication != null && database.cardGnssDao().get(CardGnssStore.fingerprint(cardId, authentication)) == null
             if (activity != null && vehicle != null) pairs.storePrepared(activity, vehicle, now)
             else {
                 activity?.let { database.cardActivityImportDao().insert(it) }
@@ -117,7 +135,7 @@ class DriverCardImportRepository @Inject constructor(
             }
             dao.insertSession(ImportSessionEntity(requestId, profile.id, "PARTIAL", now, now))
             val sources = DriverImportSourcesEntity(requestId, cardId, activity?.id, vehicle?.id,
-                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0))
+                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0) + (if (newPositions) 1 else 0) + (if (newAuthentication) 1 else 0))
             dao.insertSources(sources)
             if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
             if (vehicle != null) normalizedVehicles.save(cardId, vehicle, checkNotNull(uses))
@@ -126,6 +144,8 @@ class DriverCardImportRepository @Inject constructor(
             for (file in extraFiles) if (eventFaults.save(cardId, requestId, file, now)) storedExtras++
             check(storedExtras == newExtras)
             if (conditions != null) check(specificConditions.save(cardId, requestId, conditions, now) == newConditions)
+            if (positions != null) check(gnss.save(cardId, requestId, positions, now) == newPositions)
+            if (authentication != null) check(gnss.save(cardId, requestId, authentication, now) == newAuthentication)
             decode(sources, profile.id)
         }
     }
@@ -216,7 +236,8 @@ class DriverCardImportRepository @Inject constructor(
             sources.newSourceCount, activity, vehicle, pair, controls.load(sources.driverCardId, session.id),
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.EVENTS),
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.FAULTS),
-            specificConditions.load(sources.driverCardId, session.id))
+            specificConditions.load(sources.driverCardId, session.id),
+            gnss.positions(sources.driverCardId, session.id), gnss.authentication(sources.driverCardId, session.id))
     }
 
     private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {

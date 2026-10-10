@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -155,7 +155,9 @@ class DriverCardImportPipeline @Inject constructor(
             controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
             events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
             faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
-            specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) })
+            specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) },
+            gnssPositions = result.gnssPositions?.let { CardGnssAccumulatedDrivingFile(it.generation, it.recordCount, it.bytes) },
+            gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -200,9 +202,27 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.timeUtc == null }) null else records.minOfOrNull { checkNotNull(it.timeUtc).epochSecond },
                     if (records.any { it.timeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.timeUtc).epochSecond }, null)
             } else null
+        val positions = if (read.gnssPositions != null || read.gnssPositionReadFailed)
+            inspect(CardImportFileKind.GNSS_POSITIONS, read.gnssPositions != null, read.gnssPositionReadFailed) {
+                val file = checkNotNull(read.gnssPositions)
+                require(file.generation == read.generation)
+                val records = CardGnssAccumulatedDrivingParser.parse(file)
+                CardImportFileResult(CardImportFileKind.GNSS_POSITIONS, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.positionTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond },
+                    if (records.any { it.positionTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond }, null)
+            } else null
+        val authentication = if (read.gnssAuthentication != null || read.gnssAuthenticationReadFailed)
+            inspect(CardImportFileKind.GNSS_AUTHENTICATION, read.gnssAuthentication != null, read.gnssAuthenticationReadFailed) {
+                val file = checkNotNull(read.gnssAuthentication)
+                require(file.generation == read.generation)
+                val records = CardGnssAuthenticationParser.parse(file)
+                CardImportFileResult(CardImportFileKind.GNSS_AUTHENTICATION, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.accumulatedDrivingTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.accumulatedDrivingTimeUtc).epochSecond },
+                    if (records.any { it.accumulatedDrivingTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.accumulatedDrivingTimeUtc).epochSecond }, null)
+            } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -233,6 +253,8 @@ class DriverCardImportPipeline @Inject constructor(
             events = read.events.takeIf { files.any { it.kind == CardImportFileKind.EVENTS && it.status == CardImportFileStatus.READY } },
             faults = read.faults.takeIf { files.any { it.kind == CardImportFileKind.FAULTS && it.status == CardImportFileStatus.READY } },
             specificConditions = read.specificConditions.takeIf { files.any { it.kind == CardImportFileKind.SPECIFIC_CONDITIONS && it.status == CardImportFileStatus.READY } },
+            gnssPositions = read.gnssPositions.takeIf { files.any { it.kind == CardImportFileKind.GNSS_POSITIONS && it.status == CardImportFileStatus.READY } },
+            gnssAuthentication = read.gnssAuthentication.takeIf { files.any { it.kind == CardImportFileKind.GNSS_AUTHENTICATION && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -275,6 +297,18 @@ class DriverCardImportPipeline @Inject constructor(
                     digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array())
                     digest.update(it.bytes) }
                 digest.update(if (read.specificConditionReadFailed) 1.toByte() else 0.toByte())
+            }
+            if (read.gnssPositions != null || read.gnssPositionReadFailed) {
+                text("GNSS_POSITIONS")
+                read.gnssPositions?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.gnssPositionReadFailed) 1.toByte() else 0.toByte())
+            }
+            if (read.gnssAuthentication != null || read.gnssAuthenticationReadFailed) {
+                text("GNSS_AUTHENTICATION")
+                read.gnssAuthentication?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.gnssAuthenticationReadFailed) 1.toByte() else 0.toByte())
             }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }

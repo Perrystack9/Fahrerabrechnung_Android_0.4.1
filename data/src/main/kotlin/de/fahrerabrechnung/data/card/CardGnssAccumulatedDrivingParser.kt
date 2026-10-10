@@ -3,7 +3,7 @@ package de.fahrerabrechnung.data.card
 import java.time.Instant
 import kotlin.math.abs
 
-/** Complete EF GNSS_Places (0524). This decoder is not connected to the card reader yet. */
+/** Complete EF GNSS_Places (0524). Decoded independently after card identification. */
 class CardGnssAccumulatedDrivingFile(
     val generation: CardGeneration,
     val recordCount: Int,

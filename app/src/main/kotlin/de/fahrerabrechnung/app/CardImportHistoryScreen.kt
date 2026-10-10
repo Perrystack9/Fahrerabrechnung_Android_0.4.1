@@ -100,12 +100,14 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.CONTROLS -> "Kontrolldaten"
         CardImportFileKind.EVENTS -> "Ereignisse"
         CardImportFileKind.FAULTS -> "Störungen"
+        CardImportFileKind.GNSS_POSITIONS -> "GNSS-Punkte"
+        CardImportFileKind.GNSS_AUTHENTICATION -> "GNSS-Authentisierungsstatus"
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
     }
     return when (status) {
         CardImportFileStatus.STORED -> if (kind == CardImportFileKind.CONTROLS && decodedCount == 0)
             "Kontrolldaten: übernommen, keine Kontrolle aufgezeichnet"
-            else if (kind in setOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS, CardImportFileKind.SPECIFIC_CONDITIONS) && decodedCount == 0)
+            else if (kind in setOf(CardImportFileKind.EVENTS, CardImportFileKind.FAULTS, CardImportFileKind.SPECIFIC_CONDITIONS, CardImportFileKind.GNSS_POSITIONS, CardImportFileKind.GNSS_AUTHENTICATION) && decodedCount == 0)
                 "$label: übernommen, keine Aufzeichnung" else "$label: $decodedCount gespeichert"
         CardImportFileStatus.READY -> "$label: Übernahme läuft"
         CardImportFileStatus.MISSING -> "$label: nicht verfügbar"
