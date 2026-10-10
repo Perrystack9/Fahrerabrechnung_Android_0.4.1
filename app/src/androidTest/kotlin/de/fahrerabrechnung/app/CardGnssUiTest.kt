@@ -33,7 +33,7 @@ class CardGnssUiTest {
         val bytes = ByteArray(6050)
         ByteBuffer.wrap(bytes).putShort(0).putInt(1790000015).putInt(0).put(255.toByte())
             .put(byteArrayOf(0x7f, 0xff.toByte(), 0xff.toByte(), 0, 0, 2, 0, 0, 3))
-        ByteBuffer.wrap(bytes).position(20).putInt(1790000015).putInt(1790000031).put(10.toByte())
+        ByteBuffer.wrap(bytes).apply { position(20) }.putInt(1790000015).putInt(1790000031).put(10.toByte())
             .put(byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 3))
         bytes[1] = 1
         val file = CardGnssAccumulatedDrivingFile(CardGeneration.GEN2V2, 336, bytes)
