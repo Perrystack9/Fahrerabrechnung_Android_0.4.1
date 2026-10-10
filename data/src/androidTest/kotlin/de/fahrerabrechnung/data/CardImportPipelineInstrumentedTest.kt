@@ -873,6 +873,14 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(CardImportRunStatus.PARTIAL, partial.status)
         assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.GNSS_POSITIONS).status)
         assertNotNull(imports.get(partial.id)!!.gnssAuthentication)
+        val invalid = pipeline.process(gnssRead().copy(gnssPositions =
+            CardGnssAccumulatedDrivingFile(CardGeneration.GEN2, 336, ByteArray(6050))), "invalid-generation-gnss")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.GNSS_POSITIONS).status)
+        assertNull(imports.get(invalid.id)!!.gnssPositions); assertNotNull(imports.get(invalid.id)!!.gnssAuthentication)
+        val authFailed = pipeline.process(gnssRead().copy(gnssAuthentication = null,
+            gnssAuthenticationReadFailed = true), "authentication-failed-gnss")
+        assertEquals(CardImportFileStatus.READ_FAILED, authFailed.file(CardImportFileKind.GNSS_AUTHENTICATION).status)
+        assertNotNull(imports.get(authFailed.id)!!.gnssPositions); assertNull(imports.get(authFailed.id)!!.gnssAuthentication)
         val only = read().copy(activity = null, vehicles = null, gnssPositions =
             CardGnssAccumulatedDrivingFile(CardGeneration.GEN2V2, 336, ByteArray(6050)))
         val empty = pipeline.process(only, "empty-gnss")
