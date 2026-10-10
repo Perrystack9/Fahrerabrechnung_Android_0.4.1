@@ -573,6 +573,49 @@ class DriverCardFoundationTest {
         failure { DriverCardDecoder.gnssCount(ByteArray(15), CardGeneration.GEN2) }
     }
 
+    @Test fun placesReaderSupportsAllGenerationsAndOnlyV2Authentication() = runBlocking {
+        for (g in supportedGenerations) {
+            val fake = CardFixtureTransport(g, identityFixture())
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.places); assertFalse(result.placeReadFailed)
+            assertEquals(g == CardGeneration.GEN2V2, result.placesAuthentication != null)
+            assertFalse(result.placesAuthenticationReadFailed)
+            assertTrue(DriverCardFiles.PLACES in fake.readFiles)
+            assertEquals(g == CardGeneration.GEN2V2, DriverCardFiles.PLACES_AUTHENTICATION in fake.readFiles)
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun placesFailuresNeverDiscardOtherSourcesOrAuthentication() = runBlocking {
+        for (failure in 0..3) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                missingFiles = if (failure == 0) setOf(DriverCardFiles.PLACES) else emptySet(),
+                placeBytes = if (failure == 1) ByteArray(2353) else if (failure == 2) ByteArray(2354).also { it[1] = 112 } else null,
+                invalidPlaceCount = failure == 3)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.places); assertTrue(result.placeReadFailed)
+            assertNotNull(result.placesAuthentication); assertNotNull(result.gnssPositions)
+            assertNotNull(result.activity); assertNotNull(result.events); assertTrue(fake.closed)
+        }
+        val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            placeAuthFailure = ReaderException(ReaderFailure.TIMEOUT))).read()
+        assertNotNull(result.places); assertNull(result.placesAuthentication); assertTrue(result.placesAuthenticationReadFailed)
+    }
+    @Test fun placesCancellationPropagatesAndClosesReader() = runBlocking {
+        for (auth in listOf(false, true)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                placeFailure = if (!auth) kotlinx.coroutines.CancellationException("fixture") else null,
+                placeAuthFailure = if (auth) kotlinx.coroutines.CancellationException("fixture") else null)
+            try { DriverCardReader(fake).read(); fail("Cancellation expected") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+        }
+    }
+    @Test fun placeCapacityUsesGenerationSpecificApplicationField() {
+        assertEquals(84, DriverCardDecoder.placeCount(ByteArray(10).also { it[9] = 84 }, CardGeneration.GEN1))
+        assertEquals(112, DriverCardDecoder.placeCount(ByteArray(17).also { it[10] = 112 }, CardGeneration.GEN2V2))
+        failure { DriverCardDecoder.placeCount(ByteArray(10), CardGeneration.GEN1) }
+        failure { DriverCardDecoder.placeCount(ByteArray(17).also { it[9] = 1 }, CardGeneration.GEN2V2) }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -594,7 +637,12 @@ class DriverCardFoundationTest {
                                        private val authenticationBytes: ByteArray? = null,
                                        private val gnssFailure: Exception? = null,
                                        private val authenticationFailure: Exception? = null,
-                                       private val invalidGnssCount: Boolean = false) : CardReaderTransport {
+                                       private val invalidGnssCount: Boolean = false,
+                                       private val placeBytes: ByteArray? = null,
+                                       private val placeAuthBytes: ByteArray? = null,
+                                       private val placeFailure: Exception? = null,
+                                       private val placeAuthFailure: Exception? = null,
+                                       private val invalidPlaceCount: Boolean = false) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -628,7 +676,11 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.SPECIFIC_CONDITIONS) specificConditionFailure?.let { throw it }
                 if (file == DriverCardFiles.GNSS_PLACES) gnssFailure?.let { throw it }
                 if (file == DriverCardFiles.GNSS_AUTHENTICATION) authenticationFailure?.let { throw it }
+                if (file == DriverCardFiles.PLACES) placeFailure?.let { throw it }
+                if (file == DriverCardFiles.PLACES_AUTHENTICATION) placeAuthFailure?.let { throw it }
                 val data = when (file) {
+                    DriverCardFiles.PLACES -> placeBytes ?: ByteArray(CardPlacesParser.fileLength(generation, 112))
+                    DriverCardFiles.PLACES_AUTHENTICATION -> placeAuthBytes ?: ByteArray(CardPlacesAuthenticationParser.fileLength(generation))
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.GNSS_PLACES -> gnssBytes ?: ByteArray(CardGnssAccumulatedDrivingParser.fileLength(generation, 336))
                     DriverCardFiles.GNSS_AUTHENTICATION -> authenticationBytes ?: ByteArray(CardGnssAuthenticationParser.fileLength(generation))
@@ -649,6 +701,7 @@ class DriverCardFoundationTest {
                         it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
                         it[6] = if (invalidActivityLength) 0 else 16
                         it[8] = 2 // two vehicle record slots
+                        it[if (generation == CardGeneration.GEN1) 9 else 10] = if (invalidPlaceCount) 0 else 112
                         if (it.size == 17) {
                             it[11] = if (invalidGnssCount) 0 else 1; it[12] = if (invalidGnssCount) 0 else 80
                             it[14] = if (invalidSpecificConditionCount) 0 else 112

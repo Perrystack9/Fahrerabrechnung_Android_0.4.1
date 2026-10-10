@@ -920,7 +920,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 11
         }
         db.close(); open()
-        assertEquals(12, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
         assertArrayEquals(bytes, imports.get(old.id)!!.specificConditions!!.file.bytes)
         assertNull(imports.get(old.id)!!.gnssPositions); assertEquals(old, pipeline.process(sixFiles(), old.id))
@@ -937,6 +937,121 @@ class CardImportPipelineInstrumentedTest {
             db.cardGnssDao().insertSource(DriverImportGnssSourceEntity(old.id, CardGnssFileKind.POSITIONS.name, "wrong-card", source.id))
         }
         db.openHelper.writableDatabase.execSQL("UPDATE card_gnss_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(4), source.id))
+        assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.specificConditions)
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+    }
+
+    private fun placesRead(time: Int = 1790000015): CardReadResult {
+        val bytes = ByteArray(2354)
+        ByteBuffer.wrap(bytes).putShort(0).putInt(time).put(6.toByte()).put(13.toByte()).put(0.toByte())
+            .put(byteArrayOf(0, 0, 3)).putInt(time + 7).put(10.toByte()).put(byteArrayOf(0, 0, 1, 0, 0, 2))
+        val auth = ByteArray(562)
+        ByteBuffer.wrap(auth).putShort(0).putInt(time).put(1.toByte())
+        return gnssRead().copy(places = CardPlacesFile(CardGeneration.GEN2V2, 112, bytes),
+            placesAuthentication = CardPlacesAuthenticationFile(CardGeneration.GEN2V2, auth))
+    }
+
+    @Test fun placesPersistsExactSelectedSourcesAcrossReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(gnssRead(), "before-places")
+        val fresh = pipeline.process(placesRead(), "with-places")
+        assertEquals(2, fresh.newSourceCount); assertEquals(10, fresh.files.size)
+        val saved = imports.get(fresh.id)!!
+        assertEquals(1790000015L, saved.places!!.records.single().entryTimeRaw)
+        assertEquals(1790000015L, saved.placesAuthentication!!.records.single().entryTimeRaw)
+        db.close(); open()
+        assertArrayEquals(saved.places!!.file.bytes, imports.get(fresh.id)!!.places!!.file.bytes)
+        assertArrayEquals(saved.placesAuthentication!!.file.bytes, imports.get(fresh.id)!!.placesAuthentication!!.file.bytes)
+        assertNull(imports.get(old.id)!!.places); assertNull(imports.get(old.id)!!.placesAuthentication)
+        assertEquals(old, pipeline.process(gnssRead(), old.id))
+    }
+
+    @Test fun placesRetriesDeduplicateWhileChangedAndReplacementSourcesRemainSeparate() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(placesRead(), "places-first")
+        assertEquals(first, pipeline.process(placesRead(), first.id))
+        val same = pipeline.process(placesRead(), "places-same")
+        assertEquals(0, same.newSourceCount); assertEquals(2, count("card_place_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(placesRead(1790000020), first.id) }
+        val changed = pipeline.process(placesRead(1790000020), "places-changed")
+        assertEquals(2, changed.newSourceCount)
+        val replacement = pipeline.process(placesRead().copy(card = card("replacement-places")), "places-replacement")
+        assertEquals(10, replacement.newSourceCount)
+        assertNotEquals(first.driverCardId, replacement.driverCardId)
+        assertNotEquals(imports.get(first.id)!!.places!!.id, imports.get(replacement.id)!!.places!!.id)
+        assertEquals(1790000015L, imports.get(first.id)!!.places!!.records.single().entryTimeRaw)
+    }
+
+    @Test fun placesFailureIsPartialButValidEmptyFileIsStoredEvenWithoutOtherData() = runBlocking {
+        imports.bind(card(), true)
+        val partial = pipeline.process(placesRead().copy(places = null, placeReadFailed = true), "partial-places")
+        assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.WORK_PERIOD_PLACES).status)
+        assertNotNull(imports.get(partial.id)!!.placesAuthentication)
+        val invalid = pipeline.process(placesRead().copy(places =
+            CardPlacesFile(CardGeneration.GEN2, 112, ByteArray(2354))), "invalid-generation-places")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.WORK_PERIOD_PLACES).status)
+        assertNull(imports.get(invalid.id)!!.places); assertNotNull(imports.get(invalid.id)!!.placesAuthentication)
+        val authFailed = pipeline.process(placesRead().copy(placesAuthentication = null,
+            placesAuthenticationReadFailed = true), "authentication-failed-places")
+        assertEquals(CardImportFileStatus.READ_FAILED, authFailed.file(CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION).status)
+        assertNotNull(imports.get(authFailed.id)!!.places); assertNull(imports.get(authFailed.id)!!.placesAuthentication)
+        val only = read().copy(activity = null, vehicles = null, places =
+            CardPlacesFile(CardGeneration.GEN2V2, 112, ByteArray(2354)))
+        val empty = pipeline.process(only, "empty-places")
+        assertNotNull(empty.sessionId); assertEquals(1, empty.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, empty.file(CardImportFileKind.WORK_PERIOD_PLACES).status)
+        assertEquals(0, empty.file(CardImportFileKind.WORK_PERIOD_PLACES).decodedCount)
+        assertTrue(imports.get(empty.id)!!.places!!.records.isEmpty())
+    }
+
+    @Test fun placesForeignUnconfirmedAndUnclearReadsCannotPersist() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(placesRead(), "unconfirmed-places") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-places", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(placesRead().copy(card = foreign), "foreign-places") }
+        rejected<CardBindingRequired> { pipeline.process(placesRead().copy(card = card("unclear-places", card().holder.copy(birthDate = null))), "unclear-places") }
+        assertEquals(0, count("card_place_imports")); assertEquals(0, count("driver_import_place_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+
+    @Test fun placesWriteFailureRollsBackAllSelectedSourcesAndSession() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_places_fail BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(placesRead(), "rollback-places")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertEquals(0, count("card_place_imports")); assertEquals(0, count("driver_import_place_sources"))
+        assertEquals(0, count("import_sessions")); assertEquals(0, count("card_activity_imports"))
+        assertEquals(0, count("card_specific_condition_imports"))
+    }
+
+    @Test fun schemaTwelveUpgradePreservesExactOldReceiptsWithoutPlacesBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(gnssRead(), "schema-eleven-places")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.specificConditions!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_place_sources"); execSQL("DROP TABLE card_place_imports")
+            execSQL("DELETE FROM room_master_table"); version = 12
+        }
+        db.close(); open()
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.specificConditions!!.file.bytes)
+        assertNull(imports.get(old.id)!!.places); assertEquals(old, pipeline.process(gnssRead(), old.id))
+        assertEquals(0, count("card_place_imports"))
+        assertEquals(2, pipeline.process(placesRead(), "after-upgrade-places").newSourceCount)
+    }
+
+    @Test fun placesWrongPhysicalLinksAndCorruptedBytesAreRejectedWithoutBreakingHistory() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(gnssRead(), "old-safe-places")
+        val fresh = pipeline.process(placesRead(), "corrupted-places")
+        val source = imports.get(fresh.id)!!.places!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardPlacesDao().insertSource(DriverImportPlacesSourceEntity(old.id, CardPlacesFileKind.PLACES.name, "wrong-card", source.id))
+        }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_place_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(4), source.id))
         assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.specificConditions)
         rejected<IllegalStateException> { imports.get(fresh.id) }
     }
