@@ -1,4 +1,26 @@
-# Aktueller MF-Entwurf im laufenden zweiten Arbeitsblock
+# Abschlussstand des zweiten Arbeitsblocks
+
+## Abschlusscheckpoint des zweiten Arbeitsblocks
+
+Stand 2026-10-10T22:24:34.799Z. Tobi hat die Pause vorzeitig beendet; zweiter Arbeitsblock10.10.2026 20:34:51–22:34:51UTC (22:34:51–11.10.00:34:51 Europe/Berlin). Hardware-/APK-Ausgabe unverändert frühestens22:56:06UTC/11.10.00:56:06Berlin; Ausgabe-Aufgabe beginnt00:57:06Berlin. Keine neue Gerätebestätigung, kein neues APK ausgeliefert.
+
+Aktueller kumulativer Testkandidat: Draft [PR58](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/58), Branch `feature/card-master-file-import`, Head `ba9656f0e22980af94883783986367d7bcdf545b`, Tree `2e314a47211f06696a6b05287e40b63575b921df`. Vollständige CI38089034166 Versuch1 abgeschlossen und grün: Boundary114321509589, Build/Unit/Lint/APK/Updatepaar114321543814, Room/SQLCipher/Compose114323330921, Gate114327575576. Schema18/Version40117; bis zu19 Quellen in Gen2V2 (Gen1 bis12, Gen2 bis14).204 zusätzliche Testmethoden seit bestätigtem PR53, keine alten Testmethoden entfernt. Hardwaretest weiterhin ausstehend, PR54–58 nicht mergen.
+
+| Entwurf | aktueller unveränderter Kopf | vollständige erfolgreiche CI |
+|---|---|---|
+| PR54 Be-/Entladen |6d46ebd6fe77a4c424aee45dc700f0bd186f5d5c|38075694297/1|
+| PR55 Ladungsart |ef7d44c29d8cb9520fcaf67306ef387263bf1ba9|38084590529/1|
+| PR56 Fahrtenschreiber-Nutzungen |b08a02a42355a956907f960b28af2e495030f87e|38089028314/1|
+| PR57 feste Anwendungsmetadaten |67ae3301eeae3b2335974315e0306c500454fc26|38089031215/1|
+| PR58 MF-Karten-/Chipkennung |ba9656f0e22980af94883783986367d7bcdf545b|38089034166/1|
+
+Bestätigte Basis: PR53/Main22d41f64875de3aa5ac383d9d1ce80dc0dee1684,40112/Schema14; Tobis allgemeines „Funktioniert alles prima“ bestätigt keine zusätzlichen Einzelmessungen. Gleiche feste Testkennung `de.fahrerabrechnung.app.devicetest`, ZertifikatSHA256 `9ffc4c280b390a1699567f5cc381dfd7a0e221ef9766af6fe937f6500ee9ad58`. Ausschließlich Update über die vorhandene Test-App; keine Deinstallation/Datenlöschung/Basis-APK nötig. Kumulative Anleitung `docs/CARD_MASTER_FILE_DEVICE_TEST.md`, SHA256 `5c7a4d074bb8374b9e49435ac29e9301465d146a93267c1e72370a996d93ce6a`. Authentischer Compilerexport18 unverändert, SHA256 `70340ea11ae74941615f56e0297b5c711fb7d3acf44a63bc981daccccfb8ac3b`; finale CI prüft erneut die bytegleichen Exporte. Alle38 Tabellen, vorherige36 Entitäten der17→18-Migration unverändert.
+
+Einmalige spätere Paketanforderung vorbereitet, noch nicht gestartet: Hilfscommit1714ade9ffa86aa803ab9a8a3d781df4e9313f55, Treecb5a2366847882f8971cdf09357936ad733ac762,16 Guardfälle bestanden. Exakt `ci/device-test-pr58-ba9656f0` erst NACH dem Hardwareminimum bei diesem Hilfscommit anlegen, nachdem Produktbranch/PR/CI frisch geprüft und noch unverändert sowie kein anderer Paketlauf vorhanden ist. Der Helper prüft zusätzlich die Uhr, offenen Draft, Branch zweimal, tatsächlichen Android-Workflow und alle vier abgeschlossenen grünen Jobs und dispatcht das bestehende `device-test.yml` auf der Produktbranch mit `source_sha=ba9656f0...`/`include_baseline=false`. Der Hilfscommit ist kein APK-Produktkopf. Bei neuerem Produktkopf nicht verwenden. API-Antworten bei Unklarheit erst lesend prüfen, keine doppelte Anforderung.
+
+Diese Forschungsbranch ist kein zweiter APK-Kandidat. `docs/DEFERRED_TEST_CHECKPOINT.json` enthält den maschinenlesbaren Stand; aktuelle PR-/Run-Zustände vor Ausgabe bleiben maßgeblich. Öffentliche Zertifikatsvorbereitung:115 JRC-CVC-Beispiele/115 mathematische Beispielsignaturen,352 beschädigte Varianten und4968 synthetische vollständige EF-Dateivarianten geprüft. Originaldaten/Vertrauen getrennt;6C00 an EOF offen. Noch kein produktiver Zertifikatsimport, keine produktive Vertrauenskette und keine Vollständigkeitsbehauptung. Details `docs/CARD_CERTIFICATE_RESEARCH.md`, reproduzierbare Aggregate unter `scripts/research/`.
+
+Eigene physische Karte und exakte Übernahme, fremde/unbestätigte Karte nur temporär, keine historische Nachbefüllung; einzelne Quellenfehler unabhängig und Annahme atomar/verschlüsselt. Führerschein-/Kartenseriennummer und Chipkennung zunächst verborgen. Keine Kartenschreibbefehle, Smartphone-Ortung, geratene Arbeit/Ruhe/Heimkehr/Kilometer/LKW-Hersteller. Kein Browser, keine Subagenten, keine Bereinigung alter Dateien/Branches/Stashes/Releases/Artefakte. Actions-Budget $2/Stop usage Yes unverändert. Nutzer muss für autorisierte Routineentscheidungen nicht erneut bestätigen.
 
 Neuer Branch feature/card-master-file-import auf PR57-Head48d7e0053b2eaef56f6ed9de54a7e06f70e26db1 (inklusive PR56-Korrektur79d79ab4bde565c7851e2291dcc7c0b43c188089). Zwei neue unabhängige MF-Quellen EF ICC0002/25Byte und EF IC0005/8Byte. Amtliche ASN.1-/Byte-/Reset-/SELECT-Tabellen visuell geprüft: beide nach ATR vor erster AID lesen, keine neue MF-Select-Variante, keine Kartenbindung aus Serien-/Chipwerten. Nummern/Kennungen verborgen bis Antippen. Schema18 unverändert, version40117,19Quellen möglich.37 neue synthetische Tests. Keine Nachbefüllung, keine Kartenschreibbefehle.
 

@@ -86,6 +86,8 @@ Die folgende Vorgehensweise ist noch keine Android-Implementierung oder Hardware
 
 TCS43 nennt6700 oder6Cxx bei Offset+Le>EF-Größe und6B00 bei unpassendem Offset. Der bestehende ApduSession-Helper korrigiert6C00 zu Le256. Ein datenloses6C00 unmittelbar am Dateiende ist deshalb ausdrücklich noch als eigener Prüfpunkt offen; nicht ohne Test als Erfolg oder feste Dateilänge behandeln. Die aktuellen Legacy15/17-Lesertests sichern6700 bereits mittels Ein-Byte-Nachprüfung ab.
 
+Der isolierte synthetische Ablauf `scripts/research/probe_certificate_boundaries.py` prüft jede der138 Dateilängen204..341 mit aktiven, null- und FF-belegten Bytes, vier Antwortstückgrößen und drei EOF-Varianten.4968 vollständige Dateivarianten bleiben bytegleich, höchstens neun Ein-Byte-Grenzproben; neun zu kurze/zu lange oder fehlerhafte Varianten werden abgewiesen. Ein fehlerhaftes CA-EF verhindert die anderen drei Quellen nicht.6C00 bleibt bewusst fehlerhaft. Ergebnis: `scripts/research/certificate_boundary_probe.json`. Der Ablauf verwendet keinerlei Android-, USB-, Netzwerk- oder Karten-I/O und bestätigt keine reale Karten-Grenzantwort.
+
 ## Umsetzung und Prüffälle vor einem Zertifikats-PR
 
 - Rohdatei, Art, Generation und vollständige ursprüngliche Länge als unabhängige Quelle speichern; konkrete eigene physische Karte und exakte Importsitzung bleiben zwingend. Keine Quelle aus einer anderen Sitzung oder Gen1/Gen2 als Ersatz übernehmen.

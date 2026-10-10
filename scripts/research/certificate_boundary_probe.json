@@ -1,0 +1,8 @@
+{
+  "synthetic_complete_files_preserved": 4968,
+  "possible_lengths_checked": 138,
+  "maximum_one_byte_boundary_probes": 9,
+  "malformed_or_out_of_range_files_rejected": 9,
+  "independent_source_failure_preserves_others": true,
+  "android_implementation_or_hardware_validation": false
+}
