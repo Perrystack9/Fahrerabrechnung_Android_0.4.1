@@ -1,0 +1,60 @@
+name: One requested PR58 device-test dispatch
+
+# This unreferenced preparation must remain outside main and product PRs.
+# Create the exact branch once, only after the authorized hardware minimum.
+on:
+  create:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/device-test-pr58-ba9656f0'
+    name: Start the requested verified PR58 test ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm time, exact current full CI and one package request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const source = 'ba9656f0e22980af94883783986367d7bcdf545b';
+            const branch = 'feature/card-master-file-import';
+            const verification = 38089034166;
+            const minimum = Date.parse('2026-10-10T22:56:06Z');
+            const repository = { owner: context.repo.owner, repo: context.repo.repo };
+            if (Date.now() < minimum) throw new Error('The authorized hardware minimum has not been reached.');
+            const { data: pull } = await github.rest.pulls.get({ ...repository, pull_number: 58 });
+            if (pull.state !== 'open' || pull.merged || !pull.draft || pull.head.sha !== source) {
+              throw new Error('PR58 must remain an open draft at the prepared exact source.');
+            }
+            const { data: ref } = await github.rest.git.getRef({ ...repository, ref: `heads/${branch}` });
+            if (ref.object.sha !== source) throw new Error('The current product branch differs from the prepared source.');
+            const { data: workflow } = await github.rest.actions.getWorkflow({ ...repository, workflow_id: 'android-ci.yml' });
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...repository, run_id: verification });
+            if (run.workflow_id !== workflow.id || run.event !== 'pull_request' || run.head_sha !== source ||
+                run.status !== 'completed' || run.conclusion !== 'success') {
+              throw new Error('The requested exact source has no completed successful Android verification.');
+            }
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun,
+              { ...repository, run_id: verification, filter: 'latest', per_page: 100 });
+            const required = ['Project boundaries and CI scope', 'Build, test, lint and APK verification',
+              'Room SQLCipher and Compose instrumentation', 'Android verification'];
+            if (!required.every(name => jobs.some(job => job.name === name &&
+                job.status === 'completed' && job.conclusion === 'success'))) {
+              throw new Error('All four Android CI jobs, including completed instrumentation, are required.');
+            }
+            const existing = await github.paginate(github.rest.actions.listWorkflowRuns,
+              { ...repository, workflow_id: 'device-test.yml', event: 'workflow_dispatch', head_sha: source, per_page: 100 });
+            if (existing.length) {
+              core.info(`A package request for this exact source already exists: ${existing.map(run => run.id).join(',')}.`);
+              return;
+            }
+            const { data: latest } = await github.rest.git.getRef({ ...repository, ref: `heads/${branch}` });
+            if (latest.object.sha !== source) throw new Error('The product branch changed during verification.');
+            if (Date.now() < minimum) throw new Error('The authorized hardware minimum has not been reached.');
+            await github.rest.actions.createWorkflowDispatch({ ...repository, workflow_id: 'device-test.yml',
+              ref: branch, inputs: { source_sha: source, include_baseline: 'false' } });
+            core.info(`Requested one existing manual device-test workflow for ${source}; baseline excluded.`);
