@@ -53,4 +53,21 @@ class MigrationTestBase {
             }
         }
     }
+    @Test fun migration_11_12_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "gnss-migration-test"
+        helper.createDatabase(name, 11).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 12, true, DatabaseMigrations.MIGRATION_11_12).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_gnss_imports", "driver_import_gnss_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
 }

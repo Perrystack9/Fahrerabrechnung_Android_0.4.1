@@ -14,12 +14,13 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, onEventsFaults: () -> Unit,
-                               onSpecificConditions: () -> Unit = {}) {
+                               onSpecificConditions: () -> Unit = {}, onGnss: () -> Unit = {}) {
     ScreenContent(padding) {
         Text("Fahrerkarte · Details", style = MaterialTheme.typography.titleLarge)
         OutlinedButton(onClick = onControls) { Text("Kontrollen") }
         OutlinedButton(onClick = onEventsFaults) { Text("Ereignisse und Störungen") }
         OutlinedButton(onClick = onSpecificConditions) { Text("Fähre/Zug und Out of Scope") }
+        OutlinedButton(onClick = onGnss) { Text("GNSS-Aufzeichnungen") }
         Text("Angaben aus der ausgewählten gespeicherten Übernahme.", style = MaterialTheme.typography.bodySmall)
     }
 }

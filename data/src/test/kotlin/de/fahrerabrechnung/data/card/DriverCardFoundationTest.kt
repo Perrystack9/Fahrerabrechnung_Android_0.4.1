@@ -115,7 +115,7 @@ class DriverCardFoundationTest {
         assertEquals(CardGeneration.UNKNOWN, DriverCardDecoder.generation(null, g2).second)
         g2[0] = 2
         assertEquals(CardRecognition.OTHER_CARD, DriverCardDecoder.generation(null, g2).first)
-        assertEquals(15, DriverCardFiles.files.first { it.generation == CardGeneration.GEN2 }.expectedLength)
+        assertEquals(17, DriverCardFiles.files.first { it.generation == CardGeneration.GEN2 }.expectedLength)
         assertEquals(10, DriverCardFiles.files.first { it.generation == CardGeneration.GEN2V2 }.expectedLength)
         assertTrue(CardGeneration.GEN2V2.capabilities.contains(CardCapability.V2_FILES))
     }
@@ -518,6 +518,61 @@ class DriverCardFoundationTest {
         }
     }
 
+    @Test fun readerAttemptsOnlyGenerationSupportedGnssFiles() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(generation, identityFixture())
+            val result = DriverCardReader(fake).read()
+            assertEquals(generation != CardGeneration.GEN1, result.gnssPositions != null)
+            assertEquals(generation == CardGeneration.GEN2V2, result.gnssAuthentication != null)
+            assertFalse(result.gnssPositionReadFailed); assertFalse(result.gnssAuthenticationReadFailed)
+            assertEquals(generation != CardGeneration.GEN1, DriverCardFiles.GNSS_PLACES in fake.readFiles)
+            assertEquals(generation == CardGeneration.GEN2V2, DriverCardFiles.GNSS_AUTHENTICATION in fake.readFiles)
+            assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun gnssReadFailuresAreIndependentAndNeverDiscardOtherSources() = runBlocking {
+        for (failedId in listOf(DriverCardFiles.GNSS_PLACES, DriverCardFiles.GNSS_AUTHENTICATION)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), missingFiles = setOf(failedId))
+            val result = DriverCardReader(fake).read()
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.specificConditions)
+            assertEquals(failedId == DriverCardFiles.GNSS_PLACES, result.gnssPositionReadFailed)
+            assertEquals(failedId == DriverCardFiles.GNSS_AUTHENTICATION, result.gnssAuthenticationReadFailed)
+            assertEquals(failedId != DriverCardFiles.GNSS_PLACES, result.gnssPositions != null)
+            assertEquals(failedId != DriverCardFiles.GNSS_AUTHENTICATION, result.gnssAuthentication != null)
+        }
+    }
+
+    @Test fun gnssInvalidCapacityAndPointerLeaveAuthenticationUsable() = runBlocking {
+        for (badCount in listOf(true, false)) {
+            val bytes = ByteArray(CardGnssAccumulatedDrivingParser.fileLength(CardGeneration.GEN2V2, 336))
+            bytes[0] = 2
+            val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                invalidGnssCount = badCount, gnssBytes = bytes)).read()
+            assertNull(result.gnssPositions); assertTrue(result.gnssPositionReadFailed)
+            assertNotNull(result.gnssAuthentication); assertNotNull(result.events)
+        }
+    }
+
+    @Test fun gnssCancellationPropagatesAndClosesReader() = runBlocking {
+        for (positions in listOf(true, false)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                gnssFailure = if (positions) kotlinx.coroutines.CancellationException("fixture") else null,
+                authenticationFailure = if (!positions) kotlinx.coroutines.CancellationException("fixture") else null)
+            try { DriverCardReader(fake).read(); fail("Expected cancellation") }
+            catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+        }
+    }
+
+    @Test fun gnssCapacityUsesFullBaseApplicationNotV2Extension() {
+        val application = ByteArray(17).also { it[11] = 1; it[12] = 80 }
+        assertEquals(336, DriverCardDecoder.gnssCount(application, CardGeneration.GEN2V2))
+        application[11] = 0; application[12] = 252.toByte()
+        assertEquals(252, DriverCardDecoder.gnssCount(application, CardGeneration.GEN2))
+        failure { DriverCardDecoder.gnssCount(application, CardGeneration.GEN2V2) }
+        failure { DriverCardDecoder.gnssCount(ByteArray(15), CardGeneration.GEN2) }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -534,7 +589,12 @@ class DriverCardFoundationTest {
                                        private val invalidEventCount: Boolean = false,
                                        private val specificConditionBytes: ByteArray? = null,
                                        private val specificConditionFailure: Exception? = null,
-                                       private val invalidSpecificConditionCount: Boolean = false) : CardReaderTransport {
+                                       private val invalidSpecificConditionCount: Boolean = false,
+                                       private val gnssBytes: ByteArray? = null,
+                                       private val authenticationBytes: ByteArray? = null,
+                                       private val gnssFailure: Exception? = null,
+                                       private val authenticationFailure: Exception? = null,
+                                       private val invalidGnssCount: Boolean = false) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -566,8 +626,12 @@ class DriverCardFoundationTest {
                 if (file == CardEventFaultKind.EVENTS.fileId) eventFailure?.let { throw it }
                 if (file == CardEventFaultKind.FAULTS.fileId) faultFailure?.let { throw it }
                 if (file == DriverCardFiles.SPECIFIC_CONDITIONS) specificConditionFailure?.let { throw it }
+                if (file == DriverCardFiles.GNSS_PLACES) gnssFailure?.let { throw it }
+                if (file == DriverCardFiles.GNSS_AUTHENTICATION) authenticationFailure?.let { throw it }
                 val data = when (file) {
                     DriverCardFiles.IDENTIFICATION -> identification
+                    DriverCardFiles.GNSS_PLACES -> gnssBytes ?: ByteArray(CardGnssAccumulatedDrivingParser.fileLength(generation, 336))
+                    DriverCardFiles.GNSS_AUTHENTICATION -> authenticationBytes ?: ByteArray(CardGnssAuthenticationParser.fileLength(generation))
                     DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = if (invalidActivityPointer) 16 else 4
@@ -579,13 +643,16 @@ class DriverCardFoundationTest {
                     CardEventFaultKind.FAULTS.fileId -> faultBytes ?: ByteArray(1152)
                     DriverCardFiles.SPECIFIC_CONDITIONS -> specificConditionBytes ?: ByteArray(
                         CardSpecificConditionParser.fileLength(generation, if (generation == CardGeneration.GEN1) 56 else 112))
-                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
+                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 17).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
                         it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
                         it[6] = if (invalidActivityLength) 0 else 16
                         it[8] = 2 // two vehicle record slots
-                        if (it.size == 15) it[14] = if (invalidSpecificConditionCount) 0 else 112
+                        if (it.size == 17) {
+                            it[11] = if (invalidGnssCount) 0 else 1; it[12] = if (invalidGnssCount) 0 else 80
+                            it[14] = if (invalidSpecificConditionCount) 0 else 112
+                        }
                     }
                 }
                 val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)

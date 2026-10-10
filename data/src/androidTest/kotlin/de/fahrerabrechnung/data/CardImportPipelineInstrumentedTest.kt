@@ -791,7 +791,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 10
         }
         db.close(); open()
-        assertEquals(11, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
         assertEquals(identities, db.driverProfileDao().cards(imports.profile()!!.id))
         assertArrayEquals(eventBytes, imports.get(old.id)!!.events!!.file.bytes)
@@ -824,6 +824,121 @@ class CardImportPipelineInstrumentedTest {
         db.openHelper.writableDatabase.execSQL("UPDATE card_control_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(45), id))
         assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.activity)
         rejected<IllegalStateException> { imports.get(run.id) }
+    }
+
+    private fun gnssRead(time: Int = 1790000015): CardReadResult {
+        val positions = ByteArray(CardGnssAccumulatedDrivingParser.fileLength(CardGeneration.GEN2V2, 336))
+        ByteBuffer.wrap(positions).putShort(0).putInt(time - 7).putInt(time).put(10.toByte())
+            .put(byteArrayOf(0, 0, 1, 0, 0, 2, 0, 0, 3))
+        val auth = ByteArray(CardGnssAuthenticationParser.fileLength(CardGeneration.GEN2V2))
+        ByteBuffer.wrap(auth).putShort(0).putInt(time - 7).put(1.toByte())
+        return sixFiles().copy(gnssPositions = CardGnssAccumulatedDrivingFile(CardGeneration.GEN2V2, 336, positions),
+            gnssAuthentication = CardGnssAuthenticationFile(CardGeneration.GEN2V2, auth))
+    }
+
+    @Test fun gnssPersistsExactSelectedSourcesAcrossReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(sixFiles(), "before-gnss")
+        val fresh = pipeline.process(gnssRead(), "with-gnss")
+        assertEquals(2, fresh.newSourceCount); assertEquals(8, fresh.files.size)
+        val saved = imports.get(fresh.id)!!
+        assertEquals(1790000015L, saved.gnssPositions!!.records.single().positionTimeRaw)
+        assertEquals(1790000008L, saved.gnssAuthentication!!.records.single().accumulatedDrivingTimeRaw)
+        db.close(); open()
+        assertArrayEquals(saved.gnssPositions!!.file.bytes, imports.get(fresh.id)!!.gnssPositions!!.file.bytes)
+        assertArrayEquals(saved.gnssAuthentication!!.file.bytes, imports.get(fresh.id)!!.gnssAuthentication!!.file.bytes)
+        assertNull(imports.get(old.id)!!.gnssPositions); assertNull(imports.get(old.id)!!.gnssAuthentication)
+        assertEquals(old, pipeline.process(sixFiles(), old.id))
+    }
+
+    @Test fun gnssRetriesDeduplicateWhileChangedAndReplacementSourcesRemainSeparate() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(gnssRead(), "gnss-first")
+        assertEquals(first, pipeline.process(gnssRead(), first.id))
+        val same = pipeline.process(gnssRead(), "gnss-same")
+        assertEquals(0, same.newSourceCount); assertEquals(2, count("card_gnss_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(gnssRead(1790000020), first.id) }
+        val changed = pipeline.process(gnssRead(1790000020), "gnss-changed")
+        assertEquals(2, changed.newSourceCount)
+        val replacement = pipeline.process(gnssRead().copy(card = card("replacement-gnss")), "gnss-replacement")
+        assertEquals(8, replacement.newSourceCount)
+        assertNotEquals(first.driverCardId, replacement.driverCardId)
+        assertNotEquals(imports.get(first.id)!!.gnssPositions!!.id, imports.get(replacement.id)!!.gnssPositions!!.id)
+        assertEquals(1790000015L, imports.get(first.id)!!.gnssPositions!!.records.single().positionTimeRaw)
+    }
+
+    @Test fun gnssFailureIsPartialButValidEmptyFileIsStoredEvenWithoutOtherData() = runBlocking {
+        imports.bind(card(), true)
+        val partial = pipeline.process(gnssRead().copy(gnssPositions = null, gnssPositionReadFailed = true), "partial-gnss")
+        assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.GNSS_POSITIONS).status)
+        assertNotNull(imports.get(partial.id)!!.gnssAuthentication)
+        val invalid = pipeline.process(gnssRead().copy(gnssPositions =
+            CardGnssAccumulatedDrivingFile(CardGeneration.GEN2, 336, ByteArray(6050))), "invalid-generation-gnss")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.GNSS_POSITIONS).status)
+        assertNull(imports.get(invalid.id)!!.gnssPositions); assertNotNull(imports.get(invalid.id)!!.gnssAuthentication)
+        val authFailed = pipeline.process(gnssRead().copy(gnssAuthentication = null,
+            gnssAuthenticationReadFailed = true), "authentication-failed-gnss")
+        assertEquals(CardImportFileStatus.READ_FAILED, authFailed.file(CardImportFileKind.GNSS_AUTHENTICATION).status)
+        assertNotNull(imports.get(authFailed.id)!!.gnssPositions); assertNull(imports.get(authFailed.id)!!.gnssAuthentication)
+        val only = read().copy(activity = null, vehicles = null, gnssPositions =
+            CardGnssAccumulatedDrivingFile(CardGeneration.GEN2V2, 336, ByteArray(6050)))
+        val empty = pipeline.process(only, "empty-gnss")
+        assertNotNull(empty.sessionId); assertEquals(1, empty.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, empty.file(CardImportFileKind.GNSS_POSITIONS).status)
+        assertEquals(0, empty.file(CardImportFileKind.GNSS_POSITIONS).decodedCount)
+        assertTrue(imports.get(empty.id)!!.gnssPositions!!.records.isEmpty())
+    }
+
+    @Test fun gnssForeignUnconfirmedAndUnclearReadsCannotPersist() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(gnssRead(), "unconfirmed-gnss") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-gnss", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(gnssRead().copy(card = foreign), "foreign-gnss") }
+        rejected<CardBindingRequired> { pipeline.process(gnssRead().copy(card = card("unclear-gnss", card().holder.copy(birthDate = null))), "unclear-gnss") }
+        assertEquals(0, count("card_gnss_imports")); assertEquals(0, count("driver_import_gnss_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+
+    @Test fun gnssWriteFailureRollsBackAllSelectedSourcesAndSession() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_gnss_fail BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(gnssRead(), "rollback-gnss")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertEquals(0, count("card_gnss_imports")); assertEquals(0, count("driver_import_gnss_sources"))
+        assertEquals(0, count("import_sessions")); assertEquals(0, count("card_activity_imports"))
+        assertEquals(0, count("card_specific_condition_imports"))
+    }
+
+    @Test fun schemaElevenUpgradePreservesExactOldReceiptsWithoutGnssBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(sixFiles(), "schema-eleven-gnss")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.specificConditions!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_gnss_sources"); execSQL("DROP TABLE card_gnss_imports")
+            execSQL("DELETE FROM room_master_table"); version = 11
+        }
+        db.close(); open()
+        assertEquals(12, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.specificConditions!!.file.bytes)
+        assertNull(imports.get(old.id)!!.gnssPositions); assertEquals(old, pipeline.process(sixFiles(), old.id))
+        assertEquals(0, count("card_gnss_imports"))
+        assertEquals(2, pipeline.process(gnssRead(), "after-upgrade-gnss").newSourceCount)
+    }
+
+    @Test fun gnssWrongPhysicalLinksAndCorruptedBytesAreRejectedWithoutBreakingHistory() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(sixFiles(), "old-safe-gnss")
+        val fresh = pipeline.process(gnssRead(), "corrupted-gnss")
+        val source = imports.get(fresh.id)!!.gnssPositions!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardGnssDao().insertSource(DriverImportGnssSourceEntity(old.id, CardGnssFileKind.POSITIONS.name, "wrong-card", source.id))
+        }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_gnss_imports SET bytes = ? WHERE id = ?", arrayOf(ByteArray(4), source.id))
+        assertEquals(2, pipeline.history().size); assertNotNull(imports.get(old.id)!!.specificConditions)
+        rejected<IllegalStateException> { imports.get(fresh.id) }
     }
 
     @Test fun replacementWithSameNumberAndBytesRetainsItsOwnPhysicalProvenance() = runBlocking {

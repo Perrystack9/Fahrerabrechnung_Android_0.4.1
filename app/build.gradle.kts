@@ -24,7 +24,7 @@ android {
         applicationId = "de.fahrerabrechnung.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40109
+        versionCode = 40110
         versionName = "0.4.1-ui-v2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
