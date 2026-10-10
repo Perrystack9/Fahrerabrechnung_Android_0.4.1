@@ -1237,6 +1237,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
             execSQL("DROP TABLE driver_import_load_unload_sources"); execSQL("DROP TABLE card_load_unload_imports")
             execSQL("DELETE FROM room_master_table"); version = 14
         }
@@ -1260,6 +1261,119 @@ class CardImportPipelineInstrumentedTest {
         db.openHelper.writableDatabase.execSQL("UPDATE card_load_unload_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
         assertEquals(2, pipeline.history().size); assertNull(imports.get(old.id)!!.loadUnload)
         rejected<IllegalStateException> { imports.get(fresh.id) }
+    }
+
+    private fun typeRead(time: Int = 1790000030): CardReadResult {
+        val bytes = ByteArray(1682)
+        ByteBuffer.wrap(bytes).putShort(0).putInt(time).put(1.toByte())
+        return loadRead().copy(loadType = CardLoadTypeFile(CardGeneration.GEN2V2, 336, bytes))
+    }
+
+    @Test fun typesPersistExactOwnCardSessionAcrossEncryptedReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(loadRead(), "before-types")
+        val fresh = pipeline.process(typeRead(), "with-types")
+        assertEquals(1, fresh.newSourceCount); assertEquals(13, fresh.files.size)
+        val source = imports.get(fresh.id)!!.loadType!!
+        assertEquals(fresh.driverCardId, source.driverCardId)
+        assertEquals(1790000030L, source.records.single().entryTimeRaw)
+        db.close(); open()
+        assertArrayEquals(source.file.bytes, imports.get(fresh.id)!!.loadType!!.file.bytes)
+        assertNull(imports.get(old.id)!!.loadType)
+        assertEquals(old, pipeline.process(loadRead(), old.id))
+    }
+    @Test fun typesDeduplicateButChangedRequestsAndPhysicalReplacementCardsStayDistinct() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(typeRead(), "types-first")
+        assertEquals(first, pipeline.process(typeRead(), first.id))
+        assertEquals(0, pipeline.process(typeRead(), "types-repeat").newSourceCount)
+        assertEquals(1, count("card_load_type_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(typeRead(1790000035), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(loadRead(), first.id) }
+        val changed = pipeline.process(typeRead(1790000035), "types-changed")
+        assertEquals(1, changed.newSourceCount)
+        val replacement = pipeline.process(typeRead().copy(card = card("replacement-types")), "types-replacement")
+        assertEquals(13, replacement.newSourceCount)
+        assertNotEquals(first.driverCardId, replacement.driverCardId)
+        assertNotEquals(imports.get(first.id)!!.loadType!!.id, imports.get(replacement.id)!!.loadType!!.id)
+        assertEquals(1790000030L, imports.get(first.id)!!.loadType!!.records.single().entryTimeRaw)
+    }
+    @Test fun typeFileFailuresAndInvalidPointerAreIndependentAndValidEmptySourceCanStandAlone() = runBlocking {
+        imports.bind(card(), true)
+        val partial = pipeline.process(typeRead().copy(loadType = null, loadTypeReadFailed = true), "types-partial")
+        assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.LOAD_TYPE_ENTRIES).status)
+        assertNotNull(imports.get(partial.id)!!.loadUnload)
+        val invalidBytes = ByteArray(1682).also { it[0] = 1; it[1] = 80 }
+        val invalid = pipeline.process(typeRead().copy(loadType = CardLoadTypeFile(CardGeneration.GEN2V2, 336, invalidBytes)), "types-invalid")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.LOAD_TYPE_ENTRIES).status)
+        assertNull(imports.get(invalid.id)!!.loadType); assertNotNull(imports.get(invalid.id)!!.loadUnload)
+        val only = read().copy(activity = null, vehicles = null,
+            loadType = CardLoadTypeFile(CardGeneration.GEN2V2, 336, ByteArray(1682)))
+        val empty = pipeline.process(only, "types-empty")
+        assertNotNull(empty.sessionId); assertEquals(1, empty.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, empty.file(CardImportFileKind.LOAD_TYPE_ENTRIES).status)
+        assertEquals(0, empty.file(CardImportFileKind.LOAD_TYPE_ENTRIES).decodedCount)
+        assertTrue(imports.get(empty.id)!!.loadType!!.records.isEmpty())
+    }
+    @Test fun typesForeignUnconfirmedAndUnclearCardsCannotCreatePersistentSources() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(typeRead(), "types-unconfirmed") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-types", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(typeRead().copy(card = foreign), "types-foreign") }
+        rejected<CardBindingRequired> { pipeline.process(typeRead().copy(card = card("unclear-types", card().holder.copy(birthDate = null))), "types-unclear") }
+        assertEquals(0, count("card_load_type_imports")); assertEquals(0, count("driver_import_load_type_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun typeSourceWriteFailureRollsBackTheEntireOwnImport() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_type_fail BEFORE INSERT ON card_load_type_imports BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(typeRead(), "types-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        for (table in listOf("card_load_type_imports", "driver_import_load_type_sources", "card_load_unload_imports", "driver_import_load_unload_sources", "card_place_imports",
+            "card_gnss_imports", "import_sessions", "card_activity_imports", "card_specific_condition_imports"))
+            assertEquals(0, count(table))
+    }
+    @Test fun schemaFifteenUpgradeKeepsOldReceiptsAndSourcesWithoutLoadTypeBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(loadRead(), "schema-fifteen-types")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.places!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
+            execSQL("DELETE FROM room_master_table"); version = 15
+        }
+        db.close(); open()
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.places!!.file.bytes)
+        assertNull(imports.get(old.id)!!.loadType); assertEquals(old, pipeline.process(loadRead(), old.id))
+        assertEquals(0, count("card_load_type_imports"))
+        assertEquals(1, pipeline.process(typeRead(), "types-after-upgrade").newSourceCount)
+    }
+    @Test fun typeWrongCardLinksAndAlteredBytesCannotLeakIntoAnotherSession() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(loadRead(), "types-safe-old")
+        val fresh = pipeline.process(typeRead(), "types-corrupt-new")
+        val source = imports.get(fresh.id)!!.loadType!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardLoadTypeDao().insertSource(DriverImportLoadTypeSourceEntity(old.id, "wrong-card", source.id))
+        }
+        val altered = source.file.bytes.also { it[3] = 7 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_load_type_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
+        assertEquals(2, pipeline.history().size); assertNull(imports.get(old.id)!!.loadType)
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+    }
+
+    @Test fun loadTypeCoverageRetainsUnknownEntryTimeWithoutBorrowingOtherSourceTimes() = runBlocking {
+        imports.bind(card(), true)
+        val result = pipeline.process(typeRead(0), "type-unknown-time")
+        val receipt = result.file(CardImportFileKind.LOAD_TYPE_ENTRIES)
+        assertEquals(CardImportFileStatus.STORED, receipt.status); assertEquals(1, receipt.decodedCount)
+        assertNull(receipt.firstUtcEpochSeconds); assertNull(receipt.lastUtcEpochSeconds)
+        val row = imports.get(result.id)!!.loadType!!.records.single()
+        assertNull(row.entryTimeUtc); assertEquals(CardRecordedLoadType.GOODS, row.loadType)
+        assertNotNull(imports.get(result.id)!!.loadUnload!!.records.single().operationTimeUtc)
     }
 
     @Test fun replacementWithSameNumberAndBytesRetainsItsOwnPhysicalProvenance() = runBlocking {

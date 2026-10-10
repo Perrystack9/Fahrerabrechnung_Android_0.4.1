@@ -119,4 +119,21 @@ class MigrationTestBase {
         }
     }
 
+    @Test fun migration_15_16_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "types-migration-test"
+        helper.createDatabase(name, 15).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 16, true, DatabaseMigrations.MIGRATION_15_16).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_load_type_imports", "driver_import_load_type_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
 }

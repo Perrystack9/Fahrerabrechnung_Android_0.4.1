@@ -474,6 +474,45 @@ class AutomaticCardImportUiTest {
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 
+    @Test fun loadTypeNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(type: Int): CardLoadTypeFile {
+            val bytes = ByteArray(1682)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000100).put(type.toByte())
+            return CardLoadTypeFile(CardGeneration.GEN2V2, 336, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-types")
+            pipeline.process(read().copy(activity = null, vehicles = null, loadType = load(1)), "early-types-only")
+            pipeline.process(read().copy(loadType = load(2)), "latest-types")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Ladungsart-Einträge").performScrollTo().performClick()
+        }
+        open("early-types-only"); await("Art: Güter")
+        compose.onNodeWithText("Art: Fahrgäste").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-types"); await("Für diese Übernahme ist keine gespeicherte Ladungsart-Datei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Eintrag").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-types"); await("Art: Fahrgäste")
+        compose.onNodeWithText("Art: Güter").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
+        ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
+
     @Test fun conditionNavigationUsesOnlyTheSelectedImportAndClearsForAnOlderSource() {
         val newest = runBlocking {
             imports.bind(card(), true)

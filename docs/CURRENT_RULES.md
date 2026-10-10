@@ -86,3 +86,5 @@ Technischer Stand 10.10.2026 nach PR52: Beginn-/Ende-Orte und getrennte Orts-Aut
 
 
 Technischer Stand10.10.2026 nach PR53: Grenz-/Ländereinträge nach vollständiger grüner CI und allgemeiner Nutzerbestätigung „Funktioniert alles prima“ unverändert gemergt; Schema14/Testversion40112. Begrenzter Folge-Entwurf für eigenständige Be-/Entladeeinträge, Schema15/40113. Neuer Hardwaretest konkret bis nach11.10.00:56 Europe/Berlin aufgeschoben und gebündelt; neue Import-/Schema-PRs bis neuer Bestätigung offen. Keine Änderung der obigen Fachregeln, keine Dauer-/Arbeitszeit-/Fahrstreckenableitung. Aktueller Stand in WORK_HANDOFF.
+
+Aktuelle Ergänzung10.10.2026: eigener Ladungsart-Zweig EF0530 mit unveränderten Rohcodes/Eintragszeiten, unabhängiger Quelle und additiver Migration15→16. Be-/Entlade- und Ladungsarteinträge nicht zu Transportintervallen, Arbeit/Pause oder Fahrzeugklassen umdeuten. Kein historischer Fallback. Geräteausgabe nach dem zweiten Block frühestens11.10.00:56 Europe/Berlin; bis konkreter neuer Gerätebestätigung ungemergt.

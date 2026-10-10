@@ -168,5 +168,6 @@ class CardImportCoordinator(
         placesAuthentication = result.placesAuthentication?.let { CardPlacesAuthenticationFile(it.generation, it.bytes) },
         borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) },
         loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) },
+        loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
     )
 }
