@@ -156,3 +156,5 @@ Nach grüner Gesamt-CI und Nutzerbestätigung am unveränderten Kopf gemergt: `9
 ## Begrenzter Folgeschritt: GNSS-Decoder
 
 Decoder für vollständiges EF GNSS_Places (Generation 2/2V2): 18-Byte-Ringdatensätze, unveränderte Slots, getrennte Lenkzeit-/Positionszeitpunkte, korrekte Grad-/Minutenumrechnung und neutrale Behandlung unbekannter/ungültiger Felder. 18 synthetische Unit-Testmethoden ergänzt; vollständiger CI-Nachweis im zugehörigen PR. [Primärquellen, Format und Integrationsgrenzen](docs/GNSS_ACCUMULATED_DRIVING_FORMAT.md). Der Decoder ist noch nicht an Leser, Import, Persistenz oder UI angeschlossen; Schema 11/Testversion 40109 bleiben unverändert. Die Anbindung mit exakter eigener Quelle und Gerätetest ist ein gesonderter nächster Schritt.
+
+Separater Folgeschritt für EF GNSS_Places_Authentication: nur Gen2V2, eigener 336-Slot-Ring, 5-Byte-Statusbelege, Zeit des Drei-Stunden-Eintrags und rohe Statuscodes. 12 zusätzliche synthetische Unit-Testmethoden; keine Zuordnung zur Positionsquelle oder unabhängige Authentisierungsbehauptung. Auch diese Quelle ist noch unverbunden; vollständige CI und offener PR-Status sind im zugehörigen PR festgehalten.

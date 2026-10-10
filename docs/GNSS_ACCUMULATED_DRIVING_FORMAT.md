@@ -34,6 +34,21 @@ Beide Zeiten bleiben getrennt, einschließlich Sekunden und unsigned Werten nach
 
 Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Ein teilweise belegter Slot bleibt erhalten, auch ohne darstellbare Position. Genauigkeit außerhalb 1–100 und Tacho-Werte außerhalb 0–9.999.999 behalten den Rohwert ohne interpretierte Kennzahl. Keine Sortierung, Deduplizierung, Route, Fahrzeug-/Tätigkeitszuordnung, Heimkehr, Arbeits-/Ruhezeit, Verstoß- oder Abrechnungsberechnung.
 
+## Separate Authentisierungsquelle (Generation 2 Version 2)
+
+EF **GNSS_Places_Authentication** bleibt eine eigene Datei. EU 2021/1228, Anlage 1 §§2.79a/b und 2.117a sowie die Layouttabelle L 273/48, beschreibt 336 Slots mit je 5 Bytes und einem eigenen 2-Byte-Neuestzeiger: vollständig **1682 Bytes**. Generation 2 Version 1 hat diese Quelle nicht. Eine EF-ID wird hier nicht vorausgesetzt; die spätere Leseranbindung muss sie gesondert prüfen.
+
+| Offset im Authentisierungsslot | Breite | Quellfeld |
+| --- | --- | --- |
+| 0 | 4 | Zeitpunkt des kumulierten Drei-Stunden-Eintrags, unsigned UTC-TimeReal |
+| 4 | 1 | aufgezeichneter PositionAuthenticationStatus |
+
+Der Zeitpunkt entspricht `GNSSAccumulatedDrivingRecord.timeStamp`, ausdrücklich **nicht** dem eigenen Zeitpunkt der Positionsbestimmung. Der Decoder führt keinen Join durch: Ringindex, Reihenfolge oder eine ähnliche Zeit sind kein Zuordnungsbeleg. Die spätere Anbindung benötigt dieselbe physische Karte, exakte Sitzung und den entsprechenden Drei-Stunden-Zeitstempel; fehlende oder mehrdeutige Gegenstücke dürfen keine bestätigte Position ergeben.
+
+Status `00` bedeutet aufgezeichnet „nicht authentisiert“, `01` aufgezeichnet „authentisiert“; `02`–`FF` sind reserviert und bleiben als Rohwerte mit unbekannter Interpretation erhalten. Auch `01` ist hier nur ein gespeicherter Tachographenbeleg, keine vom Decoder ausgeführte kryptografische Prüfung. Kein Status wird auf die unverbundene Positionsquelle übertragen.
+
+Vollständige Dateilänge und Generation werden vor der defensiven Kopie geprüft. Zeiger außerhalb 0–335 werden abgewiesen. Ringreihenfolge, physische Slots, Duplikate und alle unbekannten Teilfelder bleiben erhalten. Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Unbekannte Zeiten ersetzen weder einen Status noch einen anderen Zeitpunkt. 12 neue synthetische Unit-Testmethoden prüfen diese Grenzen, alle reservierten Statuswerte, volle/belegte Ringe und eingefrorene Bytes.
+
 ## Prüfungen und nächster Integrationspunkt
 
 18 neue Unit-Testmethoden prüfen Kapazitäten/Dateigrenzen, Ringzeiger/Umbruch, Herkunft/Zeiten, unbekannte Felder, unsigned Zeiten, alle Vorzeichen, Nullkoordinaten, Pole/Datumsgrenze, unzulässige Minuten, HDOP, Tacho-Rohwerte, Füller und eingefrorene Bytes. Vollständige Android-CI bleibt erforderlich; der Abschlussnachweis steht im zugehörigen PR. Kein neuer Gerätetest-Erfolg wird aus diesen synthetischen Tests abgeleitet.
