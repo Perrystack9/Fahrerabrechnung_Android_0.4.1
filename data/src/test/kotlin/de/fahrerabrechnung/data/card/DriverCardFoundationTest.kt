@@ -975,6 +975,31 @@ class DriverCardFoundationTest {
         assertEquals(28, fake.unitReads.size)
     }
 
+    @Test fun sixteenByteApplicationIsRejectedInsteadOfBecomingLegacyFifteen() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), applicationBytes = ByteArray(16))
+        try { DriverCardReader(fake).read(); fail("Truncation expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, error.failure) }
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+    @Test fun successfulEmptyApplicationTailIsNotAnEndOfFileProof() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), legacyApplication = true, applicationTailEmptySuccess = true)
+        try { DriverCardReader(fake).read(); fail("Malformed reply expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, error.failure) }
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+    @Test fun shortNonEmptyApplicationTailContinuesToItsExactSeventeenBytes() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), applicationTailChunkLimit = 1)
+        val result = DriverCardReader(fake).read()
+        assertEquals(CardGeneration.GEN2V2, result.generation); assertEquals(200, result.vehicleUnits!!.recordCount)
+        assertTrue(fake.closed)
+    }
+    @Test fun applicationTailTimeoutIsPropagatedAndCannotMasqueradeAsLegacy() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), applicationTailFailure = ReaderException(ReaderFailure.TIMEOUT))
+        try { DriverCardReader(fake).read(); fail("Timeout expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.TIMEOUT, error.failure) }
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -1015,7 +1040,11 @@ class DriverCardFoundationTest {
                                        private val legacyApplication: Boolean = false,
                                        private val oversizedVehicleUnitResponse: Boolean = false,
                                        private val vehicleUnitChunkLimit: Int = 256,
-                                       private val extensionBytes: ByteArray? = null) : CardReaderTransport {
+                                       private val extensionBytes: ByteArray? = null,
+                                       private val applicationBytes: ByteArray? = null,
+                                       private val applicationTailEmptySuccess: Boolean = false,
+                                       private val applicationTailFailure: Exception? = null,
+                                       private val applicationTailChunkLimit: Int = 256) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
@@ -1079,7 +1108,7 @@ class DriverCardFoundationTest {
                     CardEventFaultKind.FAULTS.fileId -> faultBytes ?: ByteArray(1152)
                     DriverCardFiles.SPECIFIC_CONDITIONS -> specificConditionBytes ?: ByteArray(
                         CardSpecificConditionParser.fileLength(generation, if (generation == CardGeneration.GEN1) 56 else 112))
-                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else if (legacyApplication) 15 else 17).also {
+                    else -> applicationBytes ?: ByteArray(if (generation == CardGeneration.GEN1) 10 else if (legacyApplication) 15 else 17).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
                         it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
@@ -1102,7 +1131,16 @@ class DriverCardFoundationTest {
                     return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
                 if (file == DriverCardFiles.LOAD_TYPE && oversizedLoadTypeResponse && offset == 0)
                     return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
-                val actualLength = if (file == DriverCardFiles.VEHICLE_UNITS) minOf(length, vehicleUnitChunkLimit) else length
+                if (file == DriverCardFiles.APPLICATION && offset >= 15) {
+                    applicationTailFailure?.let { throw it }
+                    if (applicationTailEmptySuccess) return byteArrayOf(0x90.toByte(), 0)
+                }
+                if (offset >= data.size) return byteArrayOf(0x6B, 0)
+                val actualLength = when {
+                    file == DriverCardFiles.VEHICLE_UNITS -> minOf(length, vehicleUnitChunkLimit)
+                    file == DriverCardFiles.APPLICATION && offset >= 15 -> minOf(length, applicationTailChunkLimit)
+                    else -> length
+                }
                 return data.copyOfRange(offset, minOf(offset + actualLength, data.size)) + byteArrayOf(0x90.toByte(), 0)
             }
             throw AssertionError("Unexpected APDU instruction")

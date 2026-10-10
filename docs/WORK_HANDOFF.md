@@ -1,3 +1,9 @@
+# Zusatzkorrektur für vollständige Anwendungsdateien
+
+Finale PR56-CI38085931554: Produkt/Lint/APK-Builds erfolgreich, ein Lesertest am alten15-Byte-Anwendungsstand fehlgeschlagen. Tatsächliche Ursache: Reader verlangte17Byte, obwohl Decoder die alte vollständige15-Byte-Variante kennt. Jetzt vollständigen15-Byte-Präfix lesen und den unabhängigen Zwei-Byte-Zähler nur bei vollständig gelesenem Rest übernehmen. Legacy nur bei ausdrücklichem EOF6282/6B00 direkt nach15Byte; leere erfolgreiche Antwort,16Byte oder Timeout nicht als Legacy zulassen. Vier weitere Lesertests. Gültige alte Quellen bleiben erhalten, Fahrtenschreiber-Kapazität wird weiter nicht geraten. Erneute vollständige CI am neuen Kopf erforderlich. Kein Hardwaretest/keine APK ausgegeben.
+
+---
+
 Aktueller Compilercheckpoint10.10.: authentischer17.json-Export aus CI38085254090 Versuch1/Artefakt11682376429 unverändert übernommen;34 bisherige Entitäten vollständig identisch, zwei neue. Fehlender ByteBuffer-Import im neuen Reader-Test korrigiert; vollständige finale CI einschließlich Unit-/SQLCipher-/Room-/Compose-Prüfungen erforderlich. Siehe PR56 für exakten finalen Kopf/Status.
 
 Aktueller Entwicklungsstand10.10.2026, zweiter vorzeitig gestarteter Arbeitsblock: eigene Fahrtenschreiber-Nutzungen EF0523 auf PR55-Korrekturkopf ef7d44c29d8cb9520fcaf67306ef387263bf1ba9. Amtliche ASN.1-/Byte-/Kapazitätstabellen vollständig visuell geprüft; Gen2 eigener Zähler84..200, Gen2V2 fest200, zehn Byte je Eintrag. Unabhängige exakte Karten-/Sitzungsquelle, additive Migration16→17, Testversion40115. [Umfang/Primärformat](VEHICLE_UNITS_IMPORT.md), [vorbereitete gemeinsame Geräteanleitung](VEHICLE_UNITS_DEVICE_TEST.md). Echter17.json-Compilerexport und vollständige finale CI noch erforderlich; neue Entwürfe ohne Gerätebestätigung ungemergt. Block22:34:51–11.10.00:34:51 Europe/Berlin, Ausgabe frühestens00:56:06. Ältere Abschnitte darunter bleiben historische Checkpoints.
