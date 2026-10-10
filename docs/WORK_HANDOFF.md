@@ -1,3 +1,13 @@
+# Aktueller Arbeitsblock nach vorzeitig beendetem Pausenteil
+
+10.10.2026 22:34:51 Europe/Berlin: Nutzer hat die Pause ausdrücklich beendet. Zweiter Arbeitsblock bis11.10.00:34:51 Europe/Berlin. Hardware/APK-Ausgabe weiterhin frühestens11.10.00:56:06. Keine neuen Karten-/Schemaentwürfe vor späterer ausdrücklicher Gerätebestätigung mergen.
+
+PR55 Head ef7d44c29d8cb9520fcaf67306ef387263bf1ba9: Android-CI38084590529 Versuch1 vollständig grün (alle4 Jobs einschließlich SQLCipher/Room/Compose). PR56 Head1fcf5ce6f45afd2ad89d21bde597ea9731b19dd8: authentischer KSP-Schema17-Export eingecheckt, Unit-Testimport korrigiert; finale CI38085931554 läuft noch.
+
+Aktuelle Weiterentwicklung: drei feste nur gelesene Kartenquellen im Branch feature/card-fixed-metadata-import, additive Schema18/version40116, kumulativ überPR54/55/56. Parser/Leser/verschlüsselte Sitzungsspeicherung/Status und genaue Detail-/Verlaufsauswahl angebunden. Führerscheinnummer zunächst verborgen; keine Kartenschreibbefehle. Echten Schema18-Compilerexport und vollständige finale CI erst abwarten. Noch keine dieser neuen Quellen am Gerät bestätigt. Später ausschließlich neuesten vollständig grünen exakten Kopf ausgeben; Ausgangspunkt PR53 Schema14/40112, gleiche feste deviceTest-Signatur und Paketkennung. Anleitung CARD_METADATA_DEVICE_TEST.md. Keine parallele Implementierung im späteren Ausgabetask.
+
+---
+
 Aktueller Compilercheckpoint10.10.: authentischer17.json-Export aus CI38085254090 Versuch1/Artefakt11682376429 unverändert übernommen;34 bisherige Entitäten vollständig identisch, zwei neue. Fehlender ByteBuffer-Import im neuen Reader-Test korrigiert; vollständige finale CI einschließlich Unit-/SQLCipher-/Room-/Compose-Prüfungen erforderlich. Siehe PR56 für exakten finalen Kopf/Status.
 
 Aktueller Entwicklungsstand10.10.2026, zweiter vorzeitig gestarteter Arbeitsblock: eigene Fahrtenschreiber-Nutzungen EF0523 auf PR55-Korrekturkopf ef7d44c29d8cb9520fcaf67306ef387263bf1ba9. Amtliche ASN.1-/Byte-/Kapazitätstabellen vollständig visuell geprüft; Gen2 eigener Zähler84..200, Gen2V2 fest200, zehn Byte je Eintrag. Unabhängige exakte Karten-/Sitzungsquelle, additive Migration16→17, Testversion40115. [Umfang/Primärformat](VEHICLE_UNITS_IMPORT.md), [vorbereitete gemeinsame Geräteanleitung](VEHICLE_UNITS_DEVICE_TEST.md). Echter17.json-Compilerexport und vollständige finale CI noch erforderlich; neue Entwürfe ohne Gerätebestätigung ungemergt. Block22:34:51–11.10.00:34:51 Europe/Berlin, Ausgabe frühestens00:56:06. Ältere Abschnitte darunter bleiben historische Checkpoints.

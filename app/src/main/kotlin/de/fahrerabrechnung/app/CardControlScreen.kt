@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter
 internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, onEventsFaults: () -> Unit,
                                onSpecificConditions: () -> Unit = {}, onGnss: () -> Unit = {},
                                onPlaces: () -> Unit = {},
-                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}, onVehicleUnits: () -> Unit = {}) {
+                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}, onVehicleUnits: () -> Unit = {}, onMetadata: (de.fahrerabrechnung.data.card.CardMetadataKind) -> Unit = {}) {
     ScreenContent(padding) {
         Text("Fahrerkarte · Details", style = MaterialTheme.typography.titleLarge)
         OutlinedButton(onClick = onControls) { Text("Kontrollen") }
@@ -28,6 +28,8 @@ internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, o
         OutlinedButton(onClick = onLoadUnload) { Text("Be- und Entladeeinträge") }
         OutlinedButton(onClick = onLoadType) { Text("Ladungsart-Einträge") }
         OutlinedButton(onClick = onVehicleUnits) { Text("Fahrtenschreiber-Nutzungen") }
+        for (kind in de.fahrerabrechnung.data.card.CardMetadataKind.entries)
+            OutlinedButton(onClick = { onMetadata(kind) }) { Text(kind.metadataTitle()) }
         Text("Angaben aus der ausgewählten gespeicherten Übernahme.", style = MaterialTheme.typography.bodySmall)
     }
 }

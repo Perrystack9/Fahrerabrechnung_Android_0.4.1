@@ -1237,6 +1237,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
             execSQL("DROP TABLE driver_import_load_unload_sources"); execSQL("DROP TABLE card_load_unload_imports")
@@ -1341,6 +1342,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
             execSQL("DELETE FROM room_master_table"); version = 15
@@ -1454,6 +1456,7 @@ class CardImportPipelineInstrumentedTest {
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         val typeBytes = imports.get(old.id)!!.loadType!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DELETE FROM room_master_table"); version = 16
         }
@@ -1510,6 +1513,175 @@ class CardImportPipelineInstrumentedTest {
         val source = imports.get(result.id)!!.vehicleUnits!!
         assertEquals(CardGeneration.GEN2, source.file.generation); assertEquals(84, source.file.recordCount)
         assertArrayEquals(bytes, source.file.bytes); assertEquals("A.01", source.records.single().softwareVersionText)
+    }
+
+    private fun metadataRead(download: Int = 1790000200): CardReadResult {
+        val generation = CardGeneration.GEN2V2
+        val licence = ByteArray(53).also {
+            it[0] = 1; "TEST AUTHORITY".toByteArray().copyInto(it, 1); it[36] = 13
+            "TEST-LICENCE-01".toByteArray().copyInto(it, 37)
+        }
+        val current = ByteArray(19).also {
+            ByteBuffer.wrap(it).putInt(1790000100).put(13.toByte()).put(1.toByte())
+            "TEST OWN".toByteArray().copyInto(it, 6)
+        }
+        return unitRead().copy(metadata = mapOf(
+            CardMetadataKind.DRIVING_LICENCE to CardMetadataRead(CardMetadataFile(CardMetadataKind.DRIVING_LICENCE, generation, licence)),
+            CardMetadataKind.CURRENT_USAGE to CardMetadataRead(CardMetadataFile(CardMetadataKind.CURRENT_USAGE, generation, current)),
+            CardMetadataKind.LAST_CARD_DOWNLOAD to CardMetadataRead(CardMetadataFile(CardMetadataKind.LAST_CARD_DOWNLOAD, generation,
+                ByteBuffer.allocate(4).putInt(download).array()))))
+    }
+
+    @Test fun metadataPersistsExactOwnCardSessionAcrossEncryptedReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(unitRead(), "before-metadata")
+        val fresh = pipeline.process(metadataRead(), "with-metadata")
+        assertEquals(3, fresh.newSourceCount); assertEquals(17, fresh.files.size)
+        val sources = imports.get(fresh.id)!!.metadata
+        assertEquals(CardMetadataKind.entries.toSet(), sources.keys)
+        assertTrue(sources.values.all { it.driverCardId == fresh.driverCardId })
+        db.close(); open()
+        for ((kind, source) in sources) assertArrayEquals(source.file.bytes, imports.get(fresh.id)!!.metadata.getValue(kind).file.bytes)
+        assertTrue(imports.get(old.id)!!.metadata.isEmpty())
+        assertEquals(old, pipeline.process(unitRead(), old.id)); assertEquals(14, pipeline.history().first { it.id == old.id }.files.size)
+    }
+    @Test fun metadataDeduplicatesAndMapOrderIsStableWhileChangedRequestsAndBytesStayDistinct() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(metadataRead(), "metadata-first")
+        assertEquals(first, pipeline.process(metadataRead().copy(metadata = metadataRead().metadata.entries.reversed().associate { it.toPair() }), first.id))
+        assertEquals(0, pipeline.process(metadataRead(), "metadata-repeat").newSourceCount)
+        assertEquals(3, count("card_metadata_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(metadataRead(1790000210), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(unitRead(), first.id) }
+        assertEquals(1, pipeline.process(metadataRead(1790000210), "metadata-changed").newSourceCount)
+        assertEquals(1790000200L, (imports.get(first.id)!!.metadata.getValue(CardMetadataKind.LAST_CARD_DOWNLOAD).record as CardDownloadRecord).lastDownloadTimeRaw)
+    }
+    @Test fun eachMetadataFailureAndInvalidKeyPreservesTheOtherSourcesAndValidEmptyFiles() = runBlocking {
+        imports.bind(card(), true)
+        for (kind in CardMetadataKind.entries) {
+            val values = metadataRead().metadata.toMutableMap()
+            values[kind] = CardMetadataRead(readFailed = true)
+            val partial = pipeline.process(metadataRead().copy(metadata = values), "metadata-failed-${kind.name}")
+            assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+            assertEquals(CardImportFileStatus.READ_FAILED, partial.file(kind.importFileKind()).status)
+            assertFalse(imports.get(partial.id)!!.metadata.containsKey(kind)); assertNotNull(imports.get(partial.id)!!.vehicleUnits)
+            assertEquals(2, imports.get(partial.id)!!.metadata.size)
+        }
+        val wrong = metadataRead().metadata.toMutableMap().also {
+            it[CardMetadataKind.DRIVING_LICENCE] = it.getValue(CardMetadataKind.CURRENT_USAGE)
+        }
+        val invalid = pipeline.process(metadataRead().copy(metadata = wrong), "metadata-invalid-key")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.DRIVING_LICENCE_INFO).status)
+        assertEquals(2, imports.get(invalid.id)!!.metadata.size)
+        val empty = metadataRead().copy(activity = null, vehicles = null, vehicleUnits = null,
+            metadata = CardMetadataKind.entries.associateWith { CardMetadataRead(CardMetadataFile(it, CardGeneration.GEN2V2, ByteArray(it.fileLength))) },
+            controls = null, events = null, faults = null, specificConditions = null, gnssPositions = null,
+            gnssAuthentication = null, places = null, placesAuthentication = null, borderCrossings = null, loadUnload = null, loadType = null)
+        val result = pipeline.process(empty, "metadata-empty-only")
+        assertNotNull(result.sessionId); assertEquals(3, result.newSourceCount)
+        for (kind in CardMetadataKind.entries) {
+            assertEquals(CardImportFileStatus.STORED, result.file(kind.importFileKind()).status)
+            assertEquals(0, result.file(kind.importFileKind()).decodedCount)
+            assertNull(imports.get(result.id)!!.metadata.getValue(kind).record)
+        }
+    }
+    @Test fun metadataForeignUnconfirmedAndUnclearCardsCannotWriteAnything() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(metadataRead(), "metadata-unconfirmed") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-metadata", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(metadataRead().copy(card = foreign), "metadata-foreign") }
+        rejected<CardBindingRequired> { pipeline.process(metadataRead().copy(card = card("unclear-metadata", card().holder.copy(birthDate = null))), "metadata-unclear") }
+        assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("driver_import_metadata_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun metadataPhysicalReplacementWithSameNumberAndBytesHasItsOwnSources() = runBlocking {
+        imports.bind(card(), true)
+        val only = CardReadResult(CardRecognition.DRIVER, card().generation, card(), metadata = metadataRead().metadata)
+        val first = pipeline.process(only, "metadata-original")
+        val physical = card().copy(card = card().card.copy(issued = Instant.ofEpochSecond(1)))
+        val next = pipeline.process(only.copy(card = physical), "metadata-physical-replacement")
+        assertNotEquals(first.driverCardId, next.driverCardId); assertEquals(3, next.newSourceCount)
+        for (kind in CardMetadataKind.entries) assertNotEquals(imports.get(first.id)!!.metadata.getValue(kind).id,
+            imports.get(next.id)!!.metadata.getValue(kind).id)
+        assertEquals(6, count("card_metadata_imports")); assertEquals(6, count("driver_import_metadata_sources"))
+    }
+    @Test fun metadataStorageFailureRollsBackEverySourceAndSessionTogether() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_metadata_fail BEFORE INSERT ON card_metadata_imports WHEN NEW.kind = 'LAST_CARD_DOWNLOAD' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val result = pipeline.process(metadataRead(), "metadata-rollback")
+        assertEquals(CardImportRunStatus.FAILED, result.status); assertNull(result.sessionId)
+        for (table in listOf("card_metadata_imports", "driver_import_metadata_sources", "card_vehicle_units_imports", "driver_import_vehicle_units_sources",
+            "card_load_type_imports", "driver_import_load_type_sources", "card_load_unload_imports", "driver_import_load_unload_sources",
+            "card_place_imports", "driver_import_place_sources", "card_gnss_imports", "driver_import_gnss_sources",
+            "import_sessions", "driver_import_sources", "card_activity_imports", "card_vehicle_imports", "card_source_pairs",
+            "card_control_imports", "driver_import_control_sources", "card_event_fault_imports", "driver_import_event_fault_sources",
+            "card_specific_condition_imports", "driver_import_specific_condition_sources", "card_border_crossing_imports", "driver_import_border_crossing_sources"))
+            assertEquals(0, count(table))
+        assertTrue(result.files.filter { it.status == CardImportFileStatus.NOT_STORED }.isNotEmpty())
+    }
+    @Test fun schemaSeventeenUpgradeRetainsOriginalBytesAndReceiptsWithoutMetadataBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(unitRead(), "schema-seventeen-metadata")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.vehicleUnits!!.file.bytes
+        val licenceAbsent = imports.get(old.id)!!.metadata
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
+            execSQL("DELETE FROM room_master_table"); version = 17
+        }
+        db.close(); open()
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.vehicleUnits!!.file.bytes)
+        assertEquals(licenceAbsent, imports.get(old.id)!!.metadata); assertEquals(old, pipeline.process(unitRead(), old.id))
+        assertEquals(0, count("card_metadata_imports")); assertEquals(3, pipeline.process(metadataRead(), "metadata-after-upgrade").newSourceCount)
+    }
+    @Test fun metadataWrongKindAndCardLinksAndCorruptBytesCannotLeakIntoOtherSessions() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(unitRead(), "metadata-safe-old")
+        val fresh = pipeline.process(metadataRead(), "metadata-corrupt-new")
+        val source = imports.get(fresh.id)!!.metadata.getValue(CardMetadataKind.DRIVING_LICENCE)
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardMetadataKind.DRIVING_LICENCE.name, "wrong-card", source.id))
+        }
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardMetadataKind.CURRENT_USAGE.name, source.driverCardId, source.id))
+        }
+        val altered = source.file.bytes.also { it[37] = 88 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
+        assertTrue(imports.get(old.id)!!.metadata.isEmpty()); rejected<IllegalStateException> { imports.get(fresh.id) }
+        val replacement = pipeline.process(metadataRead().copy(card = card("valid-other-metadata")), "metadata-other-card")
+        val other = imports.get(replacement.id)!!.metadata.getValue(CardMetadataKind.DRIVING_LICENCE)
+        db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardMetadataKind.DRIVING_LICENCE.name, other.driverCardId, other.id))
+        assertEquals(3, pipeline.history().size); rejected<IllegalStateException> { imports.get(old.id) }
+    }
+    @Test fun metadataTimesRemainUnknownAndDoNotBorrowActivityOrImportTimes() = runBlocking {
+        imports.bind(card(), true)
+        val values = metadataRead().metadata.toMutableMap()
+        values[CardMetadataKind.CURRENT_USAGE] = CardMetadataRead(CardMetadataFile(CardMetadataKind.CURRENT_USAGE, CardGeneration.GEN2V2,
+            values.getValue(CardMetadataKind.CURRENT_USAGE).file!!.bytes.also { ByteBuffer.wrap(it).putInt(0) }))
+        val result = pipeline.process(metadataRead(0).copy(metadata = values), "metadata-unknown-time")
+        val licence = result.file(CardImportFileKind.DRIVING_LICENCE_INFO)
+        val usage = result.file(CardImportFileKind.CURRENT_USAGE)
+        assertEquals(1, licence.decodedCount); assertNull(licence.firstUtcEpochSeconds); assertNull(licence.lastUtcEpochSeconds)
+        assertEquals(1, usage.decodedCount); assertNull(usage.firstUtcEpochSeconds); assertNull(usage.lastUtcEpochSeconds)
+        assertNotNull(imports.get(result.id)!!.activity)
+        assertEquals(1790000200L, result.file(CardImportFileKind.LAST_CARD_DOWNLOAD).firstUtcEpochSeconds)
+    }
+    @Test fun eachFixedMetadataKindCanBeTheOnlySourceOnGenerationOneAndTwo() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2)) {
+            val own = card("metadata-${generation.name}").copy(generation = generation)
+            imports.bind(own, true)
+            for (kind in CardMetadataKind.entries) {
+                val file = CardMetadataFile(kind, generation, metadataRead().metadata.getValue(kind).file!!.bytes)
+                val result = pipeline.process(CardReadResult(CardRecognition.DRIVER, generation, own,
+                    metadata = mapOf(kind to CardMetadataRead(file))), "metadata-only-${generation.name}-${kind.name}")
+                assertEquals(1, result.newSourceCount); assertEquals(CardImportFileStatus.STORED, result.file(kind.importFileKind()).status)
+                assertEquals(setOf(kind), imports.get(result.id)!!.metadata.keys)
+            }
+        }
+        db.close(); open()
+        assertEquals(6, pipeline.history().size); assertEquals(6, count("card_metadata_imports"))
     }
 
     @Test fun loadTypeCoverageRetainsUnknownEntryTimeWithoutBorrowingOtherSourceTimes() = runBlocking {

@@ -1,0 +1,12 @@
+# Gemeinsames Testupdate nach dem Arbeitsblock
+
+Nur das neue Update über die bestehende FahrerTagebuch-Test-App installieren. Nicht deinstallieren oder Daten löschen. Paketkennung und feste Testsignatur bleiben gleich; Ausgangspunkt ist der allgemein bestätigte PR53-Stand40112/Schema14. Das kumulative Update40116/Schema18 enthält Be-/Entladen, Ladungsart, Fahrtenschreiber-Nutzungen und drei feste Kartenquellen. Ausgabe/Hardwaretest frühestens11.10.2026 00:56:06 Europe/Berlin und erst bei vollständiger grüner CI.
+
+1. Update installieren und vorhandenes Profil sowie alte Übernahmen öffnen. Alte Dateien bleiben erhalten; Übernahmen vor den neuen Quellen dürfen keine späteren Einträge übernehmen.
+2. Eigene Karte am vorhandenen USB-Leser automatisch einlesen lassen. Importverlauf und Fahrerkarte→Details öffnen: **Be- und Entladeeinträge**, **Ladungsart-Einträge**, **Fahrtenschreiber-Nutzungen**, **Führerschein**, **Karten-Nutzungseintrag** und **Download-Zeitpunkt**. Vorhandene Originalangaben prüfen; gültig leere Dateien sollen ausdrücklich leer erscheinen, fehlende/Lesefehler separat. Ein fehlender Beleg gilt nicht als erfolgreicher Test eines nichtleeren Datensatzes.
+3. Führerscheinnummer zunächst verborgen. Auf „Nummer anzeigen“ tippen, die eigene Nummer prüfen, wieder verbergen. Andere Übernahme öffnen: Nummer erneut verborgen. Die App prüft keine Führerscheinklassen oder Gültigkeit.
+4. Karten-Nutzungseintrag ist der gespeicherte Kartenstand, kein Live-Fahrzustand. Download-Zeitpunkt ist ausschließlich der ursprüngliche Kartenwert, kein durch diese App durchgeführter Download. Dieser Test verändert die Karte nicht.
+5. Karte entnehmen, App vollständig schließen und ohne Leser wieder öffnen. Genau diese Übernahme erneut anzeigen; vorhandene Angaben bzw. deren Leer-/Fehlstatus müssen erhalten bleiben. Eine ältere Übernahme wählen: keine späteren Belege als Ersatz anzeigen.
+6. Karte erneut einlesen: neue Übernahme getrennt öffnen, frühere Übernahme unverändert erhalten. Bei Fahrtenschreiber-Nutzungen ist der Herstellercode der des Fahrtenschreibers; Software ggf. als Rohbytes. Keine LKW-Identität oder Nutzungsdauer aus diesen Einträgen ableiten.
+
+Diese Anleitung ist vorbereitet und noch keine Gerätebestätigung. Erst Tobis spätere Rückmeldung dokumentiert tatsächlich geprüfte Schritte; neue Entwürfe vorher nicht mergen. Synthetische Tests decken Generationen, Kapazitäten, Fehler, Fremd-/Ersatzkarten und Manipulationen separat ab. Keine vollständigen Führerschein-/Kartennummern oder Roh-APDU-Daten in Rückmeldung/Logs aufnehmen.

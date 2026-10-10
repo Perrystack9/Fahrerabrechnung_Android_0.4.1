@@ -4,6 +4,16 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_17_18 = object : Migration(17, 18) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_metadata_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `kind` TEXT NOT NULL, `generation` TEXT NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_metadata_imports_driverCardId` ON `card_metadata_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_metadata_imports_id_driverCardId_kind` ON `card_metadata_imports` (`id`, `driverCardId`, `kind`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_metadata_sources` (`sessionId` TEXT NOT NULL, `kind` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, PRIMARY KEY(`sessionId`, `kind`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sourceId`, `driverCardId`, `kind`) REFERENCES `card_metadata_imports`(`id`, `driverCardId`, `kind`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_metadata_sources_sourceId_driverCardId_kind` ON `driver_import_metadata_sources` (`sourceId`, `driverCardId`, `kind`)")
+        }
+    }
+
     val MIGRATION_16_17 = object : Migration(16, 17) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `card_vehicle_units_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")

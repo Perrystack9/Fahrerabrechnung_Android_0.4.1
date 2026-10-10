@@ -170,5 +170,6 @@ class CardImportCoordinator(
         loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) },
         loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
         vehicleUnits = result.vehicleUnits?.let { CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes) },
+        metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) },
     )
 }

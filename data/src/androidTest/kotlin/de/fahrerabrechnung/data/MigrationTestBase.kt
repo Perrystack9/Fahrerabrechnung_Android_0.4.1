@@ -153,4 +153,22 @@ class MigrationTestBase {
         }
     }
 
+    @Test fun migration_17_18_preservesProfilesAndDoesNotBackfillMetadata() {
+        val name = "metadata-migration-test"
+        helper.createDatabase(name, 17).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 18, true, DatabaseMigrations.MIGRATION_17_18).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_metadata_imports", "driver_import_metadata_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
+
 }
