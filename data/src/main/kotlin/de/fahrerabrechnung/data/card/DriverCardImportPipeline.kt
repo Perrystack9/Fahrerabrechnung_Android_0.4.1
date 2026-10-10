@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION }
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -157,7 +157,9 @@ class DriverCardImportPipeline @Inject constructor(
             faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
             specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) },
             gnssPositions = result.gnssPositions?.let { CardGnssAccumulatedDrivingFile(it.generation, it.recordCount, it.bytes) },
-            gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) })
+            gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) },
+            places = result.places?.let { CardPlacesFile(it.generation, it.recordCount, it.bytes) },
+            placesAuthentication = result.placesAuthentication?.let { CardPlacesAuthenticationFile(it.generation, it.bytes) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -220,9 +222,27 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.accumulatedDrivingTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.accumulatedDrivingTimeUtc).epochSecond },
                     if (records.any { it.accumulatedDrivingTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.accumulatedDrivingTimeUtc).epochSecond }, null)
             } else null
+        val places = if (read.places != null || read.placeReadFailed)
+            inspect(CardImportFileKind.WORK_PERIOD_PLACES, read.places != null, read.placeReadFailed) {
+                val file = checkNotNull(read.places)
+                require(file.generation == read.generation)
+                val records = CardPlacesParser.parse(file)
+                CardImportFileResult(CardImportFileKind.WORK_PERIOD_PLACES, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.entryTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond },
+                    if (records.any { it.entryTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond }, null)
+            } else null
+        val placeAuth = if (read.placesAuthentication != null || read.placesAuthenticationReadFailed)
+            inspect(CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION, read.placesAuthentication != null, read.placesAuthenticationReadFailed) {
+                val file = checkNotNull(read.placesAuthentication)
+                require(file.generation == read.generation)
+                val records = CardPlacesAuthenticationParser.parse(file)
+                CardImportFileResult(CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.entryTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond },
+                    if (records.any { it.entryTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond }, null)
+            } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth))
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -255,6 +275,8 @@ class DriverCardImportPipeline @Inject constructor(
             specificConditions = read.specificConditions.takeIf { files.any { it.kind == CardImportFileKind.SPECIFIC_CONDITIONS && it.status == CardImportFileStatus.READY } },
             gnssPositions = read.gnssPositions.takeIf { files.any { it.kind == CardImportFileKind.GNSS_POSITIONS && it.status == CardImportFileStatus.READY } },
             gnssAuthentication = read.gnssAuthentication.takeIf { files.any { it.kind == CardImportFileKind.GNSS_AUTHENTICATION && it.status == CardImportFileStatus.READY } },
+            places = read.places.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES && it.status == CardImportFileStatus.READY } },
+            placesAuthentication = read.placesAuthentication.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -309,6 +331,19 @@ class DriverCardImportPipeline @Inject constructor(
                 read.gnssAuthentication?.let { text(it.generation.name)
                     digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
                 digest.update(if (read.gnssAuthenticationReadFailed) 1.toByte() else 0.toByte())
+            }
+            // Old requests that did not attempt Places retain their original fingerprint and coverage.
+            if (read.places != null || read.placeReadFailed) {
+                text("WORK_PERIOD_PLACES")
+                read.places?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.placeReadFailed) 1.toByte() else 0.toByte())
+            }
+            if (read.placesAuthentication != null || read.placesAuthenticationReadFailed) {
+                text("WORK_PERIOD_PLACES_AUTHENTICATION")
+                read.placesAuthentication?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.placesAuthenticationReadFailed) 1.toByte() else 0.toByte())
             }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }

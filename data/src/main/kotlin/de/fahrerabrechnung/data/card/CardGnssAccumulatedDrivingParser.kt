@@ -89,11 +89,11 @@ object CardGnssAccumulatedDrivingParser {
         (unsigned24(r, field) shl 8) shr 8
 }
 
-private fun recordedTime(raw: Long): Instant? =
+internal fun recordedTime(raw: Long): Instant? =
     raw.takeIf { it != 0L && it != 0xffffffffL }?.let(Instant::ofEpochSecond)
 
 /** Signed ±DDMM.M / ±DDDMM.M multiplied by ten, not decimal degrees multiplied by a scale. */
-private fun coordinateDegrees(raw: Int, maxDegrees: Int): Double? {
+internal fun coordinateDegrees(raw: Int, maxDegrees: Int): Double? {
     if (raw !in -maxDegrees * 1000..maxDegrees * 1000) return null
     val magnitude = abs(raw)
     val degrees = magnitude / 1000

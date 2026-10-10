@@ -2,6 +2,14 @@
 
 **Stand: 10.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
 
+## Aktueller Stand nach PR #51
+
+Main `1c73cb4d2fa4f656e069362a3e159cee12b0d884`, Schema 12/Testversion 40110. Exakter geprüfter Quellkopf `e3f404fd73f13cc80bb9bd667e6146acfb8a2c3a`; identischer Tree `7b7251f0eb5a01c13d7e0a6f5ee0e65d8be2f8c3`. Vollständige CI 38046259050 Versuch 2, alle vier Jobs grün. Ein erster Emulatorversuch scheiterte in einem unveränderten Compose-Test beim Teardown; genau ein gezielter Job-Retry war danach vollständig grün. Paketlauf 38048841274, Testversion 40110, stabiles Zertifikat/Update.
+
+Nutzerbestätigung 10.10.2026, 14:06 Europe/Berlin: „Scheint zu passen. Ist auch nach erneuten Öffnen da“, Screenshot zeigt GNSS-Aufzeichnungen. Bestätigt Anzeige und Bestand nach Wiederöffnung; keine Aussage zu ungenannten historischen/Fehler-/Fremdkartenfällen. Nach dieser Bestätigung unverändert gemergt. Frühere Tabellen und Arbeitsnotizen darunter bleiben historische Angaben.
+
+Nächster begrenzter Abschnitt: [EF Places 0506 und getrenntes Places_Authentication 0526](PLACES_IMPORT_IMPLEMENTATION.md), unabhängige Lesung, eigene Quellen/Sitzungslinks, additive Migration 12→13, neutrale Detailansicht, Testversion 40111. Vollständige CI und [Gerätetest](PLACES_IMPORT_DEVICE_TEST.md) noch offen. Vor Merge ist dieser neue Leser-/Persistenz-/Upgrade-Test erforderlich. Keine neue Arbeitszeit-/Heimkehr-/Routenberechnung, kein Cleanup, kein Browser; Budget/Stop-usage unverändert.
+
 ## Einstieg und Ausgangsbasis
 
 1. Zuerst [Issue #3 „Berater-Handoff“](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) und [CURRENT_RULES.md](CURRENT_RULES.md) lesen. Beide sind der verbindliche Produkt-/Fachstand; historische Design-/GPS-Dokumente gelten nur ohne Widerspruch.

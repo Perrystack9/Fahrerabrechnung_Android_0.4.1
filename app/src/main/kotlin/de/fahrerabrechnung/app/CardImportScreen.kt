@@ -54,6 +54,8 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.FAULTS -> Text("${it.decodedCount} Störungen übernommen")
                         CardImportFileKind.GNSS_POSITIONS -> Text("GNSS-Punkte übernommen")
                         CardImportFileKind.GNSS_AUTHENTICATION -> Text("GNSS-Authentisierungsstatus übernommen")
+                        CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
+                        CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")
                     }
                 }

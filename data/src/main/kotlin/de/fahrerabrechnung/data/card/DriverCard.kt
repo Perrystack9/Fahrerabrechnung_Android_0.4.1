@@ -38,7 +38,11 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val gnssPositions: CardGnssAccumulatedDrivingFile? = null,
                           val gnssPositionReadFailed: Boolean = false,
                           val gnssAuthentication: CardGnssAuthenticationFile? = null,
-                          val gnssAuthenticationReadFailed: Boolean = false)
+                          val gnssAuthenticationReadFailed: Boolean = false,
+                          val places: CardPlacesFile? = null,
+                          val placeReadFailed: Boolean = false,
+                          val placesAuthentication: CardPlacesAuthenticationFile? = null,
+                          val placesAuthenticationReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -56,6 +60,8 @@ object DriverCardFiles {
     const val SPECIFIC_CONDITIONS = 0x0522
     const val GNSS_PLACES = 0x0524
     const val GNSS_AUTHENTICATION = 0x0527
+    const val PLACES = 0x0506
+    const val PLACES_AUTHENTICATION = 0x0526
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -138,6 +144,20 @@ object DriverCardDecoder {
         val count = if (generation == CardGeneration.GEN1) 56 else
             (application[13].toInt() and 255) shl 8 or (application[14].toInt() and 255)
         CardSpecificConditionParser.fileLength(generation, count)
+        return count
+    }
+
+    /** NoOfCardPlaceRecords: Gen1 byte 9, Gen2 unsigned two-byte field at 9..10. */
+    fun placeCount(application: ByteArray, generation: CardGeneration): Int {
+        val valid = when (generation) {
+            CardGeneration.GEN1 -> application.size == 10
+            CardGeneration.GEN2, CardGeneration.GEN2V2 -> application.size in setOf(15, 17)
+            else -> false
+        }
+        if (!valid) throw ParseError(0, "Application_Identification", "invalid length or generation")
+        val count = if (generation == CardGeneration.GEN1) application[9].toInt() and 255 else
+            (application[9].toInt() and 255) shl 8 or (application[10].toInt() and 255)
+        CardPlacesParser.fileLength(generation, count)
         return count
     }
 
@@ -257,13 +277,25 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardGnssAuthenticationFile(generation, readFile(session, DriverCardFiles.GNSS_AUTHENTICATION,
                         CardGnssAuthenticationParser.fileLength(generation))).also { CardGnssAuthenticationParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val places = try {
+                    val count = DriverCardDecoder.placeCount(application, generation)
+                    CardPlacesFile(generation, count, readFile(session, DriverCardFiles.PLACES,
+                        CardPlacesParser.fileLength(generation, count))).also { CardPlacesParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                val placesAuthentication = if (supportsAuthentication) try {
+                    CardPlacesAuthenticationFile(generation, readFile(session, DriverCardFiles.PLACES_AUTHENTICATION,
+                        CardPlacesAuthenticationParser.fileLength(generation))).also { CardPlacesAuthenticationParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
                     events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null,
                     specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null,
                     gnssPositions = positions, gnssPositionReadFailed = supportsPositions && positions == null,
-                    gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null)
+                    gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null,
+                    places = places, placeReadFailed = places == null,
+                    placesAuthentication = placesAuthentication,
+                    placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

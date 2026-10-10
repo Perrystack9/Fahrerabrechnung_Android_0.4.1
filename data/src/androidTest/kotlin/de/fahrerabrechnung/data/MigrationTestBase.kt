@@ -69,5 +69,21 @@ class MigrationTestBase {
                 }
         }
     }
+    @Test fun migration_12_13_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "places-migration-test"
+        helper.createDatabase(name, 12).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 13, true, DatabaseMigrations.MIGRATION_12_13).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_place_imports", "driver_import_place_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
 
 }
