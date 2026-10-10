@@ -25,6 +25,7 @@ data class SavedDriverImport(
     val borderCrossings: SavedCardBorderCrossings? = null,
     val loadUnload: SavedCardLoadUnload? = null,
     val loadType: SavedCardLoadType? = null,
+    val vehicleUnits: SavedCardVehicleUnits? = null,
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -47,6 +48,7 @@ class DriverCardImportRepository @Inject constructor(
     private val borderCrossings = CardBorderCrossingsStore(database.cardBorderCrossingsDao())
     private val loadUnload = CardLoadUnloadStore(database.cardLoadUnloadDao())
     private val loadType = CardLoadTypeStore(database.cardLoadTypeDao())
+    private val vehicleUnits = CardVehicleUnitsStore(database.cardVehicleUnitsDao())
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -128,8 +130,12 @@ class DriverCardImportRepository @Inject constructor(
             require(!result.loadTypeReadFailed && it.generation == result.generation)
             CardLoadTypeFile(it.generation, it.recordCount, it.bytes).also { frozen -> CardLoadTypeParser.parse(frozen) }
         } else null
+        val units = if (selection == CardImportSelection.ALL_AVAILABLE) result.vehicleUnits?.let {
+            require(!result.vehicleUnitsReadFailed && it.generation == result.generation)
+            CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes).also { frozen -> CardVehicleUnitsParser.parse(frozen) }
+        } else null
         val extraFiles = listOfNotNull(events, faults)
-        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null || placeFile != null || placeAuth != null || borders != null || loads != null || types != null)
+        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null || placeFile != null || placeAuth != null || borders != null || loads != null || types != null || units != null)
         return database.withTransaction {
             val cardId = bindInside(card, false)
             val profile = checkNotNull(dao.localProfile())
@@ -158,6 +164,8 @@ class DriverCardImportRepository @Inject constructor(
                     loads?.let { CardLoadUnloadStore.fingerprint(cardId, it) })
                 check(database.cardLoadTypeDao().source(requestId)?.sourceId ==
                     types?.let { CardLoadTypeStore.fingerprint(cardId, it) })
+                check(database.cardVehicleUnitsDao().source(requestId)?.sourceId ==
+                    units?.let { CardVehicleUnitsStore.fingerprint(cardId, it) })
                 return@withTransaction decode(existing, profile.id)
             }
             val newActivity = activity != null && database.cardActivityImportDao().getById(activity.id) == null
@@ -172,6 +180,7 @@ class DriverCardImportRepository @Inject constructor(
             val newBorders = borders != null && database.cardBorderCrossingsDao().get(CardBorderCrossingsStore.fingerprint(cardId, borders)) == null
             val newLoads = loads != null && database.cardLoadUnloadDao().get(CardLoadUnloadStore.fingerprint(cardId, loads)) == null
             val newTypes = types != null && database.cardLoadTypeDao().get(CardLoadTypeStore.fingerprint(cardId, types)) == null
+            val newUnits = units != null && database.cardVehicleUnitsDao().get(CardVehicleUnitsStore.fingerprint(cardId, units)) == null
             if (activity != null && vehicle != null) pairs.storePrepared(activity, vehicle, now)
             else {
                 activity?.let { database.cardActivityImportDao().insert(it) }
@@ -179,7 +188,7 @@ class DriverCardImportRepository @Inject constructor(
             }
             dao.insertSession(ImportSessionEntity(requestId, profile.id, "PARTIAL", now, now))
             val sources = DriverImportSourcesEntity(requestId, cardId, activity?.id, vehicle?.id,
-                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0) + (if (newPositions) 1 else 0) + (if (newAuthentication) 1 else 0) + (if (newPlaces) 1 else 0) + (if (newPlaceAuth) 1 else 0) + (if (newBorders) 1 else 0) + (if (newLoads) 1 else 0) + (if (newTypes) 1 else 0))
+                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0) + (if (newPositions) 1 else 0) + (if (newAuthentication) 1 else 0) + (if (newPlaces) 1 else 0) + (if (newPlaceAuth) 1 else 0) + (if (newBorders) 1 else 0) + (if (newLoads) 1 else 0) + (if (newTypes) 1 else 0) + (if (newUnits) 1 else 0))
             dao.insertSources(sources)
             if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
             if (vehicle != null) normalizedVehicles.save(cardId, vehicle, checkNotNull(uses))
@@ -195,6 +204,7 @@ class DriverCardImportRepository @Inject constructor(
             if (borders != null) check(borderCrossings.save(cardId, requestId, borders, now) == newBorders)
             if (loads != null) check(loadUnload.save(cardId, requestId, loads, now) == newLoads)
             if (types != null) check(loadType.save(cardId, requestId, types, now) == newTypes)
+            if (units != null) check(vehicleUnits.save(cardId, requestId, units, now) == newUnits)
             decode(sources, profile.id)
         }
     }
@@ -287,7 +297,7 @@ class DriverCardImportRepository @Inject constructor(
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.FAULTS),
             specificConditions.load(sources.driverCardId, session.id),
             gnss.positions(sources.driverCardId, session.id), gnss.authentication(sources.driverCardId, session.id),
-            places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id))
+            places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id), vehicleUnits.load(sources.driverCardId, session.id))
     }
 
     private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {

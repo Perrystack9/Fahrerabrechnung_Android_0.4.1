@@ -48,7 +48,9 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val loadUnload: CardLoadUnloadFile? = null,
                           val loadUnloadReadFailed: Boolean = false,
                           val loadType: CardLoadTypeFile? = null,
-                          val loadTypeReadFailed: Boolean = false)
+                          val loadTypeReadFailed: Boolean = false,
+                          val vehicleUnits: CardVehicleUnitsFile? = null,
+                          val vehicleUnitsReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -71,6 +73,7 @@ object DriverCardFiles {
     const val BORDER_CROSSINGS = 0x0528
     const val LOAD_UNLOAD = 0x0529
     const val LOAD_TYPE = 0x0530
+    const val VEHICLE_UNITS = 0x0523
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -206,6 +209,16 @@ object DriverCardDecoder {
         reader.u16be("noOfLoadUnloadRecords")
         val count = reader.u16be("noOfLoadTypeEntryRecords")
         CardLoadTypeParser.fileLength(generation, count)
+        return count
+    }
+
+    /** EU2018/502: independent NoOfCardVehicleUnitRecords at offsets15..16 of the full17-byte file.
+     * A legacy15-byte application does not supply this capacity; never substitute another count. */
+    fun vehicleUnitCount(application: ByteArray, generation: CardGeneration): Int {
+        if (generation !in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) || application.size != 17)
+            throw ParseError(0, "Application_Identification", "missing vehicle-unit capacity")
+        val count = (application[15].toInt() and 255) shl 8 or (application[16].toInt() and 255)
+        CardVehicleUnitsParser.fileLength(generation, count)
         return count
     }
 
@@ -355,6 +368,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardLoadTypeFile(generation, count, readFile(session, DriverCardFiles.LOAD_TYPE,
                         CardLoadTypeParser.fileLength(generation, count))).also { CardLoadTypeParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val supportsVehicleUnits = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+                val vehicleUnits = if (supportsVehicleUnits) try {
+                    val count = DriverCardDecoder.vehicleUnitCount(application, generation)
+                    CardVehicleUnitsFile(generation, count, readFile(session, DriverCardFiles.VEHICLE_UNITS,
+                        CardVehicleUnitsParser.fileLength(generation, count))).also { CardVehicleUnitsParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -368,7 +387,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     borderCrossings = borderCrossings,
                     borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null,
                     loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
-                    loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null)
+                    loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
+                    vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

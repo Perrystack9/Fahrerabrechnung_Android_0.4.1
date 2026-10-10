@@ -507,6 +507,42 @@ class AutomaticCardImportUiTest {
         assertEquals(3, runBlocking { pipeline.history().size })
     }
 
+    @Test fun vehicleUnitsNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(type: Int): CardVehicleUnitsFile {
+            val bytes = ByteArray(2002)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000100).put(type.toByte()).put(254.toByte()).put("A.01".toByteArray())
+            return CardVehicleUnitsFile(CardGeneration.GEN2V2, 200, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-units")
+            pipeline.process(read().copy(activity = null, vehicles = null, vehicleUnits = load(1)), "early-units-only")
+            pipeline.process(read().copy(vehicleUnits = load(2)), "latest-units")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Fahrtenschreiber-Nutzungen").performScrollTo().performClick()
+        }
+        open("early-units-only"); await("Herstellercode des Fahrtenschreibers: Kartenwert 1")
+        compose.onNodeWithText("Herstellercode des Fahrtenschreibers: Kartenwert 2").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-units"); await("Für diese Übernahme ist keine gespeicherte Fahrtenschreiber-Datei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Fahrtenschreiber").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-units"); await("Herstellercode des Fahrtenschreibers: Kartenwert 2")
+        compose.onNodeWithText("Herstellercode des Fahrtenschreibers: Kartenwert 1").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 

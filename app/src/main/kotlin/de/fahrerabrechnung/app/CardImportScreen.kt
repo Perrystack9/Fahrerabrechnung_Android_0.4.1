@@ -57,6 +57,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.BORDER_CROSSINGS -> Text("Grenz- und Ländereinträge übernommen")
                         CardImportFileKind.LOAD_UNLOAD_OPERATIONS -> Text("Be- und Entladeeinträge übernommen")
                         CardImportFileKind.LOAD_TYPE_ENTRIES -> Text("Ladungsart-Einträge übernommen")
+                        CardImportFileKind.VEHICLE_UNITS_USED -> Text("Fahrtenschreiber-Nutzungen übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")

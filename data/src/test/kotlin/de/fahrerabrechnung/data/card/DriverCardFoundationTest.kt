@@ -875,6 +875,105 @@ class DriverCardFoundationTest {
         assertNotNull(result.loadUnload); assertFalse(result.loadUnloadReadFailed)
     }
 
+    @Test fun vehicleUnitsReaderAttemptsBothSmartGenerationsButNotGen1() = runBlocking {
+        for (g in supportedGenerations) {
+            val fake = CardFixtureTransport(g, identityFixture())
+            val result = DriverCardReader(fake).read()
+            assertEquals(g != CardGeneration.GEN1, result.vehicleUnits != null)
+            assertEquals(g != CardGeneration.GEN1, DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
+            assertFalse(result.vehicleUnitsReadFailed); assertNotNull(result.places); assertTrue(fake.closed)
+        }
+    }
+    @Test fun vehicleUnitsReaderRespectsItsOwnGeneration2Capacity() = runBlocking {
+        for (count in listOf(84, 137, 200)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), vehicleUnitCount = count)
+            val result = DriverCardReader(fake).read()
+            assertEquals(count, result.vehicleUnits!!.recordCount)
+            assertEquals(2 + count * 10, result.vehicleUnits!!.bytes.size)
+        }
+    }
+    @Test fun vehicleUnitFailuresNeverDiscardOtherValidIndependentFiles() = runBlocking {
+        for (problem in 0..5) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                missingFiles = if (problem == 0) setOf(DriverCardFiles.VEHICLE_UNITS) else emptySet(),
+                vehicleUnitBytes = when (problem) {
+                    1 -> ByteArray(2001)
+                    2 -> ByteArray(2002).also { it[1] = 200.toByte() }
+                    else -> null
+                }, vehicleUnitCount = if (problem == 3) 0 else 200,
+                vehicleUnitFailure = if (problem == 4) ReaderException(ReaderFailure.TIMEOUT) else null,
+                oversizedVehicleUnitResponse = problem == 5)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.gnssPositions)
+            assertNotNull(result.loadUnload); assertNotNull(result.loadType); assertNotNull(result.places)
+            assertEquals(problem != 0 && problem != 3, DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun legacy15ByteApplicationDoesNotInventVehicleUnitCapacity() = runBlocking {
+        for (g in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(g, identityFixture(), legacyApplication = true)
+            val result = DriverCardReader(fake).read()
+            assertEquals(g, result.generation); assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
+            assertFalse(DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.places)
+        }
+    }
+    @Test fun invalidNeighborCapacitiesDoNotBlockTheIndependentVehicleUnitCount() = runBlocking {
+        val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            invalidGnssCount = true, invalidSpecificConditionCount = true)).read()
+        assertTrue(result.gnssPositionReadFailed); assertTrue(result.specificConditionReadFailed)
+        assertNotNull(result.vehicleUnits); assertFalse(result.vehicleUnitsReadFailed)
+    }
+    @Test fun invalidVehicleUnitCapacityDoesNotBlockTheNeighborSources() = runBlocking {
+        for ((g, count) in listOf(CardGeneration.GEN2 to 83, CardGeneration.GEN2 to 201,
+            CardGeneration.GEN2V2 to 199, CardGeneration.GEN2V2 to 201)) {
+            val fake = CardFixtureTransport(g, identityFixture(), vehicleUnitCount = count)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
+            assertNotNull(result.gnssPositions); assertNotNull(result.specificConditions)
+            assertFalse(DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
+        }
+    }
+    @Test fun missingV2ExtensionDoesNotBlockVehicleUnitsFromTheMainApplication() = runBlocking {
+        val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.APPLICATION_V2))).read()
+        assertTrue(result.loadTypeReadFailed); assertTrue(result.loadUnloadReadFailed)
+        assertNotNull(result.vehicleUnits); assertFalse(result.vehicleUnitsReadFailed)
+    }
+    @Test fun earlierReadFailuresDoNotPreventTheVehicleUnitAttempt() = runBlocking {
+        val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.GNSS_AUTHENTICATION,
+                DriverCardFiles.LOAD_TYPE, DriverCardFiles.LOAD_UNLOAD))).read()
+        assertNotNull(result.vehicleUnits); assertFalse(result.vehicleUnitsReadFailed)
+        assertTrue(result.activityReadFailed); assertTrue(result.loadTypeReadFailed)
+    }
+    @Test fun vehicleUnitCancellationPropagatesAndClosesReader() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            vehicleUnitFailure = kotlinx.coroutines.CancellationException("fixture"))
+        try { DriverCardReader(fake).read(); fail("Cancellation expected") }
+        catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+    }
+    @Test fun complete2002BytesUseEightBoundedReadChunks() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture())
+        assertEquals(2002, DriverCardReader(fake).read().vehicleUnits!!.bytes.size)
+        assertEquals(8, fake.unitReads.size); assertEquals(0 to 256, fake.unitReads.first())
+        assertEquals(1792 to 210, fake.unitReads.last())
+        assertTrue(fake.unitReads.all { (offset, length) -> offset >= 0 && offset + length <= 2002 })
+    }
+    @Test fun shortNonEmptyResponsesContinueUntilTheWholeVehicleUnitFileIsRead() = runBlocking {
+        val bytes = ByteArray(2002).also { ByteBuffer.wrap(it).putShort(0).putInt(1790000000)
+            .put(253.toByte()).put(254.toByte()).put("A.01".toByteArray()) }
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            vehicleUnitBytes = bytes, vehicleUnitChunkLimit = 73)
+        val result = DriverCardReader(fake).read()
+        assertArrayEquals(bytes, result.vehicleUnits!!.bytes)
+        assertEquals("A.01", CardVehicleUnitsParser.parse(result.vehicleUnits!!).single().softwareVersionText)
+        assertEquals(28, fake.unitReads.size)
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -909,11 +1008,18 @@ class DriverCardFoundationTest {
                                        private val loadTypeBytes: ByteArray? = null,
                                        private val loadTypeFailure: Exception? = null,
                                        private val oversizedLoadTypeResponse: Boolean = false,
+                                       private val vehicleUnitBytes: ByteArray? = null,
+                                       private val vehicleUnitFailure: Exception? = null,
+                                       private val vehicleUnitCount: Int = 200,
+                                       private val legacyApplication: Boolean = false,
+                                       private val oversizedVehicleUnitResponse: Boolean = false,
+                                       private val vehicleUnitChunkLimit: Int = 256,
                                        private val extensionBytes: ByteArray? = null) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
         val typeReads = mutableListOf<Pair<Int, Int>>()
+        val unitReads = mutableListOf<Pair<Int, Int>>()
         private var selected = false
         private var file = 0
         override suspend fun availability() = SourceAvailability.AVAILABLE
@@ -948,6 +1054,7 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.BORDER_CROSSINGS) borderFailure?.let { throw it }
                 if (file == DriverCardFiles.LOAD_UNLOAD) loadUnloadFailure?.let { throw it }
                 if (file == DriverCardFiles.LOAD_TYPE) loadTypeFailure?.let { throw it }
+                if (file == DriverCardFiles.VEHICLE_UNITS) vehicleUnitFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES) placeFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES_AUTHENTICATION) placeAuthFailure?.let { throw it }
                 val data = when (file) {
@@ -959,6 +1066,7 @@ class DriverCardFoundationTest {
                     DriverCardFiles.BORDER_CROSSINGS -> borderBytes ?: ByteArray(19042)
                     DriverCardFiles.LOAD_UNLOAD -> loadUnloadBytes ?: ByteArray(32482)
                     DriverCardFiles.LOAD_TYPE -> loadTypeBytes ?: ByteArray(1682)
+                    DriverCardFiles.VEHICLE_UNITS -> vehicleUnitBytes ?: ByteArray(2002)
                     DriverCardFiles.APPLICATION_V2 -> extensionBytes ?: ByteArray(10).also { it[1] = 8; it[2] = 4; it[3] = 96; it[4] = 6; it[5] = 88; it[6] = 1; it[7] = 80; it[8] = 12 }
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = if (invalidActivityPointer) 16 else 4
@@ -970,7 +1078,7 @@ class DriverCardFoundationTest {
                     CardEventFaultKind.FAULTS.fileId -> faultBytes ?: ByteArray(1152)
                     DriverCardFiles.SPECIFIC_CONDITIONS -> specificConditionBytes ?: ByteArray(
                         CardSpecificConditionParser.fileLength(generation, if (generation == CardGeneration.GEN1) 56 else 112))
-                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else 17).also {
+                    else -> ByteArray(if (generation == CardGeneration.GEN1) 10 else if (legacyApplication) 15 else 17).also {
                         it[0] = 1; it[1] = 1
                         if (generation == CardGeneration.GEN2V2) it[2] = 1
                         it[3] = if (invalidEventCount) 0 else 12; it[4] = 24
@@ -980,6 +1088,7 @@ class DriverCardFoundationTest {
                         if (it.size == 17) {
                             it[11] = if (invalidGnssCount) 0 else 1; it[12] = if (invalidGnssCount) 0 else 80
                             it[14] = if (invalidSpecificConditionCount) 0 else 112
+                            it[15] = (vehicleUnitCount shr 8).toByte(); it[16] = vehicleUnitCount.toByte()
                         }
                     }
                 }
@@ -987,9 +1096,13 @@ class DriverCardFoundationTest {
                 val length = (apdu[4].toInt() and 255).let { if (it == 0) 256 else it }
                 if (file == DriverCardFiles.LOAD_UNLOAD) loadReads += offset to length
                 if (file == DriverCardFiles.LOAD_TYPE) typeReads += offset to length
+                if (file == DriverCardFiles.VEHICLE_UNITS) unitReads += offset to length
+                if (file == DriverCardFiles.VEHICLE_UNITS && oversizedVehicleUnitResponse && offset == 0)
+                    return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
                 if (file == DriverCardFiles.LOAD_TYPE && oversizedLoadTypeResponse && offset == 0)
                     return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
-                return data.copyOfRange(offset, minOf(offset + length, data.size)) + byteArrayOf(0x90.toByte(), 0)
+                val actualLength = if (file == DriverCardFiles.VEHICLE_UNITS) minOf(length, vehicleUnitChunkLimit) else length
+                return data.copyOfRange(offset, minOf(offset + actualLength, data.size)) + byteArrayOf(0x90.toByte(), 0)
             }
             throw AssertionError("Unexpected APDU instruction")
         }

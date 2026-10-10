@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter
 internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, onEventsFaults: () -> Unit,
                                onSpecificConditions: () -> Unit = {}, onGnss: () -> Unit = {},
                                onPlaces: () -> Unit = {},
-                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}) {
+                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}, onVehicleUnits: () -> Unit = {}) {
     ScreenContent(padding) {
         Text("Fahrerkarte · Details", style = MaterialTheme.typography.titleLarge)
         OutlinedButton(onClick = onControls) { Text("Kontrollen") }
@@ -27,6 +27,7 @@ internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, o
         OutlinedButton(onClick = onBorders) { Text("Grenz- und Ländereinträge") }
         OutlinedButton(onClick = onLoadUnload) { Text("Be- und Entladeeinträge") }
         OutlinedButton(onClick = onLoadType) { Text("Ladungsart-Einträge") }
+        OutlinedButton(onClick = onVehicleUnits) { Text("Fahrtenschreiber-Nutzungen") }
         Text("Angaben aus der ausgewählten gespeicherten Übernahme.", style = MaterialTheme.typography.bodySmall)
     }
 }
