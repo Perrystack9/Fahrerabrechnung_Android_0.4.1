@@ -1,5 +1,6 @@
 package de.fahrerabrechnung.data.card
 
+import java.nio.ByteBuffer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -1066,7 +1067,7 @@ class DriverCardFoundationTest {
                     DriverCardFiles.BORDER_CROSSINGS -> borderBytes ?: ByteArray(19042)
                     DriverCardFiles.LOAD_UNLOAD -> loadUnloadBytes ?: ByteArray(32482)
                     DriverCardFiles.LOAD_TYPE -> loadTypeBytes ?: ByteArray(1682)
-                    DriverCardFiles.VEHICLE_UNITS -> vehicleUnitBytes ?: ByteArray(2002)
+                    DriverCardFiles.VEHICLE_UNITS -> vehicleUnitBytes ?: ByteArray(2 + vehicleUnitCount * 10)
                     DriverCardFiles.APPLICATION_V2 -> extensionBytes ?: ByteArray(10).also { it[1] = 8; it[2] = 4; it[3] = 96; it[4] = 6; it[5] = 88; it[6] = 1; it[7] = 80; it[8] = 12 }
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = if (invalidActivityPointer) 16 else 4

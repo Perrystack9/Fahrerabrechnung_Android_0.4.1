@@ -30,3 +30,6 @@ Historische Requests ohne versuchte neue Quelle behalten Fingerprint und Abdecku
 39 neue Testmethoden:13 Parser,11 Reader,9 SQLCipher,1 Room und5 Compose einschließlich echter AppRoot-Navigation. Lokal Projektgrenzen, Actionlint, Shellsyntax,10 CI-Skriptregressionen und SQLite-Migration mit34 erhaltenen Tabellen erfolgreich geprüft.
 
 Schema17/Testversion40115. Echter Compilerexport und vollständige Android-CI einschließlich SQLCipher/Room/Compose am finalen Kopf erforderlich; CI-Herkunft und Abschlussstatus stehen im PR. Updatepaar bleibt vom allgemein bestätigten PR53/Schema14/40112 mit derselben Testsignatur. Neue Import-/Schema-Entwürfe bis neuer Hardwarebestätigung ungemergt; früheste Ausgabe11.10.00:56:06 Europe/Berlin.
+
+Compilerexport17.json unverändert aus CI38085254090 Versuch1, Artefakt11682376429, Archiv-SHA256156225d096bf207aa705ceee666d55fce83ce3c84a3edbccec0c311a65b0287d. Alle34 alten Entitäten identisch, zwei neue. Erster Lauf: Produkt-/Lint-/APK-Builds erfolgreich, Unit-Test-Kompilierung scheiterte am fehlenden ByteBuffer-Testimport; Import korrigiert. Vollständiger Folgelauf am korrigierten Kopf erforderlich, kein erster Full-green- oder Hardwareerfolg behauptet.
+Schema17-SHA256: `b95db604827e6ffc726933236962d1931f431bee74d368d3ef09e28adccfb340`.
