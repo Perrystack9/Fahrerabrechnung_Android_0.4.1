@@ -1,4 +1,4 @@
-Aktueller Ladungsart-Entwurf: Schema16/Testversion40114 auf PR54 Schema15. Vollständiger Android-/Emulatorlauf und unveränderter16.json-Compilerexport erforderlich; zuerst fehlenden Export aus Diagnostik übernehmen, anschließend finalen Kopf vollständig prüfen. PR53/Schema14/40112 bleibt die zuletzt am Gerät bestätigte Updatebasis. Hardwareausgabe frühestens11.10.2026 00:56 Europe/Berlin.
+Aktueller Ladungsart-Entwurf: Schema16/Testversion40114 auf PR54 Schema15. Unveränderter16.json-Compilerexport aus CI38075938370 übernommen; finale vollständige Android-/Emulatorprüfung einschließlich der Reader-/Quellen-Regressionen weiterhin erforderlich. PR53/Schema14/40112 bleibt die zuletzt am Gerät bestätigte Updatebasis. Hardwareausgabe frühestens11.10.2026 00:56 Europe/Berlin.
 
 # Dauerhaft aktualisierbare Gerätetest-App
 

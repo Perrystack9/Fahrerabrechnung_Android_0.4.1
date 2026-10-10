@@ -1363,6 +1363,11 @@ class CardImportPipelineInstrumentedTest {
         db.openHelper.writableDatabase.execSQL("UPDATE card_load_type_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
         assertEquals(2, pipeline.history().size); assertNull(imports.get(old.id)!!.loadType)
         rejected<IllegalStateException> { imports.get(fresh.id) }
+        val replacement = pipeline.process(typeRead().copy(card = card("valid-other-type-card")), "types-other-card")
+        val other = imports.get(replacement.id)!!.loadType!!
+        db.cardLoadTypeDao().insertSource(DriverImportLoadTypeSourceEntity(old.id, other.driverCardId, other.id))
+        assertEquals(3, pipeline.history().size)
+        rejected<IllegalStateException> { imports.get(old.id) }
     }
 
     @Test fun loadTypeCoverageRetainsUnknownEntryTimeWithoutBorrowingOtherSourceTimes() = runBlocking {

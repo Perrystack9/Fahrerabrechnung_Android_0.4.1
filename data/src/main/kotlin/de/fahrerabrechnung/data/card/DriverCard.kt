@@ -391,8 +391,9 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         val data = ByteArray(length)
         var offset = 0
         while (offset < length) {
-            val response = session.send(CardCommands.readBinary(offset, minOf(256, length - offset)))
-            if (!response.success || response.data.isEmpty() || response.data.size > length - offset)
+            val requestedLength = minOf(256, length - offset)
+            val response = session.send(CardCommands.readBinary(offset, requestedLength))
+            if (!response.success || response.data.size !in 1..requestedLength)
                 throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             response.data.copyInto(data, offset)
             offset += response.data.size

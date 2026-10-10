@@ -794,7 +794,7 @@ class DriverCardFoundationTest {
         }
     }
     @Test fun loadTypeFailuresAndInvalidCapacityNeverDiscardOtherValidFiles() = runBlocking {
-        for (problem in 0..4) {
+        for (problem in 0..5) {
             val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
                 missingFiles = if (problem == 0) setOf(DriverCardFiles.LOAD_TYPE) else emptySet(),
                 loadTypeBytes = when (problem) {
@@ -803,7 +803,8 @@ class DriverCardFoundationTest {
                     else -> null
                 },
                 extensionBytes = if (problem == 3) ByteArray(10) else null,
-                loadTypeFailure = if (problem == 4) ReaderException(ReaderFailure.TIMEOUT) else null)
+                loadTypeFailure = if (problem == 4) ReaderException(ReaderFailure.TIMEOUT) else null,
+                oversizedLoadTypeResponse = problem == 5)
             val result = DriverCardReader(fake).read()
             assertNull(result.loadType); assertTrue(result.loadTypeReadFailed)
             assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.places)
@@ -907,6 +908,7 @@ class DriverCardFoundationTest {
                                        private val loadUnloadFailure: Exception? = null,
                                        private val loadTypeBytes: ByteArray? = null,
                                        private val loadTypeFailure: Exception? = null,
+                                       private val oversizedLoadTypeResponse: Boolean = false,
                                        private val extensionBytes: ByteArray? = null) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
@@ -985,6 +987,8 @@ class DriverCardFoundationTest {
                 val length = (apdu[4].toInt() and 255).let { if (it == 0) 256 else it }
                 if (file == DriverCardFiles.LOAD_UNLOAD) loadReads += offset to length
                 if (file == DriverCardFiles.LOAD_TYPE) typeReads += offset to length
+                if (file == DriverCardFiles.LOAD_TYPE && oversizedLoadTypeResponse && offset == 0)
+                    return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
                 return data.copyOfRange(offset, minOf(offset + length, data.size)) + byteArrayOf(0x90.toByte(), 0)
             }
             throw AssertionError("Unexpected APDU instruction")
