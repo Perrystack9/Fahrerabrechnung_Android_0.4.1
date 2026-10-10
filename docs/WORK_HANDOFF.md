@@ -1,5 +1,7 @@
 # Echter Schema18-Export und korrigierte Dateigrenze
 
+TCS43-Grenzfall nach amtlichem Abgleich korrigiert: Ein datenloses6700 beim Zwei-Byte-Rest nach15Byte kann15 oder16Byte bedeuten. Deshalb genau ein Byte an Offset15 nachprüfen; nur datenloses6700 an dieser Ein-Byte-Grenze als vollständiges Legacy-EOF akzeptieren.16Byte,6C01-Längenkorrektur mit abgeschnittenem Rest, Statusfehler mit Daten, leere9000-Antworten und Timeouts bleiben fehlerhaft. Vier weitere Lesertests; neue vollständige CI am geänderten Kopf erforderlich. Kein Hardwaretest/keine APK ausgegeben.
+
 KSP-Compilerexport18 aus CI38086827094 Versuch1, Artifact11682788686 unverändert übernommen: ZIP322904Byte, SHA256626cdbf5b155cbf54791d7cc8f0a054fdb36ecebfc293537de535d833cd0593d; Schema99557Byte, SHA25670340ea11ae74941615f56e0297b5c711fb7d3acf44a63bc981daccccfb8ac3b. Alle36 alten Entitäten identisch zu17; Migration17→18 stimmt mit allen38 Tabellen einschließlich Spalten, Schlüssel und Indizes überein. Keine Nachbefüllung.
 
 Dieser erste CI-Lauf kompilierte Produktcode und alle14 neuen Parser-/8 Lesertests; nur die zwei Tests zum alten15-Byte-Anwendungsstand scheiterten an der bekannten Reader-Grenze. PR56-Korrektur79d79ab4bde565c7851e2291dcc7c0b43c188089 samt vier zusätzlichen Grenztests jetzt übernommen. Finale vollständige CI am neuen kumulativen Kopf erforderlich; kein Hardwaretest/kein Paket ausgegeben. Zweiter Arbeitsblock bis22:34:51UTC, Ausgabe frühestens22:56:06UTC.

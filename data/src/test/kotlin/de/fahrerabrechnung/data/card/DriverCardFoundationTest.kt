@@ -1092,6 +1092,45 @@ class DriverCardFoundationTest {
         assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
     }
 
+    @Test fun legacyFifteenByteApplicationAcceptsStandardWrongLengthOnlyAfterOneByteProbe() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(generation, identityFixture(), legacyApplication = true,
+                applicationTailLengthStatus = 0x6700)
+            val result = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, result.recognition)
+            assertEquals(generation, result.generation)
+            assertNotNull(result.activity); assertNotNull(result.vehicles)
+            assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
+            assertFalse(DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
+            assertEquals(listOf(15 to 2, 15 to 1), fake.applicationTailReads)
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun wrongLengthForTwoBytesCannotHideACompleteFirstTailByte() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), applicationBytes = ByteArray(16),
+            applicationTailLengthStatus = 0x6700)
+        try { DriverCardReader(fake).read(); fail("Sixteen-byte truncation expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, error.failure) }
+        assertEquals(listOf(15 to 2, 15 to 1, 16 to 1), fake.applicationTailReads)
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+    @Test fun correctedWrongLengthStillRejectsASixteenByteApplication() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), applicationBytes = ByteArray(16),
+            applicationTailLengthStatus = 0x6C00)
+        try { DriverCardReader(fake).read(); fail("Sixteen-byte truncation expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, error.failure) }
+        assertEquals(listOf(15 to 2, 15 to 1, 16 to 1, 16 to 256), fake.applicationTailReads)
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+    @Test fun wrongLengthWithResponseDataCannotMasqueradeAsLegacyEndOfFile() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), legacyApplication = true,
+            applicationTailLengthStatus = 0x6700, applicationTailLengthErrorData = byteArrayOf(17))
+        try { DriverCardReader(fake).read(); fail("Malformed error reply expected") }
+        catch (error: ReaderException) { assertEquals(ReaderFailure.MALFORMED_RESPONSE, error.failure) }
+        assertEquals(listOf(15 to 2), fake.applicationTailReads)
+        assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -1140,12 +1179,15 @@ class DriverCardFoundationTest {
                                        private val applicationBytes: ByteArray? = null,
                                        private val applicationTailEmptySuccess: Boolean = false,
                                        private val applicationTailFailure: Exception? = null,
-                                       private val applicationTailChunkLimit: Int = 256) : CardReaderTransport {
+                                       private val applicationTailChunkLimit: Int = 256,
+                                       private val applicationTailLengthStatus: Int? = null,
+                                       private val applicationTailLengthErrorData: ByteArray = byteArrayOf()) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
         val typeReads = mutableListOf<Pair<Int, Int>>()
         val unitReads = mutableListOf<Pair<Int, Int>>()
+        val applicationTailReads = mutableListOf<Pair<Int, Int>>()
         val metadataReads = mutableMapOf<Int, MutableList<Pair<Int, Int>>>()
         val instructions = mutableListOf<Int>()
         private var selected = false
@@ -1240,6 +1282,12 @@ class DriverCardFoundationTest {
                     if (metadataKind in oversizedMetadata) return ByteArray(length + 1) + byteArrayOf(0x90.toByte(), 0)
                 }
                 if (file == DriverCardFiles.APPLICATION && offset >= 15) {
+                    applicationTailReads += offset to length
+                    if (applicationTailLengthStatus != null && offset + length > data.size) {
+                        val sw2 = if (applicationTailLengthStatus == 0x6C00)
+                            (data.size - offset).coerceIn(0, 255) else applicationTailLengthStatus and 255
+                        return applicationTailLengthErrorData + byteArrayOf((applicationTailLengthStatus ushr 8).toByte(), sw2.toByte())
+                    }
                     applicationTailFailure?.let { throw it }
                     if (applicationTailEmptySuccess) return byteArrayOf(0x90.toByte(), 0)
                 }
