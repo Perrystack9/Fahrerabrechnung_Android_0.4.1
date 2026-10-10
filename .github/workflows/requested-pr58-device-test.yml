@@ -4,14 +4,18 @@ name: One requested PR58 device-test dispatch
 # Create the exact branch once, only after the authorized hardware minimum.
 on:
   create:
+  push:
+    branches: [ci/device-test-pr58-ba9656f0]
+    paths: [.github/workflows/requested-pr58-device-test.yml]
 
 permissions:
   contents: read
   actions: write
+  pull-requests: read
 
 jobs:
   dispatch:
-    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/device-test-pr58-ba9656f0'
+    if: (github.event_name == 'create' && github.event.ref_type == 'branch' && github.event.ref == 'ci/device-test-pr58-ba9656f0') || (github.event_name == 'push' && github.ref == 'refs/heads/ci/device-test-pr58-ba9656f0')
     name: Start the requested verified PR58 test ZIP
     runs-on: ubuntu-latest
     timeout-minutes: 5
