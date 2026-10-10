@@ -397,6 +397,43 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithTag("nav_start").assertIsDisplayed()
     }
 
+    @Test fun borderNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun border(entered: Int): CardBorderCrossingsFile {
+            val bytes = ByteArray(19042)
+            ByteBuffer.wrap(bytes).putShort(0).put(13.toByte()).put(entered.toByte()).putInt(1790000030)
+                .put(10.toByte()).put(byteArrayOf(0, 0, 1, 0, 0, 2)).put(1.toByte()).put(byteArrayOf(0, 0, 3))
+            return CardBorderCrossingsFile(CardGeneration.GEN2V2, 1120, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-borders")
+            pipeline.process(read().copy(activity = null, vehicles = null, borderCrossings = border(1)), "early-borders-only")
+            pipeline.process(read().copy(borderCrossings = border(7)), "latest-borders")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Grenz- und Ländereinträge").performScrollTo().performClick()
+        }
+        open("early-borders-only"); await("Land eingereist / bei Karteneinlage: Kartenwert 1")
+        compose.onNodeWithText("Land eingereist / bei Karteneinlage: Kartenwert 7").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-borders"); await("Für diese Übernahme ist keine gespeicherte Grenz-/Länderdatei verfügbar.")
+        compose.onNodeWithText("Ländereintrag").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-borders"); await("Land eingereist / bei Karteneinlage: Kartenwert 7")
+        compose.onNodeWithText("Land eingereist / bei Karteneinlage: Kartenwert 1").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 

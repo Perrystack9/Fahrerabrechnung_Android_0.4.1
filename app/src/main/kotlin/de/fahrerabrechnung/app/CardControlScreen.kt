@@ -15,7 +15,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, onEventsFaults: () -> Unit,
                                onSpecificConditions: () -> Unit = {}, onGnss: () -> Unit = {},
-                               onPlaces: () -> Unit = {}) {
+                               onPlaces: () -> Unit = {},
+                               onBorders: () -> Unit = {}) {
     ScreenContent(padding) {
         Text("Fahrerkarte · Details", style = MaterialTheme.typography.titleLarge)
         OutlinedButton(onClick = onControls) { Text("Kontrollen") }
@@ -23,6 +24,7 @@ internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, o
         OutlinedButton(onClick = onSpecificConditions) { Text("Fähre/Zug und Out of Scope") }
         OutlinedButton(onClick = onGnss) { Text("GNSS-Aufzeichnungen") }
         OutlinedButton(onClick = onPlaces) { Text("Beginn-/Ende-Orte") }
+        OutlinedButton(onClick = onBorders) { Text("Grenz- und Ländereinträge") }
         Text("Angaben aus der ausgewählten gespeicherten Übernahme.", style = MaterialTheme.typography.bodySmall)
     }
 }
