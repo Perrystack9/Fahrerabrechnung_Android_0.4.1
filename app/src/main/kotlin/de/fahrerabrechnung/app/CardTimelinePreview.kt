@@ -33,6 +33,7 @@ import de.fahrerabrechnung.data.card.CardDaySegment
 import de.fahrerabrechnung.data.card.CardDayVehicle
 import de.fahrerabrechnung.data.card.CardDayVehicles
 import de.fahrerabrechnung.data.card.CardDayEventFaultMarker
+import de.fahrerabrechnung.data.card.CardDaySpecificConditionMarker
 import de.fahrerabrechnung.data.card.DriverActivity
 import de.fahrerabrechnung.data.card.LocalCardDay
 import java.time.Duration
@@ -46,7 +47,8 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
                                  vehicles: List<CardDayVehicle> = emptyList(),
                                  onOpenVehicleHistory: (String?, Long?, Int?) -> Unit = { _, _, _ -> },
                                  allowHistoryNavigation: Boolean = true,
-                                 eventFaultMarkers: List<CardDayEventFaultMarker> = emptyList()) {
+                                 eventFaultMarkers: List<CardDayEventFaultMarker> = emptyList(),
+                                 specificConditionMarkers: List<CardDaySpecificConditionMarker> = emptyList()) {
     val start = day.date.atStartOfDay(zone).toInstant()
     val end = day.date.plusDays(1).atStartOfDay(zone).toInstant()
     val totalMillis = Duration.between(start, end).toMillis()
@@ -55,6 +57,7 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
     var cursor by remember(day.date, zone) { mutableFloatStateOf(0.5f) }
     var selected by remember(day.date, zone) { mutableStateOf<CardDaySegment?>(null) }
     var selectedIssues by remember(day.date, zone, eventFaultMarkers) { mutableStateOf(emptyList<CardDayEventFaultMarker>()) }
+    var selectedConditions by remember(day.date, zone, specificConditionMarkers) { mutableStateOf(emptyList<CardDaySpecificConditionMarker>()) }
 
     fun select(fraction: Float) {
         cursor = fraction.coerceIn(0f, 1f)
@@ -76,6 +79,12 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
                 style = MaterialTheme.typography.bodySmall)
         }
         Text("24-Stunden-Übersicht", style = MaterialTheme.typography.titleSmall)
+        if (specificConditionMarkers.isNotEmpty()) {
+            CardSpecificConditionMarkerTrack(specificConditionMarkers, start.toEpochMilli(), totalMillis.toDouble(),
+                "timeline_condition_overview", onSelect = { selectedConditions = it })
+            Text("↔ Fähre/Zug · ⊘ Out of Scope · ? unbekannte Sonderbedingung · Zeitpunkte antippen",
+                style = MaterialTheme.typography.bodySmall)
+        }
         if (eventFaultMarkers.isNotEmpty()) {
             CardEventFaultMarkerTrack(eventFaultMarkers, start.toEpochMilli(), totalMillis.toDouble(),
                 "timeline_issue_overview", onSelect = { selectedIssues = it })
@@ -122,6 +131,9 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
         if (eventFaultMarkers.isNotEmpty()) CardEventFaultMarkerTrack(eventFaultMarkers,
             start.toEpochMilli() + (windowStart * totalMillis).roundToLong(), totalMillis / zoom.toDouble(),
             "timeline_issue_detail", onSelect = { selectedIssues = it })
+        if (specificConditionMarkers.isNotEmpty()) CardSpecificConditionMarkerTrack(specificConditionMarkers,
+            start.toEpochMilli() + (windowStart * totalMillis).roundToLong(), totalMillis / zoom.toDouble(),
+            "timeline_condition_detail", onSelect = { selectedConditions = it })
         Canvas(Modifier.fillMaxWidth().height(92.dp)
             .pointerInput(day.date, zone) {
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
@@ -203,9 +215,15 @@ internal fun CardTimelinePreview(day: LocalCardDay, zone: ZoneId,
             modifier = Modifier.testTag("day_issue_list"), onClick = { selectedIssues = eventFaultMarkers }) {
             Text("Meldungen dieses Tages (${eventFaultMarkers.size} Zeitpunkte)")
         }
+        if (specificConditionMarkers.isNotEmpty()) OutlinedButton(
+            modifier = Modifier.testTag("day_condition_list"), onClick = { selectedConditions = specificConditionMarkers }) {
+            Text("Sonderbedingungen dieses Tages (${specificConditionMarkers.size} Zeitpunkte)")
+        }
     }
     CardEventFaultMarkerDialog(selectedIssues, zone, onChoose = { selectedIssues = listOf(it) },
         onDismiss = { selectedIssues = emptyList() })
+    CardSpecificConditionMarkerDialog(selectedConditions, zone, onChoose = { selectedConditions = listOf(it) },
+        onDismiss = { selectedConditions = emptyList() })
 }
 
 private fun DrawScope.drawVehicleSpans(
