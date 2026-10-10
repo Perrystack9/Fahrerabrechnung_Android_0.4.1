@@ -1,5 +1,7 @@
 # Dauerhaft aktualisierbare Gerätetest-App
 
+Aktueller Folge-Entwurf 10.10.2026: bestätigter PR52-Produktstand `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/40111 als unveränderte Ausgangsbasis. Grenz-/Länderquelle ergänzt Schema 14/40112 mit identischer Paketkennung und festem Testzertifikat. CI prüft das Updatepaar; Benutzer-ZIP enthält nur Update-APK und [aktuelle Anleitung](../docs/BORDER_CROSSINGS_DEVICE_TEST.md). Vollständige CI und neue Gerätebestätigung noch offen. Frühere Angaben unten dokumentieren ihre jeweiligen historischen Stände.
+
 **CI-Speicherstrategie ab 08.10.2026:** Normale erfolgreiche PR-/main-Prüfungen bauen und prüfen die APKs einschließlich des stabilen Update-Paars, laden aber keine Artefakte hoch. Benötigte Test-ZIPs werden gezielt über den manuellen `device-test.yml`-Workflow erzeugt (7 Tage; Fehlerdiagnosen 3 Tage). Vollständige Prüfungen, feste Signatur und Versionskontinuität bleiben erhalten. [Workflow, Startparameter und PR-45-Grenzen](../docs/CI_ARTIFACT_POLICY.md). Die nachstehenden älteren Produkt-/Gerätestände sind historische Herkunft; maßgeblich sind der tatsächliche Git-Stand und die aktuelle Übergabe.
 
 `device-test.jks` ist eine **absichtlich öffentliche, ausschließlich für Entwicklung bestimmte Test-Signieridentität** (PKCS12, Alias `androiddebugkey`, Passwort `android`). Sie ist kein Geheimnis und darf niemals als Release-/Produktionsschlüssel verwendet werden. Die Ausnahme in `.gitignore` gilt nur für diese eine Testdatei. Alle echten Keystores/Signierzugänge bleiben außerhalb des Repositorys.

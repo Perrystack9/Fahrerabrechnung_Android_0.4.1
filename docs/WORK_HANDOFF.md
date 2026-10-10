@@ -2,13 +2,19 @@
 
 **Stand: 10.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
 
-## Aktueller Stand nach PR #51
+## Aktueller Stand nach PR #52 und Fortsetzungscheckpoint 10.10.2026
 
-Main `1c73cb4d2fa4f656e069362a3e159cee12b0d884`, Schema 12/Testversion 40110. Exakter geprüfter Quellkopf `e3f404fd73f13cc80bb9bd667e6146acfb8a2c3a`; identischer Tree `7b7251f0eb5a01c13d7e0a6f5ee0e65d8be2f8c3`. Vollständige CI 38046259050 Versuch 2, alle vier Jobs grün. Ein erster Emulatorversuch scheiterte in einem unveränderten Compose-Test beim Teardown; genau ein gezielter Job-Retry war danach vollständig grün. Paketlauf 38048841274, Testversion 40110, stabiles Zertifikat/Update.
+Main `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/Testversion 40111. Getesteter Quellkopf `3a1c32d371d748cea0167b235dfe2470b5916583`, Tree `511f84f4c68b50b24f5016d68e5c78ae3f1074f6`; vollständige CI 38052970906 Versuch 1 und Paketlauf 38054791654 erfolgreich. PR52 wurde am unveränderten getesteten Stand gemergt.
 
-Nutzerbestätigung 10.10.2026, 14:06 Europe/Berlin: „Scheint zu passen. Ist auch nach erneuten Öffnen da“, Screenshot zeigt GNSS-Aufzeichnungen. Bestätigt Anzeige und Bestand nach Wiederöffnung; keine Aussage zu ungenannten historischen/Fehler-/Fremdkartenfällen. Nach dieser Bestätigung unverändert gemergt. Frühere Tabellen und Arbeitsnotizen darunter bleiben historische Angaben.
+Tobis ausdrückliche Bestätigung vom 10.10.2026 um 15:34 Europe/Berlin: Beginn-/Ende-Orte funktionieren und bleiben auch nach dem Abziehen der Fahrerkarte sichtbar. Die Bestätigung gilt genau PR52; ungenannte Fehler-/Fremdkartenfälle und die neue Grenzquelle sind damit nicht am Gerät getestet.
 
-Nächster begrenzter Abschnitt: [EF Places 0506 und getrenntes Places_Authentication 0526](PLACES_IMPORT_IMPLEMENTATION.md), unabhängige Lesung, eigene Quellen/Sitzungslinks, additive Migration 12→13, neutrale Detailansicht, Testversion 40111. Vollständige CI und [Gerätetest](PLACES_IMPORT_DEVICE_TEST.md) noch offen. Vor Merge ist dieser neue Leser-/Persistenz-/Upgrade-Test erforderlich. Keine neue Arbeitszeit-/Heimkehr-/Routenberechnung, kein Cleanup, kein Browser; Budget/Stop-usage unverändert.
+Das kurze Vorbereitungsfenster hatte auf isolierter Branch `feature/card-border-crossings-decoder` bereits Parser und 16 synthetische Tests zu EF Border_Crossings sowie die amtliche Primärspezifikation vorbereitet. Diese vorhandenen unveröffentlichten Dateien wurden unverändert aufgenommen und auf isolierter Folgebranch `feature/card-border-crossings-import` weitergeführt, ohne doppelte Implementierung oder Löschung alter Arbeit.
+
+Begrenzte neue Umsetzung: nur Gen2V2-Fahrerkarten-EF0528; validierte Kapazität aus bestehender EF0525, unabhängige Lesung, genaue physische Karte/Sitzung, zwei additive Tabellen mit Migration 13→14, neutrale Detailanzeige „Grenz- und Ländereinträge“, Testversion 40112. [Primärformat und Grenzen](BORDER_CROSSINGS_IMPORT.md). Neu sind fünf Reader-, sieben SQLCipher-, ein Room- und drei Compose-Tests zusätzlich zu den 16 vorbereiteten Parser-Tests. Keine Timeline-/Abrechnungs-/Kilometer-/Heimkehr-/Routenarbeit.
+
+Checkpoint vor erster CI: vollständige Android-CI am finalen Kopf, compiler-generierter Export 14.json und [neuer Gerätetest](BORDER_CROSSINGS_DEVICE_TEST.md) noch offen. Draft-PR erstellen; kein Merge ohne Tobis spätere ausdrückliche Testbestätigung. Testpaket ausschließlich nach vollständiger grüner CI des exakten Quellkopfs. Keine alten Builds als neue ausgeben. Bei Ablauf des Arbeitsfensters genau hier mit veröffentlichtem Stand und Prüfnachweisen enden.
+
+Keine Smartphone-Ortung, kein Card_Download-Schreiben, kein Backfill, keine Quellenvermischung; Fremdkarten temporär. Kein Browser, keine Subagenten und kein Cleanup von Dateien/Branches/Stashes/Releases. Actions-Budget 2,00 USD/Stop usage Yes unverändert. Alle folgenden früheren Abschnitte bleiben historische Angaben.
 
 ## Einstieg und Ausgangsbasis
 

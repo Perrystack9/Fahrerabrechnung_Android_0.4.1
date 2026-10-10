@@ -1056,6 +1056,109 @@ class CardImportPipelineInstrumentedTest {
         rejected<IllegalStateException> { imports.get(fresh.id) }
     }
 
+    private fun borderRead(time: Int = 1790000030): CardReadResult {
+        val bytes = ByteArray(19042)
+        ByteBuffer.wrap(bytes).putShort(0).put(13.toByte()).put(1.toByte()).putInt(time).put(10.toByte())
+            .put(byteArrayOf(0, 0, 1, 0, 0, 2)).put(1.toByte()).put(byteArrayOf(0, 0, 3))
+        return placesRead().copy(borderCrossings = CardBorderCrossingsFile(CardGeneration.GEN2V2, 1120, bytes))
+    }
+
+    @Test fun bordersPersistExactOwnCardSessionAcrossEncryptedReopenWithoutHistoricalFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(placesRead(), "before-borders")
+        val fresh = pipeline.process(borderRead(), "with-borders")
+        assertEquals(1, fresh.newSourceCount); assertEquals(11, fresh.files.size)
+        val source = imports.get(fresh.id)!!.borderCrossings!!
+        assertEquals(fresh.driverCardId, source.driverCardId)
+        assertEquals(1790000030L, source.records.single().positionTimeRaw)
+        db.close(); open()
+        assertArrayEquals(source.file.bytes, imports.get(fresh.id)!!.borderCrossings!!.file.bytes)
+        assertNull(imports.get(old.id)!!.borderCrossings)
+        assertEquals(old, pipeline.process(placesRead(), old.id))
+    }
+    @Test fun bordersDeduplicateButChangedRequestsAndPhysicalReplacementCardsStayDistinct() = runBlocking {
+        imports.bind(card(), true)
+        val first = pipeline.process(borderRead(), "borders-first")
+        assertEquals(first, pipeline.process(borderRead(), first.id))
+        assertEquals(0, pipeline.process(borderRead(), "borders-repeat").newSourceCount)
+        assertEquals(1, count("card_border_crossing_imports"))
+        rejected<IllegalArgumentException> { pipeline.process(borderRead(1790000035), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(placesRead(), first.id) }
+        val changed = pipeline.process(borderRead(1790000035), "borders-changed")
+        assertEquals(1, changed.newSourceCount)
+        val replacement = pipeline.process(borderRead().copy(card = card("replacement-borders")), "borders-replacement")
+        assertEquals(11, replacement.newSourceCount)
+        assertNotEquals(first.driverCardId, replacement.driverCardId)
+        assertNotEquals(imports.get(first.id)!!.borderCrossings!!.id, imports.get(replacement.id)!!.borderCrossings!!.id)
+        assertEquals(1790000030L, imports.get(first.id)!!.borderCrossings!!.records.single().positionTimeRaw)
+    }
+    @Test fun borderFileFailuresAndInvalidPointerAreIndependentAndValidEmptySourceCanStandAlone() = runBlocking {
+        imports.bind(card(), true)
+        val partial = pipeline.process(borderRead().copy(borderCrossings = null, borderCrossingsReadFailed = true), "borders-partial")
+        assertEquals(CardImportRunStatus.PARTIAL, partial.status)
+        assertEquals(CardImportFileStatus.READ_FAILED, partial.file(CardImportFileKind.BORDER_CROSSINGS).status)
+        assertNotNull(imports.get(partial.id)!!.places)
+        val invalidBytes = ByteArray(19042).also { it[0] = 4; it[1] = 96 }
+        val invalid = pipeline.process(borderRead().copy(borderCrossings = CardBorderCrossingsFile(CardGeneration.GEN2V2, 1120, invalidBytes)), "borders-invalid")
+        assertEquals(CardImportFileStatus.INVALID, invalid.file(CardImportFileKind.BORDER_CROSSINGS).status)
+        assertNull(imports.get(invalid.id)!!.borderCrossings); assertNotNull(imports.get(invalid.id)!!.places)
+        val only = read().copy(activity = null, vehicles = null,
+            borderCrossings = CardBorderCrossingsFile(CardGeneration.GEN2V2, 1120, ByteArray(19042)))
+        val empty = pipeline.process(only, "borders-empty")
+        assertNotNull(empty.sessionId); assertEquals(1, empty.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, empty.file(CardImportFileKind.BORDER_CROSSINGS).status)
+        assertEquals(0, empty.file(CardImportFileKind.BORDER_CROSSINGS).decodedCount)
+        assertTrue(imports.get(empty.id)!!.borderCrossings!!.records.isEmpty())
+    }
+    @Test fun bordersForeignUnconfirmedAndUnclearCardsCannotCreatePersistentSources() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(borderRead(), "borders-unconfirmed") }
+        imports.bind(card(), true)
+        val foreign = card("foreign-borders", DriverIdentity("BETA", "OTHER", LocalDate.of(1980, 1, 1), "en"))
+        rejected<ForeignCardRejected> { pipeline.process(borderRead().copy(card = foreign), "borders-foreign") }
+        rejected<CardBindingRequired> { pipeline.process(borderRead().copy(card = card("unclear-borders", card().holder.copy(birthDate = null))), "borders-unclear") }
+        assertEquals(0, count("card_border_crossing_imports")); assertEquals(0, count("driver_import_border_crossing_sources"))
+        assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun borderSourceWriteFailureRollsBackTheEntireOwnImport() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER fixture_border_fail BEFORE INSERT ON card_border_crossing_imports BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(borderRead(), "borders-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        for (table in listOf("card_border_crossing_imports", "driver_import_border_crossing_sources", "card_place_imports",
+            "card_gnss_imports", "import_sessions", "card_activity_imports", "card_specific_condition_imports"))
+            assertEquals(0, count(table))
+    }
+    @Test fun schemaThirteenUpgradeKeepsOldReceiptsAndSourcesWithoutBorderBackfill() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(placesRead(), "schema-thirteen-borders")
+        val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
+        val bytes = imports.get(old.id)!!.places!!.file.bytes
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE driver_import_border_crossing_sources"); execSQL("DROP TABLE card_border_crossing_imports")
+            execSQL("DELETE FROM room_master_table"); version = 13
+        }
+        db.close(); open()
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(row, db.cardImportRunDao().run(old.id)); assertEquals(files, db.cardImportRunDao().files(old.id))
+        assertArrayEquals(bytes, imports.get(old.id)!!.places!!.file.bytes)
+        assertNull(imports.get(old.id)!!.borderCrossings); assertEquals(old, pipeline.process(placesRead(), old.id))
+        assertEquals(0, count("card_border_crossing_imports"))
+        assertEquals(1, pipeline.process(borderRead(), "borders-after-upgrade").newSourceCount)
+    }
+    @Test fun borderWrongCardLinksAndAlteredBytesCannotLeakIntoAnotherSession() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(placesRead(), "borders-safe-old")
+        val fresh = pipeline.process(borderRead(), "borders-corrupt-new")
+        val source = imports.get(fresh.id)!!.borderCrossings!!
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardBorderCrossingsDao().insertSource(DriverImportBorderCrossingsSourceEntity(old.id, "wrong-card", source.id))
+        }
+        val altered = source.file.bytes.also { it[3] = 7 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_border_crossing_imports SET bytes = ? WHERE id = ?", arrayOf(altered, source.id))
+        assertEquals(2, pipeline.history().size); assertNull(imports.get(old.id)!!.borderCrossings)
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+    }
+
     @Test fun replacementWithSameNumberAndBytesRetainsItsOwnPhysicalProvenance() = runBlocking {
         imports.bind(card(), true)
         val first = pipeline.process(read(), "original")

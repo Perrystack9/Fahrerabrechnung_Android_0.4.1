@@ -1,5 +1,7 @@
 # FahrerTagebuch – aktueller Arbeitsstand
 
+**Aktueller Stand 10.10.2026:** PR52 ist nach bestätigter Anzeige der Beginn-/Ende-Orte auch nach Kartenentnahme unverändert gemergt (main 4d5b101, Schema 13/Testversion 40111). Begrenzter Folge-Entwurf: [Gen2V2-Grenz-/Ländereinträge](docs/BORDER_CROSSINGS_IMPORT.md), Schema 14/Testversion 40112. CI/Schemaexport und neuer notwendiger Gerätetest stehen noch aus; kein vollständiger Kartenimport behauptet. [Aktueller Fortsetzungscheckpoint](docs/WORK_HANDOFF.md). Frühere Abschnitte darunter sind historisch.
+
 **Dokumentationsstand: 10.10.2026 · PR #51 nach vollständiger CI unverändert gemergt (main 1c73cb4). Schema 12, Testversion 40110. Nutzer bestätigt passende GNSS-Anzeige und Bestand nach Wiederöffnung um 14:06 Europe/Berlin. Weitere manuelle Fehler-/Fremdkartentests sind damit nicht belegt.** Verbindlicher Fachstand: [CURRENT_RULES.md](docs/CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3).
 
 Aktueller begrenzter Folgeschritt: [Beginn-/Ende-Orte unabhängig importieren](docs/PLACES_IMPORT_IMPLEMENTATION.md), Schema 13/Testversion 40111 im Feature-PR; vollständige CI und notwendiger Gerätetest stehen aus. Die darunterstehenden früheren Abschnitte dokumentieren ihren jeweiligen historischen Stand.

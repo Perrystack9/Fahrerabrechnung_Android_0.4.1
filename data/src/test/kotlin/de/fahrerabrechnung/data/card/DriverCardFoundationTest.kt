@@ -616,6 +616,60 @@ class DriverCardFoundationTest {
         failure { DriverCardDecoder.placeCount(ByteArray(17).also { it[9] = 1 }, CardGeneration.GEN2V2) }
     }
 
+    @Test fun borderReaderAttemptsOnlyGen2V2AndKeepsOtherSources() = runBlocking {
+        for (g in supportedGenerations) {
+            val fake = CardFixtureTransport(g, identityFixture())
+            val result = DriverCardReader(fake).read()
+            assertEquals(g == CardGeneration.GEN2V2, result.borderCrossings != null)
+            assertEquals(g == CardGeneration.GEN2V2, DriverCardFiles.BORDER_CROSSINGS in fake.readFiles)
+            assertFalse(result.borderCrossingsReadFailed); assertNotNull(result.places); assertTrue(fake.closed)
+        }
+    }
+    @Test fun borderCapacityUsesOnlyValidatedV2Extension() {
+        val extension = byteArrayOf(0, 8, 4, 96, 6, 88, 1, 80, 12, 0)
+        assertEquals(1120, DriverCardDecoder.borderCrossingCount(extension, CardGeneration.GEN2V2))
+        for (g in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.UNKNOWN))
+            failure { DriverCardDecoder.borderCrossingCount(extension, g) }
+        for (length in listOf(0, 9, 11, 17))
+            failure { DriverCardDecoder.borderCrossingCount(ByteArray(length), CardGeneration.GEN2V2) }
+        for (offset in listOf(1, 2, 3)) {
+            val invalid = extension.copyOf(); invalid[offset] = 0
+            failure { DriverCardDecoder.borderCrossingCount(invalid, CardGeneration.GEN2V2) }
+        }
+    }
+    @Test fun borderFailuresAndInvalidCapacityNeverDiscardOtherValidFiles() = runBlocking {
+        for (problem in 0..4) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                missingFiles = if (problem == 0) setOf(DriverCardFiles.BORDER_CROSSINGS) else emptySet(),
+                borderBytes = when (problem) {
+                    1 -> ByteArray(19041)
+                    2 -> ByteArray(19042).also { it[0] = 4; it[1] = 96 }
+                    else -> null
+                },
+                extensionBytes = if (problem == 3) ByteArray(10) else null,
+                borderFailure = if (problem == 4) ReaderException(ReaderFailure.TIMEOUT) else null)
+            val result = DriverCardReader(fake).read()
+            assertNull(result.borderCrossings); assertTrue(result.borderCrossingsReadFailed)
+            assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.places)
+            assertNotNull(result.placesAuthentication); assertNotNull(result.gnssPositions); assertNotNull(result.events)
+            assertEquals(problem != 0 && problem != 3, DriverCardFiles.BORDER_CROSSINGS in fake.readFiles)
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun earlierReadFailuresDoNotPreventTheBorderAttempt() = runBlocking {
+        val result = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.PLACES, DriverCardFiles.GNSS_AUTHENTICATION,
+                DriverCardFiles.DRIVER_ACTIVITY))).read()
+        assertNotNull(result.borderCrossings); assertFalse(result.borderCrossingsReadFailed)
+        assertTrue(result.placeReadFailed); assertTrue(result.activityReadFailed)
+    }
+    @Test fun borderCancellationPropagatesAndClosesReader() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            borderFailure = kotlinx.coroutines.CancellationException("fixture"))
+        try { DriverCardReader(fake).read(); fail("Cancellation expected") }
+        catch (_: kotlinx.coroutines.CancellationException) { assertTrue(fake.closed) }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -642,7 +696,10 @@ class DriverCardFoundationTest {
                                        private val placeAuthBytes: ByteArray? = null,
                                        private val placeFailure: Exception? = null,
                                        private val placeAuthFailure: Exception? = null,
-                                       private val invalidPlaceCount: Boolean = false) : CardReaderTransport {
+                                       private val invalidPlaceCount: Boolean = false,
+                                       private val borderBytes: ByteArray? = null,
+                                       private val borderFailure: Exception? = null,
+                                       private val extensionBytes: ByteArray? = null) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         private var selected = false
@@ -676,6 +733,7 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.SPECIFIC_CONDITIONS) specificConditionFailure?.let { throw it }
                 if (file == DriverCardFiles.GNSS_PLACES) gnssFailure?.let { throw it }
                 if (file == DriverCardFiles.GNSS_AUTHENTICATION) authenticationFailure?.let { throw it }
+                if (file == DriverCardFiles.BORDER_CROSSINGS) borderFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES) placeFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES_AUTHENTICATION) placeAuthFailure?.let { throw it }
                 val data = when (file) {
@@ -684,7 +742,8 @@ class DriverCardFoundationTest {
                     DriverCardFiles.IDENTIFICATION -> identification
                     DriverCardFiles.GNSS_PLACES -> gnssBytes ?: ByteArray(CardGnssAccumulatedDrivingParser.fileLength(generation, 336))
                     DriverCardFiles.GNSS_AUTHENTICATION -> authenticationBytes ?: ByteArray(CardGnssAuthenticationParser.fileLength(generation))
-                    DriverCardFiles.APPLICATION_V2 -> ByteArray(10)
+                    DriverCardFiles.BORDER_CROSSINGS -> borderBytes ?: ByteArray(19042)
+                    DriverCardFiles.APPLICATION_V2 -> extensionBytes ?: ByteArray(10).also { it[1] = 8; it[2] = 4; it[3] = 96 }
                     DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = if (invalidActivityPointer) 16 else 4
                     }

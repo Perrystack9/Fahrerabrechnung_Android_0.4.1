@@ -85,5 +85,21 @@ class MigrationTestBase {
                 }
         }
     }
+    @Test fun migration_13_14_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "borders-migration-test"
+        helper.createDatabase(name, 13).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 14, true, DatabaseMigrations.MIGRATION_13_14).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_border_crossing_imports", "driver_import_border_crossing_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
 
 }

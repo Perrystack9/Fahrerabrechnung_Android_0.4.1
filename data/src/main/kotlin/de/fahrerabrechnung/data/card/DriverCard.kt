@@ -42,7 +42,9 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val places: CardPlacesFile? = null,
                           val placeReadFailed: Boolean = false,
                           val placesAuthentication: CardPlacesAuthenticationFile? = null,
-                          val placesAuthenticationReadFailed: Boolean = false)
+                          val placesAuthenticationReadFailed: Boolean = false,
+                          val borderCrossings: CardBorderCrossingsFile? = null,
+                          val borderCrossingsReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -62,6 +64,7 @@ object DriverCardFiles {
     const val GNSS_AUTHENTICATION = 0x0527
     const val PLACES = 0x0506
     const val PLACES_AUTHENTICATION = 0x0526
+    const val BORDER_CROSSINGS = 0x0528
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -161,6 +164,18 @@ object DriverCardDecoder {
         return count
     }
 
+    /** Gen2V2 extension: 2-byte following-length (8), then NoOfBorderCrossingRecords. */
+    fun borderCrossingCount(applicationV2: ByteArray, generation: CardGeneration): Int {
+        if (generation != CardGeneration.GEN2V2 || applicationV2.size != 10)
+            throw ParseError(0, "Application_Identification_V2", "unsupported generation or length")
+        val reader = BinaryReader(applicationV2)
+        if (reader.u16be("lengthOfFollowingData") != 8)
+            throw ParseError(0, "lengthOfFollowingData", "unsupported V2 extension")
+        val count = reader.u16be("noOfBorderCrossingRecords")
+        CardBorderCrossingsParser.fileLength(generation, count)
+        return count
+    }
+
     /** Full Gen2 Application_Identification: NoOfGNSSADRecords at offsets 11..12. */
     fun gnssCount(application: ByteArray, generation: CardGeneration): Int {
         if (application.size != 17) throw ParseError(0, "Application_Identification", "expected full Gen2 file")
@@ -233,7 +248,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
-            if (generation == CardGeneration.GEN2V2) readFile(session, DriverCardFiles.APPLICATION_V2, 10)
+            val applicationV2 = if (generation == CardGeneration.GEN2V2)
+                readFile(session, DriverCardFiles.APPLICATION_V2, 10) else null
             return try {
                 val application = g2 ?: g1!!
                 val identity = DriverCardDecoder.identity(
@@ -286,6 +302,11 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardPlacesAuthenticationFile(generation, readFile(session, DriverCardFiles.PLACES_AUTHENTICATION,
                         CardPlacesAuthenticationParser.fileLength(generation))).also { CardPlacesAuthenticationParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val borderCrossings = if (supportsAuthentication) try {
+                    val count = DriverCardDecoder.borderCrossingCount(checkNotNull(applicationV2), generation)
+                    CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
+                        CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -295,7 +316,9 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null,
                     places = places, placeReadFailed = places == null,
                     placesAuthentication = placesAuthentication,
-                    placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null)
+                    placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null,
+                    borderCrossings = borderCrossings,
+                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }
