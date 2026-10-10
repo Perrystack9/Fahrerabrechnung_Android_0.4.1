@@ -409,8 +409,15 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         val tail = ByteArray(2)
         var offset = 0
         while (offset < tail.size) {
-            val requested = tail.size - offset
-            val response = session.send(CardCommands.readBinary(15 + offset, requested))
+            var requested = tail.size - offset
+            var response = session.send(CardCommands.readBinary(15 + offset, requested))
+            // TCS43 permits6700 when Offset+Le exceeds the EF. At offset15, a
+            // two-byte error could mean15 OR16 bytes; only a one-byte probe proves EOF.
+            if (offset == 0 && response.data.isEmpty() && response.statusWord == 0x6700) {
+                requested = 1
+                response = session.send(CardCommands.readBinary(15, requested))
+                if (response.data.isEmpty() && response.statusWord == 0x6700) return prefix
+            }
             if (offset == 0 && response.data.isEmpty() && response.statusWord in setOf(0x6282, 0x6B00)) return prefix
             if (!response.success || response.data.size !in 1..requested)
                 throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)

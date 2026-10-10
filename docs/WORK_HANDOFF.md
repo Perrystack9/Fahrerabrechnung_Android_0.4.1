@@ -1,5 +1,7 @@
 # Zusatzkorrektur für vollständige Anwendungsdateien
 
+TCS43-Grenzfall nach amtlichem Abgleich korrigiert: Ein datenloses6700 beim Zwei-Byte-Rest nach15Byte kann15 oder16Byte bedeuten. Deshalb genau ein Byte an Offset15 nachprüfen; nur datenloses6700 an dieser Ein-Byte-Grenze als vollständiges Legacy-EOF akzeptieren.16Byte,6C01-Längenkorrektur mit abgeschnittenem Rest, Statusfehler mit Daten, leere9000-Antworten und Timeouts bleiben fehlerhaft. Vier weitere Lesertests; neue vollständige CI am geänderten Kopf erforderlich. Kein Hardwaretest/keine APK ausgegeben.
+
 Finale PR56-CI38085931554: Produkt/Lint/APK-Builds erfolgreich, ein Lesertest am alten15-Byte-Anwendungsstand fehlgeschlagen. Tatsächliche Ursache: Reader verlangte17Byte, obwohl Decoder die alte vollständige15-Byte-Variante kennt. Jetzt vollständigen15-Byte-Präfix lesen und den unabhängigen Zwei-Byte-Zähler nur bei vollständig gelesenem Rest übernehmen. Legacy nur bei ausdrücklichem EOF6282/6B00 direkt nach15Byte; leere erfolgreiche Antwort,16Byte oder Timeout nicht als Legacy zulassen. Vier weitere Lesertests. Gültige alte Quellen bleiben erhalten, Fahrtenschreiber-Kapazität wird weiter nicht geraten. Erneute vollständige CI am neuen Kopf erforderlich. Kein Hardwaretest/keine APK ausgegeben.
 
 ---
