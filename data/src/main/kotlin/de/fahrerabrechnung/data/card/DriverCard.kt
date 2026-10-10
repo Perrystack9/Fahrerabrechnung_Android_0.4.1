@@ -411,7 +411,22 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         val selected = session.send(CardCommands.selectAid(aid))
         if (selected.statusWord == 0x6A82) return null
         if (!selected.success) throw ReaderException(ReaderFailure.IO)
-        return readFile(session, DriverCardFiles.APPLICATION, appSize)
+        if (appSize != 17) return readFile(session, DriverCardFiles.APPLICATION, appSize)
+        // The pre-2018 Gen2 layout is exactly15 bytes. Accept only an explicit EOF after
+        // that complete prefix; an empty successful reply or a16-byte truncation is malformed.
+        val prefix = readFile(session, DriverCardFiles.APPLICATION, 15)
+        val tail = ByteArray(2)
+        var offset = 0
+        while (offset < tail.size) {
+            val requested = tail.size - offset
+            val response = session.send(CardCommands.readBinary(15 + offset, requested))
+            if (offset == 0 && response.data.isEmpty() && response.statusWord in setOf(0x6282, 0x6B00)) return prefix
+            if (!response.success || response.data.size !in 1..requested)
+                throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+            response.data.copyInto(tail, offset)
+            offset += response.data.size
+        }
+        return prefix + tail
     }
 
     private suspend fun readFile(session: ApduSession, id: Int, length: Int): ByteArray {

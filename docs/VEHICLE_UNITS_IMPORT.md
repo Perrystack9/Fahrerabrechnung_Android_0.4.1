@@ -33,3 +33,7 @@ Schema17/Testversion40115. Echter Compilerexport und vollständige Android-CI ei
 
 Compilerexport17.json unverändert aus CI38085254090 Versuch1, Artefakt11682376429, Archiv-SHA256156225d096bf207aa705ceee666d55fce83ce3c84a3edbccec0c311a65b0287d. Alle34 alten Entitäten identisch, zwei neue. Erster Lauf: Produkt-/Lint-/APK-Builds erfolgreich, Unit-Test-Kompilierung scheiterte am fehlenden ByteBuffer-Testimport; Import korrigiert. Vollständiger Folgelauf am korrigierten Kopf erforderlich, kein erster Full-green- oder Hardwareerfolg behauptet.
 Schema17-SHA256: `b95db604827e6ffc726933236962d1931f431bee74d368d3ef09e28adccfb340`.
+
+## Exakte Legacy-Dateigrenze
+
+Der Leser erkennt den alten15-Byte-Anwendungsstand jetzt über den vollständigen Präfix und ein ausdrückliches EOF6282/6B00. Der17-Byte-Stand verlangt beide zusätzlichen Zählerbytes;16Byte, leere erfolgreiche Antworten oder Timeouts sind fehlerhaft. Vier weitere Lesertests sichern diese Grenze ab. Die alte Datei liefert weiterhin keinen VehicleUnits-Zähler.
