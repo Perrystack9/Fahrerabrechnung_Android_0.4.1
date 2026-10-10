@@ -24,3 +24,11 @@ Die CI-ZIP aktualisiert die bestehende **FahrerTagebuch Test** (40106, 40107 ode
 3. Einen älteren Import ohne diese Quelle, das getrennte Altarchiv bzw. eine gelesene leere Quelle öffnen: keine aus späteren Übernahmen ergänzten Marker. Profil, Kartentage und Fahrzeughistorie bleiben verfügbar.
 
 Ohne reale Sonderbedingungsbelege kann diese Markerprüfung nicht am Gerät durchgeführt werden; die synthetischen automatischen Tests sind dann der vorhandene Nachweis. Es wird für diesen UI-Schritt keine erneute Kartenlesung verlangt. Das Überspringen bei PR #44 ist keine allgemeine dauerhafte Ausnahme für spätere Leser-/Import-/Migrationsänderungen und setzt den Hardware-Testzähler nicht zurück.
+
+## Abschluss am 10.10.2026
+
+[CI 37137254348, Versuch 6](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37137254348/attempts/6) am unveränderten Produktkopf `42fb5dea0fb8f18d1b2206bda5d09b59b4ebe8b1` vollständig grün: **143 Unit-, 99 Daten-/SQLCipher- und 66 App-/Compose-Tests, insgesamt 308 ohne Fehler oder übersprungene Tests**. Alle acht neuen Compose-Tests anhand der Instrumentierungsberichte als ausgeführt bestätigt. Alle sieben Gradle-Aufrufe, Lint, APK-/Signatur-/Versionsprüfung und bytegleicher Schema-11-Export bestanden.
+
+Am 10.10.2026 um 05:52 Uhr Europe/Berlin bestätigt der Nutzer zur bereitgestellten Testversion 40109: „Daten sind nach dem schließen und wieder öffnen nach wie vor vorhanden.“ Die Bildschirmaufnahme zeigt gespeicherte Kartentage und Fahrzeughistorie ohne erneute Kartenlesung. Für die ausgewählte ältere Übernahme fehlen gespeicherte Sonderbedingungen. Das ist keine neue Leerdaten-Lesung oder Prüfung realer Fähre-/Zug-/Out-of-Scope-Marker. Installationsweg und Ausgangs-Versionscode sind nicht separat sichtbar; keine genauere Migrationsmessung behauptet. Letzte vollständige bestätigte Karten-/Leserprüfung bleibt PR #41 vom 03.10.2026, 08:06 Uhr.
+
+Nach grüner Gesamt-CI und Nutzerbestätigung am unveränderten Kopf gemergt: `9f24a48845367502e585c87b1eb8e63f370b3dfb`, Tree `90b73aa63229055d5560d6e0f8ad63b855ab30d5`. CI-Infrastruktur aus PR #46/#47 erhalten. Die tatsächliche kurze Test-ZIP enthält nur das Update 40109; vorhandene Test-App beibehalten.

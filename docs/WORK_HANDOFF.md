@@ -1,6 +1,6 @@
 # Work-Übergabe – FahrerTagebuch
 
-**Stand: 03.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
+**Stand: 10.10.2026.** Diese Datei hält den technischen Fortschritt und den zuletzt vom Nutzer bestätigten Gerätetest fest. Sie ersetzt keine Fachregeln.
 
 ## Einstieg und Ausgangsbasis
 
@@ -11,12 +11,14 @@
 | Bezug | Stand |
 |---|---|
 | Letzter Import-/Schema-PR | [PR #44: Sonderbedingungsquelle sitzungsgenau übernehmen](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/44), nach grüner CI, erneuter Codeprüfung und ausdrücklichem Überspringen des Gerätetests gemergt |
-| Letzte am Gerät getestete Import-/Schema-Basis | [`e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5); PR #43 ergänzt UI-Marker; PR #44 ergänzt die neue Quelle und Schema 11, ohne bestätigten Gerätetest |
+| Letzte vollständig am Leser getestete Import-/Schema-Basis | [`e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5`](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/commit/e957834d2cfa5e1dcd4e54bb458a1e078f2a57f5); PR #43 ergänzt UI-Marker; PR #44 ergänzt die neue Quelle und Schema 11, ohne bestätigten Gerätetest |
 | Getesteter PR-41-Kopf | `69b3566638e6759b544b3470f95d83059a89ae56`; Merge-Tree `0de278c6e235823fc34c1e4f896bde2c800ee1d9` entspricht exakt diesem getesteten Stand |
 | Abgeschlossener begrenzter Produktabschnitt | Automatische Vordergrund-Lesung eigener Aktivitäts-, Fahrzeug-, Kontroll-, Ereignis-, Störungs- und Sonderbedingungsquellen mit dauerhafter Importhistorie für diese unterstützten Dateien; vorhandene Profilbindung und Normalisierung weiterverwenden |
 | Datenbank auf main | Room/SQLCipher, Schema **11**, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11; keine destruktive Migration oder automatische Zuordnung alter Quellen |
 | Automatischer Nachweis der letzten Importerweiterung | [PR-44-Lauf 37121217858](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37121217858): vollständig grün, 135 Unit-, 99 SQLCipher- und 58 Compose-Tests, insgesamt 292 ohne Fehler/übersprungene Tests. Generierter Schema-11-Export byteidentisch bestätigt |
-| Letzter manueller Gerätetest | **03.10.2026, 08:06 Uhr, PR #41: Update Schema 9→10, automatische Übernahme, exakte Historie und Wiederöffnung bestanden; Screenshot zeigt echten Ereignisbeleg und leere Störungsquelle**, Details und Grenzen unten |
+| Letzter vollständiger Karten-/Lesertest | **03.10.2026, 08:06 Uhr, PR #41: Update Schema 9→10, automatische Übernahme, exakte Historie und Wiederöffnung bestanden; Screenshot zeigt echten Ereignisbeleg und leere Störungsquelle**, Details und Grenzen unten |
+| Aktueller Produkt-/UI-Stand | PR #45, Produktkopf `42fb5dea0fb8f18d1b2206bda5d09b59b4ebe8b1`, gemergt als `9f24a48845367502e585c87b1eb8e63f370b3dfb`; Schema 11, Testversion 40109; CI #46/#47 erhalten |
+| Letzter kurzer Geräte-/Bestandstest | 10.10.2026, 05:52 Europe/Berlin, PR #45: vorhandene Daten nach Schließen/Wiederöffnen bestätigt; keine erneute Kartenlesung oder Prüfung realer Sonderbedingungsmarker |
 
 ## Wirklich implementiert
 
@@ -258,14 +260,14 @@ Gezielte Regressionstests sichern verschlüsselte Wiederöffnung, Deduplizierung
 - [CardSourcePairRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardSourcePairRepository.kt): validieren, atomar speichern, exakt zugehörige Quellen lesen.
 - [CardSourcePairDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/CardSourcePairDao.kt): Herkunftstabelle und Fremdschlüssel.
 - [CardActivityImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt) / [CardVehicleImportRepository.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt): Quell-Snapshots und inhaltliche Deduplizierung.
-- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 10, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10; keine destruktive Migration.
+- [AppDatabase.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt) / [DatabaseMigrations.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DatabaseMigrations.kt): main Schema 11, additive Migrationen 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11; keine destruktive Migration.
 - [NormalizedCardVehicleStore.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/card/NormalizedCardVehicleStore.kt) / [DriverVehicleUseDao.kt](../data/src/main/kotlin/de/fahrerabrechnung/data/db/DriverVehicleUseDao.kt): Folgeschritt mit unveränderlichen Fahrzeugnutzungen und additiver Migration 6 → 7; bisherige Tabellen unverändert.
 - [CardHardwareTestScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardHardwareTestScreen.kt), [CardSnapshotHistoryScreen.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/CardSnapshotHistoryScreen.kt), [AppRoot.kt](../app/src/main/kotlin/de/fahrerabrechnung/app/AppRoot.kt): lesen/speichern, Quellenübersicht und Auswahl der Vorschau.
 - [EncryptedDatabaseInstrumentedTest.kt](../data/src/androidTest/kotlin/de/fahrerabrechnung/data/EncryptedDatabaseInstrumentedTest.kt) / [CardSourcePairNavigationTest.kt](../app/src/androidTest/kotlin/de/fahrerabrechnung/app/CardSourcePairNavigationTest.kt): Persistenz-/Migrations- und Navigationsregressionen.
 
 ## Noch offen und empfohlene Fortsetzung
 
-Die normale Vordergrund-Lesung übernimmt unterstützte eigene Daten automatisch. Erste eigene/unklare Ersatzkarten verlangen weiterhin Bestätigung. Aktivitäts-, Fahrzeug-, Kontroll-, Ereignis- und Störungsquellen sind **persistente, profilgebundene Quellen**, noch keine vollständige Kartenabdeckung oder fachliche Tageszusammenführung.
+Die normale Vordergrund-Lesung übernimmt unterstützte eigene Daten automatisch. Erste eigene/unklare Ersatzkarten verlangen weiterhin Bestätigung. Aktivitäts-, Fahrzeug-, Kontroll-, Ereignis-, Störungs- und Sonderbedingungsquellen sind **persistente, profilgebundene Quellen**, noch keine vollständige Kartenabdeckung oder fachliche Tageszusammenführung.
 
 Offen sind vollständige Importhistorie und Status/Fehlerbehandlung über alle Kartenquellen, vollständiger quellenübergreifender Tagesbestand sowie weitere Dateien für GNSS und Grenzübertritte. Der letzte Kontrollbeleg ist seit PR #39, Ereignisse/Störungen samt Übersicht seit PR #41 im beschriebenen Umfang gespeichert und darstellbar; die gespeicherten Ereignis-/Störungszeitpunkte werden zusätzlich als Marker dargestellt. GNSS-/Grenzübertrittsmarker stehen noch aus. Die Profil-/Kartenbindung aus PR #30 und normalisierten Tagesquellen aus PR #32 sind gemergt und im beschriebenen Umfang am Gerät bestanden. Dauerhafte Fahrzeugzuordnung, Tageskilometer/Arbeitszeiten und fachliche Reise-/Spesen-/Zuschlagsauswertung fehlen. Grundscreens und vorbereitete Entities/Interfaces sind teilweise Preview.
 
@@ -327,3 +329,15 @@ Kein bestätigtes Update auf Schema 11, keine bestätigte Leerdaten-Lesung und k
 ## Fortsetzung: Sonderbedingungsmarker auf der Tageszeitleiste
 
 Branch feature/card-specific-condition-timeline baut auf diesem Merge auf. Reiner Projektions-/UI-Schritt analog PR #43: exakte gespeicherte Quelle der ausgewählten eigenen Sitzung und physische DriverCard-ID; keine spätere Quelle in alten Imports/Archiven. Nur belegte Zeitpunkte auf realer Tages-/Zoomachse, 23-/25-Stunden-Tage, exakte Sekunden/Offset. Eigene Spur und Tagesliste halten zeitgleiche Meldungen einzeln auswählbar. Gen1-Fähre bleibt ohne erfundenen Beginn/Ende, reservierte Codes neutral, unbekannte Zeiten nur in der vorhandenen Quellenübersicht. Keine Intervalle, Ruhe-/Verstoß-/Fachberechnung oder Änderung der Tätigkeiten. Leser, Parser, Datenbank und Schema 11 bleiben unverändert. Acht Unit- und acht Compose-Tests ergänzen die bestehende vollständige CI; Test-App 40109. [Umfang und optionale Softwareprüfung](SPECIFIC_CONDITION_TIMELINE_CHECK.md). Eine nicht vorhandene reale Meldung wird nicht als am Gerät geprüft ausgegeben.
+
+## Abgeschlossener PR #45: CI und kurzer Geräte-/Bestandstest
+
+[CI 37137254348, Versuch 6](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/37137254348/attempts/6) am unveränderten Produktkopf `42fb5dea0fb8f18d1b2206bda5d09b59b4ebe8b1` vollständig grün: **143 Unit-, 99 Daten-/SQLCipher- und 66 App-/Compose-Tests, insgesamt 308 ohne Fehler oder übersprungene Tests**. Alle acht neuen Compose-Tests anhand der Instrumentierungsberichte als ausgeführt bestätigt. Alle sieben Gradle-Aufrufe, Lint, APK-/Signatur-/Versionsprüfung und bytegleicher Schema-11-Export bestanden.
+
+Am 10.10.2026 um 05:52 Uhr Europe/Berlin bestätigt der Nutzer zur bereitgestellten Testversion 40109: „Daten sind nach dem schließen und wieder öffnen nach wie vor vorhanden.“ Die Bildschirmaufnahme zeigt gespeicherte Kartentage und Fahrzeughistorie ohne erneute Kartenlesung. Für die ausgewählte ältere Übernahme fehlen gespeicherte Sonderbedingungen. Das ist keine neue Leerdaten-Lesung oder Prüfung realer Fähre-/Zug-/Out-of-Scope-Marker. Installationsweg und Ausgangs-Versionscode sind nicht separat sichtbar; keine genauere Migrationsmessung behauptet. Letzte vollständige bestätigte Karten-/Leserprüfung bleibt PR #41 vom 03.10.2026, 08:06 Uhr.
+
+Nach grüner Gesamt-CI und Nutzerbestätigung am unveränderten Kopf gemergt: `9f24a48845367502e585c87b1eb8e63f370b3dfb`, Tree `90b73aa63229055d5560d6e0f8ad63b855ab30d5`. CI-Infrastruktur aus PR #46/#47 erhalten.
+
+Test-ZIP `FahrerTagebuch-PR45-Test-Update.zip`: nur Update-APK 40109, kurze Anleitung, Prüfsummen und Herkunft. Build-Job `114119290705`, Geräteartefakt `11658395401`, erfolgreicher Emulatorjob `114120535610`. ZIP-SHA-256 `a52f1b9a76d0b3e576aee3a3afbdf6c4e3da97bf2701a814a4ab3e1c82926736`. Paket `de.fahrerabrechnung.app.devicetest`, gleichbleibender öffentlicher Testschlüssel.
+
+Die frühere externe Actions-Quota-Blockade ist erledigt: Nach mitgeteilter Budgeterhöhung auf 2,00 USD bei weiterhin aktivem Stop usage wurde nach kurzer Propagationszeit genau der damals aktuelle fehlgeschlagene Build-Job `113762376670` einmal wiederholt. Versuch 6 bestand einschließlich des abhängigen Emulatorjobs. Keine erneute PR-45-Wiederholung, keine zusätzlichen Löschungen. [Aktuelle CI-/Artefaktstrategie](CI_ARTIFACT_POLICY.md).
