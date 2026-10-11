@@ -1,3 +1,7 @@
+Aktueller bestätigter Stand11.10.2026: Gerätetest PR60/40120 ausdrücklich bestanden: Update und alte Daten, neue Kartenlesung, Zertifikate/Kartenangaben/Anwendungsverzeichnis, Bestand nach Kartenentnahme und App-Neustart sowie unveränderter alter Import. PR60 am unveränderten geprüften Kopf85d0614 gemergt als9e7670f05b7c35a585244aeca539be9d0fe7c6fb, Tree78155b21cb76f9c27231360bd78dad0aa5472a22 exakt gleich dem Teststand. PR59 ist enthalten und von GitHub ebenfalls als gemergt abgeschlossen. Letzte Gerätebasis jetzt40120/Schema18. PR62/40121 und spätere Änderungen sind ausdrücklich noch nicht hardwarebestätigt und bleiben ungemergt. [Verbindliche Gerätebestätigung und Merge-Nachweise](DEVICE_CONFIRMATION_40120.md). Selbstständige Importfortsetzung beauftragt; Projektregeln, kein Browser/Unteragenten/Bereinigung und Actions-Budget2USD bleiben bestehen. Ältere Checkpoints darunter sind historische Stände.
+
+---
+
 Aktueller gemeinsamer FolgestandPR60/40120: Originaldateien plus MF-DIR für erkannte Gen2/Gen2V2-Karten, bis27 Quellen. Lokale Prüfungen bestanden; neue vollständige CI vor Ausgabe erforderlich. Keine neue Hardwarebestätigung. [DIR-Umfang](CARD_DIRECTORY_IMPORT.md). Ältere Checkpoints dokumentieren ihre damaligen Stände.
 
 # Abdeckung der Fahrerkarte
