@@ -139,8 +139,8 @@ class CardIdentitySourceReaderTest {
                 val fake = BoundaryTransport(byteArrayOf((eof ushr 8).toByte(), eof.toByte()))
                 val source = CardIdentitySourceReader.freezeComplete(ApduSession(fake), kind, generation, raw)
                 assertArrayEquals(raw, source.bytes); assertEquals(2, fake.commands.size)
-                assertArrayEquals(CardCommands.selectFile(kind.fileId), fake.commands.first())
-                assertArrayEquals(CardCommands.readBinary(raw.size, 1), fake.commands.last())
+                assertArrayEquals(CardCommands.selectFile(kind.fileId).encode(), fake.commands.first())
+                assertArrayEquals(CardCommands.readBinary(raw.size, 1).encode(), fake.commands.last())
             }
     }
     @Test fun trailingDataSuccessfulEmptyAndErrorDataAreNeverProofOfACompleteOriginalEf() = runBlocking {
