@@ -1,3 +1,11 @@
+Aktueller Checkpoint11.10.2026: Tobi bestätigt um08:36 Europe/Berlin allgemein „Funktioniert alles“ zum ausgegebenen PR58-Testupdate40117/Schema18 und beauftragt zwei Stunden selbstständige Weiterarbeit bis10:36:13. Alle vier Jobs der exakten CI-KöpfePR54–58 erneut erfolgreich geprüft. PR58 unverändert gemergt als1b592d627d5d18db9fc909f5c8cf2c796fd8578b; Merge-Tree2e314a47211f06696a6b05287e40b63575b921df bytegleich zum getesteten Kopfba9656f0e22980af94883783986367d7bcdf545b. GitHub hat die enthaltenen PR54–57 ebenfalls abgeschlossen, keine alten PRs offen. Keine neuen Einzelmesswerte oder nichtleeren Quellenfälle behauptet.
+
+Neuer begrenzter Entwurf: vier unabhängige Zertifikatsarten der gewählten Kartenanwendung (Gen1 zwei); vollständige begrenzte EF-Lesung, struktureller Decoder, verschlüsselte exakte Karten-/Sitzungsquelle und Detailansicht mit Referenzen auf Antippen. Testversion40118, Schema18 unverändert, stabile Testkennung/-signatur. Alte19-Quellen-Historie bleibt unverändert; neue Gen2V2-Vorgänge können23 Quellen enthalten. Keine Kryptovertrauens-/Echtheits-/Vollständigkeitsbehauptung, keine neuen PSO-/Schreib-/Authentisierungsbefehle, keine Nachbefüllung. [Umfang und Primärformat](../docs/CARD_CERTIFICATE_IMPORT.md), [erst nach dem Arbeitsblock auszugebender Gerätetest](../docs/CARD_CERTIFICATE_DEVICE_TEST.md). 54 zusätzliche Testmethoden vorbereitet, vollständige Android-/SQLCipher-/Compose-CI am endgültigen Kopf noch erforderlich. Kein neuer Hardwaretest bestätigt; Entwurf bis späterer Rückmeldung ungemergt.
+
+Dieser Checkpoint ist maßgeblich; die älteren Abschnitte darunter dokumentieren ihre jeweiligen früheren Stände.
+
+---
+
 Aktueller Ladungsart-Entwurf: Schema16/Testversion40114 auf PR54 Schema15. Unveränderter16.json-Compilerexport aus CI38075938370 übernommen; finale vollständige Android-/Emulatorprüfung einschließlich der Reader-/Quellen-Regressionen weiterhin erforderlich. PR53/Schema14/40112 bleibt die zuletzt am Gerät bestätigte Updatebasis. Hardwareausgabe frühestens11.10.2026 00:56 Europe/Berlin.
 
 # Dauerhaft aktualisierbare Gerätetest-App

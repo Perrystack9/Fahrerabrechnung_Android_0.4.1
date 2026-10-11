@@ -14,7 +14,14 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE }
+
+internal fun CardCertificateKind.importFileKind(): CardImportFileKind = when (this) {
+    CardCertificateKind.CARD -> CardImportFileKind.CARD_CERTIFICATE
+    CardCertificateKind.SIGNING -> CardImportFileKind.CARD_SIGNING_CERTIFICATE
+    CardCertificateKind.CA -> CardImportFileKind.CA_CERTIFICATE
+    CardCertificateKind.LINK -> CardImportFileKind.LINK_CERTIFICATE
+}
 
 internal fun CardMetadataKind.importFileKind(): CardImportFileKind = when (this) {
     CardMetadataKind.DRIVING_LICENCE -> CardImportFileKind.DRIVING_LICENCE_INFO
@@ -173,7 +180,8 @@ class DriverCardImportPipeline @Inject constructor(
             loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) },
             loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
             vehicleUnits = result.vehicleUnits?.let { CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes) },
-            metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) })
+            metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) },
+            certificates = result.certificates.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCertificateFile(it.kind, it.generation, it.bytes) }) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -299,9 +307,19 @@ class DriverCardImportPipeline @Inject constructor(
                     record?.timeUtc?.epochSecond, record?.timeUtc?.epochSecond, null)
             }
         } }
+        val certificates = CardCertificateKind.entries.mapNotNull { kind -> read.certificates[kind]?.let { value ->
+            inspect(kind.importFileKind(), value.file != null, value.readFailed) {
+                val file = checkNotNull(value.file)
+                require(file.kind == kind && file.generation == read.generation && kind.supports(read.generation))
+                val record = CardCertificateParser.parse(file)
+                // A certificate period is not an activity/source-time range or an import timestamp.
+                CardImportFileResult(kind.importFileKind(), CardImportFileStatus.READY, if (record == null) 0 else 1,
+                    null, null, null)
+            }
+        } }
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata)
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates)
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -341,6 +359,7 @@ class DriverCardImportPipeline @Inject constructor(
             loadType = read.loadType.takeIf { files.any { it.kind == CardImportFileKind.LOAD_TYPE_ENTRIES && it.status == CardImportFileStatus.READY } },
             vehicleUnits = read.vehicleUnits.takeIf { files.any { it.kind == CardImportFileKind.VEHICLE_UNITS_USED && it.status == CardImportFileStatus.READY } },
             metadata = read.metadata.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
+            certificates = read.certificates.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -440,6 +459,13 @@ class DriverCardImportPipeline @Inject constructor(
             // An empty map means these EFs were not attempted on the historical request.
             for (kind in CardMetadataKind.entries) read.metadata[kind]?.let { value ->
                 text("CARD_METADATA_${kind.name}")
+                value.file?.let { text(it.kind.name); text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (value.readFailed) 1.toByte() else 0.toByte())
+            }
+            // Historical requests with no certificate attempts retain exactly their former fingerprint.
+            for (kind in CardCertificateKind.entries) read.certificates[kind]?.let { value ->
+                text("CARD_CERTIFICATE_${kind.name}")
                 value.file?.let { text(it.kind.name); text(it.generation.name)
                     digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
                 digest.update(if (value.readFailed) 1.toByte() else 0.toByte())

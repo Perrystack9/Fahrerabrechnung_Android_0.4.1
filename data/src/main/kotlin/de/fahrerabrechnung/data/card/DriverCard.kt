@@ -51,7 +51,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val loadTypeReadFailed: Boolean = false,
                           val vehicleUnits: CardVehicleUnitsFile? = null,
                           val vehicleUnitsReadFailed: Boolean = false,
-                          val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap())
+                          val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap(),
+                          val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -391,6 +392,11 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     catch (_: ParseError) { null }
                     CardMetadataRead(file, readFailed = file == null)
                 }
+                val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                    val file = try { CardCertificateReader.read(session, kind, generation) }
+                    catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                    CardCertificateRead(file, readFailed = file == null)
+                }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -406,7 +412,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
                     loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
                     vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
-                    metadata = metadata)
+                    metadata = metadata, certificates = certificates)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

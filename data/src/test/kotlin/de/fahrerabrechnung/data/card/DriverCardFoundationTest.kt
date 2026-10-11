@@ -1203,6 +1203,95 @@ class DriverCardFoundationTest {
         assertFalse(DriverCardFiles.IDENTIFICATION in fake.readFiles); assertTrue(fake.closed)
     }
 
+    @Test fun certificatesAreReadInTheSelectedApplicationAfterValidatedDriverIdentity() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val kinds = CardCertificateKind.entries.filter { it.supports(generation) }
+            val sources = kinds.associateWith { if (generation == CardGeneration.GEN1) ByteArray(194) { it.toByte() }
+                else CertificateFixtures.certificate() }
+            val fake = CardFixtureTransport(generation, identityFixture(), certificateBytes = sources)
+            val read = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, read.recognition); assertEquals(kinds.toSet(), read.certificates.keys)
+            for (kind in kinds) {
+                assertFalse(read.certificates.getValue(kind).readFailed)
+                assertArrayEquals(sources.getValue(kind), read.certificates.getValue(kind).file!!.bytes)
+                assertTrue(fake.commandOrder.indexOf(0xB0 to DriverCardFiles.IDENTIFICATION) <
+                    fake.commandOrder.indexOf(0xB0 to kind.fileId))
+            }
+            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) }); assertTrue(fake.closed)
+            if (generation == CardGeneration.GEN1) assertTrue(fake.readFiles.none { it in setOf(0xC101, 0xC109) })
+        }
+    }
+    @Test fun certificateFailurePreservesOtherCertificatesAndEveryEarlierSource() = runBlocking {
+        for (bad in CardCertificateKind.entries) {
+            val sources = CardCertificateKind.entries.associateWith { CertificateFixtures.certificate() }
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), certificateBytes = sources,
+                certificateFailures = mapOf(bad to ReaderException(ReaderFailure.TIMEOUT)))
+            val read = DriverCardReader(fake).read()
+            assertTrue(read.certificates.getValue(bad).readFailed); assertNull(read.certificates.getValue(bad).file)
+            for (kind in CardCertificateKind.entries.filter { it != bad })
+                assertArrayEquals(sources.getValue(kind), read.certificates.getValue(kind).file!!.bytes)
+            assertNotNull(read.activity); assertNotNull(read.vehicles)
+            assertTrue(read.metadata.values.all { it.file != null && !it.readFailed }); assertTrue(fake.closed)
+        }
+    }
+    @Test fun malformedCertificateBodyOrExtraEfByteIsAnIndependentFailure() = runBlocking {
+        for (bad in CardCertificateKind.entries) for (extraByte in listOf(false, true)) {
+            val sources = CardCertificateKind.entries.associateWith { CertificateFixtures.certificate() }.toMutableMap()
+            val raw = sources.getValue(bad)
+            sources[bad] = if (extraByte) raw + byteArrayOf(0) else raw.copyOf().also { it[1] = 0x22 }
+            val read = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), certificateBytes = sources)).read()
+            assertTrue(read.certificates.getValue(bad).readFailed)
+            assertTrue(read.certificates.filterKeys { it != bad }.values.all { it.file != null && !it.readFailed })
+            assertEquals(CardRecognition.DRIVER, read.recognition)
+        }
+    }
+    @Test fun certificateCancellationAtEachEfPropagatesAndClosesTheReader() = runBlocking {
+        for (kind in CardCertificateKind.entries) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+                certificateFailures = mapOf(kind to kotlinx.coroutines.CancellationException("fixture")))
+            try { DriverCardReader(fake).read(); fail() } catch (_: kotlinx.coroutines.CancellationException) { }
+            assertTrue(fake.closed)
+        }
+    }
+    @Test fun unrecognizedOrInconsistentCardsNeverReadOrReturnCertificateSources() = runBlocking {
+        for (generation in listOf(CardGeneration.UNKNOWN)) {
+            val fake = CardFixtureTransport(generation, identityFixture())
+            val read = DriverCardReader(fake).read()
+            assertNotEquals(CardRecognition.DRIVER, read.recognition); assertTrue(read.certificates.isEmpty())
+            assertTrue(CardCertificateKind.entries.none { it.fileId in fake.readFiles })
+        }
+        val other = CardFixtureTransport(CardGeneration.GEN2, identityFixture(),
+            applicationBytes = ByteArray(17).also { it[0] = 2 })
+        assertEquals(CardRecognition.OTHER_CARD, DriverCardReader(other).read().recognition)
+        assertTrue(CardCertificateKind.entries.none { it.fileId in other.readFiles })
+        val fake = CardFixtureTransport(CardGeneration.GEN2, ByteArray(143))
+        assertTrue(DriverCardReader(fake).read().certificates.isEmpty())
+        assertTrue(CardCertificateKind.entries.none { it.fileId in fake.readFiles })
+    }
+    @Test fun shortCertificateResponsesContinueToTheCompleteEfAndProvenBoundary() = runBlocking {
+        val sources = CardCertificateKind.entries.associateWith { CertificateFixtures.certificate() }
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), certificateBytes = sources, certificateChunkLimit = 7)
+        val read = DriverCardReader(fake).read()
+        for (kind in CardCertificateKind.entries) assertArrayEquals(sources.getValue(kind), read.certificates.getValue(kind).file!!.bytes)
+        assertNotNull(read.activity); assertTrue(fake.closed)
+    }
+    @Test fun missingV2CapacityDoesNotPreventCertificateFilesWithoutCapacityCounters() = runBlocking {
+        val sources = CardCertificateKind.entries.associateWith { CertificateFixtures.certificate() }
+        val read = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.APPLICATION_V2), certificateBytes = sources)).read()
+        assertTrue(read.borderCrossingsReadFailed); assertTrue(read.loadUnloadReadFailed); assertTrue(read.loadTypeReadFailed)
+        for (kind in CardCertificateKind.entries) assertArrayEquals(sources.getValue(kind), read.certificates.getValue(kind).file!!.bytes)
+    }
+    @Test fun allMissingCertificateFilesAreReportedWithoutDiscardingTheDriver() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = CardCertificateKind.entries.map { it.fileId }.toSet())
+        val read = DriverCardReader(fake).read()
+        assertEquals(CardRecognition.DRIVER, read.recognition)
+        assertEquals(CardCertificateKind.entries.toSet(), read.certificates.keys)
+        assertTrue(read.certificates.values.all { it.file == null && it.readFailed })
+        assertNotNull(read.activity); assertNotNull(read.vehicles); assertTrue(fake.closed)
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -1248,6 +1337,9 @@ class DriverCardFoundationTest {
                                        private val metadataFailures: Map<CardMetadataKind, Exception> = emptyMap(),
                                        private val oversizedMetadata: Set<CardMetadataKind> = emptySet(),
                                        private val metadataChunkLimit: Int = 256,
+                                       private val certificateBytes: Map<CardCertificateKind, ByteArray> = emptyMap(),
+                                       private val certificateFailures: Map<CardCertificateKind, Exception> = emptyMap(),
+                                       private val certificateChunkLimit: Int = 256,
                                        private val applicationBytes: ByteArray? = null,
                                        private val applicationTailEmptySuccess: Boolean = false,
                                        private val applicationTailFailure: Exception? = null,
@@ -1312,7 +1404,13 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.PLACES_AUTHENTICATION) placeAuthFailure?.let { throw it }
                 val metadataKind = CardMetadataKind.entries.firstOrNull { it.fileId == file }
                 metadataKind?.let { metadataFailures[it]?.let { failure -> throw failure } }
+                val certificateKind = CardCertificateKind.entries.firstOrNull { it.fileId == file }
+                certificateKind?.let { certificateFailures[it]?.let { failure -> throw failure } }
                 val data = when (file) {
+                    CardCertificateKind.CARD.fileId -> certificateBytes[CardCertificateKind.CARD] ?: return byteArrayOf(0x6A, 0x82.toByte())
+                    CardCertificateKind.SIGNING.fileId -> certificateBytes[CardCertificateKind.SIGNING] ?: return byteArrayOf(0x6A, 0x82.toByte())
+                    CardCertificateKind.CA.fileId -> certificateBytes[CardCertificateKind.CA] ?: return byteArrayOf(0x6A, 0x82.toByte())
+                    CardCertificateKind.LINK.fileId -> certificateBytes[CardCertificateKind.LINK] ?: return byteArrayOf(0x6A, 0x82.toByte())
                     CardMetadataKind.ICC_IDENTIFICATION.fileId -> metadataBytes[CardMetadataKind.ICC_IDENTIFICATION] ?: ByteArray(25)
                     CardMetadataKind.IC_IDENTIFICATION.fileId -> metadataBytes[CardMetadataKind.IC_IDENTIFICATION] ?: ByteArray(8)
                     CardMetadataKind.DRIVING_LICENCE.fileId -> metadataBytes[CardMetadataKind.DRIVING_LICENCE] ?: ByteArray(53)
@@ -1376,10 +1474,12 @@ class DriverCardFoundationTest {
                     if (applicationTailEmptySuccess) return byteArrayOf(0x90.toByte(), 0)
                 }
                 if (offset >= data.size) return byteArrayOf(0x6B, 0)
+                if (certificateKind != null && offset + length > data.size) return byteArrayOf(0x67, 0)
                 val actualLength = when {
                     file == DriverCardFiles.APPLICATION && offset >= 15 -> minOf(length, applicationTailChunkLimit)
                     file == DriverCardFiles.VEHICLE_UNITS -> minOf(length, vehicleUnitChunkLimit)
                     metadataKind != null -> minOf(length, metadataChunkLimit)
+                    certificateKind != null -> minOf(length, certificateChunkLimit)
                     else -> length
                 }
                 return data.copyOfRange(offset, minOf(offset + actualLength, data.size)) + byteArrayOf(0x90.toByte(), 0)
