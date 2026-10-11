@@ -20,10 +20,10 @@ internal fun CardIdentitySourceKind.identitySourceTitle(): String = when (this) 
 
 /** Always the selected original source. The normalized profile is no substitute for a missing EF. */
 @Composable
-internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardIdentitySourceKind, SavedCardIdentitySource>) {
+internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardIdentitySourceKind, SavedCardIdentitySource>, receiptId: String? = null) {
     var kind by remember { mutableStateOf(CardIdentitySourceKind.IDENTIFICATION) }
     val source = sources[kind]
-    var showNumber by remember(kind, source?.id) { mutableStateOf(false) }
+    var showNumber by remember(kind, source?.id, receiptId) { mutableStateOf(false) }
     val zone = remember { ZoneId.systemDefault() }
     val format = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss XXX") }
     fun time(value: Instant) = value.takeUnless { it.epochSecond in setOf(0L, 0xFFFF_FFFFL) }
@@ -57,10 +57,13 @@ internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardI
                 }
                 is CardApplicationIdentityRecord -> {
                     Text("Aufgezeichnete Strukturversion: ${record.structureVersionBytes.joinToString(" ") { "%02X".format(it) }}")
+                    Text("Speicher für Ereignisse je Typ: ${record.eventsPerTypeRaw}")
+                    Text("Speicher für Störungen je Typ: ${record.faultsPerTypeRaw}")
                     Text("Speicher für Aktivitätsaufzeichnungen: ${record.activityStructureLengthRaw} Bytes")
                     Text("Speicherplätze für Fahrzeugnutzungen: ${record.vehicleCapacityRaw}")
                     Text("Speicherplätze für Beginn-/Ende-Orte: ${record.placeCapacityRaw}")
                     record.gnssCapacityRaw?.let { Text("Speicherplätze für GNSS-Aufzeichnungen: $it") }
+                    record.specificConditionCapacityRaw?.let { Text("Speicherplätze für besondere Bedingungen: $it") }
                     record.vehicleUnitCapacityRaw?.let { Text("Speicherplätze für Fahrtenschreiber-Nutzungen: $it") }
                     Text("Diese Angaben beschreiben die aufgezeichnete Speicherkapazität, nicht die Anzahl übernommener Einträge.",
                         style = MaterialTheme.typography.bodySmall)
@@ -69,6 +72,7 @@ internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardI
                     Text("Speicherplätze für Grenz- und Ländereinträge: ${record.borderCapacityRaw}")
                     Text("Speicherplätze für Be- und Entladeeinträge: ${record.loadUnloadCapacityRaw}")
                     Text("Speicherplätze für Ladungsart-Einträge: ${record.loadTypeCapacityRaw}")
+                    Text("Speicher für Fahrtenschreiberkonfiguration: ${record.vuConfigurationLengthRangeRaw} Bytes")
                     Text("Diese Angaben beschreiben die aufgezeichnete Speicherkapazität, nicht die Anzahl übernommener Einträge.",
                         style = MaterialTheme.typography.bodySmall)
                 }

@@ -65,6 +65,18 @@ class CardCertificateUiTest {
         compose.onNodeWithText("Inhaberreferenz: verborgen").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(holder).assertDoesNotExist(); compose.onNodeWithText(authority).assertDoesNotExist()
     }
+    @Test fun changingReceiptHidesReferencesEvenWithTheSameDeduplicatedCertificate() {
+        val receipt = mutableStateOf("first")
+        val source = mapOf(CardCertificateKind.CARD to CertificateUiFixtures.source())
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            CardCertificateScreen(PaddingValues(), source, receipt.value)
+        } }
+        compose.onNodeWithText("Referenzen anzeigen").performScrollTo().performClick()
+        compose.onNodeWithText(holder).performScrollTo().assertIsDisplayed()
+        compose.runOnIdle { receipt.value = "repeat" }
+        compose.onNodeWithText(holder).assertDoesNotExist(); compose.onNodeWithText(authority).assertDoesNotExist()
+        compose.onNodeWithText("Inhaberreferenz: verborgen").performScrollTo().assertIsDisplayed()
+    }
     @Test fun changingCertificateKindAndReturningResetsTheReveal() {
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
             CardCertificateScreen(PaddingValues(), mapOf(CardCertificateKind.CARD to CertificateUiFixtures.source(),

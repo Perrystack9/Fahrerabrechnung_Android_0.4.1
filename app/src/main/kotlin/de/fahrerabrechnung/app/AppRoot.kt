@@ -161,6 +161,7 @@ fun AppRoot(
     var selectedMetadata by androidx.compose.runtime.remember { mutableStateOf<Map<CardMetadataKind, SavedCardMetadata>>(emptyMap()) }
     var selectedCertificates by androidx.compose.runtime.remember { mutableStateOf<Map<CardCertificateKind, SavedCardCertificate>>(emptyMap()) }
     var selectedIdentitySources by androidx.compose.runtime.remember { mutableStateOf<Map<CardIdentitySourceKind, SavedCardIdentitySource>>(emptyMap()) }
+    var selectedReceiptId by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
     var selectedPreviewDriverCardId by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
     var selectedSourcePair by androidx.compose.runtime.remember { mutableStateOf<SavedCardSourcePair?>(null) }
     var cardFilesStatus by androidx.compose.runtime.remember { mutableStateOf(CardFilesStatus.CHECKING) }
@@ -201,7 +202,7 @@ fun AppRoot(
                 CardImportPhase.WAITING_FOR_CARD, CardImportPhase.READING, CardImportPhase.SAVING,
                 CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT,
                 CardImportPhase.IMPORTED, CardImportPhase.INCOMPLETE, CardImportPhase.FOREIGN_CARD, CardImportPhase.ERROR)) {
-            selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+            selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
             previewLoadError = null
             navController.navigate(DetailRoutes.CARD_IMPORT) { launchSingleTop = true }
         }
@@ -215,7 +216,7 @@ fun AppRoot(
                 selectedActivitySnapshot = saved?.activity
                 selectedVehicleSnapshot = saved?.vehicles
                 selectedControlSnapshot = saved?.controls
-                selectedEventSnapshot = saved?.events; selectedFaultSnapshot = saved?.faults; selectedConditionsSnapshot = saved?.specificConditions; selectedGnssPositions = saved?.gnssPositions; selectedGnssAuthentication = saved?.gnssAuthentication; selectedPlaces = saved?.places; selectedPlacesAuthentication = saved?.placesAuthentication; selectedBorderCrossings = saved?.borderCrossings; selectedLoadUnload = saved?.loadUnload; selectedLoadType = saved?.loadType; selectedVehicleUnits = saved?.vehicleUnits; selectedMetadata = saved?.metadata.orEmpty(); selectedCertificates = saved?.certificates.orEmpty(); selectedIdentitySources = saved?.identitySources.orEmpty()
+                selectedEventSnapshot = saved?.events; selectedFaultSnapshot = saved?.faults; selectedConditionsSnapshot = saved?.specificConditions; selectedGnssPositions = saved?.gnssPositions; selectedGnssAuthentication = saved?.gnssAuthentication; selectedPlaces = saved?.places; selectedPlacesAuthentication = saved?.placesAuthentication; selectedBorderCrossings = saved?.borderCrossings; selectedLoadUnload = saved?.loadUnload; selectedLoadType = saved?.loadType; selectedVehicleUnits = saved?.vehicleUnits; selectedMetadata = saved?.metadata.orEmpty(); selectedCertificates = saved?.certificates.orEmpty(); selectedIdentitySources = saved?.identitySources.orEmpty(); selectedReceiptId = saved?.id
                 selectedPreviewDriverCardId = saved?.driverCardId
                 if (saved == null) previewLoadError = "Noch keine gespeicherten Kartendaten vorhanden."
             } catch (_: Exception) { previewLoadError = "Die gespeicherten Kartendaten konnten nicht geöffnet werden." }
@@ -359,11 +360,11 @@ fun AppRoot(
                     onOpenHistory = { navController.navigate(DetailRoutes.CARD_SNAPSHOTS) },
                     onOpenLatest = {
                         previewIsArchive = false; previewLoadError = null
-                        selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                        selectedSourcePair = null; selectedActivitySnapshot = null; selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     },
                     onOpenVehicles = {
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null; selectedSourcePair = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null; selectedSourcePair = null
                         vehicleHistoryQuery = ""; vehicleHistoryUseStart = null; vehicleHistoryNation = null
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     })
@@ -374,18 +375,18 @@ fun AppRoot(
                     onShowLatestPair = {
                         selectedSourcePair = null
                         selectedActivitySnapshot = null
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                     },
                     previewSnapshot = selectedActivitySnapshot,
                     onShowLatestSnapshot = {
                         selectedActivitySnapshot = null
                         selectedSourcePair = null
                         if (driverCardImports != null) selectedVehicleSnapshot = null
-                        selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                        selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                     },
                     previewVehicleSnapshot = selectedVehicleSnapshot,
                     onShowLatestVehicleSnapshot = {
-                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                        selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                         selectedSourcePair = null
                         if (driverCardImports != null) selectedActivitySnapshot = null
                     },
@@ -394,7 +395,7 @@ fun AppRoot(
                         // An explicitly selected archive stays within its own source file.
                         if (driverCardImports == null || selectedVehicleSnapshot == null) {
                             selectedSourcePair = null
-                            selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                            selectedVehicleSnapshot = null; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                         }
                         vehicleHistoryQuery = query.orEmpty()
                         vehicleHistoryUseStart = useStart
@@ -408,7 +409,7 @@ fun AppRoot(
                         onPreview = { saved ->
                             previewIsArchive = false; previewLoadError = null
                             selectedSourcePair = saved.pair; selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles; selectedControlSnapshot = saved.controls
-                            selectedEventSnapshot = saved.events; selectedFaultSnapshot = saved.faults; selectedConditionsSnapshot = saved.specificConditions; selectedGnssPositions = saved.gnssPositions; selectedGnssAuthentication = saved.gnssAuthentication; selectedPlaces = saved.places; selectedPlacesAuthentication = saved.placesAuthentication; selectedBorderCrossings = saved.borderCrossings; selectedLoadUnload = saved.loadUnload; selectedLoadType = saved.loadType; selectedVehicleUnits = saved.vehicleUnits; selectedMetadata = saved.metadata; selectedCertificates = saved.certificates; selectedIdentitySources = saved.identitySources
+                            selectedEventSnapshot = saved.events; selectedFaultSnapshot = saved.faults; selectedConditionsSnapshot = saved.specificConditions; selectedGnssPositions = saved.gnssPositions; selectedGnssAuthentication = saved.gnssAuthentication; selectedPlaces = saved.places; selectedPlacesAuthentication = saved.placesAuthentication; selectedBorderCrossings = saved.borderCrossings; selectedLoadUnload = saved.loadUnload; selectedLoadType = saved.loadType; selectedVehicleUnits = saved.vehicleUnits; selectedMetadata = saved.metadata; selectedCertificates = saved.certificates; selectedIdentitySources = saved.identitySources; selectedReceiptId = saved.id
                             selectedPreviewDriverCardId = saved.driverCardId
                             navController.navigate(DetailRoutes.CARD_PREVIEW)
                         }, onOpenArchive = { navController.navigate(DetailRoutes.CARD_ARCHIVE) })
@@ -418,7 +419,7 @@ fun AppRoot(
                         driverImports = driverCardImports,
                         onPreviewPair = { saved ->
                             selectedPreviewDriverCardId = null
-                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap()
+                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null
                             selectedSourcePair = saved
                             selectedActivitySnapshot = saved.activity
                             selectedVehicleSnapshot = saved.vehicles
@@ -428,12 +429,12 @@ fun AppRoot(
                             selectedSourcePair = null
                             selectedActivitySnapshot = saved
                             if (driverCardImports != null) selectedVehicleSnapshot = null
-                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null
+                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null
                             navController.popBackStack()
                         },
                         onPreviewVehicle = { saved ->
                             selectedPreviewDriverCardId = null
-                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap()
+                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null
                             selectedSourcePair = null
                             selectedVehicleSnapshot = saved
                             if (driverCardImports != null) selectedActivitySnapshot = null
@@ -444,7 +445,7 @@ fun AppRoot(
                         },
                         onPreviewVehicleDay = { saved ->
                             selectedPreviewDriverCardId = null
-                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap()
+                            selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null
                             selectedSourcePair = null
                             selectedVehicleSnapshot = saved
                             selectedActivitySnapshot = null
@@ -456,12 +457,12 @@ fun AppRoot(
                     cardActivityImports, cardVehicleImports, pairs = cardSourcePairs,
                     onPreviewPair = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null; selectedSourcePair = saved
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null; selectedSourcePair = saved
                         selectedActivitySnapshot = saved.activity; selectedVehicleSnapshot = saved.vehicles
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewActivity = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null; selectedSourcePair = null
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null; selectedSourcePair = null
                         selectedActivitySnapshot = saved; selectedVehicleSnapshot = null
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     }, onPreviewVehicle = { saved ->
@@ -471,7 +472,7 @@ fun AppRoot(
                         navController.navigate(DetailRoutes.VEHICLE_DETAIL)
                     }, onPreviewVehicleDay = { saved ->
                         previewLoadError = null
-                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedPreviewDriverCardId = null; selectedSourcePair = null
+                        previewIsArchive = true; selectedControlSnapshot = null; selectedEventSnapshot = null; selectedFaultSnapshot = null; selectedConditionsSnapshot = null; selectedGnssPositions = null; selectedGnssAuthentication = null; selectedPlaces = null; selectedPlacesAuthentication = null; selectedBorderCrossings = null; selectedLoadUnload = null; selectedLoadType = null; selectedVehicleUnits = null; selectedMetadata = emptyMap(); selectedCertificates = emptyMap(); selectedIdentitySources = emptyMap(); selectedReceiptId = null; selectedPreviewDriverCardId = null; selectedSourcePair = null
                         selectedActivitySnapshot = null; selectedVehicleSnapshot = saved
                         navController.navigate(DetailRoutes.CARD_PREVIEW)
                     })
@@ -517,11 +518,11 @@ fun AppRoot(
             }
             composable(DetailRoutes.CARD_IDENTITY_SOURCES) {
                 if (visibleRoute.value == DetailRoutes.CARD_IDENTITY_SOURCES && !previewIsArchive && driverCardImports != null)
-                    CardIdentitySourceScreen(padding, selectedIdentitySources)
+                    CardIdentitySourceScreen(padding, selectedIdentitySources, selectedReceiptId)
             }
             composable(DetailRoutes.CARD_CERTIFICATES) {
                 if (visibleRoute.value == DetailRoutes.CARD_CERTIFICATES && !previewIsArchive && driverCardImports != null)
-                    CardCertificateScreen(padding, selectedCertificates)
+                    CardCertificateScreen(padding, selectedCertificates, selectedReceiptId)
             }
             composable(DetailRoutes.CARD_EVENTS_FAULTS) {
                 if (visibleRoute.value == DetailRoutes.CARD_EVENTS_FAULTS && !previewIsArchive && driverCardImports != null)

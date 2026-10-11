@@ -92,6 +92,31 @@ class CardIdentitySourceUiTest {
         compose.onNodeWithText("Diese gespeicherte Originaldatei ist leer.").assertDoesNotExist()
         compose.onNodeWithText("Für diese Übernahme sind diese Originalangaben nicht gespeichert.").performScrollTo().assertIsDisplayed()
     }
+    @Test fun changingReceiptMasksTheNumberEvenWhenOriginalSourceIsDeduplicated() {
+        val receipt = mutableStateOf("first")
+        val source = mapOf(CardIdentitySourceKind.IDENTIFICATION to IdentityUiFixtures.source())
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            CardIdentitySourceScreen(PaddingValues(), source, receipt.value)
+        } }
+        compose.onNodeWithText("Kartennummer anzeigen").performScrollTo().performClick()
+        compose.onNodeWithText(full).performScrollTo().assertIsDisplayed()
+        compose.runOnIdle { receipt.value = "second" }
+        compose.onNodeWithText(full).assertDoesNotExist()
+        compose.onNodeWithText("Kartennummer: verborgen").performScrollTo().assertIsDisplayed()
+    }
+    @Test fun originalApplicationDisplaysAllRecordedCapacitiesIncludingUnsignedMaximum() {
+        val raw = IdentityUiFixtures.application().also {
+            it[3] = 255.toByte(); it[4] = 128.toByte(); it[13] = 255.toByte(); it[14] = 255.toByte()
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            CardIdentitySourceScreen(PaddingValues(), mapOf(CardIdentitySourceKind.APPLICATION to IdentityUiFixtures.source(
+                CardIdentitySourceKind.APPLICATION, raw = raw)))
+        } }
+        compose.onNodeWithText("Kartenanwendung öffnen").performScrollTo().performClick()
+        compose.onNodeWithText("Speicher für Ereignisse je Typ: 255").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Speicher für Störungen je Typ: 128").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Speicherplätze für besondere Bedingungen: 65535").performScrollTo().assertIsDisplayed()
+    }
     @Test fun capacitiesAreLabeledAsStorageAndLegacyApplicationHasNoInventedVehicleUnitField() {
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
             CardIdentitySourceScreen(PaddingValues(), mapOf(CardIdentitySourceKind.APPLICATION to IdentityUiFixtures.source(
@@ -113,6 +138,7 @@ class CardIdentitySourceUiTest {
         compose.onNodeWithText("Speicherplätze für Grenz- und Ländereinträge: 112").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Speicherplätze für Be- und Entladeeinträge: 336").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Speicherplätze für Ladungsart-Einträge: 84").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Speicher für Fahrtenschreiberkonfiguration: 0 Bytes").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Kartennummer anzeigen").assertDoesNotExist()
     }
 }

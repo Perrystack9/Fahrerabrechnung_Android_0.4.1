@@ -20,10 +20,10 @@ internal fun CardCertificateKind.certificateTitle(): String = when (this) {
 
 /** Exact selected own-card receipt. References are hidden again on source/kind/view changes. */
 @Composable
-internal fun CardCertificateScreen(padding: PaddingValues, sources: Map<CardCertificateKind, SavedCardCertificate>) {
+internal fun CardCertificateScreen(padding: PaddingValues, sources: Map<CardCertificateKind, SavedCardCertificate>, receiptId: String? = null) {
     var kind by remember { mutableStateOf(CardCertificateKind.CARD) }
     val source = sources[kind]
-    var showReferences by remember(kind, source?.id) { mutableStateOf(false) }
+    var showReferences by remember(kind, source?.id, receiptId) { mutableStateOf(false) }
     val zone = remember { ZoneId.systemDefault() }
     val format = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss XXX") }
     fun reference(bytes: List<Int>) = bytes.joinToString(" ") { "%02X".format(it) }
