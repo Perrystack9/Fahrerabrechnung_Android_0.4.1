@@ -2453,9 +2453,9 @@ class CardImportPipelineInstrumentedTest {
         rejected<CardBindingRequired> { pipeline.process(communicationRead(), "communication-unconfirmed") }
         assertNull(imports.profile()); assertEquals(0, count("card_import_runs")); assertEquals(0, count("card_metadata_imports"))
         imports.bind(card(), true)
-        val foreign = card("foreign-communication", DriverIdentity("FOREIGN", "OTHER", LocalDate.of(2001, 3, 4), "de"))
+        val foreign = card("foreign-comm", DriverIdentity("FOREIGN", "OTHER", LocalDate.of(2001, 3, 4), "de"))
         rejected<ForeignCardRejected> { pipeline.process(communicationRead(foreign), "communication-foreign") }
-        val uncertain = card("uncertain-communication", card().holder.copy(surname = "OTHER"))
+        val uncertain = card("uncertain-comm", card().holder.copy(surname = "OTHER"))
         rejected<CardBindingRequired> { pipeline.process(communicationRead(uncertain), "communication-uncertain") }
         assertEquals(1, count("driver_cards")); assertEquals(0, count("import_sessions")); assertEquals(0, count("card_metadata_imports"))
         assertEquals(0, count("card_import_runs"))
