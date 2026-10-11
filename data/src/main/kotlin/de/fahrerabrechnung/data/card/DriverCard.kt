@@ -44,7 +44,14 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val placesAuthentication: CardPlacesAuthenticationFile? = null,
                           val placesAuthenticationReadFailed: Boolean = false,
                           val borderCrossings: CardBorderCrossingsFile? = null,
-                          val borderCrossingsReadFailed: Boolean = false)
+                          val borderCrossingsReadFailed: Boolean = false,
+                          val loadUnload: CardLoadUnloadFile? = null,
+                          val loadUnloadReadFailed: Boolean = false,
+                          val loadType: CardLoadTypeFile? = null,
+                          val loadTypeReadFailed: Boolean = false,
+                          val vehicleUnits: CardVehicleUnitsFile? = null,
+                          val vehicleUnitsReadFailed: Boolean = false,
+                          val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -65,6 +72,9 @@ object DriverCardFiles {
     const val PLACES = 0x0506
     const val PLACES_AUTHENTICATION = 0x0526
     const val BORDER_CROSSINGS = 0x0528
+    const val LOAD_UNLOAD = 0x0529
+    const val LOAD_TYPE = 0x0530
+    const val VEHICLE_UNITS = 0x0523
     const val APPLICATION_V2 = 0x0525
     val files = listOf(
         CardFile(APPLICATION, "Application_Identification", CardGeneration.GEN1, true, 10, "ApplicationIdG1"),
@@ -176,6 +186,43 @@ object DriverCardDecoder {
         return count
     }
 
+    /** Gen2V2 independent capacity at offsets 4..5, not the border/source capacity. */
+    fun loadUnloadCount(applicationV2: ByteArray, generation: CardGeneration): Int {
+        if (generation != CardGeneration.GEN2V2 || applicationV2.size != 10)
+            throw ParseError(0, "Application_Identification_V2", "unsupported generation or length")
+        val reader = BinaryReader(applicationV2)
+        if (reader.u16be("lengthOfFollowingData") != 8)
+            throw ParseError(0, "lengthOfFollowingData", "unsupported V2 extension")
+        reader.u16be("noOfBorderCrossingRecords")
+        val count = reader.u16be("noOfLoadUnloadRecords")
+        CardLoadUnloadParser.fileLength(generation, count)
+        return count
+    }
+
+    /** Gen2V2 load-type capacity at offsets 6..7; other source capacities stay independent. */
+    fun loadTypeCount(applicationV2: ByteArray, generation: CardGeneration): Int {
+        if (generation != CardGeneration.GEN2V2 || applicationV2.size != 10)
+            throw ParseError(0, "Application_Identification_V2", "unsupported generation or length")
+        val reader = BinaryReader(applicationV2)
+        if (reader.u16be("lengthOfFollowingData") != 8)
+            throw ParseError(0, "lengthOfFollowingData", "unsupported V2 extension")
+        reader.u16be("noOfBorderCrossingRecords")
+        reader.u16be("noOfLoadUnloadRecords")
+        val count = reader.u16be("noOfLoadTypeEntryRecords")
+        CardLoadTypeParser.fileLength(generation, count)
+        return count
+    }
+
+    /** EU2018/502: independent NoOfCardVehicleUnitRecords at offsets15..16 of the full17-byte file.
+     * A legacy15-byte application does not supply this capacity; never substitute another count. */
+    fun vehicleUnitCount(application: ByteArray, generation: CardGeneration): Int {
+        if (generation !in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) || application.size != 17)
+            throw ParseError(0, "Application_Identification", "missing vehicle-unit capacity")
+        val count = (application[15].toInt() and 255) shl 8 or (application[16].toInt() and 255)
+        CardVehicleUnitsParser.fileLength(generation, count)
+        return count
+    }
+
     /** Full Gen2 Application_Identification: NoOfGNSSADRecords at offsets 11..12. */
     fun gnssCount(application: ByteArray, generation: CardGeneration): Int {
         if (application.size != 17) throw ParseError(0, "Application_Identification", "expected full Gen2 file")
@@ -244,6 +291,11 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             }
             AtrDecoder.parse(transport.powerOn())
             val session = ApduSession(transport)
+            // TCS18: MF is the current directory immediately after ATR. Read its EFs before
+            // selecting either application; retain only temporary bytes until driver identification.
+            val masterFiles = CardMetadataKind.entries.filter { it.inMasterFile }.associateWith { kind ->
+                try { readFile(session, kind.fileId, kind.fileLength) } catch (_: ReaderException) { null }
+            }
             val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
@@ -310,6 +362,35 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
                         CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
                 } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val loadUnload = if (supportsAuthentication) try {
+                    val count = DriverCardDecoder.loadUnloadCount(applicationV2
+                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable load/unload capacity"), generation)
+                    CardLoadUnloadFile(generation, count, readFile(session, DriverCardFiles.LOAD_UNLOAD,
+                        CardLoadUnloadParser.fileLength(generation, count))).also { CardLoadUnloadParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val loadType = if (supportsAuthentication) try {
+                    val count = DriverCardDecoder.loadTypeCount(applicationV2
+                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable load-type capacity"), generation)
+                    CardLoadTypeFile(generation, count, readFile(session, DriverCardFiles.LOAD_TYPE,
+                        CardLoadTypeParser.fileLength(generation, count))).also { CardLoadTypeParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val supportsVehicleUnits = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+                val vehicleUnits = if (supportsVehicleUnits) try {
+                    val count = DriverCardDecoder.vehicleUnitCount(application, generation)
+                    CardVehicleUnitsFile(generation, count, readFile(session, DriverCardFiles.VEHICLE_UNITS,
+                        CardVehicleUnitsParser.fileLength(generation, count))).also { CardVehicleUnitsParser.parse(it) }
+                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
+                val metadata = CardMetadataKind.entries.filter { !it.inMasterFile }.associateWith { kind ->
+                    val file = try {
+                        CardMetadataFile(kind, generation, readFile(session, kind.fileId, kind.fileLength))
+                            .also { CardMetadataParser.parse(it) }
+                    } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                    CardMetadataRead(file, readFailed = file == null)
+                } + masterFiles.mapValues { (kind, bytes) ->
+                    val file = try { bytes?.let { CardMetadataFile(kind, generation, it).also { frozen -> CardMetadataParser.parse(frozen) } } }
+                    catch (_: ParseError) { null }
+                    CardMetadataRead(file, readFailed = file == null)
+                }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -321,7 +402,11 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     placesAuthentication = placesAuthentication,
                     placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null,
                     borderCrossings = borderCrossings,
-                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null)
+                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null,
+                    loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
+                    loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
+                    vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
+                    metadata = metadata)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }
@@ -335,7 +420,29 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         val selected = session.send(CardCommands.selectAid(aid))
         if (selected.statusWord == 0x6A82) return null
         if (!selected.success) throw ReaderException(ReaderFailure.IO)
-        return readFile(session, DriverCardFiles.APPLICATION, appSize)
+        if (appSize != 17) return readFile(session, DriverCardFiles.APPLICATION, appSize)
+        // The pre-2018 Gen2 layout is exactly15 bytes. Accept only an explicit EOF after
+        // that complete prefix; an empty successful reply or a16-byte truncation is malformed.
+        val prefix = readFile(session, DriverCardFiles.APPLICATION, 15)
+        val tail = ByteArray(2)
+        var offset = 0
+        while (offset < tail.size) {
+            var requested = tail.size - offset
+            var response = session.send(CardCommands.readBinary(15 + offset, requested))
+            // TCS43 permits6700 when Offset+Le exceeds the EF. At offset15, a
+            // two-byte error could mean15 OR16 bytes; only a one-byte probe proves EOF.
+            if (offset == 0 && response.data.isEmpty() && response.statusWord == 0x6700) {
+                requested = 1
+                response = session.send(CardCommands.readBinary(15, requested))
+                if (response.data.isEmpty() && response.statusWord == 0x6700) return prefix
+            }
+            if (offset == 0 && response.data.isEmpty() && response.statusWord in setOf(0x6282, 0x6B00)) return prefix
+            if (!response.success || response.data.size !in 1..requested)
+                throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
+            response.data.copyInto(tail, offset)
+            offset += response.data.size
+        }
+        return prefix + tail
     }
 
     private suspend fun readFile(session: ApduSession, id: Int, length: Int): ByteArray {
@@ -344,8 +451,9 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         val data = ByteArray(length)
         var offset = 0
         while (offset < length) {
-            val response = session.send(CardCommands.readBinary(offset, minOf(256, length - offset)))
-            if (!response.success || response.data.isEmpty() || response.data.size > length - offset)
+            val requestedLength = minOf(256, length - offset)
+            val response = session.send(CardCommands.readBinary(offset, requestedLength))
+            if (!response.success || response.data.size !in 1..requestedLength)
                 throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
             response.data.copyInto(data, offset)
             offset += response.data.size

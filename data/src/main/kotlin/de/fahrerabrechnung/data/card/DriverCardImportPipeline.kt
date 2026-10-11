@@ -14,7 +14,16 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION }
+
+internal fun CardMetadataKind.importFileKind(): CardImportFileKind = when (this) {
+    CardMetadataKind.DRIVING_LICENCE -> CardImportFileKind.DRIVING_LICENCE_INFO
+    CardMetadataKind.CURRENT_USAGE -> CardImportFileKind.CURRENT_USAGE
+    CardMetadataKind.LAST_CARD_DOWNLOAD -> CardImportFileKind.LAST_CARD_DOWNLOAD
+    CardMetadataKind.ICC_IDENTIFICATION -> CardImportFileKind.ICC_IDENTIFICATION
+    CardMetadataKind.IC_IDENTIFICATION -> CardImportFileKind.IC_IDENTIFICATION
+}
+
 enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
 
 data class CardImportFileResult(
@@ -160,7 +169,11 @@ class DriverCardImportPipeline @Inject constructor(
             gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) },
             places = result.places?.let { CardPlacesFile(it.generation, it.recordCount, it.bytes) },
             placesAuthentication = result.placesAuthentication?.let { CardPlacesAuthenticationFile(it.generation, it.bytes) },
-            borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) })
+            borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) },
+            loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) },
+            loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
+            vehicleUnits = result.vehicleUnits?.let { CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes) },
+            metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -250,9 +263,45 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.positionTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond },
                     if (records.any { it.positionTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.positionTimeUtc).epochSecond }, null)
             } else null
+        val loads = if (read.loadUnload != null || read.loadUnloadReadFailed)
+            inspect(CardImportFileKind.LOAD_UNLOAD_OPERATIONS, read.loadUnload != null, read.loadUnloadReadFailed) {
+                val file = checkNotNull(read.loadUnload)
+                require(file.generation == read.generation)
+                val records = CardLoadUnloadParser.parse(file)
+                CardImportFileResult(CardImportFileKind.LOAD_UNLOAD_OPERATIONS, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.operationTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.operationTimeUtc).epochSecond },
+                    if (records.any { it.operationTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.operationTimeUtc).epochSecond }, null)
+            } else null
+        val types = if (read.loadType != null || read.loadTypeReadFailed)
+            inspect(CardImportFileKind.LOAD_TYPE_ENTRIES, read.loadType != null, read.loadTypeReadFailed) {
+                val file = checkNotNull(read.loadType)
+                require(file.generation == read.generation)
+                val records = CardLoadTypeParser.parse(file)
+                CardImportFileResult(CardImportFileKind.LOAD_TYPE_ENTRIES, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.entryTimeUtc == null }) null else records.minOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond },
+                    if (records.any { it.entryTimeUtc == null }) null else records.maxOfOrNull { checkNotNull(it.entryTimeUtc).epochSecond }, null)
+            } else null
+        val units = if (read.vehicleUnits != null || read.vehicleUnitsReadFailed)
+            inspect(CardImportFileKind.VEHICLE_UNITS_USED, read.vehicleUnits != null, read.vehicleUnitsReadFailed) {
+                val file = checkNotNull(read.vehicleUnits)
+                require(file.generation == read.generation)
+                val records = CardVehicleUnitsParser.parse(file)
+                CardImportFileResult(CardImportFileKind.VEHICLE_UNITS_USED, CardImportFileStatus.READY, records.size,
+                    if (records.any { it.useBeginUtc == null }) null else records.minOfOrNull { checkNotNull(it.useBeginUtc).epochSecond },
+                    if (records.any { it.useBeginUtc == null }) null else records.maxOfOrNull { checkNotNull(it.useBeginUtc).epochSecond }, null)
+            } else null
+        val metadata = CardMetadataKind.entries.mapNotNull { kind -> read.metadata[kind]?.let { value ->
+            inspect(kind.importFileKind(), value.file != null, value.readFailed) {
+                val file = checkNotNull(value.file)
+                require(file.kind == kind && file.generation == read.generation)
+                val record = CardMetadataParser.parse(file)
+                CardImportFileResult(kind.importFileKind(), CardImportFileStatus.READY, if (record == null) 0 else 1,
+                    record?.timeUtc?.epochSecond, record?.timeUtc?.epochSecond, null)
+            }
+        } }
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata)
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -288,6 +337,10 @@ class DriverCardImportPipeline @Inject constructor(
             places = read.places.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES && it.status == CardImportFileStatus.READY } },
             placesAuthentication = read.placesAuthentication.takeIf { files.any { it.kind == CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION && it.status == CardImportFileStatus.READY } },
             borderCrossings = read.borderCrossings.takeIf { files.any { it.kind == CardImportFileKind.BORDER_CROSSINGS && it.status == CardImportFileStatus.READY } },
+            loadUnload = read.loadUnload.takeIf { files.any { it.kind == CardImportFileKind.LOAD_UNLOAD_OPERATIONS && it.status == CardImportFileStatus.READY } },
+            loadType = read.loadType.takeIf { files.any { it.kind == CardImportFileKind.LOAD_TYPE_ENTRIES && it.status == CardImportFileStatus.READY } },
+            vehicleUnits = read.vehicleUnits.takeIf { files.any { it.kind == CardImportFileKind.VEHICLE_UNITS_USED && it.status == CardImportFileStatus.READY } },
+            metadata = read.metadata.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -362,6 +415,34 @@ class DriverCardImportPipeline @Inject constructor(
                 read.borderCrossings?.let { text(it.generation.name)
                     digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
                 digest.update(if (read.borderCrossingsReadFailed) 1.toByte() else 0.toByte())
+            }
+            // No changes to historical requests that never attempted the new source.
+            if (read.loadUnload != null || read.loadUnloadReadFailed) {
+                text("LOAD_UNLOAD_OPERATIONS")
+                read.loadUnload?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.loadUnloadReadFailed) 1.toByte() else 0.toByte())
+            }
+            // Keep historical requests that never attempted this source unchanged.
+            if (read.loadType != null || read.loadTypeReadFailed) {
+                text("LOAD_TYPE_ENTRIES")
+                read.loadType?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.loadTypeReadFailed) 1.toByte() else 0.toByte())
+            }
+            // Historical requests which never attempted this source keep their fingerprint.
+            if (read.vehicleUnits != null || read.vehicleUnitsReadFailed) {
+                text("VEHICLE_UNITS_USED")
+                read.vehicleUnits?.let { text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(8).putInt(it.recordCount).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (read.vehicleUnitsReadFailed) 1.toByte() else 0.toByte())
+            }
+            // An empty map means these EFs were not attempted on the historical request.
+            for (kind in CardMetadataKind.entries) read.metadata[kind]?.let { value ->
+                text("CARD_METADATA_${kind.name}")
+                value.file?.let { text(it.kind.name); text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (value.readFailed) 1.toByte() else 0.toByte())
             }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }

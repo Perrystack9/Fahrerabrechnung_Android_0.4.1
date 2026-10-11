@@ -1,4 +1,8 @@
+Aktueller Ladungsart-Entwurf: Schema16/Testversion40114 auf PR54 Schema15. Unveränderter16.json-Compilerexport aus CI38075938370 übernommen; finale vollständige Android-/Emulatorprüfung einschließlich der Reader-/Quellen-Regressionen weiterhin erforderlich. PR53/Schema14/40112 bleibt die zuletzt am Gerät bestätigte Updatebasis. Hardwareausgabe frühestens11.10.2026 00:56 Europe/Berlin.
+
 # Dauerhaft aktualisierbare Gerätetest-App
+
+Aktueller Folge-Entwurf: PR53-Produktstand22d41f6 mit40112/Schema14 ist bestätigte Basis. Be-/Entladequelle ergänzt40113/Schema15; identische Paketkennung/feste Signatur. Testpaket erst nach kompletter grüner CI und frühestens11.10.00:56 Europe/Berlin. [Aktuelle Anleitung](../docs/LOAD_UNLOAD_DEVICE_TEST.md), [Checkpoint](../docs/WORK_HANDOFF.md). Alle älteren Angaben unten sind historische Herkunft.
 
 Aktueller Folge-Entwurf 10.10.2026: bestätigter PR52-Produktstand `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/40111 als unveränderte Ausgangsbasis. Grenz-/Länderquelle ergänzt Schema 14/40112 mit identischer Paketkennung und festem Testzertifikat. CI prüft das Updatepaar; Benutzer-ZIP enthält nur Update-APK und [aktuelle Anleitung](../docs/BORDER_CROSSINGS_DEVICE_TEST.md). Vollständige CI und neue Gerätebestätigung noch offen. Frühere Angaben unten dokumentieren ihre jeweiligen historischen Stände.
 

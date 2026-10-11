@@ -102,4 +102,73 @@ class MigrationTestBase {
         }
     }
 
+    @Test fun migration_14_15_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "loads-migration-test"
+        helper.createDatabase(name, 14).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 15, true, DatabaseMigrations.MIGRATION_14_15).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_load_unload_imports", "driver_import_load_unload_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
+    @Test fun migration_15_16_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "types-migration-test"
+        helper.createDatabase(name, 15).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 16, true, DatabaseMigrations.MIGRATION_15_16).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_load_type_imports", "driver_import_load_type_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
+    @Test fun migration_16_17_preservesProfilesAndExistingSourcesWithoutBackfill() {
+        val name = "units-migration-test"
+        helper.createDatabase(name, 16).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 17, true, DatabaseMigrations.MIGRATION_16_17).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_vehicle_units_imports", "driver_import_vehicle_units_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
+    @Test fun migration_17_18_preservesProfilesAndDoesNotBackfillMetadata() {
+        val name = "metadata-migration-test"
+        helper.createDatabase(name, 17).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p1', 'Fahrer', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 18, true, DatabaseMigrations.MIGRATION_17_18).use { db ->
+            db.query("SELECT name FROM profiles WHERE id = 'p1'").use { cursor ->
+                cursor.moveToFirst(); assertEquals("Fahrer", cursor.getString(0))
+            }
+            for (table in listOf("card_metadata_imports", "driver_import_metadata_sources"))
+                db.query("SELECT count(*) FROM $table").use { cursor ->
+                    cursor.moveToFirst(); assertEquals(0, cursor.getInt(0))
+                }
+        }
+    }
+
+
 }

@@ -434,6 +434,201 @@ class AutomaticCardImportUiTest {
         assertEquals(3, runBlocking { pipeline.history().size })
     }
 
+    @Test fun loadUnloadNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(operation: Int): CardLoadUnloadFile {
+            val bytes = ByteArray(32482)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000020).put(operation.toByte()).putInt(1790000030)
+                .put(10.toByte()).put(byteArrayOf(0, 0, 1, 0, 0, 2)).put(1.toByte()).put(byteArrayOf(0, 0, 3))
+            return CardLoadUnloadFile(CardGeneration.GEN2V2, 1624, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-loads")
+            pipeline.process(read().copy(activity = null, vehicles = null, loadUnload = load(1)), "early-loads-only")
+            pipeline.process(read().copy(loadUnload = load(2)), "latest-loads")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Be- und Entladeeinträge").performScrollTo().performClick()
+        }
+        open("early-loads-only"); await("Art: Beladen")
+        compose.onNodeWithText("Art: Entladen").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-loads"); await("Für diese Übernahme ist keine gespeicherte Be-/Entladedatei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Vorgang").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-loads"); await("Art: Entladen")
+        compose.onNodeWithText("Art: Beladen").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    @Test fun loadTypeNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(type: Int): CardLoadTypeFile {
+            val bytes = ByteArray(1682)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000100).put(type.toByte())
+            return CardLoadTypeFile(CardGeneration.GEN2V2, 336, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-types")
+            pipeline.process(read().copy(activity = null, vehicles = null, loadType = load(1)), "early-types-only")
+            pipeline.process(read().copy(loadType = load(2)), "latest-types")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Ladungsart-Einträge").performScrollTo().performClick()
+        }
+        open("early-types-only"); await("Art: Güter")
+        compose.onNodeWithText("Art: Fahrgäste").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-types"); await("Für diese Übernahme ist keine gespeicherte Ladungsart-Datei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Eintrag").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-types"); await("Art: Fahrgäste")
+        compose.onNodeWithText("Art: Güter").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    @Test fun vehicleUnitsNavigationUsesOnlyTheSelectedSessionIncludingASourceOnlyImport() {
+        fun load(type: Int): CardVehicleUnitsFile {
+            val bytes = ByteArray(2002)
+            ByteBuffer.wrap(bytes).putShort(0).putInt(1790000100).put(type.toByte()).put(254.toByte()).put("A.01".toByteArray())
+            return CardVehicleUnitsFile(CardGeneration.GEN2V2, 200, bytes)
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-units")
+            pipeline.process(read().copy(activity = null, vehicles = null, vehicleUnits = load(1)), "early-units-only")
+            pipeline.process(read().copy(vehicleUnits = load(2)), "latest-units")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Fahrtenschreiber-Nutzungen").performScrollTo().performClick()
+        }
+        open("early-units-only"); await("Herstellercode des Fahrtenschreibers: Kartenwert 1")
+        compose.onNodeWithText("Herstellercode des Fahrtenschreibers: Kartenwert 2").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-units"); await("Für diese Übernahme ist keine gespeicherte Fahrtenschreiber-Datei verfügbar.")
+        compose.onNodeWithText("Aufgezeichneter Fahrtenschreiber").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-units"); await("Herstellercode des Fahrtenschreibers: Kartenwert 2")
+        compose.onNodeWithText("Herstellercode des Fahrtenschreibers: Kartenwert 1").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+
+    private fun metadataHistoryNavigation(kind: CardMetadataKind, title: String, firstText: String, lastText: String) {
+        fun value(code: Int): CardMetadataRead {
+            val bytes = ByteArray(kind.fileLength)
+            when (kind) {
+                CardMetadataKind.DRIVING_LICENCE -> {
+                    bytes[0] = 1; "TEST AUTHORITY".toByteArray().copyInto(bytes, 1); bytes[36] = code.toByte()
+                    "TEST-LICENCE-01".toByteArray().copyInto(bytes, 37)
+                }
+                CardMetadataKind.CURRENT_USAGE -> {
+                    ByteBuffer.wrap(bytes).putInt(1790000100).put(code.toByte()).put(1.toByte())
+                    "TEST OWN".toByteArray().copyInto(bytes, 6)
+                }
+                CardMetadataKind.LAST_CARD_DOWNLOAD -> ByteBuffer.wrap(bytes).putInt(if (code == 1) 0 else 1790000200)
+                CardMetadataKind.ICC_IDENTIFICATION -> bytes[8] = code.toByte()
+                CardMetadataKind.IC_IDENTIFICATION -> bytes[0] = code.toByte()
+            }
+            return CardMetadataRead(CardMetadataFile(kind, CardGeneration.GEN2V2, bytes))
+        }
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-metadata")
+            pipeline.process(read().copy(activity = null, vehicles = null, metadata = mapOf(kind to value(1))), "early-metadata-only")
+            pipeline.process(read().copy(metadata = mapOf(kind to value(7))), "latest-metadata")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert")
+        compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick()
+            await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText(title).performScrollTo().performClick()
+        }
+        open("early-metadata-only")
+        if (kind == CardMetadataKind.IC_IDENTIFICATION) {
+            compose.onNodeWithText("Chipkennung: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("Kennung anzeigen").performScrollTo().performClick()
+        }
+        await(firstText)
+        compose.onNodeWithText(lastText, substring = true).assertDoesNotExist()
+        if (kind == CardMetadataKind.DRIVING_LICENCE) {
+            compose.onNodeWithText("Führerscheinnummer: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("Nummer anzeigen").performScrollTo().performClick()
+            compose.onNodeWithText("Führerscheinnummer: TEST-LICENCE-01").assertIsDisplayed()
+        }
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-metadata"); await("Für diese Übernahme ist diese Kartendatei nicht gespeichert.")
+        compose.onNodeWithText(firstText, substring = true).assertDoesNotExist()
+        compose.onNodeWithText(lastText, substring = true).assertDoesNotExist()
+        compose.onNodeWithText("TEST-LICENCE-01", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-metadata")
+        if (kind == CardMetadataKind.IC_IDENTIFICATION) {
+            compose.onNodeWithText("Chipkennung: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("Kennung anzeigen").performScrollTo().performClick()
+        }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText(lastText, substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText(lastText, substring = true).assertIsDisplayed()
+        compose.onNodeWithText(firstText, substring = true).assertDoesNotExist()
+        if (kind == CardMetadataKind.DRIVING_LICENCE) {
+            compose.onNodeWithText("Führerscheinnummer: verborgen").assertIsDisplayed()
+            compose.onNodeWithText("TEST-LICENCE-01", substring = true).assertDoesNotExist()
+        }
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+    @Test fun licenceHistoryNavigationUsesOnlyTheSelectedSessionAndResetsTheNumber() =
+        metadataHistoryNavigation(CardMetadataKind.DRIVING_LICENCE, "Führerschein",
+            "Ausstellungsstaat: Kartenwert 1", "Ausstellungsstaat: Kartenwert 7")
+    @Test fun currentUsageHistoryNavigationUsesOnlyTheSelectedSession() =
+        metadataHistoryNavigation(CardMetadataKind.CURRENT_USAGE, "Karten-Nutzungseintrag",
+            "Zulassungsstaat: Kartenwert 1", "Zulassungsstaat: Kartenwert 7")
+    @Test fun downloadHistoryNavigationKeepsEmptyAndMissingAndOriginalTimesDistinct() =
+        metadataHistoryNavigation(CardMetadataKind.LAST_CARD_DOWNLOAD, "Download-Zeitpunkt",
+            "In dieser Kartendatei ist kein Eintrag aufgezeichnet.", "Download-Zeitpunkt auf der Karte: ")
+
+    @Test fun iccHistoryNavigationUsesOnlyTheSelectedMasterSource() =
+        metadataHistoryNavigation(CardMetadataKind.ICC_IDENTIFICATION, "Kartenkennung",
+            "Herstellercode der Karte: Kartenwert 1", "Herstellercode der Karte: Kartenwert 7")
+    @Test fun chipHistoryNavigationUsesOnlyTheSelectedMasterSourceAndMasksItInitially() =
+        metadataHistoryNavigation(CardMetadataKind.IC_IDENTIFICATION, "Chipkennung",
+            "Chipkennung: 01 00 00 00 00 00 00 00", "Chipkennung: 07 00 00 00 00 00 00 00")
+
     private fun conditions(type: Int) = CardSpecificConditionFile(CardGeneration.GEN2V2, 112,
         ByteArray(562).also { ByteBuffer.wrap(it).apply { position(2); putInt(1790000015); put(type.toByte()) } })
 

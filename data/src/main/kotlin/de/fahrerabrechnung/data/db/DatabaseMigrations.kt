@@ -4,6 +4,46 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_17_18 = object : Migration(17, 18) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_metadata_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `kind` TEXT NOT NULL, `generation` TEXT NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_metadata_imports_driverCardId` ON `card_metadata_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_metadata_imports_id_driverCardId_kind` ON `card_metadata_imports` (`id`, `driverCardId`, `kind`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_metadata_sources` (`sessionId` TEXT NOT NULL, `kind` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, PRIMARY KEY(`sessionId`, `kind`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sourceId`, `driverCardId`, `kind`) REFERENCES `card_metadata_imports`(`id`, `driverCardId`, `kind`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_metadata_sources_sourceId_driverCardId_kind` ON `driver_import_metadata_sources` (`sourceId`, `driverCardId`, `kind`)")
+        }
+    }
+
+    val MIGRATION_16_17 = object : Migration(16, 17) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_vehicle_units_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_vehicle_units_imports_driverCardId` ON `card_vehicle_units_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_vehicle_units_imports_id_driverCardId` ON `card_vehicle_units_imports` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_vehicle_units_sources` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, PRIMARY KEY(`sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sourceId`, `driverCardId`) REFERENCES `card_vehicle_units_imports`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_vehicle_units_sources_sourceId_driverCardId` ON `driver_import_vehicle_units_sources` (`sourceId`, `driverCardId`)")
+        }
+    }
+
+    val MIGRATION_15_16 = object : Migration(15, 16) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_load_type_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_load_type_imports_driverCardId` ON `card_load_type_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_load_type_imports_id_driverCardId` ON `card_load_type_imports` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_load_type_sources` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, PRIMARY KEY(`sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sourceId`, `driverCardId`) REFERENCES `card_load_type_imports`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_load_type_sources_sourceId_driverCardId` ON `driver_import_load_type_sources` (`sourceId`, `driverCardId`)")
+        }
+    }
+
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_load_unload_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_load_unload_imports_driverCardId` ON `card_load_unload_imports` (`driverCardId`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_card_load_unload_imports_id_driverCardId` ON `card_load_unload_imports` (`id`, `driverCardId`)")
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `driver_import_load_unload_sources` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, PRIMARY KEY(`sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `driver_import_sources`(`sessionId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sourceId`, `driverCardId`) REFERENCES `card_load_unload_imports`(`id`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_driver_import_load_unload_sources_sourceId_driverCardId` ON `driver_import_load_unload_sources` (`sourceId`, `driverCardId`)")
+        }
+    }
+
     val MIGRATION_13_14 = object : Migration(13, 14) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `card_border_crossing_imports` (`id` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `generation` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `bytes` BLOB NOT NULL, `importedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`driverCardId`) REFERENCES `driver_cards`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
