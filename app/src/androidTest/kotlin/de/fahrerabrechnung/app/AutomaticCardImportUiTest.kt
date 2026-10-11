@@ -612,6 +612,73 @@ class AutomaticCardImportUiTest {
         }
         assertEquals(3, runBlocking { pipeline.history().size })
     }
+    @Test fun originalHistoryNavigationKeepsEachSelectedSnapshotAndMissingOlderFilesExact() {
+        fun application(capacity: Int) = CardIdentitySourceRead(CardIdentitySourceFile(CardIdentitySourceKind.APPLICATION,
+            card().generation, IdentityUiFixtures.application(capacity)))
+        val newest = runBlocking {
+            imports.bind(card(), true); pipeline.process(read(), "before-original-ui")
+            pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(), identitySources = mapOf(
+                CardIdentitySourceKind.APPLICATION to application(2))), "early-original-only")
+            pipeline.process(read().copy(identitySources = mapOf(CardIdentitySourceKind.APPLICATION to application(7),
+                CardIdentitySourceKind.IDENTIFICATION to CardIdentitySourceRead(CardIdentitySourceFile(CardIdentitySourceKind.IDENTIFICATION,
+                    card().generation, IdentityUiFixtures.original(card()))))), "latest-original-ui")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert"); compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick(); await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Kartenangaben").performScrollTo().performClick()
+        }
+        open("early-original-only")
+        compose.onNodeWithText("Für diese Übernahme sind diese Originalangaben nicht gespeichert.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartenanwendung öffnen").performScrollTo().performClick()
+        compose.onNodeWithText("Speicherplätze für Fahrzeugnutzungen: 2").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartennummer anzeigen").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-original-ui")
+        compose.onNodeWithText("Für diese Übernahme sind diese Originalangaben nicht gespeichert.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartenanwendung öffnen").performScrollTo().performClick()
+        compose.onNodeWithText("Für diese Übernahme sind diese Originalangaben nicht gespeichert.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Speicherplätze für Fahrzeugnutzungen:", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-original-ui")
+        compose.onNodeWithText("Kartennummer: verborgen").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartennummer anzeigen").performScrollTo().performClick()
+        compose.onNodeWithText("Kartennummer: fixture-own-1234").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartenanwendung öffnen").performScrollTo().performClick()
+        compose.onNodeWithText("Speicherplätze für Fahrzeugnutzungen: 7").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Karteninhaber und Gültigkeit öffnen").performScrollTo().performClick()
+        compose.onNodeWithText("Kartennummer: verborgen").performScrollTo().assertIsDisplayed()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+    @Test fun originalIdentityOnlyLatestImportOpensThroughActualRootAndResetsNumberAfterLeaving() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(), identitySources = mapOf(
+                CardIdentitySourceKind.IDENTIFICATION to CardIdentitySourceRead(CardIdentitySourceFile(CardIdentitySourceKind.IDENTIFICATION,
+                    card().generation, IdentityUiFixtures.original(card()))))), "latest-only-original")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.INCOMPLETE, lastRun = run))
+        } }
+        await("Gespeicherte Daten ansehen"); compose.onNodeWithText("Gespeicherte Daten ansehen").performScrollTo().performClick()
+        await("Fahrerkarten-Details"); compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Kartenangaben").performScrollTo().performClick()
+        compose.onNodeWithText("Karteninhaber: TEST PERSON ALPHA").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Kartennummer anzeigen").performScrollTo().performClick()
+        compose.onNodeWithText("Kartennummer: fixture-own-1234").performScrollTo().assertIsDisplayed()
+        repeat(2) { compose.onNodeWithTag("back").performClick() }
+        compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Kartenangaben").performScrollTo().performClick()
+        compose.onNodeWithText("Kartennummer: verborgen").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun certificateHistoryNavigationUsesOnlySelectedSessionAndHidesReferencesAgain() {
         val newest = runBlocking {
             imports.bind(card(), true)

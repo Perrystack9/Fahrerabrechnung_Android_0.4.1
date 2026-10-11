@@ -1,0 +1,13 @@
+# FahrerTagebuch Test · gebündeltes Update
+
+Das Update ergänzt Zertifikate und originale Karten-/Anwendungsangaben. Testversion 40119, Schema 18 unverändert. Der letzte bestätigte Stand ist das PR58-Update 40117. Testkennung und Signatur bleiben gleich.
+
+Ausgabe erst nach dem am 11.10.2026 um 08:36:13 Europe/Berlin begonnenen zweistündigen Arbeitsblock, frühestens 10:36:13 Europe/Berlin, und nach vollständig grüner Android-CI für den exakten Produktkopf. `BUILD_INFO.txt` nennt diesen Kopf und den Paketlauf. Diese Anleitung dokumentiert noch keinen bestandenen neuen Gerätetest.
+
+1. `02-FahrerTagebuch-Test-Update.apk` als Update über **FahrerTagebuch Test** installieren. Die bestehende App behalten; nicht deinstallieren und keine App-Daten löschen. Die alten eigenen Übernahmen sollen nach der Installation weiterhin sichtbar sein.
+2. Leser und eigene Karte anschließen. Die App liest und übernimmt automatisch; nur nötige USB-Freigaben bzw. die vorhandene Bestätigung für eine neue Karte beachten. Eine nicht unterstützte oder fehlende Datei darf die anderen Daten nicht verschwinden lassen.
+3. Beim neuen Vorgang **Gespeicherte Daten ansehen → Fahrerkarten-Details → Zertifikate** öffnen. Die gespeicherten Zertifikatsarten müssen auswählbar sein; eine fehlende Art darf ausdrücklich fehlen. Referenzen sind zunächst verborgen und erst nach Antippen sichtbar. Das Format ist gelesen und strukturell dekodiert; Signatur und Vertrauenskette sind noch nicht geprüft. Gen1 unterstützt hier nur Karten- und CA-Zertifikat.
+4. Unter **Fahrerkarten-Details → Kartenangaben** Karteninhaber/Gültigkeit und Kartenanwendung öffnen; bei Gen2V2 auch Kartenanwendung V2. Die Kartennummer soll zunächst verborgen sein. Speicherkapazitäten beschreiben die Datei und sind keine Anzahl importierter Einträge. Falls die Endprobe einer Datei nicht unterstützt wird, muss deren Originalquelle fehlen, während andere Daten verfügbar bleiben.
+5. Karte entnehmen, Leser trennen und die App schließen/wieder öffnen. Beim neuen gespeicherten Vorgang müssen die tatsächlich übernommenen Daten weiter verfügbar sein. Im **Importverlauf** einen älteren Vorgang öffnen: neue Zertifikate und Originalangaben dürfen dort nur erscheinen, wenn sie bereits für genau diesen Vorgang gespeichert waren. Quellen-/Ansichtswechsel soll Nummern und Referenzen wieder verbergen.
+
+Hilfreiche Rückmeldung: Update und alte Daten okay; neue Kartenlesung okay; Zertifikate/Kartenangaben sichtbar oder konkret fehlend; nach Wiederöffnung noch vorhanden. Es werden keine Karten-Schreib-, PSO- oder Authentisierungsbefehle ergänzt. Die neuen PRs bleiben bis zur nächsten Gerätebestätigung Entwürfe.

@@ -37,7 +37,7 @@ test "${#baseline_apks[@]}" -eq 1
 test "${#current_apks[@]}" -eq 1
 cp "${baseline_apks[0]}" "$output_dir/01-FahrerTagebuch-Test-Schema18.apk"
 cp "${current_apks[0]}" "$output_dir/02-FahrerTagebuch-Test-Update.apk"
-cp docs/CARD_CERTIFICATE_DEVICE_TEST.md "$output_dir/ANLEITUNG.md"
+cp docs/CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md "$output_dir/ANLEITUNG.md"
 
 keytool -exportcert -keystore ci/device-test.jks -storepass android -alias androiddebugkey > ci-logs/device-test-public-cert.der
 for variant in 01-FahrerTagebuch-Test-Schema18 02-FahrerTagebuch-Test-Update; do

@@ -52,7 +52,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val vehicleUnits: CardVehicleUnitsFile? = null,
                           val vehicleUnitsReadFailed: Boolean = false,
                           val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap(),
-                          val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap())
+                          val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap(),
+                          val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -307,8 +308,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             } catch (_: ReaderException) { null } else null
             return try {
                 val application = g2 ?: g1!!
-                val identity = DriverCardDecoder.identity(
-                    readFile(session, DriverCardFiles.IDENTIFICATION, 143), generation)
+                val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
+                val identity = DriverCardDecoder.identity(identityBytes, generation)
                 // Failure of one EF must not prevent trying the other or expose incomplete bytes.
                 val activity = try {
                     val length = DriverCardDecoder.activityLength(application, generation)
@@ -397,6 +398,18 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     catch (_: ParseError) { null } catch (_: ReaderException) { null }
                     CardCertificateRead(file, readFailed = file == null)
                 }
+                val identitySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                    val captured = when (kind) {
+                        CardIdentitySourceKind.APPLICATION -> application
+                        CardIdentitySourceKind.IDENTIFICATION -> identityBytes
+                        CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
+                    }
+                    val file = try { captured?.let {
+                        CardIdentitySourceReader.freezeComplete(session, kind, generation, it)
+                            .also { frozen -> CardIdentitySourceParser.validate(frozen, identity) }
+                    } } catch (_: ParseError) { null } catch (_: ReaderException) { null }
+                    CardIdentitySourceRead(file, readFailed = file == null)
+                }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -412,7 +425,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
                     loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
                     vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
-                    metadata = metadata, certificates = certificates)
+                    metadata = metadata, certificates = certificates, identitySources = identitySources)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

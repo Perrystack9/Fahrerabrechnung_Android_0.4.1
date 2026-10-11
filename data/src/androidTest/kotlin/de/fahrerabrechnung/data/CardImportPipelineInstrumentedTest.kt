@@ -1836,6 +1836,191 @@ class CardImportPipelineInstrumentedTest {
         assertNotNull(imports.get(result.id)!!.loadUnload!!.records.single().operationTimeUtc)
     }
 
+    private fun originalIdentityBytes(own: DriverCard = card()): ByteArray {
+        val result = ByteBuffer.allocate(143).put(own.card.issuingState.toByte())
+            .put(own.card.number.padEnd(16).toByteArray(Charsets.ISO_8859_1))
+        fun name(value: String) { result.put(1); result.put(value.padEnd(35).toByteArray(Charsets.ISO_8859_1)) }
+        name(own.card.issuingAuthority)
+        result.putInt(own.card.issued.epochSecond.toInt()).putInt(own.card.validFrom.epochSecond.toInt()).putInt(own.card.expires.epochSecond.toInt())
+        name(own.holder.surname); name(own.holder.givenNames)
+        result.put(own.holder.birthDate?.toString()?.replace("-", "")?.chunked(2)?.map { it.toInt(16).toByte() }?.toByteArray() ?: ByteArray(4))
+        result.put(own.holder.language.toByteArray()); return result.array()
+    }
+    private fun originalApplicationBytes(generation: CardGeneration = CardGeneration.GEN2V2, vehicles: Int = 2): ByteArray {
+        val size = if (generation == CardGeneration.GEN1) 10 else 17
+        return ByteBuffer.allocate(size).put(1).put(1).put(if (generation == CardGeneration.GEN2V2) 1.toByte() else 0.toByte())
+            .put(12).put(24).putShort(16).putShort(vehicles.toShort()).apply {
+                if (generation == CardGeneration.GEN1) put(112) else putShort(112).putShort(336).putShort(112).putShort(200)
+            }.array()
+    }
+    private fun originalSources(own: DriverCard = card(), vehicles: Int = 2) = CardIdentitySourceKind.entries
+        .filter { it.supports(own.generation) }.associateWith { kind ->
+            val bytes = when (kind) {
+                CardIdentitySourceKind.APPLICATION -> originalApplicationBytes(own.generation, vehicles)
+                CardIdentitySourceKind.IDENTIFICATION -> originalIdentityBytes(own)
+                CardIdentitySourceKind.APPLICATION_V2 -> ByteBuffer.allocate(10).putShort(8).putShort(112).putShort(336).putShort(84).putShort(0).array()
+            }
+            CardIdentitySourceRead(CardIdentitySourceFile(kind, own.generation, bytes))
+        }
+    private fun originalRead(own: DriverCard = card(), vehicles: Int = 2) = certificateRead().copy(card = own,
+        identitySources = originalSources(own, vehicles))
+
+    @Test fun completeOriginalSourcesExtendTheNewRunTo26WithoutBackfilling19Or23SourceHistory() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(masterRead(), "old-19-originals")
+        val cert = pipeline.process(certificateRead(), "old-23-originals")
+        val full = pipeline.process(originalRead(), "new-26-originals")
+        assertEquals(19, old.files.size); assertEquals(23, cert.files.size); assertEquals(26, full.files.size)
+        assertEquals(3, full.newSourceCount); assertTrue(full.files.all { it.status == CardImportFileStatus.STORED })
+        assertTrue(imports.get(old.id)!!.identitySources.isEmpty()); assertTrue(imports.get(cert.id)!!.identitySources.isEmpty())
+        val sources = imports.get(full.id)!!.identitySources
+        assertEquals(CardIdentitySourceKind.entries.toSet(), sources.keys)
+        for (kind in CardIdentitySourceKind.entries) assertArrayEquals(originalRead().identitySources.getValue(kind).file!!.bytes, sources.getValue(kind).file.bytes)
+        assertEquals(12, count("card_metadata_imports")); assertEquals(5 + 9 + 12, count("driver_import_metadata_sources"))
+        assertEquals(old, pipeline.process(masterRead(), old.id)); assertEquals(cert, pipeline.process(certificateRead(), cert.id))
+    }
+    @Test fun originalRetryAndChangedApplicationPreserveExactBytesAndDeduplicateEachSource() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(originalRead(), "original-retry")
+        assertEquals(26, first.newSourceCount); assertEquals(first, pipeline.process(originalRead(), first.id))
+        val same = pipeline.process(originalRead(), "original-unchanged"); assertEquals(0, same.newSourceCount)
+        val changed = pipeline.process(originalRead(vehicles = 3), "original-capacity-changed"); assertEquals(1, changed.newSourceCount)
+        rejected<IllegalArgumentException> { pipeline.process(originalRead(vehicles = 4), first.id) }
+        val before = imports.get(first.id)!!.identitySources; val after = imports.get(changed.id)!!.identitySources
+        assertEquals(2, (before.getValue(CardIdentitySourceKind.APPLICATION).record as CardApplicationIdentityRecord).vehicleCapacityRaw)
+        assertEquals(3, (after.getValue(CardIdentitySourceKind.APPLICATION).record as CardApplicationIdentityRecord).vehicleCapacityRaw)
+        assertEquals(before.getValue(CardIdentitySourceKind.IDENTIFICATION).id, after.getValue(CardIdentitySourceKind.IDENTIFICATION).id)
+        assertEquals(13, count("card_metadata_imports")); assertEquals(3, pipeline.history().size)
+    }
+    @Test fun aBlankCompleteV2SourcePersistsItsOriginalBytesWithZeroDecodedRecords() = runBlocking {
+        imports.bind(card(), true)
+        for (fill in listOf(0, 255)) {
+            val source = CardIdentitySourceFile(CardIdentitySourceKind.APPLICATION_V2, card().generation, ByteArray(10) { fill.toByte() })
+            val run = pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(),
+                identitySources = mapOf(source.kind to CardIdentitySourceRead(source))), "blank-original-v2-$fill")
+            assertEquals(0, run.file(source.kind.importFileKind()).decodedCount)
+            assertEquals(CardImportFileStatus.STORED, run.file(source.kind.importFileKind()).status)
+            val saved = imports.get(run.id)!!.identitySources.getValue(source.kind)
+            assertNull(saved.record); assertArrayEquals(source.bytes, saved.file.bytes)
+        }
+        assertEquals(2, count("card_metadata_imports")); assertEquals(0, count("driver_activity_days"))
+    }
+    @Test fun missingFailedWrongKindGenerationAndMalformedOriginalSourceFailIndependently() = runBlocking {
+        imports.bind(card(), true)
+        val kind = CardIdentitySourceKind.APPLICATION_V2
+        val attempts = listOf(
+            CardIdentitySourceRead() to CardImportFileStatus.MISSING,
+            CardIdentitySourceRead(readFailed = true) to CardImportFileStatus.READ_FAILED,
+            originalSources().getValue(CardIdentitySourceKind.IDENTIFICATION) to CardImportFileStatus.INVALID,
+            CardIdentitySourceRead(CardIdentitySourceFile(kind, card().generation, ByteArray(10).also { it[1] = 7 })) to CardImportFileStatus.INVALID,
+            CardIdentitySourceRead(CardIdentitySourceFile(CardIdentitySourceKind.APPLICATION, CardGeneration.GEN1,
+                originalApplicationBytes(CardGeneration.GEN1))) to CardImportFileStatus.INVALID)
+        for ((index, attempt) in attempts.withIndex()) {
+            val read = originalRead().copy(identitySources = originalSources() + (kind to attempt.first))
+            val run = pipeline.process(read, "original-partial-$index")
+            assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(attempt.second, run.file(kind.importFileKind()).status)
+            assertEquals(setOf(CardIdentitySourceKind.APPLICATION, CardIdentitySourceKind.IDENTIFICATION), imports.get(run.id)!!.identitySources.keys)
+            assertNotNull(imports.get(run.id)!!.activity); assertEquals(4, imports.get(run.id)!!.certificates.size)
+        }
+    }
+    @Test fun originalIdentityFromAnotherHolderCannotBeSavedUnderTheRecognizedOwnCard() = runBlocking {
+        imports.bind(card(), true)
+        val altered = card().copy(holder = card().holder.copy(surname = "OTHER"))
+        val read = originalRead().copy(identitySources = originalSources() +
+            (CardIdentitySourceKind.IDENTIFICATION to originalSources(altered).getValue(CardIdentitySourceKind.IDENTIFICATION)))
+        val run = pipeline.process(read, "mismatched-original-identity")
+        assertEquals(CardImportFileStatus.INVALID, run.file(CardImportFileKind.DRIVER_IDENTIFICATION).status)
+        assertFalse(imports.get(run.id)!!.identitySources.containsKey(CardIdentitySourceKind.IDENTIFICATION))
+        rejected<IllegalArgumentException> { imports.save(read, "direct-mismatched-identity", CardImportSelection.ALL_AVAILABLE) }
+        assertEquals(1, count("import_sessions")); assertEquals(1, count("driver_cards"))
+    }
+    @Test fun unconfirmedAndForeignOriginalSourcesWriteNoProfileCardRunOrSourceRows() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(originalRead(), "unconfirmed-originals") }
+        for (table in listOf("driver_cards", "card_import_runs", "import_sessions", "card_metadata_imports")) assertEquals(0, count(table))
+        imports.bind(card(), true)
+        val foreign = card("foreign-original", DriverIdentity("FOREIGN", "OTHER", LocalDate.of(2001, 3, 4), "de"))
+        rejected<ForeignCardRejected> { pipeline.process(originalRead(foreign), "foreign-originals") }
+        assertEquals(1, count("driver_cards")); assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun sameNumberReplacementKeepsAllOriginalSourcesOnItsOwnPhysicalCard() = runBlocking {
+        imports.bind(card(), true); val before = pipeline.process(originalRead(), "original-physical-card")
+        val replacement = card().copy(card = card().card.copy(issued = Instant.ofEpochSecond(1)))
+        val after = pipeline.process(originalRead(replacement), "replacement-original-card")
+        assertNotEquals(before.driverCardId, after.driverCardId)
+        for (kind in CardIdentitySourceKind.entries) {
+            val old = imports.get(before.id)!!.identitySources.getValue(kind); val next = imports.get(after.id)!!.identitySources.getValue(kind)
+            assertNotEquals(old.id, next.id); assertNotEquals(old.driverCardId, next.driverCardId)
+        }
+        assertEquals(0L, (imports.get(before.id)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).record as CardOriginalIdentityRecord).card.card.issued.epochSecond)
+        assertEquals(1L, (imports.get(after.id)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).record as CardOriginalIdentityRecord).card.card.issued.epochSecond)
+    }
+    @Test fun receiptFailureRollsBackNewOriginalSourcesTogetherWithTheAcceptedImport() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(certificateRead(), "before-original-rollback")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_original_receipt BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(originalRead(), "rollback-originals")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertTrue(failed.files.all { it.status == CardImportFileStatus.NOT_STORED })
+        assertEquals(9, count("card_metadata_imports")); assertEquals(9, count("driver_import_metadata_sources"))
+        assertEquals(1, count("import_sessions")); assertTrue(imports.get(old.id)!!.identitySources.isEmpty())
+    }
+    @Test fun encryptedReopeningRestoresOnlySelectedOriginalBytesAndMissingHistoricalSources() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(certificateRead(), "old-no-originals")
+        val first = pipeline.process(originalRead(), "old-original-capacity")
+        val latest = pipeline.process(originalRead(vehicles = 3), "new-original-capacity")
+        val original = imports.get(first.id)!!.identitySources
+        db.close(); assertFalse(context.getDatabasePath(AppDatabase.DATABASE_NAME).readBytes().take(16).toByteArray().contentEquals("SQLite format 3\u0000".toByteArray()))
+        open(); assertTrue(imports.get(old.id)!!.identitySources.isEmpty())
+        for (kind in CardIdentitySourceKind.entries) assertArrayEquals(original.getValue(kind).file.bytes, imports.get(first.id)!!.identitySources.getValue(kind).file.bytes)
+        assertEquals(3, (imports.get(latest.id)!!.identitySources.getValue(CardIdentitySourceKind.APPLICATION).record as CardApplicationIdentityRecord).vehicleCapacityRaw)
+        assertEquals(3, pipeline.history().size)
+    }
+    @Test fun originalForeignKeysRejectWrongKindAndPhysicalCardAndTamperedBytesFailOnlyTheirSession() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(certificateRead(), "safe-before-original-corruption")
+        val fresh = pipeline.process(originalRead(), "original-corrupt-session")
+        val source = imports.get(fresh.id)!!.identitySources.getValue(CardIdentitySourceKind.APPLICATION)
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardIdentitySourceKind.IDENTIFICATION.storageKind, source.driverCardId, source.id)) }
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, source.file.kind.storageKind, "wrong-card", source.id)) }
+        val changed = source.file.bytes.also { it[8] = 3 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(changed, source.id))
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+        assertTrue(imports.get(old.id)!!.identitySources.isEmpty()); assertEquals(2, pipeline.history().size)
+    }
+    @Test fun eachSupportedOriginalSourceCanBeTheOnlySourceAcrossAllGenerations() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val own = card("id-${generation.name}").copy(generation = generation); imports.bind(own, true)
+            for ((kind, file) in originalSources(own)) {
+                val run = pipeline.process(CardReadResult(CardRecognition.DRIVER, generation, own, identitySources = mapOf(kind to file)), "only-id-${generation.name}-${kind.name}")
+                assertEquals(1, run.newSourceCount); assertEquals(setOf(kind), imports.get(run.id)!!.identitySources.keys)
+                assertEquals(CardImportFileStatus.STORED, run.file(kind.importFileKind()).status)
+                assertTrue(imports.get(run.id)!!.metadata.isEmpty()); assertTrue(imports.get(run.id)!!.certificates.isEmpty())
+            }
+        }
+        db.close(); open(); assertEquals(7, pipeline.history().size); assertEquals(7, count("card_metadata_imports"))
+    }
+    @Test fun originalValidityAndCapacityDoNotBecomeActivityCoverageOrImportTimes() = runBlocking {
+        imports.bind(card(), true); val run = pipeline.process(originalRead(), "original-no-time-coverage")
+        for (kind in CardIdentitySourceKind.entries) {
+            val file = run.file(kind.importFileKind()); assertNull(file.firstUtcEpochSeconds); assertNull(file.lastUtcEpochSeconds)
+            assertEquals(1, file.decodedCount)
+        }
+        assertNotNull(run.file(CardImportFileKind.ACTIVITIES).firstUtcEpochSeconds)
+    }
+    @Test fun directOriginalSaveRetryRequiresTheExactUnionOfAllMixedSources() = runBlocking {
+        imports.bind(card(), true); val saved = imports.save(originalRead(), "direct-original", CardImportSelection.ALL_AVAILABLE)
+        assertEquals(saved.id, imports.save(originalRead(), saved.id, CardImportSelection.ALL_AVAILABLE).id)
+        rejected<IllegalStateException> { imports.save(certificateRead(), saved.id, CardImportSelection.ALL_AVAILABLE) }
+        rejected<IllegalStateException> { imports.save(originalRead(vehicles = 3), saved.id, CardImportSelection.ALL_AVAILABLE) }
+        assertEquals(1, imports.all().size); assertEquals(3, imports.get(saved.id)!!.identitySources.size)
+    }
+    @Test fun concurrentIdenticalOriginalImportsShareSourcesButRetainBothExactSessions() = runBlocking {
+        imports.bind(card(), true)
+        val first = async { pipeline.process(originalRead(), "concurrent-original-1") }
+        val second = async { pipeline.process(originalRead(), "concurrent-original-2") }
+        val results = listOf(first.await(), second.await())
+        assertEquals(listOf(0, 26), results.map { it.newSourceCount }.sorted())
+        assertEquals(12, count("card_metadata_imports")); assertEquals(24, count("driver_import_metadata_sources"))
+        assertEquals(2, count("import_sessions")); assertTrue(results.all { imports.get(it.id)!!.identitySources.size == 3 })
+    }
+
     private fun certificateFixture(role: Int = 17, generation: CardGeneration = CardGeneration.GEN2V2): ByteArray {
         if (generation == CardGeneration.GEN1) return ByteArray(194) { (it + role).toByte() }
         fun tlv(tag: Int, bytes: ByteArray): ByteArray {
