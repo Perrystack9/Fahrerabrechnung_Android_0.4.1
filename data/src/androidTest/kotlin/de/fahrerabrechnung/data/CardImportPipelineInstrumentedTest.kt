@@ -2106,9 +2106,12 @@ class CardImportPipelineInstrumentedTest {
         rejected<CardBindingRequired> { pipeline.process(directoryRead(), "directory-unconfirmed") }
         assertNull(imports.profile()); assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("card_import_runs"))
         imports.bind(card(), true)
-        val foreign = card("foreign-dir", card().holder.copy(surname = "OTHER"))
+        val foreign = card("foreign-dir", DriverIdentity("FOREIGN", "OTHER", LocalDate.of(2001, 3, 4), "de"))
         rejected<ForeignCardRejected> { pipeline.process(directoryRead(foreign), "directory-foreign") }
+        val uncertain = card("uncertain-dir", card().holder.copy(surname = "OTHER"))
+        rejected<CardBindingRequired> { pipeline.process(directoryRead(uncertain), "directory-uncertain") }
         assertEquals(1, count("driver_cards")); assertEquals(0, count("import_sessions")); assertEquals(0, count("card_metadata_imports"))
+        assertEquals(0, count("card_import_runs"))
     }
     @Test fun sameNumberReplacementKeepsIdenticalDirectoryBytesBoundToItsPhysicalCard() = runBlocking {
         imports.bind(card(), true); val first = pipeline.process(directoryRead(), "directory-physical-old")
