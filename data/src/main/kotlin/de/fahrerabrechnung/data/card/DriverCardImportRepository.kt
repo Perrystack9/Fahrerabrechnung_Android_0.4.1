@@ -27,6 +27,9 @@ data class SavedDriverImport(
     val loadType: SavedCardLoadType? = null,
     val vehicleUnits: SavedCardVehicleUnits? = null,
     val metadata: Map<CardMetadataKind, SavedCardMetadata> = emptyMap(),
+    val certificates: Map<CardCertificateKind, SavedCardCertificate> = emptyMap(),
+    val identitySources: Map<CardIdentitySourceKind, SavedCardIdentitySource> = emptyMap(),
+    val directory: SavedCardDirectory? = null,
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -51,6 +54,9 @@ class DriverCardImportRepository @Inject constructor(
     private val loadType = CardLoadTypeStore(database.cardLoadTypeDao())
     private val vehicleUnits = CardVehicleUnitsStore(database.cardVehicleUnitsDao())
     private val metadata = CardMetadataStore(database.cardMetadataDao())
+    private val certificates = CardCertificateStore(database.cardMetadataDao())
+    private val identitySources = CardIdentitySourceStore(database.cardMetadataDao())
+    private val directories = CardDirectoryStore(database.cardMetadataDao())
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -142,8 +148,24 @@ class DriverCardImportRepository @Inject constructor(
                 CardMetadataFile(kind, it.generation, it.bytes).also { frozen -> CardMetadataParser.parse(frozen) }
             }
         } else emptyList()
+        val certificateFiles = if (selection == CardImportSelection.ALL_AVAILABLE) result.certificates.mapNotNull { (kind, read) ->
+            read.file?.let {
+                require(!read.readFailed && it.kind == kind && it.generation == result.generation && kind.supports(result.generation))
+                CardCertificateFile(kind, it.generation, it.bytes).also { frozen -> CardCertificateParser.parse(frozen) }
+            }
+        } else emptyList()
+        val identityFiles = if (selection == CardImportSelection.ALL_AVAILABLE) result.identitySources.mapNotNull { (kind, read) ->
+            read.file?.let {
+                require(!read.readFailed && it.kind == kind && kind.supports(result.generation))
+                CardIdentitySourceFile(kind, it.generation, it.bytes).also { frozen -> CardIdentitySourceParser.validate(frozen, card) }
+            }
+        } else emptyList()
+        val directory = if (selection == CardImportSelection.ALL_AVAILABLE) result.directory?.let {
+            require(!result.directoryReadFailed && it.generation == result.generation)
+            CardDirectoryFile(it.generation, it.bytes).also { frozen -> CardDirectoryParser.parse(frozen) }
+        } else null
         val extraFiles = listOfNotNull(events, faults)
-        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null || placeFile != null || placeAuth != null || borders != null || loads != null || types != null || units != null || metadataFiles.isNotEmpty())
+        require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null || placeFile != null || placeAuth != null || borders != null || loads != null || types != null || units != null || metadataFiles.isNotEmpty() || certificateFiles.isNotEmpty() || identityFiles.isNotEmpty() || directory != null)
         return database.withTransaction {
             val cardId = bindInside(card, false)
             val profile = checkNotNull(dao.localProfile())
@@ -175,7 +197,10 @@ class DriverCardImportRepository @Inject constructor(
                 check(database.cardVehicleUnitsDao().source(requestId)?.sourceId ==
                     units?.let { CardVehicleUnitsStore.fingerprint(cardId, it) })
                 check(database.cardMetadataDao().sources(requestId).associate { it.kind to it.sourceId } ==
-                    metadataFiles.associate { it.kind.name to CardMetadataStore.fingerprint(cardId, it) })
+                    metadataFiles.associate { it.kind.name to CardMetadataStore.fingerprint(cardId, it) } +
+                        certificateFiles.associate { it.kind.storageKind to CardCertificateStore.fingerprint(cardId, it) } +
+                        identityFiles.associate { it.kind.storageKind to CardIdentitySourceStore.fingerprint(cardId, it) } +
+                        directory?.let { mapOf(CardDirectoryStore.STORAGE_KIND to CardDirectoryStore.fingerprint(cardId, it)) }.orEmpty())
                 return@withTransaction decode(existing, profile.id)
             }
             val newActivity = activity != null && database.cardActivityImportDao().getById(activity.id) == null
@@ -192,6 +217,9 @@ class DriverCardImportRepository @Inject constructor(
             val newTypes = types != null && database.cardLoadTypeDao().get(CardLoadTypeStore.fingerprint(cardId, types)) == null
             val newUnits = units != null && database.cardVehicleUnitsDao().get(CardVehicleUnitsStore.fingerprint(cardId, units)) == null
             val newMetadata = metadataFiles.count { database.cardMetadataDao().get(CardMetadataStore.fingerprint(cardId, it)) == null }
+            val newCertificates = certificateFiles.count { database.cardMetadataDao().get(CardCertificateStore.fingerprint(cardId, it)) == null }
+            val newIdentities = identityFiles.count { database.cardMetadataDao().get(CardIdentitySourceStore.fingerprint(cardId, it)) == null }
+            val newDirectory = directory != null && database.cardMetadataDao().get(CardDirectoryStore.fingerprint(cardId, directory)) == null
             if (activity != null && vehicle != null) pairs.storePrepared(activity, vehicle, now)
             else {
                 activity?.let { database.cardActivityImportDao().insert(it) }
@@ -199,7 +227,7 @@ class DriverCardImportRepository @Inject constructor(
             }
             dao.insertSession(ImportSessionEntity(requestId, profile.id, "PARTIAL", now, now))
             val sources = DriverImportSourcesEntity(requestId, cardId, activity?.id, vehicle?.id,
-                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0) + (if (newPositions) 1 else 0) + (if (newAuthentication) 1 else 0) + (if (newPlaces) 1 else 0) + (if (newPlaceAuth) 1 else 0) + (if (newBorders) 1 else 0) + (if (newLoads) 1 else 0) + (if (newTypes) 1 else 0) + (if (newUnits) 1 else 0) + newMetadata)
+                pairId, (if (newActivity) 1 else 0) + (if (newVehicle) 1 else 0) + (if (newControl) 1 else 0) + newExtras + (if (newConditions) 1 else 0) + (if (newPositions) 1 else 0) + (if (newAuthentication) 1 else 0) + (if (newPlaces) 1 else 0) + (if (newPlaceAuth) 1 else 0) + (if (newBorders) 1 else 0) + (if (newLoads) 1 else 0) + (if (newTypes) 1 else 0) + (if (newUnits) 1 else 0) + newMetadata + newCertificates + newIdentities + (if (newDirectory) 1 else 0))
             dao.insertSources(sources)
             if (activity != null) normalizedActivities.save(cardId, activity, checkNotNull(days))
             if (vehicle != null) normalizedVehicles.save(cardId, vehicle, checkNotNull(uses))
@@ -219,6 +247,13 @@ class DriverCardImportRepository @Inject constructor(
             var storedMetadata = 0
             for (file in metadataFiles) if (metadata.save(cardId, requestId, file, now)) storedMetadata++
             check(storedMetadata == newMetadata)
+            var storedCertificates = 0
+            for (file in certificateFiles) if (certificates.save(cardId, requestId, file, now)) storedCertificates++
+            check(storedCertificates == newCertificates)
+            var storedIdentities = 0
+            for (file in identityFiles) if (identitySources.save(cardId, requestId, file, now)) storedIdentities++
+            check(storedIdentities == newIdentities)
+            if (directory != null) check(directories.save(cardId, requestId, directory, now) == newDirectory)
             decode(sources, profile.id)
         }
     }
@@ -311,7 +346,7 @@ class DriverCardImportRepository @Inject constructor(
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.FAULTS),
             specificConditions.load(sources.driverCardId, session.id),
             gnss.positions(sources.driverCardId, session.id), gnss.authentication(sources.driverCardId, session.id),
-            places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id), vehicleUnits.load(sources.driverCardId, session.id), metadata.load(sources.driverCardId, session.id))
+            places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id), vehicleUnits.load(sources.driverCardId, session.id), metadata.load(sources.driverCardId, session.id), certificates.load(sources.driverCardId, session.id), identitySources.load(sources.driverCardId, session.id), directories.load(sources.driverCardId, session.id))
     }
 
     private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {

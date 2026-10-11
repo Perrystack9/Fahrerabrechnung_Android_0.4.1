@@ -38,13 +38,14 @@ data class ResponseApdu(val data: ByteArray, val sw1: Int, val sw2: Int) {
 
 class ApduSession(private val transport: CardReaderTransport) {
     /** Bounded GET RESPONSE / 6C retry, with a cumulative cap against malformed or hostile cards. */
-    suspend fun send(command: CommandApdu): ResponseApdu {
+    suspend fun send(command: CommandApdu, correctLength: Boolean = true): ResponseApdu {
         var current = command
         val collected = ArrayList<Byte>()
         var corrected = false
         repeat(32) {
             val answer = ResponseApdu.decode(transport.exchange(current.encode()))
-            if (answer.sw1 == 0x6C && !corrected) {
+            if (correctLength && answer.sw1 == 0x6C && !corrected) {
+                if (answer.data.isNotEmpty()) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
                 corrected = true
                 current = current.withLe(if (answer.sw2 == 0) 256 else answer.sw2)
                 return@repeat

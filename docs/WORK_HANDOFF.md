@@ -1,3 +1,27 @@
+Aktueller gemeinsamer Checkpoint11.10.2026: Tobi hat die Fortsetzung um14:41 und14:45 Europe/Prague erneut beauftragt. Der frühere Ausgabetermin11:10 ist überholt. PR59 ist vollständig grün; PR60 bündelt Originaldateien und zusätzlich das MF-Anwendungsverzeichnis. Version40120, Schema18, stabile Testkennung/-signatur, bestätigte UpdatebasisPR58/40117. 44 Originaldateien- und31 DIR-Testmethoden, zusammen mit PR59 insgesamt129 zusätzliche Methoden. CI38122321988 fand einen widersprüchlichen Fahrzeug-Testdatensatz; dieser ist an die tatsächlich gelieferten zwei Plätze angepasst, ohne Prüfungen zu entfernen oder Produktionsgrenzen zu lockern. Neue vollständige Android-/SQLCipher-/Compose-CI erforderlich; APK-Ausgabe danach. Kein neuer Hardwaretest bestätigt, kein Import-Merge vor ausdrücklicher Gerätebestätigung. Kein Browser, keine Subagenten, keine Bereinigung; Actions-Budget unverändert2USD. [DIR-Umfang und Primärformat](CARD_DIRECTORY_IMPORT.md), [gebündelte Geräteanleitung](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md).
+
+Die älteren Checkpoints darunter bleiben als damalige Stände erhalten.
+
+---
+
+Aktueller gemeinsamer Checkpoint11.10.2026: Tobis erneuter Auftrag09:10:27 Europe/Berlin gilt für zwei Stunden bis11:10:27. PR59 ist vollständig grün, CI38119878793 am unveränderten Kopf c535c01. PR60 ist der gemeinsame kumulative Originaldateien-Entwurf40119/Schema18. Der parallel entstandene PR61 ergänzt dieselben Dateien und wurde deshalb ungemergt geschlossen; seine Dateien und Branch bleiben erhalten. Kein Browser, keine Subagenten, keine Bereinigung, Actions-Budget unverändert2USD. Kein neuer Import-Merge vor späterer ausdrücklicher Gerätebestätigung.
+
+Abgleich ergänzt: Kartennummer und Zertifikatsreferenzen bei Wechsel der ausgewählten ImportSession auch dann erneut verbergen, wenn identische Originalbytes denselben Quellenfingerprint besitzen. Sämtliche in0501/0525 dekodierten Speicherkapazitäten werden in der Detailansicht angezeigt, einschließlich Ereignissen/Störungen/besonderen Bedingungen und VU-Konfigurationsgröße. Diese Größe ist kein Import von EF0540. Drei zusätzliche Compose-Prüfungen; insgesamt44 Originaldateien-Testmethoden bzw.98 zusammen mit PR59. Vollständige CI am endgültigen gemeinsamen Kopf erforderlich. Testpaket frühestens am Blockende11:10:27 ausgeben; keine neue Gerätebestätigung vorweggenommen.
+
+Dieser gemeinsame Checkpoint ist maßgeblich; ältere Abschnitte dokumentieren ihre damaligen Stände.
+
+---
+
+Aktueller Checkpoint 11.10.2026: Tobi bestätigt um 08:36 Europe/Berlin allgemein „Funktioniert alles“ zum ausgegebenen PR58-Testupdate 40117/Schema 18 und beauftragt zwei Stunden selbstständige Weiterarbeit bis 10:36:13. Alle vier Jobs der exakten CI-Köpfe PR54–58 erneut erfolgreich geprüft. PR58 unverändert gemergt als 1b592d627d5d18db9fc909f5c8cf2c796fd8578b; Merge-Tree 2e314a47211f06696a6b05287e40b63575b921df bytegleich zum getesteten Kopf ba9656f0e22980af94883783986367d7bcdf545b. GitHub hat die enthaltenen PR54–57 ebenfalls abgeschlossen. Keine neuen Einzelmesswerte oder nichtleeren Quellenfälle behauptet.
+
+Neuer begrenzter Zertifikatsentwurf PR59: vier unabhängige Zertifikatsarten der gewählten Kartenanwendung (Gen1 zwei), vollständige begrenzte EF-Lesung, struktureller Decoder, verschlüsselte exakte Karten-/Sitzungsquelle und Detailansicht mit Referenzen auf Antippen. Kopf c535c01a838fb9f565b49b7a9b50030d06e77bf7, 54 zusätzliche Testmethoden. Alle vier Jobs der vollständigen CI 38119878793 erfolgreich, einschließlich SQLCipher-/Room- und Compose-Instrumentierung. Der Zertifikatskopf bleibt unverändert. [Umfang und Primärformat](CARD_CERTIFICATE_IMPORT.md).
+
+Separater Folgeentwurf ergänzt die vollständigen bereits gelesenen Originaldateien für Anwendung, Karten-/Inhaberidentifikation und V2-Anwendung, einschließlich unabhängiger Dateiendproben und der Ansicht „Kartenangaben“. 41 weitere Testmethoden vorbereitet. Die erste Folge-CI 38121099485 fand zwei falsch typisierte APDU-Testvergleiche; die Vergleiche sind auf kodierte Bytes korrigiert, neue vollständige CI am Korrekturkopf erforderlich. Aktuelle Testversion 40119, Schema 18 und stabile Testkennung/-signatur unverändert. Neue Gen2V2-Vorgänge können 26 unterstützte Quellen enthalten; ältere 19-/23-Quellen-Vorgänge behalten ihren exakten bisherigen Stand. Keine Vollständigkeits-/Kryptovertrauensbehauptung, keine neuen PSO-/Schreib-/Authentisierungsbefehle und keine Nachbefüllung. [Originalquellen und Prüfgrenzen](CARD_ORIGINAL_IDENTIFICATION_IMPORT.md), [gebündelter Gerätetest](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md). Vollständige Android-/SQLCipher-/Compose-CI am endgültigen Kopf vor der Ausgabe erforderlich. Kein neuer Hardwaretest bestätigt; beide Importentwürfe bleiben bis zur Rückmeldung ungemergt.
+
+Dieser Checkpoint ist maßgeblich; die älteren Abschnitte darunter dokumentieren ihre jeweiligen früheren Stände.
+
+---
+
 # Aktueller MF-Entwurf im laufenden zweiten Arbeitsblock
 
 TCS43-Grenzfall nach amtlichem Abgleich korrigiert: Ein datenloses6700 beim Zwei-Byte-Rest nach15Byte kann15 oder16Byte bedeuten. Deshalb genau ein Byte an Offset15 nachprüfen; nur datenloses6700 an dieser Ein-Byte-Grenze als vollständiges Legacy-EOF akzeptieren.16Byte,6C01-Längenkorrektur mit abgeschnittenem Rest, Statusfehler mit Daten, leere9000-Antworten und Timeouts bleiben fehlerhaft. Vier weitere Lesertests; neue vollständige CI am geänderten Kopf erforderlich. Kein Hardwaretest/keine APK ausgegeben.
