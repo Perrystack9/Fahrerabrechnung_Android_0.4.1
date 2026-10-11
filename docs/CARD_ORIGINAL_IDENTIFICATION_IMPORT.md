@@ -1,6 +1,6 @@
 # Originale Identifikationsdateien je Übernahme
 
-Begrenzter Folgeschritt zum Zertifikatsimport: Die bereits zur Kartenerkennung gelesenen Originalbytes von `Application_Identification` und `Identification` sowie die unabhängige V2-Erweiterung werden als eigene verschlüsselte Quellen gespeichert. Die normalisierte Karte und das Fahrerprofil ersetzen diese Dateien nicht. Schema 18 bleibt unverändert; Testversion 40119 hat dieselbe Testkennung und Signatur wie der bestätigte Stand 40117.
+Begrenzter Folgeschritt zum Zertifikatsimport: Die bereits zur Kartenerkennung gelesenen Originalbytes von `Application_Identification` und `Identification` sowie die unabhängige V2-Erweiterung werden als eigene verschlüsselte Quellen gespeichert. Die normalisierte Karte und das Fahrerprofil ersetzen diese Dateien nicht. Schema 18 bleibt unverändert; Testversion 40120 hat dieselbe Testkennung und Signatur wie der bestätigte Stand 40117.
 
 ## Primärformat und Lesung
 
@@ -25,3 +25,5 @@ Historische Übernahmen mit 19 oder 23 Quellen behalten ihre bisherigen Statusze
 44 zusätzliche Testmethoden: 8 Parser-, 5 Endproben-, 6 tatsächliche Leser-, 14 SQLCipher-/Room- und 11 Compose-/AppRoot-Tests. Sie prüfen Originalbytes, alle Generationen, die ältere 15-Byte-Struktur, unabhängige Kapazitäten, 00/FF-V2-Dateien, zusätzliche Bytes, fehlerhafte Endantworten, Abbruch, Fremdkarten, Ersatzkarten, gleichzeitige Importe, exakte Wiederholungen, Rollback, verschlüsselte Wiederöffnung, beschädigte Quellen sowie historischen und aktuellen Ansichtswechsel. Alle bisherigen Tests bleiben erhalten.
 
 Lokale Projektgrenzen, CI-Regressionsprüfungen und Shellsyntax sind geprüft. Die vollständige Android-/Emulator-CI am endgültigen Produktkopf ist vor jeder APK-Ausgabe erforderlich. Ein neuer Gerätetest ist noch nicht bestätigt; beide Importentwürfe bleiben bis zur Rückmeldung ungemergt. [Gebündelter Gerätetest](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md).
+
+Der gemeinsame Folgestand ergänzt zusätzlich das unabhängige [MF-Anwendungsverzeichnis](CARD_DIRECTORY_IMPORT.md). Damit können neue Gen2V2-Vorgänge27 Quellen enthalten; die bisherigen26-Quellen-Vorgänge behalten ihren exakten Stand. Die oben beschriebenen Originaldateien und ihre44 Tests bleiben erhalten.

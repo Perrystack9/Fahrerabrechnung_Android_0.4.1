@@ -70,6 +70,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.APPLICATION_IDENTIFICATION -> Text("Kartenanwendung übernommen")
                         CardImportFileKind.DRIVER_IDENTIFICATION -> Text("Originale Kartenangaben übernommen")
                         CardImportFileKind.APPLICATION_IDENTIFICATION_V2 -> Text("Kartenanwendung V2 übernommen")
+                        CardImportFileKind.MF_DIRECTORY -> Text("Anwendungsverzeichnis übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")

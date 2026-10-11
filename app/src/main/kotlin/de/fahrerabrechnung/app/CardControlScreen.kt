@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter
 internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, onEventsFaults: () -> Unit,
                                onSpecificConditions: () -> Unit = {}, onGnss: () -> Unit = {},
                                onPlaces: () -> Unit = {},
-                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}, onVehicleUnits: () -> Unit = {}, onMetadata: (de.fahrerabrechnung.data.card.CardMetadataKind) -> Unit = {}, onCertificates: () -> Unit = {}, onIdentitySources: () -> Unit = {}) {
+                               onBorders: () -> Unit = {}, onLoadUnload: () -> Unit = {}, onLoadType: () -> Unit = {}, onVehicleUnits: () -> Unit = {}, onMetadata: (de.fahrerabrechnung.data.card.CardMetadataKind) -> Unit = {}, onCertificates: () -> Unit = {}, onIdentitySources: () -> Unit = {}, onDirectory: () -> Unit = {}) {
     ScreenContent(padding) {
         Text("Fahrerkarte · Details", style = MaterialTheme.typography.titleLarge)
         OutlinedButton(onClick = onControls) { Text("Kontrollen") }
@@ -32,6 +32,7 @@ internal fun CardDetailsScreen(padding: PaddingValues, onControls: () -> Unit, o
             OutlinedButton(onClick = { onMetadata(kind) }) { Text(kind.metadataTitle()) }
         OutlinedButton(onClick = onCertificates) { Text("Zertifikate") }
         OutlinedButton(onClick = onIdentitySources) { Text("Kartenangaben") }
+        OutlinedButton(onClick = onDirectory) { Text("Anwendungsverzeichnis") }
         Text("Angaben aus der ausgewählten gespeicherten Übernahme.", style = MaterialTheme.typography.bodySmall)
     }
 }

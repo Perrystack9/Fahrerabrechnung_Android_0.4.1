@@ -53,7 +53,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val vehicleUnitsReadFailed: Boolean = false,
                           val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap(),
                           val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap(),
-                          val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap())
+                          val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap(),
+                          val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false)
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -298,6 +299,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val masterFiles = CardMetadataKind.entries.filter { it.inMasterFile }.associateWith { kind ->
                 try { readFile(session, kind.fileId, kind.fileLength) } catch (_: ReaderException) { null }
             }
+            val rawDirectory = try { CardDirectoryReader.read(session) } catch (_: ReaderException) { null }
             val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
@@ -410,6 +412,10 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     } } catch (_: ParseError) { null } catch (_: ReaderException) { null }
                     CardIdentitySourceRead(file, readFailed = file == null)
                 }
+                val supportsDirectory = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+                val directory = if (supportsDirectory) try { rawDirectory?.let {
+                    CardDirectoryFile(generation, it).also { frozen -> CardDirectoryParser.parse(frozen) }
+                } } catch (_: ParseError) { null } else null
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -425,7 +431,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
                     loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
                     vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
-                    metadata = metadata, certificates = certificates, identitySources = identitySources)
+                    metadata = metadata, certificates = certificates, identitySources = identitySources,
+                    directory = directory, directoryReadFailed = supportsDirectory && directory == null)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

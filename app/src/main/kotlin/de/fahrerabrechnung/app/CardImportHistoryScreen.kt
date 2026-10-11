@@ -118,6 +118,7 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.APPLICATION_IDENTIFICATION -> "Kartenanwendung"
         CardImportFileKind.DRIVER_IDENTIFICATION -> "Originale Kartenangaben"
         CardImportFileKind.APPLICATION_IDENTIFICATION_V2 -> "Kartenanwendung V2"
+        CardImportFileKind.MF_DIRECTORY -> "Anwendungsverzeichnis"
         CardImportFileKind.WORK_PERIOD_PLACES -> "Beginn-/Ende-Orte"
         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> "Orts-Authentisierungsstatus"
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
@@ -125,7 +126,7 @@ private fun CardImportFileResult.description(): String {
     return when (status) {
         CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.CARD_CERTIFICATE, CardImportFileKind.CARD_SIGNING_CERTIFICATE,
             CardImportFileKind.CA_CERTIFICATE, CardImportFileKind.LINK_CERTIFICATE,
-            CardImportFileKind.APPLICATION_IDENTIFICATION_V2) && decodedCount == 0)
+            CardImportFileKind.APPLICATION_IDENTIFICATION_V2, CardImportFileKind.MF_DIRECTORY) && decodedCount == 0)
             "$label: übernommen, Datei leer"
             else if (kind == CardImportFileKind.CONTROLS && decodedCount == 0)
             "Kontrolldaten: übernommen, keine Kontrolle aufgezeichnet"

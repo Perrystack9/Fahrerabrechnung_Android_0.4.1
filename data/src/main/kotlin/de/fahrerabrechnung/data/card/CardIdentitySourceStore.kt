@@ -26,7 +26,7 @@ internal class CardIdentitySourceStore(private val dao: CardMetadataDao) {
     suspend fun load(cardId: String, sessionId: String): Map<CardIdentitySourceKind, SavedCardIdentitySource> {
         val result = mutableMapOf<CardIdentitySourceKind, SavedCardIdentitySource>()
         for (source in dao.sources(sessionId)) {
-            if (source.kind in CardMetadataKind.entries.map { it.name } ||
+            if (source.kind == CardDirectoryStore.STORAGE_KIND || source.kind in CardMetadataKind.entries.map { it.name } ||
                 source.kind in CardCertificateKind.entries.map { it.storageKind }) continue
             val kind = CardIdentitySourceKind.entries.singleOrNull { it.storageKind == source.kind }
                 ?: error("Unsupported saved card source kind")

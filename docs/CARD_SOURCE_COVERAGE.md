@@ -1,8 +1,10 @@
+Aktueller gemeinsamer FolgestandPR60/40120: Originaldateien plus MF-DIR für erkannte Gen2/Gen2V2-Karten, bis27 Quellen. Lokale Prüfungen bestanden; neue vollständige CI vor Ausgabe erforderlich. Keine neue Hardwarebestätigung. [DIR-Umfang](CARD_DIRECTORY_IMPORT.md). Ältere Checkpoints dokumentieren ihre damaligen Stände.
+
 # Abdeckung der Fahrerkarte
 
 Stand11.10.2026: Tobi hat PR58/40117 um08:36 Europe/Berlin allgemein bestätigt („Funktioniert alles“). PR54–58 sind unverändert kumulativ gemergt; Main1b592d6 hat den getesteten Tree2e314a4. Diese Bestätigung enthält keine zusätzlichen Einzelmesswerte oder nichtleeren Quellenfälle.
 
-PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an c535c01 bestanden, einschließlich Room/SQLCipher/Compose. Kumulativer PR60-Originaldateien-Entwurf40119: lokale Prüfungen bestanden, vollständige CI und späterer Gerätetest erforderlich. Neue Entwürfe bleiben ungemergt. Vollständige Kartenabdeckung wird noch nicht behauptet.
+PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an c535c01 bestanden, einschließlich Room/SQLCipher/Compose. Kumulativer PR60-Originaldateien-/DIR-Entwurf40120: lokale Prüfungen bestanden, vollständige CI und späterer Gerätetest erforderlich. Neue Entwürfe bleiben ungemergt. Vollständige Kartenabdeckung wird noch nicht behauptet.
 
 | Quelldatei | EF | Generation | Stand |
 |---|---|---|---|
@@ -31,15 +33,16 @@ PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an
 | Application_Identification | `0501` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige Originalbytes10/15/17 |
 | Application_Identification_V2 | `0525` | Gen2V2 | PR60 auf PR59; vollständige Originalbytes10 |
 | Identification | `0520` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige143Bytes, exakte Identitätsprüfung |
+| MF DIR | `2F00` | Gen2/Gen2V2 | PR60 kumulativ; exakt20Bytes mit unabhängiger Dateiendprüfung, genaue Karte/Sitzung |
 
 ## Herkunft und offene Quellen
 
-Neue Gen2V2-Lesevorgänge können26 unterstützte Quellen enthalten. Historische19-/23-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Schema18 unverändert.
+Neue Gen2V2-Lesevorgänge können27 unterstützte Quellen enthalten. Historische19-/23-/26-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Schema18 unverändert.
 
 | Noch offene Datei/Funktion | EF | Klärung vor Umsetzung |
 |---|---|---|
 | VU_Configuration | `0540` | Gen2V2, eigenes Sicherheits-/Zugriffsverfahren SC5; nicht blind als gewöhnliche EF lesen |
-| MF DIR | `2F00` | Anwendungseinträge und unterstützte Verzeichnisstruktur, vollständige begrenzte Lesung |
+| DIR außerhalb des Gen2-Formats | `2F00` | Gen1-/andere Verzeichnisformate getrennt am Primärformat klären |
 | Bedingte ATR/INFO- und Extended_Length-EFs | MF | Vorhandensein, Längen und Zugriff am amtlichen Format prüfen |
 | Vollständiger signierter Standarddownload | mehrere | Download-/Authentisierungsprotokoll und Original-Signaturen separat implementieren |
 | Kryptografische Zertifikats-/Signaturprüfung | mehrere | RSA-Nachrichtenrückgewinnung bzw. EC-Prüfung und überprüfbare Vertrauenskette |

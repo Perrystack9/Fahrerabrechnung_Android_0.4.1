@@ -1,6 +1,7 @@
 package de.fahrerabrechnung.data.card
 
 import java.nio.ByteBuffer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -1102,7 +1103,8 @@ class DriverCardFoundationTest {
             val fake = CardFixtureTransport(generation, identityFixture(), metadataBytes = metadataFixtureBytes())
             val result = DriverCardReader(fake).read()
             assertEquals(listOf(0xA4 to 0x0002, 0xB0 to 0x0002, 0xA4 to 0x0005, 0xB0 to 0x0005), fake.commandOrder.take(4))
-            assertEquals(0xA4 to 0, fake.commandOrder[4])
+            val firstAid = fake.commandOrder.indexOf(0xA4 to 0)
+            assertEquals(listOf(0xA4 to 0x2F00, 0xB0 to 0x2F00, 0xB0 to 0x2F00), fake.commandOrder.subList(4, firstAid))
             for (kind in CardMetadataKind.entries.filter { it.inMasterFile }) {
                 assertArrayEquals(metadataFixtureBytes().getValue(kind), result.metadata.getValue(kind).file!!.bytes)
                 assertEquals(generation, result.metadata.getValue(kind).file!!.generation)
@@ -1330,7 +1332,10 @@ class DriverCardFoundationTest {
         val identity = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture() + byteArrayOf(7))).read()
         assertEquals(CardRecognition.DRIVER, identity.recognition); assertNotNull(identity.activity)
         assertTrue(identity.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).readFailed)
-        val app = IdentitySourceFixtures.application(CardGeneration.GEN2V2) + byteArrayOf(7)
+        // Match the transport's16-byte activity ring and two vehicle slots; only EF length is invalid.
+        val app = IdentitySourceFixtures.application(CardGeneration.GEN2V2).also {
+            it[5] = 0; it[6] = 16; it[7] = 0; it[8] = 2
+        } + byteArrayOf(7)
         val application = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), applicationBytes = app)).read()
         assertEquals(CardRecognition.DRIVER, application.recognition); assertNotNull(application.vehicles)
         assertTrue(application.identitySources.getValue(CardIdentitySourceKind.APPLICATION).readFailed)
@@ -1352,6 +1357,62 @@ class DriverCardFoundationTest {
             identityBoundaryFailures = mapOf(CardIdentitySourceKind.APPLICATION to kotlinx.coroutines.CancellationException("synthetic")))
         try { DriverCardReader(fake).read(); fail() } catch (_: kotlinx.coroutines.CancellationException) { }
         assertTrue(fake.closed)
+    }
+
+    @Test fun directoryIsCapturedInMfBeforeEitherAidAndRetainedOnlyForRecognizedGen2Cards() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), directoryChunkLimit = 3)
+            val read = DriverCardReader(fake).read()
+            assertEquals(CardRecognition.DRIVER, read.recognition)
+            if (generation == CardGeneration.GEN1) {
+                assertNull(read.directory); assertFalse(read.directoryReadFailed)
+            } else {
+                assertArrayEquals(DirectoryFixtures.bytes(), read.directory!!.bytes)
+                assertEquals(generation, read.directory!!.generation); assertFalse(read.directoryReadFailed)
+            }
+            val firstAid = fake.commandOrder.indexOf(0xA4 to 0)
+            assertTrue(fake.commandOrder.take(firstAid).any { it == 0xB0 to CardDirectoryReader.FILE_ID })
+            assertTrue(fake.commandOrder.drop(firstAid).none { it.second == CardDirectoryReader.FILE_ID })
+            assertTrue(fake.instructions.all { it == 0xA4 || it == 0xB0 }); assertTrue(fake.closed)
+        }
+    }
+    @Test fun missingTruncatedOverlongMalformedAndBadBoundaryDirectoryDoNotBlockOtherSources() = runBlocking {
+        val invalid = DirectoryFixtures.bytes().also { it[3] = 5 }
+        val attempts = listOf(
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), missingFiles = setOf(0x2F00)),
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryBytes = ByteArray(19)),
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryBytes = DirectoryFixtures.bytes() + byteArrayOf(1)),
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryBytes = invalid),
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryEndReply = byteArrayOf(0x6C, 0)),
+            CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryFailure = ReaderException(ReaderFailure.TIMEOUT)))
+        for (fake in attempts) {
+            val read = DriverCardReader(fake).read()
+            assertTrue(read.directoryReadFailed); assertNull(read.directory)
+            assertEquals(CardRecognition.DRIVER, read.recognition); assertNotNull(read.card)
+            assertNotNull(read.activity); assertNotNull(read.vehicles)
+            assertTrue(read.identitySources.values.all { it.file != null && !it.readFailed })
+            assertTrue(read.metadata.values.all { it.file != null && !it.readFailed }); assertTrue(fake.closed)
+        }
+    }
+    @Test fun directoryCancellationPropagatesAndClosesTransportBeforeAnyApplicationSelection() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryFailure = CancellationException("synthetic"))
+        try { DriverCardReader(fake).read(); fail() } catch (_: CancellationException) { }
+        assertFalse(fake.aidSelected); assertTrue(fake.closed)
+    }
+    @Test fun unrecognizedCardsDiscardTheTemporaryMasterDirectoryAndNeverClaimAnAttempt() = runBlocking {
+        val fake = CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())
+        val read = DriverCardReader(fake).read()
+        assertEquals(CardRecognition.UNKNOWN_CARD, read.recognition)
+        assertNull(read.directory); assertFalse(read.directoryReadFailed); assertTrue(fake.closed)
+    }
+    @Test fun anEmptyDirectoryIsPreservedAndDoesNotChangeIndependentApplicationRecognition() = runBlocking {
+        for (fill in listOf(0, 255)) {
+            val fake = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), directoryBytes = ByteArray(20) { fill.toByte() })
+            val read = DriverCardReader(fake).read()
+            assertEquals(CardGeneration.GEN2V2, read.generation); assertFalse(read.directoryReadFailed)
+            assertArrayEquals(ByteArray(20) { fill.toByte() }, read.directory!!.bytes)
+            assertNull(CardDirectoryParser.parse(read.directory!!)); assertNotNull(read.activity)
+        }
     }
 
     private class CardFixtureTransport(private val generation: CardGeneration,
@@ -1409,7 +1470,11 @@ class DriverCardFoundationTest {
                                        private val applicationTailFailure: Exception? = null,
                                        private val applicationTailChunkLimit: Int = 256,
                                        private val applicationTailLengthStatus: Int? = null,
-                                       private val applicationTailLengthErrorData: ByteArray = byteArrayOf()) : CardReaderTransport {
+                                       private val applicationTailLengthErrorData: ByteArray = byteArrayOf(),
+                                       private val directoryBytes: ByteArray = DirectoryFixtures.bytes(),
+                                       private val directoryFailure: Exception? = null,
+                                       private val directoryChunkLimit: Int = 20,
+                                       private val directoryEndReply: ByteArray? = null) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
@@ -1443,16 +1508,17 @@ class DriverCardFoundationTest {
             if (ins == 0xA4) {
                 file = (apdu[5].toInt() and 255) shl 8 or (apdu[6].toInt() and 255)
                 commandOrder += ins to file
-                val master = CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                val master = file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
                 if ((master && aidSelected) || (!master && !selected)) return byteArrayOf(0x6A, 0x82.toByte())
                 if (file in missingFiles) return byteArrayOf(0x6A, 0x82.toByte())
                 return byteArrayOf(0x90.toByte(), 0)
             }
             if (ins == 0xB0) {
                 commandOrder += ins to file
-                val master = CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                val master = file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
                 if ((master && aidSelected) || (!master && !selected)) throw AssertionError("Wrong card directory")
                 readFiles += file
+                if (file == CardDirectoryReader.FILE_ID) directoryFailure?.let { throw it }
                 if (file == DriverCardFiles.DRIVER_ACTIVITY) activityFailure?.let { throw it }
                 if (file == DriverCardFiles.CONTROL_ACTIVITY) controlFailure?.let { throw it }
                 if (file == CardEventFaultKind.EVENTS.fileId) eventFailure?.let { throw it }
@@ -1471,6 +1537,7 @@ class DriverCardFoundationTest {
                 val certificateKind = CardCertificateKind.entries.firstOrNull { it.fileId == file }
                 certificateKind?.let { certificateFailures[it]?.let { failure -> throw failure } }
                 val data = when (file) {
+                    CardDirectoryReader.FILE_ID -> directoryBytes
                     CardCertificateKind.CARD.fileId -> certificateBytes[CardCertificateKind.CARD] ?: return byteArrayOf(0x6A, 0x82.toByte())
                     CardCertificateKind.SIGNING.fileId -> certificateBytes[CardCertificateKind.SIGNING] ?: return byteArrayOf(0x6A, 0x82.toByte())
                     CardCertificateKind.CA.fileId -> certificateBytes[CardCertificateKind.CA] ?: return byteArrayOf(0x6A, 0x82.toByte())
@@ -1516,6 +1583,7 @@ class DriverCardFoundationTest {
                 }
                 val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)
                 val length = (apdu[4].toInt() and 255).let { if (it == 0) 256 else it }
+                if (file == CardDirectoryReader.FILE_ID && offset == 20) directoryEndReply?.let { return it }
                 if (file == DriverCardFiles.LOAD_UNLOAD) loadReads += offset to length
                 if (file == DriverCardFiles.LOAD_TYPE) typeReads += offset to length
                 if (file == DriverCardFiles.VEHICLE_UNITS) unitReads += offset to length
@@ -1545,6 +1613,7 @@ class DriverCardFoundationTest {
                 if (offset >= data.size) return byteArrayOf(0x6B, 0)
                 if (certificateKind != null && offset + length > data.size) return byteArrayOf(0x67, 0)
                 val actualLength = when {
+                    file == CardDirectoryReader.FILE_ID -> minOf(length, directoryChunkLimit)
                     file == DriverCardFiles.APPLICATION && offset >= 15 -> minOf(length, applicationTailChunkLimit)
                     file == DriverCardFiles.VEHICLE_UNITS -> minOf(length, vehicleUnitChunkLimit)
                     metadataKind != null -> minOf(length, metadataChunkLimit)

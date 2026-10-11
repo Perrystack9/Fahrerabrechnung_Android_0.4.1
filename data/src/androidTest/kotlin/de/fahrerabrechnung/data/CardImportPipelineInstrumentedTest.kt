@@ -2021,6 +2021,144 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(2, count("import_sessions")); assertTrue(results.all { imports.get(it.id)!!.identitySources.size == 3 })
     }
 
+    private fun directoryBytes() = byteArrayOf(0x61, 8, 0x4F, 6, 0xFF.toByte(), 0x54, 0x41, 0x43, 0x48, 0x4F,
+        0x61, 8, 0x4F, 6, 0xFF.toByte(), 0x53, 0x4D, 0x52, 0x44, 0x54)
+    private fun directoryRead(own: DriverCard = card(), raw: ByteArray = directoryBytes()) = originalRead(own).copy(
+        directory = CardDirectoryFile(own.generation, raw))
+
+    @Test fun masterDirectoryExtendsOnlyNewRunsTo27AndPreservesAllEarlierRequestFingerprints() = runBlocking {
+        imports.bind(card(), true)
+        val old19 = pipeline.process(masterRead(), "directory-old19")
+        val old23 = pipeline.process(certificateRead(), "directory-old23")
+        val old26 = pipeline.process(originalRead(), "directory-old26")
+        val fresh = pipeline.process(directoryRead(), "directory-new27")
+        assertEquals(27, fresh.files.size); assertEquals(1, fresh.newSourceCount)
+        assertEquals(CardImportRunStatus.SAVED, fresh.status)
+        assertEquals(2, fresh.file(CardImportFileKind.MF_DIRECTORY).decodedCount)
+        assertNull(fresh.file(CardImportFileKind.MF_DIRECTORY).firstUtcEpochSeconds)
+        assertNull(fresh.file(CardImportFileKind.MF_DIRECTORY).lastUtcEpochSeconds)
+        for (old in listOf(old19, old23, old26)) assertNull(imports.get(old.id)!!.directory)
+        assertEquals(old19, pipeline.process(masterRead(), old19.id))
+        assertEquals(old23, pipeline.process(certificateRead(), old23.id))
+        assertEquals(old26, pipeline.process(originalRead(), old26.id))
+        assertEquals(13, count("card_metadata_imports")); assertEquals(39, count("driver_import_metadata_sources"))
+        val saved = imports.get(fresh.id)!!
+        assertArrayEquals(directoryBytes(), saved.directory!!.file.bytes)
+        assertEquals(saved.driverCardId, saved.directory!!.driverCardId)
+        assertEquals(5, saved.metadata.size); assertEquals(4, saved.certificates.size); assertEquals(3, saved.identitySources.size)
+    }
+    @Test fun directoryDeduplicationRetainsSeparateSessionsAndRejectsChangedOrOmittedAttempts() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(directoryRead(), "directory-retry")
+        assertEquals(27, first.newSourceCount); assertEquals(first, pipeline.process(directoryRead(), first.id))
+        val same = pipeline.process(directoryRead(), "directory-same"); assertEquals(0, same.newSourceCount)
+        assertEquals(imports.get(first.id)!!.directory!!.id, imports.get(same.id)!!.directory!!.id)
+        rejected<IllegalArgumentException> { pipeline.process(originalRead(), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(directoryRead(raw = ByteArray(20)), first.id) }
+        val blank = pipeline.process(directoryRead(raw = ByteArray(20)), "directory-now-blank")
+        assertEquals(1, blank.newSourceCount); assertNull(imports.get(blank.id)!!.directory!!.record)
+        assertNotNull(imports.get(first.id)!!.directory!!.record); assertEquals(3, pipeline.history().size)
+    }
+    @Test fun malformedFailedAndWrongGenerationDirectoryLeaveAll26OtherSourcesAvailable() = runBlocking {
+        imports.bind(card(), true)
+        val attempts = listOf(
+            directoryRead().copy(directoryReadFailed = true) to CardImportFileStatus.READ_FAILED,
+            originalRead().copy(directoryReadFailed = true) to CardImportFileStatus.READ_FAILED,
+            directoryRead(raw = directoryBytes().also { it[3] = 5 }) to CardImportFileStatus.INVALID,
+            originalRead().copy(directory = CardDirectoryFile(CardGeneration.GEN2, directoryBytes())) to CardImportFileStatus.INVALID)
+        for ((index, attempt) in attempts.withIndex()) {
+            val run = pipeline.process(attempt.first, "directory-bad-$index")
+            assertEquals(CardImportRunStatus.PARTIAL, run.status)
+            assertEquals(attempt.second, run.file(CardImportFileKind.MF_DIRECTORY).status)
+            assertEquals(26, run.files.count { it.status == CardImportFileStatus.STORED })
+            val saved = imports.get(run.id)!!; assertNull(saved.directory)
+            assertEquals(3, saved.identitySources.size); assertEquals(4, saved.certificates.size); assertEquals(5, saved.metadata.size)
+        }
+        assertEquals(12, count("card_metadata_imports"))
+    }
+    @Test fun completeBlankDirectoriesRemainSourcesAndHaveNoActivityCoverage() = runBlocking {
+        imports.bind(card(), true)
+        for (fill in listOf(0, 255)) {
+            val raw = ByteArray(20) { fill.toByte() }
+            val run = pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(),
+                directory = CardDirectoryFile(card().generation, raw)), "directory-blank-$fill")
+            assertEquals(1, run.newSourceCount); assertEquals(0, run.file(CardImportFileKind.MF_DIRECTORY).decodedCount)
+            assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.MF_DIRECTORY).status)
+            assertNull(run.file(CardImportFileKind.MF_DIRECTORY).firstUtcEpochSeconds)
+            val saved = imports.get(run.id)!!; assertNull(saved.directory!!.record)
+            assertArrayEquals(raw, saved.directory!!.file.bytes)
+            assertTrue(saved.metadata.isEmpty()); assertTrue(saved.certificates.isEmpty()); assertTrue(saved.identitySources.isEmpty())
+        }
+        assertEquals(2, count("card_metadata_imports")); assertEquals(0, count("driver_activity_days")); assertEquals(0, count("driver_vehicle_uses"))
+    }
+    @Test fun aDirectoryCanBeTheOnlySavedSourceForEitherSupportedGeneration() = runBlocking {
+        for ((index, generation) in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2).withIndex()) {
+            val own = card().copy(generation = generation, card = card().card.copy(issued = Instant.ofEpochSecond(index.toLong())))
+            imports.bind(own, true)
+            val run = pipeline.process(CardReadResult(CardRecognition.DRIVER, generation, own,
+                directory = CardDirectoryFile(generation, directoryBytes())), "only-directory-${generation.name}")
+            assertEquals(1, run.newSourceCount); assertEquals(3, run.files.size)
+            val saved = imports.get(run.id)!!; assertEquals(generation, saved.directory!!.file.generation)
+            assertNull(saved.activity); assertNull(saved.vehicles); assertTrue(saved.metadata.isEmpty())
+        }
+        assertEquals(2, count("card_metadata_imports")); assertEquals(2, count("driver_cards"))
+    }
+    @Test fun unconfirmedAndForeignDirectoriesNeverCreatePersistentSourcesOrReceipts() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(directoryRead(), "directory-unconfirmed") }
+        assertNull(imports.profile()); assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("card_import_runs"))
+        imports.bind(card(), true)
+        val foreign = card("foreign-directory", card().holder.copy(surname = "OTHER"))
+        rejected<ForeignCardRejected> { pipeline.process(directoryRead(foreign), "directory-foreign") }
+        assertEquals(1, count("driver_cards")); assertEquals(0, count("import_sessions")); assertEquals(0, count("card_metadata_imports"))
+    }
+    @Test fun sameNumberReplacementKeepsIdenticalDirectoryBytesBoundToItsPhysicalCard() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(directoryRead(), "directory-physical-old")
+        val replacement = card().copy(card = card().card.copy(expires = card().card.expires.plusSeconds(86400)))
+        val next = pipeline.process(directoryRead(replacement), "directory-physical-new")
+        val before = imports.get(first.id)!!.directory!!; val after = imports.get(next.id)!!.directory!!
+        assertNotEquals(first.driverCardId, next.driverCardId); assertNotEquals(before.id, after.id)
+        assertArrayEquals(before.file.bytes, after.file.bytes)
+        assertEquals(first.driverCardId, before.driverCardId); assertEquals(next.driverCardId, after.driverCardId)
+    }
+    @Test fun finalReceiptFailureRollsBackTheDirectoryAndAllSessionLinksTogether() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(originalRead(), "before-directory-rollback")
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_directory_receipt BEFORE UPDATE ON card_import_runs WHEN NEW.status = 'SAVED' BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        val failed = pipeline.process(directoryRead(), "directory-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status); assertNull(failed.sessionId)
+        assertTrue(failed.files.all { it.status == CardImportFileStatus.NOT_STORED })
+        assertEquals(12, count("card_metadata_imports")); assertEquals(12, count("driver_import_metadata_sources"))
+        assertEquals(1, count("import_sessions")); assertNull(imports.get(old.id)!!.directory)
+    }
+    @Test fun encryptedReopeningRestoresOnlyTheSelectedDirectoryIncludingEmptyAndMissingHistory() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(originalRead(), "directory-before")
+        val first = pipeline.process(directoryRead(), "directory-full")
+        val last = pipeline.process(directoryRead(raw = ByteArray(20)), "directory-empty")
+        val before = imports.get(first.id)!!.directory!!
+        db.close(); assertFalse(context.getDatabasePath(AppDatabase.DATABASE_NAME).readBytes().take(16).toByteArray().contentEquals("SQLite format 3\u0000".toByteArray()))
+        open(); assertNull(imports.get(old.id)!!.directory)
+        assertEquals(before.id, imports.get(first.id)!!.directory!!.id)
+        assertArrayEquals(directoryBytes(), imports.get(first.id)!!.directory!!.file.bytes)
+        assertNull(imports.get(last.id)!!.directory!!.record); assertEquals(3, pipeline.history().size)
+    }
+    @Test fun directoryForeignKeysRejectWrongKindOrPhysicalCardAndTamperingFailsOnlyItsSession() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(originalRead(), "directory-safe-old")
+        val fresh = pipeline.process(directoryRead(), "directory-corruption")
+        val source = imports.get(fresh.id)!!.directory!!
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardMetadataKind.CURRENT_USAGE.name, source.driverCardId, source.id)) }
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardDirectoryStore.STORAGE_KIND, "wrong-card", source.id)) }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(directoryBytes().also { it[8] = 0 }, source.id))
+        rejected<IllegalStateException> { imports.get(fresh.id) }
+        assertNull(imports.get(old.id)!!.directory); assertEquals(2, pipeline.history().size)
+    }
+    @Test fun directSaveRetryRequiresTheEntireUnionAndManualActivitySelectionDoesNotSaveDirectory() = runBlocking {
+        imports.bind(card(), true)
+        val saved = imports.save(directoryRead(), "directory-direct", CardImportSelection.ALL_AVAILABLE)
+        assertEquals(saved.id, imports.save(directoryRead(), saved.id, CardImportSelection.ALL_AVAILABLE).id)
+        rejected<IllegalStateException> { imports.save(originalRead(), saved.id, CardImportSelection.ALL_AVAILABLE) }
+        rejected<IllegalStateException> { imports.save(directoryRead(raw = ByteArray(20)), saved.id, CardImportSelection.ALL_AVAILABLE) }
+        val onlyActivity = imports.save(directoryRead(), "directory-manual-activity", CardImportSelection.ACTIVITY)
+        assertNotNull(onlyActivity.activity); assertNull(onlyActivity.directory); assertEquals(2, imports.all().size)
+    }
+
     private fun certificateFixture(role: Int = 17, generation: CardGeneration = CardGeneration.GEN2V2): ByteArray {
         if (generation == CardGeneration.GEN1) return ByteArray(194) { (it + role).toByte() }
         fun tlv(tag: Int, bytes: ByteArray): ByteArray {
