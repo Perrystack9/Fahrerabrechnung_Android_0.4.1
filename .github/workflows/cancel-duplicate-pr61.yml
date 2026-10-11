@@ -6,10 +6,11 @@ on:
 permissions:
   contents: read
   actions: write
+  pull-requests: read
 
 jobs:
   cancel:
-    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/cancel-duplicate-pr61-9dc77e15'
+    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/cancel-duplicate-pr61-9dc77e15-verified'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -25,7 +26,7 @@ jobs:
             }
             const { data: run } = await github.rest.actions.getWorkflowRun({ ...repo, run_id: 38121971730 });
             if (run.event !== 'pull_request' || run.head_sha !== source ||
-                !run.pull_requests.some(pr => pr.number === 61)) {
+                run.head_branch !== 'feature/card-original-identification-import' || run.workflow_id !== 364659148) {
               throw new Error('The prepared run does not belong to the duplicate PR61 source.');
             }
             if (run.status === 'completed') { core.info('The duplicate CI has already completed.'); return; }
