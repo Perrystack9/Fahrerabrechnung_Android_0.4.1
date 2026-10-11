@@ -1423,7 +1423,7 @@ class DriverCardFoundationTest {
 
     @Test fun advertisedCommunicationFilesAreReadUnderMfBeforeEitherAidAndRetainedIndependently() = runBlocking {
         for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) for (inverse in listOf(false, true)) {
-            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr(inverse = inverse))
+            val transport = CardFixtureTransport(generation, identityFixture(), communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr(inverse = inverse))
             val result = DriverCardReader(transport).read()
             assertEquals(generation, result.generation)
             assertEquals(CardCommunicationKind.entries.toSet(), result.communication.keys)
@@ -1440,7 +1440,7 @@ class DriverCardFoundationTest {
     @Test fun absentOrMalformedAtrCapabilitiesDoNotAddOptionalAttemptsToHistoricalReads() = runBlocking {
         for (atr in listOf(byteArrayOf(0x3B, 0), communicationFixtureAtr(0), communicationFixtureAtr(2, inverse = true),
             byteArrayOf(0x3B, 4, 0x80.toByte(), 0x73, 0, 0))) {
-            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(), communicationAtr = atr)
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), communicationBytes = communicationFixtureBytes(), communicationAtr = atr)
             val result = DriverCardReader(transport).read()
             assertTrue(result.communication.isEmpty())
             assertFalse(transport.commandOrder.any { it.second in CardCommunicationKind.entries.map { kind -> kind.fileId } })
@@ -1448,7 +1448,7 @@ class DriverCardFoundationTest {
     }
     @Test fun advertisedFileFailuresKeepOtherCommunicationAndOrdinarySourcesAvailable() = runBlocking {
         for (kind in CardCommunicationKind.entries) {
-            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(),
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), communicationBytes = communicationFixtureBytes(),
                 communicationAtr = communicationFixtureAtr(), communicationFailures = mapOf(kind to ReaderException(ReaderFailure.TIMEOUT)))
             val result = DriverCardReader(transport).read()
             assertTrue(result.communication.getValue(kind).readFailed); assertNull(result.communication.getValue(kind).file)
@@ -1462,7 +1462,7 @@ class DriverCardFoundationTest {
             communicationFixtureBytes() + (CardCommunicationKind.ATR_INFO to ByteArray(6)),
             communicationFixtureBytes() + (CardCommunicationKind.EXTENDED_LENGTH to byteArrayOf(2, 2, 1)))
         for (bytes in attempts) {
-            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = bytes, communicationAtr = communicationFixtureAtr())
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), communicationBytes = bytes, communicationAtr = communicationFixtureAtr())
             val result = DriverCardReader(transport).read()
             assertEquals(1, result.communication.values.count { it.readFailed })
             assertEquals(1, result.communication.values.count { it.file != null })
@@ -1470,14 +1470,14 @@ class DriverCardFoundationTest {
         }
     }
     @Test fun advertisedCommunicationCancellationClosesReaderAndPreventsApplicationRead() = runBlocking {
-        val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(),
+        val transport = CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), communicationBytes = communicationFixtureBytes(),
             communicationAtr = communicationFixtureAtr(), communicationFailures = mapOf(CardCommunicationKind.ATR_INFO to kotlinx.coroutines.CancellationException("synthetic")))
         try { DriverCardReader(transport).read(); fail() } catch (_: kotlinx.coroutines.CancellationException) { }
         assertTrue(transport.closed); assertFalse(transport.aidSelected)
     }
     @Test fun unknownAndGen1RecognitionDoNotExposeGen2CommunicationSources() = runBlocking {
         for (generation in listOf(CardGeneration.UNKNOWN, CardGeneration.GEN1)) {
-            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr())
+            val transport = CardFixtureTransport(generation, identityFixture(), communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr())
             val result = DriverCardReader(transport).read()
             assertTrue(result.communication.isEmpty()); assertTrue(transport.closed)
         }
