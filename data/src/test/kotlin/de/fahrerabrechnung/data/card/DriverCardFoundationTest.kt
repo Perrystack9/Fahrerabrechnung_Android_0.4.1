@@ -1174,7 +1174,7 @@ class DriverCardFoundationTest {
             assertNotNull(result.activity); assertNotNull(result.vehicles)
             assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
             assertFalse(DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
-            assertEquals(listOf(15 to 2, 15 to 1), fake.applicationTailReads)
+            assertEquals(listOf(15 to 2, 15 to 1, 15 to 1), fake.applicationTailReads)
             assertTrue(fake.closed)
         }
     }
@@ -1290,6 +1290,60 @@ class DriverCardFoundationTest {
         assertEquals(CardCertificateKind.entries.toSet(), read.certificates.keys)
         assertTrue(read.certificates.values.all { it.file == null && it.readFailed })
         assertNotNull(read.activity); assertNotNull(read.vehicles); assertTrue(fake.closed)
+    }
+
+    @Test fun originalApplicationAndIdentificationAreRetainedFromTheSameRecognitionBuffers() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN1, CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val fake = CardFixtureTransport(generation, identityFixture())
+            val read = DriverCardReader(fake).read()
+            assertEquals(CardOriginalFileKind.entries.filter { it.supports(generation) }.toSet(), read.originalFiles.keys)
+            assertTrue(read.originalFiles.values.all { it.file != null && !it.readFailed })
+            val identification = read.originalFiles.getValue(CardOriginalFileKind.IDENTIFICATION).file!!
+            assertArrayEquals(identityFixture(), identification.bytes)
+            assertEquals(read.card, (CardOriginalFileParser.parse(identification) as CardIdentificationRecord).card)
+            assertEquals(1, fake.commandOrder.count { it == 0xA4 to DriverCardFiles.APPLICATION })
+            assertEquals(1, fake.commandOrder.count { it == 0xA4 to DriverCardFiles.IDENTIFICATION })
+            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) }); assertTrue(fake.closed)
+        }
+    }
+    @Test fun legacyApplicationRetainsExactlyFifteenBytesWithoutInventingVehicleUnitCapacity() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val read = DriverCardReader(CardFixtureTransport(generation, identityFixture(), legacyApplication = true)).read()
+            val file = read.originalFiles.getValue(CardOriginalFileKind.APPLICATION_IDENTIFICATION).file!!
+            assertEquals(15, file.bytes.size)
+            assertNull((CardOriginalFileParser.parse(file) as CardApplicationIdentificationRecord).vehicleUnitRecordsRaw)
+            assertNotNull(read.activity)
+        }
+    }
+    @Test fun missingV2ExtensionIsReportedWithoutDiscardingTheOtherOriginals() = runBlocking {
+        val read = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.APPLICATION_V2))).read()
+        assertTrue(read.originalFiles.getValue(CardOriginalFileKind.APPLICATION_IDENTIFICATION_V2).readFailed)
+        assertNotNull(read.originalFiles.getValue(CardOriginalFileKind.APPLICATION_IDENTIFICATION).file)
+        assertNotNull(read.originalFiles.getValue(CardOriginalFileKind.IDENTIFICATION).file)
+        assertNotNull(read.activity); assertNotNull(read.vehicles)
+    }
+    @Test fun overlongOriginalIdentificationDoesNotChangeRecognitionOrOtherSources() = runBlocking {
+        val read = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture() + byteArrayOf(7))).read()
+        assertEquals(CardRecognition.DRIVER, read.recognition)
+        assertTrue(read.originalFiles.getValue(CardOriginalFileKind.IDENTIFICATION).readFailed)
+        assertNull(read.originalFiles.getValue(CardOriginalFileKind.IDENTIFICATION).file)
+        assertNotNull(read.originalFiles.getValue(CardOriginalFileKind.APPLICATION_IDENTIFICATION).file)
+        assertNotNull(read.activity)
+    }
+    @Test fun overlongOriginalApplicationIsIndependentFromItsRecognizedCapacityPrefix() = runBlocking {
+        val raw = ByteArray(18).also { it[0] = 1; it[1] = 1; it[2] = 1; it[3] = 12; it[4] = 24; it[6] = 16; it[8] = 2; it[10] = 112; it[11] = 1; it[12] = 80; it[14] = 112; it[16] = 100 }
+        val read = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2V2, identityFixture(), applicationBytes = raw)).read()
+        assertEquals(CardRecognition.DRIVER, read.recognition)
+        assertTrue(read.originalFiles.getValue(CardOriginalFileKind.APPLICATION_IDENTIFICATION).readFailed)
+        assertNotNull(read.originalFiles.getValue(CardOriginalFileKind.IDENTIFICATION).file); assertNotNull(read.activity)
+    }
+    @Test fun unknownOtherAndInconsistentCardsExposeNoOriginalIdentificationFiles() = runBlocking {
+        val unknown = DriverCardReader(CardFixtureTransport(CardGeneration.UNKNOWN, identityFixture())).read()
+        val other = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2, identityFixture(),
+            applicationBytes = ByteArray(17).also { it[0] = 2; it[1] = 1 })).read()
+        val inconsistent = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2, ByteArray(143))).read()
+        assertTrue(listOf(unknown, other, inconsistent).all { it.originalFiles.isEmpty() })
     }
 
     private class CardFixtureTransport(private val generation: CardGeneration,

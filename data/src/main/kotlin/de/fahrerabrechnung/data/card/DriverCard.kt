@@ -52,7 +52,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val vehicleUnits: CardVehicleUnitsFile? = null,
                           val vehicleUnitsReadFailed: Boolean = false,
                           val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap(),
-                          val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap())
+                          val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap(),
+                          val originalFiles: Map<CardOriginalFileKind, CardOriginalFileRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -301,14 +302,25 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
             if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
+            val application = g2 ?: g1!!
+            val originalApplication = CardOriginalFileReader.retain(session,
+                CardOriginalFileKind.APPLICATION_IDENTIFICATION, generation, application)
             // The V2 extension supplies the new EF's capacity. A failure must not discard legacy EFs.
             val applicationV2 = if (generation == CardGeneration.GEN2V2) try {
                 readFile(session, DriverCardFiles.APPLICATION_V2, 10)
             } catch (_: ReaderException) { null } else null
+            val originalApplicationV2 = if (generation == CardGeneration.GEN2V2)
+                CardOriginalFileReader.retain(session, CardOriginalFileKind.APPLICATION_IDENTIFICATION_V2,
+                    generation, applicationV2) else null
             return try {
-                val application = g2 ?: g1!!
-                val identity = DriverCardDecoder.identity(
-                    readFile(session, DriverCardFiles.IDENTIFICATION, 143), generation)
+                val identificationBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
+                val identity = DriverCardDecoder.identity(identificationBytes, generation)
+                val originalIdentification = CardOriginalFileReader.retain(session,
+                    CardOriginalFileKind.IDENTIFICATION, generation, identificationBytes)
+                val originals = mapOf(CardOriginalFileKind.APPLICATION_IDENTIFICATION to originalApplication,
+                    CardOriginalFileKind.IDENTIFICATION to originalIdentification) +
+                    if (originalApplicationV2 != null) mapOf(CardOriginalFileKind.APPLICATION_IDENTIFICATION_V2 to originalApplicationV2)
+                    else emptyMap()
                 // Failure of one EF must not prevent trying the other or expose incomplete bytes.
                 val activity = try {
                     val length = DriverCardDecoder.activityLength(application, generation)
@@ -412,7 +424,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
                     loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
                     vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
-                    metadata = metadata, certificates = certificates)
+                    metadata = metadata, certificates = certificates, originalFiles = originals)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

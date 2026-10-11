@@ -27,7 +27,8 @@ internal class CardMetadataStore(private val dao: CardMetadataDao) {
         val result = mutableMapOf<CardMetadataKind, SavedCardMetadata>()
         for (source in dao.sources(sessionId)) {
             // Certificates use their own namespace and decoder in these same schema18 tables.
-            if (source.kind in CardCertificateKind.entries.map { it.storageKind }) continue
+            if (source.kind in CardCertificateKind.entries.map { it.storageKind } ||
+                source.kind in CardOriginalFileKind.entries.map { it.storageKind }) continue
             val kind = CardMetadataKind.valueOf(source.kind)
             check(source.driverCardId == cardId)
             val row = checkNotNull(dao.get(source.sourceId))

@@ -674,6 +674,60 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithText("Ausstellerreferenz: verborgen").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun originalHistoryNavigationUsesExactSessionAndClearsForTheOlderReceipt() {
+        fun originalRead(capacity: Int) = read().copy(originalFiles = mapOf(CardOriginalFileKind.APPLICATION_IDENTIFICATION to
+            CardOriginalFileRead(CardOriginalFile(CardOriginalFileKind.APPLICATION_IDENTIFICATION, card().generation,
+                OriginalUiFixtures.application(capacity = capacity)))))
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "before-original-ui")
+            pipeline.process(originalRead(13780).copy(activity = null, vehicles = null), "early-original-only")
+            pipeline.process(originalRead(65535), "latest-original-ui")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert"); compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick(); await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Anwendungs- und Identifikationsdateien").performScrollTo().performClick()
+        }
+        open("early-original-only")
+        compose.onNodeWithText("Aktivitätsspeicher: 13780 Bytes").performScrollTo().assertIsDisplayed()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("before-original-ui")
+        compose.onNodeWithText("Für diese Übernahme ist diese Originaldatei nicht gespeichert.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Aktivitätsspeicher:", substring = true).assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("latest-original-ui")
+        compose.onNodeWithText("Aktivitätsspeicher: 65535 Bytes").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Aktivitätsspeicher: 13780 Bytes").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+    @Test fun originalOnlyLatestImportOpensFromActualRootWithoutActivityOrVehicleSource() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(), originalFiles = mapOf(
+                CardOriginalFileKind.APPLICATION_IDENTIFICATION to CardOriginalFileRead(CardOriginalFile(
+                    CardOriginalFileKind.APPLICATION_IDENTIFICATION, card().generation, OriginalUiFixtures.application())))), "latest-only-original")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.INCOMPLETE, lastRun = run))
+        } }
+        await("Gespeicherte Daten ansehen"); compose.onNodeWithText("Gespeicherte Daten ansehen").performScrollTo().performClick()
+        await("Fahrerkarten-Details"); compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Anwendungs- und Identifikationsdateien").performScrollTo().performClick()
+        compose.onNodeWithText("Aktivitätsspeicher: 13780 Bytes").performScrollTo().assertIsDisplayed()
+        repeat(2) { compose.onNodeWithTag("back").performClick() }
+        compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Anwendungs- und Identifikationsdateien").performScrollTo().performClick()
+        compose.onNodeWithText("Dateigröße: 17 Bytes").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun licenceHistoryNavigationUsesOnlyTheSelectedSessionAndResetsTheNumber() =
         metadataHistoryNavigation(CardMetadataKind.DRIVING_LICENCE, "Führerschein",
             "Ausstellungsstaat: Kartenwert 1", "Ausstellungsstaat: Kartenwert 7")
