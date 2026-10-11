@@ -1,0 +1,33 @@
+name: Cancel duplicate PR61 verification only
+
+on:
+  create:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  cancel:
+    if: github.event.ref_type == 'branch' && github.event.ref == 'ci/cancel-duplicate-pr61-9dc77e15'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check duplicate receipt and cancel its own CI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repo = { owner: context.repo.owner, repo: context.repo.repo };
+            const source = '9dc77e153d71cf180afa5f583480d597eb42962d';
+            const { data: pull } = await github.rest.pulls.get({ ...repo, pull_number: 61 });
+            if (pull.state !== 'closed' || pull.merged || pull.head.sha !== source) {
+              throw new Error('Only the closed unmerged duplicate at the exact prepared source may be cancelled.');
+            }
+            const { data: run } = await github.rest.actions.getWorkflowRun({ ...repo, run_id: 38121971730 });
+            if (run.event !== 'pull_request' || run.head_sha !== source ||
+                !run.pull_requests.some(pr => pr.number === 61)) {
+              throw new Error('The prepared run does not belong to the duplicate PR61 source.');
+            }
+            if (run.status === 'completed') { core.info('The duplicate CI has already completed.'); return; }
+            await github.rest.actions.cancelWorkflowRun({ ...repo, run_id: run.id });
+            core.info('Cancelled only the duplicate PR61 run. PR59 and PR60 are unchanged.');
