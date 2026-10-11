@@ -54,7 +54,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val metadata: Map<CardMetadataKind, CardMetadataRead> = emptyMap(),
                           val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap(),
                           val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap(),
-                          val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false)
+                          val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false,
+                          val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -292,7 +293,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 ReaderState.Empty -> throw ReaderException(ReaderFailure.CARD_ABSENT)
                 ReaderState.Disconnected -> throw ReaderException(ReaderFailure.DISCONNECTED)
             }
-            AtrDecoder.parse(transport.powerOn())
+            val atr = AtrDecoder.parse(transport.powerOn())
             val session = ApduSession(transport)
             // TCS18: MF is the current directory immediately after ATR. Read its EFs before
             // selecting either application; retain only temporary bytes until driver identification.
@@ -300,6 +301,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 try { readFile(session, kind.fileId, kind.fileLength) } catch (_: ReaderException) { null }
             }
             val rawDirectory = try { CardDirectoryReader.read(session) } catch (_: ReaderException) { null }
+            val extendedSupport = CardCommunicationParser.advertisedBy(atr)
+            val rawCommunication = if (extendedSupport != true) emptyMap() else
+                CardCommunicationKind.entries.associateWith { kind ->
+                    try { CardCommunicationReader.read(session, kind, extendedSupport) }
+                    catch (_: ReaderException) { null to true }
+                }.filterValues { (bytes, failed) -> bytes != null || failed }
             val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
             val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
             val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
@@ -416,6 +423,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 val directory = if (supportsDirectory) try { rawDirectory?.let {
                     CardDirectoryFile(generation, it).also { frozen -> CardDirectoryParser.parse(frozen) }
                 } } catch (_: ParseError) { null } else null
+                val communication = if (!supportsDirectory) emptyMap() else rawCommunication.mapValues { (kind, captured) ->
+                    val file = try { captured.first?.let {
+                        CardCommunicationFile(kind, generation, it).also { frozen -> CardCommunicationParser.parse(frozen) }
+                    } } catch (_: ParseError) { null }
+                    CardCommunicationRead(file, readFailed = captured.second || file == null)
+                }
                 CardReadResult(recognized, generation, identity, activity, vehicles,
                     vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
                     controls = controls, controlReadFailed = controls == null,
@@ -432,7 +445,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
                     vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
                     metadata = metadata, certificates = certificates, identitySources = identitySources,
-                    directory = directory, directoryReadFailed = supportsDirectory && directory == null)
+                    directory = directory, directoryReadFailed = supportsDirectory && directory == null,
+                    communication = communication)
             } catch (_: ParseError) {
                 CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
             }

@@ -1415,6 +1415,73 @@ class DriverCardFoundationTest {
         }
     }
 
+    private fun communicationFixtureBytes() = mapOf(
+        CardCommunicationKind.ATR_INFO to byteArrayOf(0x7F, 0x66, 4, 2, 2, 1, 0),
+        CardCommunicationKind.EXTENDED_LENGTH to byteArrayOf(2, 1, 0x11))
+    private fun communicationFixtureAtr(flag: Int = 0x40) = byteArrayOf(0x3B, 5, 0x80.toByte(), 0x73, 0, 0, flag.toByte())
+
+    @Test fun advertisedCommunicationFilesAreReadUnderMfBeforeEitherAidAndRetainedIndependently() = runBlocking {
+        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) {
+            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr())
+            val result = DriverCardReader(transport).read()
+            assertEquals(generation, result.generation)
+            assertEquals(CardCommunicationKind.entries.toSet(), result.communication.keys)
+            for (kind in CardCommunicationKind.entries) {
+                val file = result.communication.getValue(kind).file!!
+                assertArrayEquals(communicationFixtureBytes().getValue(kind), file.bytes)
+                assertFalse(result.communication.getValue(kind).readFailed)
+                val select = transport.commandOrder.indexOf(0xA4 to kind.fileId)
+                assertTrue(select >= 0 && select < transport.commandOrder.indexOf(0xA4 to 0))
+            }
+            assertEquals(setOf(0xA4, 0xB0), transport.instructions.toSet()); assertTrue(transport.closed)
+        }
+    }
+    @Test fun absentOrMalformedAtrCapabilitiesDoNotAddOptionalAttemptsToHistoricalReads() = runBlocking {
+        for (atr in listOf(byteArrayOf(0x3B, 0), communicationFixtureAtr(0),
+            byteArrayOf(0x3B, 4, 0x80.toByte(), 0x73, 0, 0))) {
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(), communicationAtr = atr)
+            val result = DriverCardReader(transport).read()
+            assertTrue(result.communication.isEmpty())
+            assertFalse(transport.commandOrder.any { it.second in CardCommunicationKind.entries.map { kind -> kind.fileId } })
+        }
+    }
+    @Test fun advertisedFileFailuresKeepOtherCommunicationAndOrdinarySourcesAvailable() = runBlocking {
+        for (kind in CardCommunicationKind.entries) {
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(),
+                communicationAtr = communicationFixtureAtr(), communicationFailures = mapOf(kind to ReaderException(ReaderFailure.TIMEOUT)))
+            val result = DriverCardReader(transport).read()
+            assertTrue(result.communication.getValue(kind).readFailed); assertNull(result.communication.getValue(kind).file)
+            assertNotNull(result.communication.getValue(CardCommunicationKind.entries.single { it != kind }).file)
+            assertNotNull(result.card); assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.directory)
+            assertTrue(transport.closed)
+        }
+    }
+    @Test fun shortAndMalformedAdvertisedSourcesNeverBecomeSuccessfulPrefixes() = runBlocking {
+        val attempts = listOf(communicationFixtureBytes() - CardCommunicationKind.ATR_INFO,
+            communicationFixtureBytes() + (CardCommunicationKind.ATR_INFO to ByteArray(6)),
+            communicationFixtureBytes() + (CardCommunicationKind.EXTENDED_LENGTH to byteArrayOf(2, 2, 1)))
+        for (bytes in attempts) {
+            val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = bytes, communicationAtr = communicationFixtureAtr())
+            val result = DriverCardReader(transport).read()
+            assertEquals(1, result.communication.values.count { it.readFailed })
+            assertEquals(1, result.communication.values.count { it.file != null })
+            assertNotNull(result.card); assertTrue(transport.closed)
+        }
+    }
+    @Test fun advertisedCommunicationCancellationClosesReaderAndPreventsApplicationRead() = runBlocking {
+        val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(),
+            communicationAtr = communicationFixtureAtr(), communicationFailures = mapOf(CardCommunicationKind.ATR_INFO to kotlinx.coroutines.CancellationException("synthetic")))
+        try { DriverCardReader(transport).read(); fail() } catch (_: kotlinx.coroutines.CancellationException) { }
+        assertTrue(transport.closed); assertFalse(transport.aidSelected)
+    }
+    @Test fun unknownAndGen1RecognitionDoNotExposeGen2CommunicationSources() = runBlocking {
+        for (generation in listOf(CardGeneration.UNKNOWN, CardGeneration.GEN1)) {
+            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr())
+            val result = DriverCardReader(transport).read()
+            assertTrue(result.communication.isEmpty()); assertTrue(transport.closed)
+        }
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -1474,7 +1541,10 @@ class DriverCardFoundationTest {
                                        private val directoryBytes: ByteArray = DirectoryFixtures.bytes(),
                                        private val directoryFailure: Exception? = null,
                                        private val directoryChunkLimit: Int = 20,
-                                       private val directoryEndReply: ByteArray? = null) : CardReaderTransport {
+                                       private val directoryEndReply: ByteArray? = null,
+                                       private val communicationBytes: Map<CardCommunicationKind, ByteArray> = emptyMap(),
+                                       private val communicationFailures: Map<CardCommunicationKind, Exception> = emptyMap(),
+                                       private val communicationAtr: ByteArray = byteArrayOf(0x3B, 0)) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
@@ -1489,7 +1559,7 @@ class DriverCardFoundationTest {
         private var file = 0
         override suspend fun availability() = SourceAvailability.AVAILABLE
         override suspend fun open() = ReaderState.Open
-        override suspend fun powerOn() = byteArrayOf(0x3B, 0)
+        override suspend fun powerOn() = communicationAtr.copyOf()
         override suspend fun exchange(apdu: ByteArray): ByteArray {
             val ins = apdu[1].toInt() and 255
             instructions += ins
@@ -1508,14 +1578,14 @@ class DriverCardFoundationTest {
             if (ins == 0xA4) {
                 file = (apdu[5].toInt() and 255) shl 8 or (apdu[6].toInt() and 255)
                 commandOrder += ins to file
-                val master = file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                val master = file in CardCommunicationKind.entries.map { it.fileId } || file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
                 if ((master && aidSelected) || (!master && !selected)) return byteArrayOf(0x6A, 0x82.toByte())
                 if (file in missingFiles) return byteArrayOf(0x6A, 0x82.toByte())
                 return byteArrayOf(0x90.toByte(), 0)
             }
             if (ins == 0xB0) {
                 commandOrder += ins to file
-                val master = file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
+                val master = file in CardCommunicationKind.entries.map { it.fileId } || file == CardDirectoryReader.FILE_ID || CardMetadataKind.entries.firstOrNull { it.fileId == file }?.inMasterFile == true
                 if ((master && aidSelected) || (!master && !selected)) throw AssertionError("Wrong card directory")
                 readFiles += file
                 if (file == CardDirectoryReader.FILE_ID) directoryFailure?.let { throw it }
@@ -1532,11 +1602,15 @@ class DriverCardFoundationTest {
                 if (file == DriverCardFiles.VEHICLE_UNITS) vehicleUnitFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES) placeFailure?.let { throw it }
                 if (file == DriverCardFiles.PLACES_AUTHENTICATION) placeAuthFailure?.let { throw it }
+                val communicationKind = CardCommunicationKind.entries.firstOrNull { it.fileId == file }
+                communicationKind?.let { communicationFailures[it]?.let { failure -> throw failure } }
                 val metadataKind = CardMetadataKind.entries.firstOrNull { it.fileId == file }
                 metadataKind?.let { metadataFailures[it]?.let { failure -> throw failure } }
                 val certificateKind = CardCertificateKind.entries.firstOrNull { it.fileId == file }
                 certificateKind?.let { certificateFailures[it]?.let { failure -> throw failure } }
                 val data = when (file) {
+                    CardCommunicationKind.ATR_INFO.fileId -> communicationBytes[CardCommunicationKind.ATR_INFO] ?: return byteArrayOf(0x6A, 0x82.toByte())
+                    CardCommunicationKind.EXTENDED_LENGTH.fileId -> communicationBytes[CardCommunicationKind.EXTENDED_LENGTH] ?: return byteArrayOf(0x6A, 0x82.toByte())
                     CardDirectoryReader.FILE_ID -> directoryBytes
                     CardCertificateKind.CARD.fileId -> certificateBytes[CardCertificateKind.CARD] ?: return byteArrayOf(0x6A, 0x82.toByte())
                     CardCertificateKind.SIGNING.fileId -> certificateBytes[CardCertificateKind.SIGNING] ?: return byteArrayOf(0x6A, 0x82.toByte())

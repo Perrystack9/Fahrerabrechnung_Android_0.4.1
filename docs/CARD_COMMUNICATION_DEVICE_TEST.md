@@ -1,0 +1,12 @@
+# Späterer Gerätetest der Kommunikationsquellen
+
+**Noch keine neue APK ausgegeben oder Gerätebestätigung erhalten.** Entwurfsversion 40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Anleitung](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md) und Geräte-/Merge-Sperre gelten weiterhin.
+
+Eine neue APK darf erst nach der vollständigen grünen CI am exakten neuen Produktkopf ausgegeben werden. Als Update über die bestehende FahrerTagebuch-Test-App installieren; nicht deinstallieren oder Daten löschen. Die bestätigte Gerätebasis bleibt PR58/40117, solange Tobi keine neue Bestätigung gibt.
+
+1. Nach dem Update eigenes Profil und bisherige Übernahmen prüfen; alte Übernahmen dürfen keine neuen Kommunikationsquellen erhalten.
+2. Eigene Karte im bisherigen Galaxy-S23-/Android-16-/CCID-Kontext neu lesen. Bisherige Quellen müssen unabhängig weiter funktionieren. Die beiden neuen EFs werden nur bei eindeutiger ATR-Ankündigung versucht. Fehlende optionale Angaben sind kein Ersatz für einen realen Positivtest; angekündigte, aber fehlende/ungültige Daten müssen separat als fehlgeschlagen erscheinen.
+3. Neue Übernahme → Fahrerkarten-Details → Kommunikationsangaben öffnen. Bei tatsächlich gelesenen Dateien müssen Dateigrößen und bekannte T=0/T=1-Angaben angezeigt werden. Leere Datei ist von fehlender historischer Quelle zu unterscheiden. Bei unbekanntem Protokollcode darf keine Unterstützung erfunden werden; ATR/INFO-Puffergrößen werden nicht interpretiert.
+4. App vollständig schließen und ohne Leser wieder öffnen. Genau diese Übernahme erneut öffnen, dann eine ältere auswählen. Keine jüngere Quelle in der alten Übernahme. Kartenlesung wiederholen: unveränderte Dateien deduplizieren, getrennte Übernahmen erhalten; Erstbestätigung nicht erneut verlangen.
+
+In der Rückmeldung Installationsversion und beobachteten Umfang nennen. Falls die Karte erweiterte Länge nicht eindeutig ankündigt, deckt der Test nur Update, bisherigen Import und fehlende optionale Angaben ab; kein realer ATR/INFO-/Extended_Length-Positivfall ist dann bestätigt. Keine anderen Karten/Leser, VU-Konfiguration, signierten Downloads oder Kryptoprüfungen aus dieser Rückmeldung ableiten.

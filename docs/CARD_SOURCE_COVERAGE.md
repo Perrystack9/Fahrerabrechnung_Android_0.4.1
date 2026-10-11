@@ -1,3 +1,7 @@
+Aktueller Fortsetzungsstand 11.10.2026: PR60/40120 bleibt unverändert an `85d0614235e4d9b5384d96d9ee124aab1f9fbc3a`, gemeinsame ZIP bereitgestellt und CI bestanden, Gerätebestätigung weiterhin ausstehend. Neuer getrennt zu prüfender kumulativer Folgeentwurf 40121/Schema18 ergänzt bedingte MF-Kommunikationsquellen und Quellenmap-Snapshots; bis29 unterstützte Gen2V2-Quellen nur bei eindeutig angekündigter Erweiterung. 38 zusätzliche Testmethoden, lokale Grenzen/CI-Guards/Shellsyntax/Diff bestanden; neue vollständige Android-CI erforderlich. Alle Entwürfe ungemergt. [Verbindliche Fortsetzung und genaue offene Grenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Keine Browser, Unteragenten oder Bereinigung; Actions-Budget unverändert 2 USD. Ältere Checkpoints bleiben historische Stände.
+
+---
+
 Aktueller gemeinsamer FolgestandPR60/40120: Originaldateien plus MF-DIR für erkannte Gen2/Gen2V2-Karten, bis27 Quellen. Lokale Prüfungen bestanden; neue vollständige CI vor Ausgabe erforderlich. Keine neue Hardwarebestätigung. [DIR-Umfang](CARD_DIRECTORY_IMPORT.md). Ältere Checkpoints dokumentieren ihre damaligen Stände.
 
 # Abdeckung der Fahrerkarte

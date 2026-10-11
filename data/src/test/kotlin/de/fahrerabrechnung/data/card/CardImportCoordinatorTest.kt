@@ -51,6 +51,53 @@ class CardImportCoordinatorTest {
         assertEquals(2, reads); assertEquals(1, saves)
     }
 
+    @Test fun allNewSourceMapsAreFrozenBeforeSuspendingForCardReview() = runBlocking {
+        val certificates = mutableMapOf(CardCertificateKind.CARD to CardCertificateRead(
+            CardCertificateFile(CardCertificateKind.CARD, CardGeneration.GEN2V2, ByteArray(204))))
+        val identities = mutableMapOf(CardIdentitySourceKind.APPLICATION to CardIdentitySourceRead(
+            CardIdentitySourceFile(CardIdentitySourceKind.APPLICATION, CardGeneration.GEN2V2, ByteArray(17))))
+        val communication = mutableMapOf(CardCommunicationKind.EXTENDED_LENGTH to CardCommunicationRead(
+            CardCommunicationFile(CardCommunicationKind.EXTENDED_LENGTH, CardGeneration.GEN2V2, byteArrayOf(2, 1, 0x11))))
+        val reached = CompletableDeferred<Unit>(); val proceed = CompletableDeferred<Unit>()
+        var saved = false
+        val c = CardImportCoordinator({ result().copy(certificates = certificates, identitySources = identities,
+            communication = communication, directory = CardDirectoryFile(CardGeneration.GEN2V2, ByteArray(20))) }, {
+            reached.complete(Unit); proceed.await(); CardBindingReview(CardBindingKind.KNOWN_CARD, "Fixture")
+        }, { error("Known card") }, { read, id ->
+            assertEquals(setOf(CardCertificateKind.CARD), read.certificates.keys)
+            assertFalse(read.certificates.getValue(CardCertificateKind.CARD).readFailed)
+            assertEquals(setOf(CardIdentitySourceKind.APPLICATION), read.identitySources.keys)
+            assertEquals(setOf(CardCommunicationKind.EXTENDED_LENGTH), read.communication.keys)
+            assertEquals(0x11, (CardCommunicationParser.parse(read.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH).file!!)
+                as CardExtendedLengthRecord).protocolCodeRaw)
+            assertArrayEquals(ByteArray(20), read.directory!!.bytes)
+            saved = true; run(id)
+        })
+        val job = launch { c.observe(CardReaderObservation.Present(1)) }
+        reached.await()
+        certificates.clear(); certificates[CardCertificateKind.LINK] = CardCertificateRead(readFailed = true)
+        identities.clear(); communication.clear()
+        proceed.complete(Unit); job.join(); assertTrue(saved)
+    }
+
+    @Test fun confirmationUsesFreshCommunicationSourcesRatherThanTheWaitingSnapshot() = runBlocking {
+        var reads = 0; var bound = false; var saves = 0
+        val c = CardImportCoordinator({
+            reads++
+            result().copy(communication = mapOf(CardCommunicationKind.EXTENDED_LENGTH to CardCommunicationRead(
+                CardCommunicationFile(CardCommunicationKind.EXTENDED_LENGTH, CardGeneration.GEN2V2,
+                    byteArrayOf(2, 1, (if (reads == 1) 0x01 else 0x10).toByte())))))
+        }, { CardBindingReview(if (bound) CardBindingKind.KNOWN_CARD else CardBindingKind.FIRST_CARD, null) },
+            { bound = true }, { read, id ->
+                assertTrue(bound); assertEquals(0x10, (CardCommunicationParser.parse(
+                    read.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH).file!!) as CardExtendedLengthRecord).protocolCodeRaw)
+                saves++; run(id)
+            })
+        c.observe(CardReaderObservation.Present(1)); assertEquals(0, saves)
+        c.confirm(c.state.value.confirmationToken!!)
+        assertEquals(2, reads); assertEquals(1, saves)
+    }
+
     @Test fun knownCardImportsAutomaticallyOncePerObservedInsertion() = runBlocking {
         var reads = 0; val saves = mutableListOf<String>()
         val c = CardImportCoordinator({ reads++; result() }, { CardBindingReview(CardBindingKind.KNOWN_CARD, "Fixture") },
