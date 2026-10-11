@@ -61,8 +61,12 @@ class CardCommunicationTest {
         assertEquals(false, CardCommunicationParser.advertisedBy(atr(0x80, 0x73, 0, 0, 0)))
         assertEquals(true, CardCommunicationParser.advertisedBy(atr(0, 0x73, 0, 0, 0x40, 0, 0x90, 0)))
         assertEquals(true, CardCommunicationParser.advertisedBy(atr(0x80, 0x31, 0xFF, 0x73, 0, 0, 0x40)))
-        assertEquals(true, CardCommunicationParser.advertisedBy(atr(0x80, 0x73, 0, 0, 2, inverse = true)))
-        assertEquals(false, CardCommunicationParser.advertisedBy(atr(0x80, 0x73, 0, 0, 0x40, inverse = true)))
+        for (inverse in listOf(false, true)) for (flag in 0..255) {
+            assertEquals(flag and 0x40 != 0,
+                CardCommunicationParser.advertisedBy(atr(0x80, 0x73, 0, 0, flag, inverse = inverse)))
+            assertEquals(flag and 0x40 != 0,
+                CardCommunicationParser.advertisedBy(atr(0, 0x73, 0, 0, flag, 0, 0x90, 0, inverse = inverse)))
+        }
     }
     @Test fun unknownMalformedAndDuplicateCapabilitiesNeverPretendToBeUnsupported() {
         for (a in listOf(atr(), atr(0x10, 0x73, 0, 0, 0x40), atr(0x80, 0x72, 0, 0),

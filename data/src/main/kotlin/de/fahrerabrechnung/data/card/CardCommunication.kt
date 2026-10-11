@@ -93,8 +93,9 @@ object CardCommunicationParser {
             if (length == 0 || length > end - offset) return null
             if (header ushr 4 == 7) {
                 if (length != 3 || result != null) return null
-                val mask = if (atr.raw.firstOrNull() == 0x3F.toByte()) 0x02 else 0x40
-                result = bytes[offset + 2].toInt() and mask != 0
+                // CCID returns decoded character values, not electrical bit order. The
+                // ISO7816 third function table uses bit7 for either TS convention.
+                result = bytes[offset + 2].toInt() and 0x40 != 0
             }
             offset += length
         }

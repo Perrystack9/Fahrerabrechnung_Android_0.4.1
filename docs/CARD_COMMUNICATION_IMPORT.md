@@ -6,7 +6,8 @@ Folgeentwurf auf dem unveränderten PR60-Produktkopf `85d0614235e4d9b5384d96d9ee
 
 - [EU2016/799, Anlage IC, Anlage 2](https://dtc.jrc.ec.europa.eu/iot_doc/EU%202016-799-EN.pdf): TCS33 und TCS142–147, insbesondere MF-Tabellen und bedingtes Vorhandensein auf L139/216–217.
 - [JRC Interoperability Test Specification 1.10, April 2022](https://dtc.jrc.ec.europa.eu/iot_doc/2022-04-08%20Smart%20Tachograph%20Interoperability%20Test%20Specification%20Version%201.10.pdf), Kapitel 8.1–8.3, Dokumentseiten 27–29: unabhängiger Abgleich der Dateikennungen und Fahrer-/Werkstatt-/Kontroll-/Unternehmenskartenquellen. Fahrerkarte enthält keine Calibration-, Sensor_Installation-, Controller_Activity- oder Company_Activity-Dateien.
-- [AOSP AnswerToReset](https://android.googlesource.com/platform/frameworks/opt/telephony/+/master/src/java/com/android/internal/telephony/uicc/AnswerToReset.java): Compact-TLV-Kartenfähigkeiten, Tag 7, drittes Byte, direkte/indirekte Konvention. Nur als zusätzliche Implementierungsreferenz für die ATR-Erkennung; keine Übertragung von UICC-Fachlogik.
+- [USB-IF CCID 1.1](https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf), Begriffsdefinition „Convention“ und §6.1/6.2: Übertragungskonvention und vom Leser gelieferte Zeichenwerte.
+- [pcsc-tools ATR_analysis](https://github.com/LudovicRousseau/pcsc-tools-devel/blob/master/ATR_analysis.in), Blob `7a40f67cd7832716e6ea26c9ff7783c558a282e2`, `analyse_historical_bytes`/`cc`: Compact-TLV Tag 7, dritte Funktionstabelle; Bit `0x40` gilt für die dekodierten Zeichen bei TS `3B` und `3F`. Die UICC-spezifische AOSP-Maskenwahl wird nicht auf den CCID-Pfad übertragen.
 
 | Quelle | EF | Vollständige Länge | Auswertung |
 |---|---|---|---|
@@ -18,6 +19,8 @@ Die genaue ISO7816-4:2013-Auswertung des `7F66`-Inhalts ist **noch nicht impleme
 ## Leser und Fehlertrennung
 
 Der ATR muss die erweiterte Länge über eine eindeutig lesbare Compact-TLV-Kartenfähigkeit ankündigen. Fehlendes, proprietäres, abgeschnittenes oder mehrfaches Fähigkeitsobjekt bleibt unbekannt; die neuen EFs werden dann nicht versucht. Ein eindeutig verneinter Hinweis versucht sie ebenfalls nicht. Unbekannt ist keine Bestätigung, dass die Dateien fehlen oder die gesamte Karte vollständig gelesen wurde.
+
+Die Compact-TLV-Kategorien `80` und `00` werden begrenzt gelesen; bei `00` bleiben die letzten drei Statusbytes außerhalb der Datenobjekte. Das Fähigkeitsbit ist stets `0x40` im dritten Wertbyte von `73`. Die physische inverse Konvention ändert die Bedeutung der bereits vom CCID gelieferten Zeichen nicht. Die Regression deckt alle 256 Flagwerte unter beiden Konventionen und beiden Statuslayouts sowie den vollständigen Reader-Pfad ab.
 
 Die Lesung erfolgt nach ATR unter dem aktuellen MF **vor der ersten AID-Auswahl**, mit kurzen SELECT/READ-Befehlen. Die bestehenden ICC-/IC-/DIR-Reihenfolgen bleiben erhalten. Jeder Versuch hat seine eigene Fehleranzeige. Eine angekündigte, aber fehlende Datei ist ein Lesefehler und macht den Lesevorgang teilweise. Nicht angekündigte Dateien ergänzen keine Statuszeile und verändern keine alten Request-Fingerprints. Temporäre MF-Bytes werden erst nach unabhängiger Fahreridentifikation für Gen2/Gen2V2 freigegeben; Gen1, unbekannte und inkonsistente Karten erhalten diese Quellen nicht.
 

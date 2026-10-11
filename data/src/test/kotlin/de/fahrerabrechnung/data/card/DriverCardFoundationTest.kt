@@ -1418,11 +1418,12 @@ class DriverCardFoundationTest {
     private fun communicationFixtureBytes() = mapOf(
         CardCommunicationKind.ATR_INFO to byteArrayOf(0x7F, 0x66, 4, 2, 2, 1, 0),
         CardCommunicationKind.EXTENDED_LENGTH to byteArrayOf(2, 1, 0x11))
-    private fun communicationFixtureAtr(flag: Int = 0x40) = byteArrayOf(0x3B, 5, 0x80.toByte(), 0x73, 0, 0, flag.toByte())
+    private fun communicationFixtureAtr(flag: Int = 0x40, inverse: Boolean = false) =
+        byteArrayOf((if (inverse) 0x3F else 0x3B).toByte(), 5, 0x80.toByte(), 0x73, 0, 0, flag.toByte())
 
     @Test fun advertisedCommunicationFilesAreReadUnderMfBeforeEitherAidAndRetainedIndependently() = runBlocking {
-        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) {
-            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr())
+        for (generation in listOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) for (inverse in listOf(false, true)) {
+            val transport = CardFixtureTransport(generation, communicationBytes = communicationFixtureBytes(), communicationAtr = communicationFixtureAtr(inverse = inverse))
             val result = DriverCardReader(transport).read()
             assertEquals(generation, result.generation)
             assertEquals(CardCommunicationKind.entries.toSet(), result.communication.keys)
@@ -1437,7 +1438,7 @@ class DriverCardFoundationTest {
         }
     }
     @Test fun absentOrMalformedAtrCapabilitiesDoNotAddOptionalAttemptsToHistoricalReads() = runBlocking {
-        for (atr in listOf(byteArrayOf(0x3B, 0), communicationFixtureAtr(0),
+        for (atr in listOf(byteArrayOf(0x3B, 0), communicationFixtureAtr(0), communicationFixtureAtr(2, inverse = true),
             byteArrayOf(0x3B, 4, 0x80.toByte(), 0x73, 0, 0))) {
             val transport = CardFixtureTransport(CardGeneration.GEN2V2, communicationBytes = communicationFixtureBytes(), communicationAtr = atr)
             val result = DriverCardReader(transport).read()
