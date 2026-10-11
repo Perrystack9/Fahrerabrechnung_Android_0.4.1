@@ -2106,7 +2106,7 @@ class CardImportPipelineInstrumentedTest {
         rejected<CardBindingRequired> { pipeline.process(directoryRead(), "directory-unconfirmed") }
         assertNull(imports.profile()); assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("card_import_runs"))
         imports.bind(card(), true)
-        val foreign = card("foreign-directory", card().holder.copy(surname = "OTHER"))
+        val foreign = card("foreign-dir", card().holder.copy(surname = "OTHER"))
         rejected<ForeignCardRejected> { pipeline.process(directoryRead(foreign), "directory-foreign") }
         assertEquals(1, count("driver_cards")); assertEquals(0, count("import_sessions")); assertEquals(0, count("card_metadata_imports"))
     }
@@ -2140,7 +2140,7 @@ class CardImportPipelineInstrumentedTest {
         assertNull(imports.get(last.id)!!.directory!!.record); assertEquals(3, pipeline.history().size)
     }
     @Test fun directoryForeignKeysRejectWrongKindOrPhysicalCardAndTamperingFailsOnlyItsSession() = runBlocking {
-        imports.bind(card(), true); val old = pipeline.process(originalRead(), "directory-safe-old")
+        imports.bind(card(), true); val old = pipeline.process(read(), "directory-safe-old")
         val fresh = pipeline.process(directoryRead(), "directory-corruption")
         val source = imports.get(fresh.id)!!.directory!!
         rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardMetadataKind.CURRENT_USAGE.name, source.driverCardId, source.id)) }
