@@ -42,4 +42,4 @@ Der Vordergrund-Importkoordinator kopiert nun auch Zertifikats-, Originalidentit
 
 Lokale Projektgrenzen, CI-Scope-/Schema-Guard-Regressionssuite, Shellsyntax und Diffprüfung sind bestanden. Vollständige Android-CI mit Build, Unit, Lint, APK-/Updatepaar-, compiler-generiertem Schemaexport und Room/SQLCipher/Compose ist vor einer APK-Ausgabe erforderlich. Lauf und Ergebnis werden in [CARD_IMPORT_FINALIZATION_HANDOFF.md](CARD_IMPORT_FINALIZATION_HANDOFF.md) ergänzt.
 
-Keine neue Hardwarebestätigung. PR59/PR60 und dieser neue Importentwurf bleiben ungemergt. PR60/40120 ist weiterhin das unveränderte bereits bereitgestellte Testpaket; Version 40121 ist zunächst nur der neue Entwurfszähler.
+Keine Hardwarebestätigung für die neuen Kommunikationsquellen. PR59/PR60 sind nach dem bestandenen Gerätetest40120 unverändert kumulativ gemergt; dieser neue Importentwurf bleibt bis zu seiner eigenen Gerätebestätigung ungemergt. PR60/40120 ist weiterhin das unveränderte bereits bereitgestellte Testpaket; Version40121 ist der neue Entwurfszähler ohne eigene Gerätefreigabe. Die letzte bestätigte Basis ist jetzt40120; das CI-Updatepaar wird entsprechend aktualisiert.

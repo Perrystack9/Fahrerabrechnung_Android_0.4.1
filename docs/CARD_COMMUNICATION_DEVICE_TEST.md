@@ -1,8 +1,8 @@
 # Späterer Gerätetest der Kommunikationsquellen
 
-**Noch keine neue APK ausgegeben oder Gerätebestätigung erhalten.** Entwurfsversion 40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Anleitung](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md) und Geräte-/Merge-Sperre gelten weiterhin.
+**Noch keine neue APK ausgegeben oder Gerätebestätigung erhalten.** Entwurfsversion 40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Gerätetest ist jetzt bestanden](DEVICE_CONFIRMATION_40120.md). Die neue Geräte-/Merge-Sperre gilt für40121 und spätere Änderungen.
 
-Eine neue APK darf erst nach der vollständigen grünen CI am exakten neuen Produktkopf ausgegeben werden. Als Update über die bestehende FahrerTagebuch-Test-App installieren; nicht deinstallieren oder Daten löschen. Die bestätigte Gerätebasis bleibt PR58/40117, solange Tobi keine neue Bestätigung gibt.
+Eine neue APK darf erst nach der vollständigen grünen CI am exakten neuen Produktkopf ausgegeben werden. Als Update über die bestehende FahrerTagebuch-Test-App installieren; nicht deinstallieren oder Daten löschen. Die bestätigte Gerätebasis ist jetzt PR60/40120. Der neue CI-Lauf prüft das Updatepaar40120→40121;40121 benötigt anschließend seine eigene ausdrückliche Gerätebestätigung.
 
 1. Nach dem Update eigenes Profil und bisherige Übernahmen prüfen; alte Übernahmen dürfen keine neuen Kommunikationsquellen erhalten.
 2. Eigene Karte im bisherigen Galaxy-S23-/Android-16-/CCID-Kontext neu lesen. Bisherige Quellen müssen unabhängig weiter funktionieren. Die beiden neuen EFs werden nur bei eindeutiger ATR-Ankündigung versucht. Fehlende optionale Angaben sind kein Ersatz für einen realen Positivtest; angekündigte, aber fehlende/ungültige Daten müssen separat als fehlgeschlagen erscheinen.
