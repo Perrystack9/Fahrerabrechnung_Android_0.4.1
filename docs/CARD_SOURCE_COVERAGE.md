@@ -1,3 +1,11 @@
+Aktueller bestätigter Main-Stand12.10.2026: PR65/40122/Schema19 nach vollständiger grüner CI und ausdrücklicher Gerätebestätigung unverändert gemergt (21edb80, Tree6f71f4e bytegleich). Beide Anwendungen derselben Karte bleiben getrennt, MF-Belege einmal am Parent. [Bestätigung und Grenzen](DEVICE_CONFIRMATION_40122.md). Die früheren noch offenen Freigabeangaben darunter sind historische Stände.
+
+---
+
+Aktueller PR65-Kandidat 12.10.2026: gemeinsamer Import beider Anwendungen derselben physischen Karte, atomare Speicherung und genaue Verlaufswahl sind in `62fc0d299f87b26109a98ff11e94c9202a27ae01` umgesetzt, 40122 / Schema 19. Gen2V2 gehört zum Gen2-DF; MF-Dateien werden am gemeinsamen Parent einmal gespeichert, DF-Quellen bleiben getrennt. **Vollständige aktuelle CI bestanden, eigene Hardwarefreigabe ausstehend:** Versuch4 nach Budgetfreigabe vollständig grün; geprüftes Testpaket40122 bereitgestellt. [Aktueller Hardwarecheckpoint](PR65_DEVICE_DELIVERY_40122.md). Keine Vollständigkeits-, Standarddownload- oder Vertrauensbehauptung. [Aktueller Checkpoint](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md) · [nächste Importpunkte](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Ältere Freigabe-/Versionsangaben darunter sind historische Belege.
+
+---
+
 Aktueller Gerätecheckpoint12.10.2026: Tobi bestätigt den neuen40121-Wiederlese-/Anzeigefall nach erneutem Einstecken positiv. Beide neuen MF-Quellen real vorhanden: ATR/INFO11Bytes, Extended_Length3Bytes, T=1 aufgezeichnet/T=0 nicht aufgezeichnet. PR62-Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756 unverändert und vollständige CI38172596871 sowie Paketlauf38201601458 erneut grün. [Genaue40121-Gerätebestätigung und Grenzen](DEVICE_CONFIRMATION_40121.md). Keine zusätzlichen40121-Neustart-/Altdaten-/Historienfälle behaupten. PR62 unverändert gemergt als26a9f14c34523fa4ba884d8dd9891c24e1736ab4, Tree11e79e492b381f9d515bee796ffea30da3099592 bytegleich zum Testkopf. Selbstständige Produktfortsetzung durch die eingerichtete Aufgabe;  spätere Änderungen weiterhin bis eigener Freigabe ungemergt. Keine Browser/Unteragenten/Bereinigung, Budget2USD unverändert. Die folgenden Angaben sind historische Checkpoints.
 
 ---
@@ -50,14 +58,14 @@ PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an
 
 ## Herkunft und offene Quellen
 
-Neue Gen2V2-Lesevorgänge enthalten bis27 bisherige und zwei zusätzlich bedingte Quellenarten, insgesamt bis29. Die neuen Dateien werden nur bei eindeutiger ATR-Ankündigung versucht. Gen1 hat16 Arten, Gen2 bis21 beziehungsweise23 mit beiden bedingten Dateien. Das zählt keine Zeitabdeckung und keine Datensätze. Historische19-/23-/26-/27-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Schema18 unverändert.
+Neue Gen2V2-Lesevorgänge enthalten bis27 bisherige und zwei zusätzlich bedingte Quellenarten, insgesamt bis29. Die neuen Dateien werden nur bei eindeutiger ATR-Ankündigung versucht. Gen1 hat16 Arten, Gen2 bis21 beziehungsweise23 mit beiden bedingten Dateien. Das zählt keine Zeitabdeckung und keine Datensätze. Historische19-/23-/26-/27-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Diese Zahlen beschreiben die Quellenarten des bisherigen Ein-Anwendungs-Imports, nicht die Zahl der Belege einer PR65-Gruppe. PR65 ergänzt Schema19: MF-Belege einmal am Parent, Quellen je Anwendung getrennt; keine Addition beider Zeitsätze.
 
-[Annex IC §4.5.2.2–4.5.2.4](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0799-20160526) sieht DIR und beide Kommunikationsdateien nur auf Karten der zweiten Generation vor. Eine Standard-DIR-Datei auf reinen Gen1-Karten fehlt somit nicht im Importumfang. Die getrennte Gen1-Anwendung auf einer Gen2-Karte wird dagegen noch nicht zusätzlich zur ausgewählten Gen2-Anwendung importiert.
+[Annex IC §4.5.2.2–4.5.2.4](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0799-20160526) sieht DIR und beide Kommunikationsdateien nur auf Karten der zweiten Generation vor. Eine Standard-DIR-Datei auf reinen Gen1-Karten fehlt somit nicht im Importumfang. PR65 erfasst zusätzlich die getrennte Gen1-Anwendung derselben Gen2-Karte mit eigenem Anwendungs-/Sitzungsbeleg. Diese Codeintegration hat die vollständige CI und die ausdrückliche Gerätebestätigung bestanden und ist unverändert auf Main40122.
 
 | Noch offene Datei/Funktion | EF | Klärung vor Umsetzung |
 |---|---|---|
 | VU_Configuration | `0540` | Gen2V2, eigenes Sicherheits-/Zugriffsverfahren SC5; nicht blind als gewöhnliche EF lesen |
-| Getrennter Import beider Anwendungen auf Gen2-Karte | zwei DFs | Eigenständige generationsgetrennte Quellen-/Sitzungsmodellierung statt Überlagerung |
+| Freigabe des gemeinsamen Imports beider Anwendungen | zwei DFs | PR65: generationsgetrennte Quellen, gemeinsame MF-Belege und atomare Speicherung nach vollständiger CI und bestätigtem Gerätetest auf Main40122 |
 | ATR/INFO-Inhalt | `2F01` | Originalbytes sind importiert; vollständigen ISO7816-4:2013-Decoder für den `7F66`-Inhalt anhand belegten Primärformats ergänzen |
 | Unbekanntes ATR-Historienformat | ATR | Bedingte Dateien nicht versucht; unbekannt nicht als fehlend oder vollständig behaupten |
 | Vollständiger signierter Standarddownload | mehrere | Download-/Authentisierungsprotokoll und Original-Signaturen separat implementieren |
