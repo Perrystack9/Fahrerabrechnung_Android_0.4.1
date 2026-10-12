@@ -1,7 +1,7 @@
 package de.fahrerabrechnung.data.card
 
 /** Fixed DFs, not two physical cards. Gen2V2 is a format of the Gen2 DF, not a third AID. */
-internal enum class CardApplication(val identificationReadLength: Int) {
+enum class CardApplication(val identificationReadLength: Int) {
     GEN1(10), GEN2(17);
     val aid: ByteArray get() = when (this) {
         GEN1 -> byteArrayOf(0xFF.toByte(), 0x54, 0x41, 0x43, 0x48, 0x4F)
@@ -13,11 +13,11 @@ internal enum class CardApplication(val identificationReadLength: Int) {
     }
 }
 
-internal enum class CardApplicationReadStatus { ABSENT, READ_FAILED, READ }
-internal enum class CardApplicationIdentityAgreement { NO_DRIVER, UNVERIFIED, AGREED, CONFLICT }
+enum class CardApplicationReadStatus { ABSENT, READ_FAILED, READ }
+enum class CardApplicationIdentityAgreement { NO_DRIVER, UNVERIFIED, AGREED, CONFLICT }
 
 /** Captured once under MF. Bytes are temporary originals, not authenticated or decoded claims. */
-internal class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val readFailed: Boolean) {
+class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val readFailed: Boolean) {
     private val captured = bytes?.copyOf()
     val bytes: ByteArray? get() = captured?.copyOf()
     init {
@@ -27,7 +27,7 @@ internal class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val rea
 }
 
 /** Neither caller-owned buffers nor a returned snapshot can change this application attempt. */
-internal class CardApplicationAttempt private constructor(
+class CardApplicationAttempt private constructor(
     val application: CardApplication, val status: CardApplicationReadStatus,
     read: CardReadResult?, val failure: ReaderFailure?,
 ) {
@@ -65,7 +65,7 @@ internal class CardApplicationAttempt private constructor(
 }
 
 /** In-memory envelope only. This is deliberately not accepted by the single-DF persistence API. */
-internal class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: List<CardMasterFileCapture>) {
+class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: List<CardMasterFileCapture>) {
     private val attemptsByApplication = attempts.associateBy { it.application }
     private val masterById = master.associateBy { it.fileId }
     val applications: List<CardApplicationAttempt> get() = CardApplication.entries.map { attemptsByApplication.getValue(it) }

@@ -35,12 +35,15 @@ class CardImportCoordinator(
     private val reviewCard: suspend (DriverCard) -> CardBindingReview,
     private val confirmOwnCard: suspend (DriverCard) -> Unit,
     private val saveRead: suspend (CardReadResult, String) -> CardImportRun,
+    private val readApplications: (suspend () -> CardApplicationReadBatch)? = null,
+    private val saveApplications: (suspend (CardApplicationReadBatch, String, Boolean) -> SavedCardReadBatch)? = null,
 ) {
     private val operations = Mutex()
     private val mutableState = MutableStateFlow(CardImportUiState())
     val state: StateFlow<CardImportUiState> = mutableState.asStateFlow()
     private var latchedDevice: Int? = null
     private var pending: CardReadResult? = null
+    private var pendingBatch: CardApplicationReadBatch? = null
 
     suspend fun observe(observation: CardReaderObservation) = operations.withLock {
         observeInside(observation)
@@ -60,13 +63,26 @@ class CardImportCoordinator(
             is CardReaderObservation.Present -> {
                 if (latchedDevice == observation.deviceKey) return
                 latchedDevice = observation.deviceKey
-                perform { accept(readCard()) }
+                perform {
+                    if (readApplications == null) accept(readCard()) else acceptBatch(readApplications.invoke())
+                }
             }
         }
     }
 
     /** The live card is re-read before binding; a stale dialog can never bind a swapped card. */
     suspend fun confirm(token: String) = operations.withLock {
+        pendingBatch?.let { batch ->
+            if (mutableState.value.confirmationToken != token) return@withLock
+            val expected = batchCard(batch)
+            perform {
+                val current = checkNotNull(readApplications).invoke()
+                if (current.identityAgreement != CardApplicationIdentityAgreement.AGREED || batchCard(current) != expected)
+                    acceptBatch(current)
+                else saveBatch(current, true)
+            }
+            return@withLock
+        }
         val expected = pending?.card ?: return@withLock
         if (mutableState.value.confirmationToken != token) return@withLock
         perform {
@@ -124,6 +140,41 @@ class CardImportCoordinator(
         }
     }
 
+    private fun batchCard(batch: CardApplicationReadBatch): DriverCard {
+        val results = batch.applications.mapNotNull { it.result }
+        return checkNotNull((results.firstOrNull { it.generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) }
+            ?: results.first()).card)
+    }
+
+    private suspend fun acceptBatch(batch: CardApplicationReadBatch) {
+        pendingBatch = null; pending = null
+        if (batch.identityAgreement != CardApplicationIdentityAgreement.AGREED) {
+            change(CardImportPhase.ERROR); return
+        }
+        val card = batchCard(batch)
+        val review = reviewCard(card)
+        when (review.kind) {
+            CardBindingKind.FOREIGN_CARD -> change(CardImportPhase.FOREIGN_CARD)
+            CardBindingKind.FIRST_CARD, CardBindingKind.CONFIRM_REPLACEMENT -> {
+                pendingBatch = batch
+                val phase = if (review.kind == CardBindingKind.FIRST_CARD)
+                    CardImportPhase.CONFIRM_FIRST_CARD else CardImportPhase.CONFIRM_REPLACEMENT
+                change(phase, UUID.randomUUID().toString(), card)
+            }
+            CardBindingKind.KNOWN_CARD, CardBindingKind.SAME_HOLDER -> saveBatch(batch, false)
+        }
+    }
+
+    private suspend fun saveBatch(batch: CardApplicationReadBatch, confirmed: Boolean) {
+        change(CardImportPhase.SAVING)
+        val saved = checkNotNull(saveApplications).invoke(batch, UUID.randomUUID().toString(), confirmed)
+        val partial = saved.applications.any { it.status == CardApplicationReadStatus.READ_FAILED ||
+            it.run?.status == CardImportRunStatus.PARTIAL } || saved.masterFiles.any { it.readFailed }
+        pendingBatch = null
+        mutableState.value = CardImportUiState(if (partial) CardImportPhase.INCOMPLETE else CardImportPhase.IMPORTED,
+            lastRun = saved.primaryRun)
+    }
+
     private suspend fun save(result: CardReadResult) {
         change(CardImportPhase.SAVING)
         val run = saveRead(result, UUID.randomUUID().toString())
@@ -152,6 +203,8 @@ class CardImportCoordinator(
 
     private fun change(phase: CardImportPhase, token: String? = null, card: DriverCard? = null,
                        failure: ReaderFailure? = null) {
+        if (phase !in setOf(CardImportPhase.READING, CardImportPhase.CONFIRM_FIRST_CARD, CardImportPhase.CONFIRM_REPLACEMENT))
+            pendingBatch = null
         mutableState.value = CardImportUiState(phase, token, card, mutableState.value.lastRun, failure)
     }
 

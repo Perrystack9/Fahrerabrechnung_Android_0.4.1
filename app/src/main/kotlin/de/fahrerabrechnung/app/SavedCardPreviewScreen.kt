@@ -21,13 +21,15 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
                                     onOpenDetails: (() -> Unit)? = null,
                                     driverCardId: String? = null,
                                     events: SavedCardEventFault? = null, faults: SavedCardEventFault? = null,
-                                    specificConditions: SavedCardSpecificConditions? = null) {
+                                    specificConditions: SavedCardSpecificConditions? = null,
+                                    receiptId: String? = null, applicationGeneration: CardGeneration? = null) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
-    var selected by remember(activity) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
+    var selected by remember(activity, receiptId) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
     val uses = vehicles?.uses.orEmpty()
     ScreenContent(padding) {
         Text(if (archive) "Gespeicherte Dateivorschau" else "Gespeicherte Kartendaten", style = MaterialTheme.typography.titleLarge)
+        applicationGeneration?.let { Text("Ausgewählte Anwendung: ${it.name}") }
         if (archive) Text("Diese Dateivorschau ordnet ältere Daten keinem Fahrerprofil zu.")
         if (!archive && onOpenDetails != null)
             OutlinedButton(onClick = onOpenDetails) { Text("Fahrerkarten-Details") }

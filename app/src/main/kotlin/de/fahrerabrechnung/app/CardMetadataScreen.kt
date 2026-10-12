@@ -21,10 +21,10 @@ internal fun CardMetadataKind.metadataTitle(): String = when (this) {
 
 /** Read-only snapshot from the exact selected own-card session, with no inferred facts. */
 @Composable
-internal fun CardMetadataScreen(padding: PaddingValues, kind: CardMetadataKind, source: SavedCardMetadata?) {
+internal fun CardMetadataScreen(padding: PaddingValues, kind: CardMetadataKind, source: SavedCardMetadata?, receiptId: String? = null) {
     val zone = remember { ZoneId.systemDefault() }
     val format = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss XXX") }
-    var showNumber by remember(kind, source?.id) { mutableStateOf(false) }
+    var showNumber by remember(kind, source?.id, receiptId) { mutableStateOf(false) }
     ScreenContent(padding) {
         Text(kind.metadataTitle(), style = MaterialTheme.typography.titleLarge)
         Text("Kartenstand der ausgewählten gespeicherten Übernahme.")

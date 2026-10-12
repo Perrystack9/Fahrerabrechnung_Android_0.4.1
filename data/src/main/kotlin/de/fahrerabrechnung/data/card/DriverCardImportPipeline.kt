@@ -54,6 +54,8 @@ data class CardImportRun(
     val status: CardImportRunStatus, val startedAtEpochMillis: Long, val finishedAtEpochMillis: Long?,
     val sessionId: String?, val newSourceCount: Int, val failureCode: String?,
     val files: List<CardImportFileResult>,
+    val batchId: String? = null,
+    val application: CardApplication? = null,
 )
 
 /** Supported-source pipeline, not a claim that every driver-card EF is imported. */
@@ -68,6 +70,98 @@ class DriverCardImportPipeline @Inject constructor(
     private val dao get() = database.cardImportRunDao()
     private val initialization = Mutex()
     private var initialized = false
+
+    /** Validate all identities first; bind and save all child receipts in one outer transaction. */
+    suspend fun processApplications(batch: CardApplicationReadBatch, requestId: String,
+                                    confirmedOwnCard: Boolean = false): SavedCardReadBatch {
+        require(requestId.isNotBlank() && requestId.length <= 128)
+        require(batch.identityAgreement == CardApplicationIdentityAgreement.AGREED)
+        val attempts = batch.applications
+        val plans = attempts.mapNotNull { attempt -> attempt.result?.let { attempt.application to prepare(it) } }.toMap()
+        val primary = if (CardApplication.GEN2 in plans) CardApplication.GEN2 else CardApplication.GEN1
+        val card = checkNotNull(plans.getValue(primary).read.card)
+        initialize() // Process-scoped recovery must finish outside the rollbackable group.
+        return database.withTransaction {
+            val batches = database.cardReadBatchDao()
+            require(dao.run(requestId) == null) // Never reuse a historic single-application request as a parent.
+            require(database.driverProfileDao().sources(requestId) == null)
+            val cardId = imports.bind(card, confirmedOwnCard)
+            val fingerprint = CardBatchRequests.fingerprint(cardId, batch, plans.mapValues { it.value.fingerprint(cardId) })
+            batches.batch(requestId)?.let { existing ->
+                require(existing.driverCardId == cardId && existing.requestFingerprint == fingerprint)
+                return@withTransaction decodeBatch(existing)
+            }
+            val now = clock.millis()
+            val parent = CardReadBatchEntity(requestId, cardId, fingerprint, now, primary.name)
+            batches.insertBatch(parent)
+            val savedAttempts = attempts.map { attempt ->
+                val read = attempt.result
+                val run = read?.let {
+                    val id = CardBatchRequests.child(requestId, attempt.application)
+                    require(dao.run(id) == null)
+                    require(database.driverProfileDao().sources(id) == null)
+                    process(it, id).also { child ->
+                        check(child.driverCardId == cardId)
+                        check(child.failureCode != "STORAGE_FAILED" && child.status !in setOf(CardImportRunStatus.IN_PROGRESS, CardImportRunStatus.INTERRUPTED))
+                        check(child.sessionId != null) // Validated 0520 is a persistable own source.
+                    }
+                }
+                CardApplicationAttemptEntity(requestId, attempt.application.name, cardId, attempt.status.name,
+                    attempt.failure?.name, read?.generation?.name, run?.id, run?.sessionId)
+            }
+            batches.insertAttempts(savedAttempts)
+            batches.insertMasterFiles(batch.masterFiles.map { capture ->
+                val bytes = capture.bytes
+                val id = bytes?.let { CardBatchRequests.master(cardId, capture.fileId, it) }
+                if (bytes != null) {
+                    check(bytes.size <= 128)
+                    val row = CardMasterSourceEntity(checkNotNull(id), cardId, capture.fileId, bytes, now)
+                    batches.insertMaster(row)
+                    val stored = checkNotNull(batches.master(id))
+                    check(stored.driverCardId == cardId && stored.fileId == capture.fileId && stored.bytes.contentEquals(bytes))
+                }
+                CardBatchMasterFileEntity(requestId, capture.fileId, cardId, id, capture.readFailed)
+            })
+            decodeBatch(parent)
+        }
+    }
+
+    suspend fun applicationBatch(id: String): SavedCardReadBatch? = database.withTransaction {
+        val row = database.cardReadBatchDao().batch(id) ?: return@withTransaction null
+        val profile = imports.profile() ?: return@withTransaction null
+        if (database.driverProfileDao().card(row.driverCardId)?.profileId != profile.id) return@withTransaction null
+        decodeBatch(row)
+    }
+
+    private suspend fun decodeBatch(row: CardReadBatchEntity): SavedCardReadBatch {
+        val batches = database.cardReadBatchDao()
+        val profile = checkNotNull(imports.profile())
+        check(database.driverProfileDao().card(row.driverCardId)?.profileId == profile.id)
+        val attempts = batches.attempts(row.id)
+        check(attempts.map { it.application }.toSet() == CardApplication.entries.map { it.name }.toSet())
+        val applications = attempts.map { attempt ->
+            check(attempt.driverCardId == row.driverCardId)
+            val application = CardApplication.valueOf(attempt.application)
+            val generation = attempt.generation?.let(CardGeneration::valueOf)
+            generation?.let { check(application.supports(it)) }
+            val run = attempt.runId?.let { decode(checkNotNull(dao.run(it))) }
+            check((attempt.status == CardApplicationReadStatus.READ.name) == (run != null))
+            run?.let { check(it.driverCardId == row.driverCardId && it.generation == generation && it.sessionId == attempt.sessionId) }
+            SavedCardApplication(application, CardApplicationReadStatus.valueOf(attempt.status), generation,
+                attempt.failureCode?.let(ReaderFailure::valueOf), run)
+        }
+        val master = batches.masterFiles(row.id).map { ref ->
+            check(ref.driverCardId == row.driverCardId && (ref.sourceId == null) == ref.readFailed)
+            val original = ref.sourceId?.let { checkNotNull(batches.master(it)) }
+            original?.let {
+                check(it.driverCardId == row.driverCardId && it.fileId == ref.fileId)
+                check(it.id == CardBatchRequests.master(row.driverCardId, ref.fileId, it.bytes))
+            }
+            SavedCardMasterFile(ref.fileId, original?.bytes, ref.readFailed)
+        }
+        return SavedCardReadBatch(row.id, row.driverCardId, row.savedAtEpochMillis,
+            CardApplication.valueOf(row.primaryApplication), applications, master)
+    }
 
     // Singleton lifetime is the app process. Recover once, before any new process-owned run starts.
     private suspend fun initialize() = initialization.withLock {
@@ -138,7 +232,10 @@ class DriverCardImportPipeline @Inject constructor(
         initialize()
         return database.withTransaction {
             val profile = imports.profile() ?: return@withTransaction emptyList()
-            dao.runs(profile.id).map { decode(it) }
+            dao.runs(profile.id).filter { run ->
+                val attempt = database.cardReadBatchDao().attemptForRun(run.id)
+                attempt == null || database.cardReadBatchDao().batch(attempt.batchId)?.primaryApplication == attempt.application
+            }.map { decode(it) }
         }
     }
 
@@ -161,18 +258,19 @@ class DriverCardImportPipeline @Inject constructor(
         val profile = checkNotNull(imports.profile())
         check(checkNotNull(database.driverProfileDao().card(run.driverCardId)).profileId == profile.id)
         val identity = database.driverProfileDao().cards(profile.id).single { it.cardId == run.driverCardId }
+        val attempt = database.cardReadBatchDao().attemptForRun(run.id)
         val files = dao.files(run.id)
         val kinds = files.map { it.kind }.toSet()
         // Historic two/three-file receipts retain their original coverage and fingerprint.
         check(kinds.containsAll(setOf(CardImportFileKind.ACTIVITIES.name, CardImportFileKind.VEHICLES.name)) &&
             kinds.all { it in CardImportFileKind.entries.map { kind -> kind.name } } && files.size == kinds.size)
         run.sessionId?.let { check(database.driverProfileDao().sources(it)?.driverCardId == run.driverCardId) }
-        return CardImportRun(run.id, run.driverCardId, identity.cardNumber, CardGeneration.valueOf(identity.generation),
+        return CardImportRun(run.id, run.driverCardId, identity.cardNumber, CardGeneration.valueOf(attempt?.generation ?: identity.generation),
             CardImportRunStatus.valueOf(run.status), run.startedAtEpochMillis, run.finishedAtEpochMillis,
             run.sessionId, run.newSourceCount, run.failureCode, files.map {
                 CardImportFileResult(CardImportFileKind.valueOf(it.kind), CardImportFileStatus.valueOf(it.status),
                     it.decodedCount, it.firstUtcEpochSeconds, it.lastUtcEpochSeconds, it.failureCode)
-            })
+            }, attempt?.batchId, attempt?.application?.let(CardApplication::valueOf))
     }
 
     private fun prepare(result: CardReadResult): Plan {

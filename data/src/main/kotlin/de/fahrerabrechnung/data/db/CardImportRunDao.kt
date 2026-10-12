@@ -12,7 +12,7 @@ import androidx.room.Update
 @Entity(tableName = "card_import_runs", foreignKeys = [
     ForeignKey(entity = DriverCardEntity::class, parentColumns = ["id"], childColumns = ["driverCardId"], onDelete = ForeignKey.RESTRICT),
     ForeignKey(entity = ImportSessionEntity::class, parentColumns = ["id"], childColumns = ["sessionId"], onDelete = ForeignKey.RESTRICT),
-], indices = [Index("driverCardId"), Index(value = ["sessionId"], unique = true), Index("startedAtEpochMillis")])
+], indices = [Index("driverCardId"), Index(value = ["sessionId"], unique = true), Index("startedAtEpochMillis"), Index(value = ["id", "driverCardId"], unique = true)])
 data class CardImportRunEntity(
     @androidx.room.PrimaryKey val id: String,
     val driverCardId: String,
