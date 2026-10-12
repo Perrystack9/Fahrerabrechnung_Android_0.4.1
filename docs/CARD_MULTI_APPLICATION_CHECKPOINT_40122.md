@@ -1,6 +1,14 @@
 # PR65 – gemeinsamer Kartenimport 40122: gesicherter Übergabestand
 
-Stand 12.10.2026. **Aktueller Produktkopf gesichert; Build/JVM/Signatur/Schema bestanden. Die Emulatorprüfung wird von GitHub vor der Runner-Zuweisung abgewiesen. Keine vollständige CI-Freigabe und keine Hardwarefreigabe für 40122.**
+Stand 12.10.2026. **Vollständige CI am unveränderten Produktkopf62fc0d2 bestanden; aktuelle signatur-/prüfsummengeprüfte Test-ZIP40122 bereitgestellt. Eigene Hardwarebestätigung ausstehend; kein Merge/Auto-Merge.** [Verbindlicher aktueller Auslieferungscheckpoint](PR65_DEVICE_DELIVERY_40122.md).
+
+## Abgeschlossener CI-/Paketcheckpoint nach Budgetfreigabe
+
+Tobi meldete die Budgetfreigabe am12.10.2026 um18:12 Europe/Berlin. Ein gezielter Retry ausschließlich der fehlgeschlagenen Jobs im bestehenden Lauf38243540172 bekam tatsächlich Runner. **Versuch4 ist vollständig success**, abgeschlossen18:32:47 Europe/Berlin. Beide normalen Instrumentierungstasks liefen auf dem Emulator erfolgreich; Abschlussjob114908499092 ebenfalls success. Keine weitere Source-/Teständerung, Filterung oder CI-Abschwächung. Der getestete Mergebaum5b96c098 hat denselben Tree6f71f4e wie der Produktkopf62fc0d2.
+
+Aktuelle APK40122 und Test-ZIP anschließend lokal aus genau diesem Kopf erstellt, Signatur/Manifest/ARM64/Room-Identität sowie Paketprüfsummen/CRC geprüft und ZIP bereitgestellt. [Aktuelle Hashes, Job-IDs, Anleitung und Hardware-Sperre](PR65_DEVICE_DELIVERY_40122.md). Maßgeblich ist die dort ausgewiesene neue APK-SHA, nicht die ältere lokale Kandidaten-SHA im historischen Abschnitt. Alle302 Produktblobs unverändert. Budget-/Stop-usage-Einstellungen vom Agenten unverändert; neuer Nutzerbetrag nicht mitgeteilt. Kein weiterer Paketworkflow.
+
+Die frühere Budgetsperre und unlesbare Startannotation sind geklärt. Keine weitere Startfehler-/Budgetrückmeldung nötig. **Jetzt erforderlich: Tobis eigener40122-Hardwaretest und ausdrückliche Bestätigung vor Merge.** Die Abschnitte darunter erhalten die bisherigen Prüf- und Sicherungsbelege als Historie.
 
 ## Bestätigter Startfehler: Actions-Budget
 

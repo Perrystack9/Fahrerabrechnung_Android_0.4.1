@@ -1,3 +1,7 @@
+Aktueller Gerätecheckpoint 12.10.2026: PR65 am unveränderten Produktkopf `62fc0d299f87b26109a98ff11e94c9202a27ae01` vollständig grün (CI38243540172, Versuch4, alle vier Jobs). Signiertes Testupdate40122/Schema19 als geprüfte ZIP mit kurzer Anleitung bereitgestellt. Eigene Hardwarebestätigung ausstehend; PR65 offen/Entwurf, kein Merge/Auto-Merge, Main40121 unverändert. [Verbindlicher Auslieferungs-/Hardwarecheckpoint](PR65_DEVICE_DELIVERY_40122.md) · [vorbereitete nächste Importpunkte](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Tobi hat die Budgetausführung freigegeben; der Agent änderte keine Kontoeinstellung oder CI. Die folgenden Angaben sind historische Checkpoints.
+
+---
+
 Aktuelle Fortsetzung 12.10.2026, 15:37 UTC: PR65 bleibt exakt auf `62fc0d299f87b26109a98ff11e94c9202a27ae01` / 40122 / Schema 19. Auch CI-Versuch 3 wird vor Runnerstart abgewiesen; Build und Projektgrenzen bleiben bestanden. Älterer lokaler Arbeitsstand zuerst als `d71f2ae` vollständig gesichert, danach mit identischem vollständigem Baum als `453c81799bc6d5f4d4cfee9f8e6ee9d6d9c124aa` auf der GitHub-Sicherungsbranch erhalten. Vorhandene PR65-Implementierung exakt aus ihren Git-Objekten hinzugeholt; keine Source-/CI-/Budgetänderung. [Aktueller Runner-/Übergabecheckpoint](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md) · [vorbereitete nächste Importpunkte](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Vollständige CI, 40122-Paketausgabe und eigene Hardwarebestätigung fehlen weiterhin; kein Merge/Auto-Merge. Die folgenden Angaben sind frühere Checkpoints.
 
 ---
