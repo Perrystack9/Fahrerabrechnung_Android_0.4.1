@@ -1,3 +1,7 @@
+Aktueller Auslieferungsstand12.10.2026: Test-ZIP PR62/40121 aus unverändertem Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756 bereitgestellt; vollständige CI38172596871 und Paketlauf38201601458 erfolgreich. APK-v2-Signatur/Inhaltsdigest, Zertifikat, Paketkennung, Version und alle Prüfsummen lokal bestanden. Anleitung/BUILD_INFO enthalten, Update über bestätigte40120, keine Neuinstallation.40121 noch hardwareunbestätigt; PR62 offener Entwurf. Tobi hat nach erfolgreicher ausdrücklicher Bestätigung den Abschluss von PR62 und selbstständige weitere Kartenimportarbeit beauftragt; automatische Fortsetzung nach PR62-Merge eingerichtet, mit zusätzlicher Prüfung der dokumentierten40121-Freigabe. [Verbindlicher Auslieferungs-/Fortsetzungscheckpoint](PR62_DEVICE_DELIVERY_40121.md). Keine neue Freigabe späterer Änderungen; kein Browser/Unteragenten/Bereinigung, Budget2USD unverändert. Die folgenden Angaben dokumentieren frühere Stände.
+
+---
+
 # Kartenimport – Fortsetzung und Übergabe am 11.10.2026
 
 ## Verbindlicher bestätigter Stand

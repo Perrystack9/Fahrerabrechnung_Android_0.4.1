@@ -1,8 +1,8 @@
-# Späterer Gerätetest der Kommunikationsquellen
+# Gerätetest PR62 – Version40121
 
-**Noch keine neue APK ausgegeben oder Gerätebestätigung erhalten.** Entwurfsversion 40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Gerätetest ist jetzt bestanden](DEVICE_CONFIRMATION_40120.md). Die neue Geräte-/Merge-Sperre gilt für40121 und spätere Änderungen.
+**Testupdate40121 ist bereit; die Gerätebestätigung steht noch aus.** Version40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Gerätetest ist jetzt bestanden](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/blob/main/docs/DEVICE_CONFIRMATION_40120.md). Die neue Geräte-/Merge-Sperre gilt für40121 und spätere Änderungen.
 
-Eine neue APK darf erst nach der vollständigen grünen CI am exakten neuen Produktkopf ausgegeben werden. Als Update über die bestehende FahrerTagebuch-Test-App installieren; nicht deinstallieren oder Daten löschen. Die bestätigte Gerätebasis ist jetzt PR60/40120. CI38172596871 am integrierten Kopfefbf49c hat das Updatepaar40120→40121 und alle vier Pflichtjobs bestanden;40121 benötigt anschließend seine eigene ausdrückliche Gerätebestätigung.
+Alle vier Prüfungen der vollständigen CI38172596871 am unveränderten Quellkopfefbf49c und der Paketbau38201601458 sind bestanden. APK-v2-Signatur, Inhaltsdigest, Paketkennung, Version40121 und Prüfsummen wurden zusätzlich lokal geprüft. Als Update über die bestehende FahrerTagebuch-Test-App installieren; nicht deinstallieren oder Daten löschen. Die bestätigte Gerätebasis ist jetzt PR60/40120. Das Updatepaar40120→40121 ist in CI geprüft;40121 benötigt anschließend seine eigene ausdrückliche Gerätebestätigung.
 
 1. Nach dem Update eigenes Profil und bisherige Übernahmen prüfen; alte Übernahmen dürfen keine neuen Kommunikationsquellen erhalten.
 2. Eigene Karte im bisherigen Galaxy-S23-/Android-16-/CCID-Kontext neu lesen. Bisherige Quellen müssen unabhängig weiter funktionieren. Die beiden neuen EFs werden nur bei eindeutiger ATR-Ankündigung versucht. Fehlende optionale Angaben sind kein Ersatz für einen realen Positivtest; angekündigte, aber fehlende/ungültige Daten müssen separat als fehlgeschlagen erscheinen.
