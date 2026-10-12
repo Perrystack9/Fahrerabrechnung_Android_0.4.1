@@ -1,10 +1,18 @@
+Aktueller Gerätecheckpoint12.10.2026: Tobi bestätigt den neuen40121-Wiederlese-/Anzeigefall nach erneutem Einstecken positiv. Beide neuen MF-Quellen real vorhanden: ATR/INFO11Bytes, Extended_Length3Bytes, T=1 aufgezeichnet/T=0 nicht aufgezeichnet. PR62-Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756 unverändert und vollständige CI38172596871 sowie Paketlauf38201601458 erneut grün. [Genaue40121-Gerätebestätigung und Grenzen](DEVICE_CONFIRMATION_40121.md). Keine zusätzlichen40121-Neustart-/Altdaten-/Historienfälle behaupten. PR62 unverändert gemergt als26a9f14c34523fa4ba884d8dd9891c24e1736ab4, Tree11e79e492b381f9d515bee796ffea30da3099592 bytegleich zum Testkopf. Selbstständige Produktfortsetzung durch die eingerichtete Aufgabe;  spätere Änderungen weiterhin bis eigener Freigabe ungemergt. Keine Browser/Unteragenten/Bereinigung, Budget2USD unverändert. Die folgenden Angaben sind historische Checkpoints.
+
+---
+
+Aktueller Auslieferungsstand12.10.2026: Test-ZIP PR62/40121 aus unverändertem Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756 bereitgestellt; vollständige CI38172596871 und Paketlauf38201601458 erfolgreich. APK-v2-Signatur/Inhaltsdigest, Zertifikat, Paketkennung, Version und alle Prüfsummen lokal bestanden. Anleitung/BUILD_INFO enthalten, Update über bestätigte40120, keine Neuinstallation.40121 noch hardwareunbestätigt; PR62 offener Entwurf. Tobi hat nach erfolgreicher ausdrücklicher Bestätigung den Abschluss von PR62 und selbstständige weitere Kartenimportarbeit beauftragt; automatische Fortsetzung nach PR62-Merge eingerichtet, mit zusätzlicher Prüfung der dokumentierten40121-Freigabe. [Verbindlicher Auslieferungs-/Fortsetzungscheckpoint](PR62_DEVICE_DELIVERY_40121.md). Keine neue Freigabe späterer Änderungen; kein Browser/Unteragenten/Bereinigung, Budget2USD unverändert. Die folgenden Angaben dokumentieren frühere Stände.
+
+---
+
 # Kartenimport – Fortsetzung und Übergabe am 11.10.2026
 
 ## Verbindlicher bestätigter Stand
 
 Repository `Perrystack9/Fahrerabrechnung_Android_0.4.1`. **Gerätetest40120 ist ausdrücklich bestanden.** Tobi bestätigte am11.10.2026,22:22 Europe/Berlin: Update installiert und alte Daten vorhanden; neue Kartenlesung erfolgreich; Zertifikate, Kartenangaben und Anwendungsverzeichnis sichtbar; nach Kartenentnahme/App-Neustart weiterhin vorhanden; alter Import unverändert. Keine weiteren Einzelmesswerte, Fremdkarten-/Fehlerfälle oder Kryptovertrauensnachweise daraus ableiten. [Genaue Gerätebestätigung](DEVICE_CONFIRMATION_40120.md).
 
-PR60 wurde am unveränderten Quellkopf `85d0614235e4d9b5384d96d9ee124aab1f9fbc3a` gemergt als `9e7670f05b7c35a585244aeca539be9d0fe7c6fb`. Main-Tree `78155b21cb76f9c27231360bd78dad0aa5472a22` bytegleich zum geprüften und getesteten40120-Stand. Vorheriger Main `1b592d627d5d18db9fc909f5c8cf2c796fd8578b` ist der erste Elterncommit, PR60 der zweite. PR59-Kopf `c535c01a838fb9f565b49b7a9b50030d06e77bf7` ist enthalten; GitHub hat PR59 automatisch ebenfalls als gemergt abgeschlossen. Vollständige CI38119878793/38145473572 und Paketlauf38148088141 erneut erfolgreich geprüft.
+PR60 wurde am unveränderten Quellkopf `85d0614235e4d9b5384d96d9ee124aab1f9fbc3a` gemergt als `9e7670f05b7c35a585244aeca539be9d0fe7c6fb`. Main-Tree `78155b21cb76f9c27231360bd78dad0aa5472a22` bytegleich zum geprüften und getesteten40120-Stand. Vorheriger Main `1b592d627d5d18db9fc909f5c8cf2c796fd8578b` ist der erste Elterncommit, PR60 der zweite. PR59-Kopf `c535c01a838fb9f565b49b7a9b50030d06e77bf7` ist enthalten; GitHub hat PR59 automatisch ebenfalls als gemergt abgeschlossen. Vollständige CI38119878793/38145473572 und Paketlauf38148088141 erneut erfolgreich geprüft. Auch die nach dem Merge automatisch gestartete vollständige Main-CI38172090773 am Mergekopf9e7670f ist in allen vier Jobs erfolgreich (114566626588,114566666934,114568345231,114573403361). Der anschließende Docs-Push38172378527 am dokumentierten Main f2984027 ist erfolgreich; Android dort planmäßig übersprungen.
 
 Der reine Dokumentationsabschluss [PR63](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/63) ist nach erfolgreicher Docs-CI38172276322 gemergt als `f2984027643a27ea55dc44c10fae9cdf6d115938`, Tree `7b9bd9e96e2b123748514e508f9ddbbd18d76028`. Sechs Markdown-Dateien, kein Produkt-/Schema-/Versionswechsel; Android-Build und Instrumentierung dabei korrekt übersprungen. Dauerhafter Geräte-Checkpoint und Einstiegshinweise auf Main vorhanden.
 
@@ -16,7 +24,7 @@ Tobi hat selbstständige Weiterarbeit mit dem verbleibenden Kontingent erneut be
 
 [PR62](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/62), offen und Entwurf, Branch `feature/card-import-finalization`, Base `main`. **PR62 und spätere Änderungen gelten durch den Test40120 ausdrücklich nicht als hardwarebestätigt. Kein Merge/Auto-Merge vor eigener ausdrücklicher Gerätefreigabe.** Entwurfsversion40121, Schema18 unverändert.
 
-Der Kommunikationskopf `93d1eca6b14c2b0bb0edc23d24648f49e7d7b081`, Tree `b5ef85c4066633a35a1500adeda00c69a41f6d14`, hat alle vier Jobs der vollständigen CI38165084869 bestanden. Im anschließenden Schritt werden der dokumentierte Main f2984027 integriert und das Updatepaar auf40120→40121 aktualisiert. Der neue integrierte Kopf braucht seine vollständige CI; genaue endgültige SHA/Tree/Lauf werden im abschließenden Dokumentationscheckpoint und PR62 festgehalten. Keine grüne CI für einen anderen Kopf übertragen.
+Aktueller integrierter Produktkopf **`efbf49cdf92bd5e5ddb2e042b3e14e9372169756`**, Tree **`11e79e492b381f9d515bee796ffea30da3099592`**. Eltern: Kommunikationskopf `93d1eca6b14c2b0bb0edc23d24648f49e7d7b081` und dokumentierter Main `f2984027643a27ea55dc44c10fae9cdf6d115938`. Der Main ist vollständig enthalten; PR62 ist ohne Konflikt mergebar und bleibt trotzdem bis eigener Hardwarefreigabe Entwurf. Die vollständige [CI38172596871](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38172596871) am integrierten Kopf ist in allen vier Jobs erfolgreich. Diese neue CI belegt das aktualisierte40120→40121-Updatepaar. Der vorherige Kommunikationskopf93d1eca hat alle vier Jobs38165084869 bestanden.
 
 Die lokale Arbeitskopie stammt aus einem vorhandenen PR60-Snapshot; lokale Commit-IDs und GitHub-Commit-IDs unterscheiden sich wegen der Snapshot-Historie. Alle hochgeladenen Blobs und vollständigen Trees wurden bytegenau abgeglichen. Für Remote-Fortsetzungen den bezeichneten **GitHub-Kopf** als Parent verwenden und vor jedem Ref-Update erneut prüfen. Der Integrationscommit hat zusätzlich den dokumentierten Main als zweiten Parent. Keine lokale Snapshot-Historie auf den Remote-Branch drücken.
 
@@ -28,6 +36,19 @@ Die lokale Arbeitskopie stammt aus einem vorhandenen PR60-Snapshot; lokale Commi
 - Koordinator friert alle neuen Quellenmaps vor wartender Kartenprüfung ein; ausdrückliche Bestätigung verwendet weiter frische Lesung.
 - 38 neue Testmethoden:20 JVM, elf SQLCipher, sieben Compose/AppRoot. Alte Tests nicht entfernt oder gelockert. Amtlicher MF-/Fahrerkarten-Abgleich und genaue Grenzen in [CARD_COMMUNICATION_IMPORT.md](CARD_COMMUNICATION_IMPORT.md).
 - Nach bestätigtem40120 aktualisierte Build-Basis aus dem bytegleichen PR60-Merge; gleiches Testpaket und Testzertifikat, steigendes Updatepaar40120→40121. Kein erneuter manueller Test von40120 nötig.
+
+## Prüfung des integrierten Produktkopfs
+
+Die neue vollständige [CI38172596871](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38172596871) gehört exakt zu efbf49cdf92bd5e5ddb2e042b3e14e9372169756 und ist vollständig erfolgreich:
+
+| Job | ID | Ergebnis |
+|---|---|---|
+| Project boundaries and CI scope | `114568150966` | erfolgreich |
+| Build, test, lint and APK verification | `114568180648` | erfolgreich |
+| Room SQLCipher and Compose instrumentation | `114569924279` | erfolgreich |
+| Android verification | `114574672562` | erfolgreich |
+
+Das Build-Log bestätigt alle sieben Pflichtkommandos mit Exit0 und das feste Testzertifikat/Paket mit steigendem Updatepaar. Das bytegenau geprüfte Skript verwendet ausdrücklich die bestätigte Basis40120 aus9e7670f. Beide connectedDebugAndroidTest-Tasks und BUILD SUCCESSFUL sind im Emulatorlog belegt; danach generierte Room-Exporte unverändert. PR62-Kopf/Base/Draft-Zustand nach Abschluss erneut geprüft. Keine neue Hardwarefreigabe daraus ableiten.
 
 ## Bereits belegte Prüfung und aktuelle Integration
 
@@ -66,6 +87,22 @@ Keine neue Test-ZIP ausgegeben, kein separater Paketworkflow ausgelöst. Eine sp
 Die ungesichert lesbaren Quellenarten der **ausgewählten** Anwendung:Gen1 16,Gen2 21 beziehungsweise23 mit beiden angekündigten Kommunikationsquellen,Gen2V2 27 beziehungsweise29. Das zählt Quellenarten, keine Zeitabdeckung oder Datensätze. Es ist keine Behauptung, alle Anwendungen, Signaturen und geschützten Kartenbereiche zu importieren. Fahrzeug-/Spesen-/Abrechnungslogik bleibt außerhalb dieses Schritts.
 
 [Primärabgleich Annex IC§4.5.2.2–4.5.2.4 und Appendix2 TCS140–147](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0799-20160526):DIR und beide Kommunikationsdateien nur auf Karten der zweiten Generation. Die zweite Anwendung **auf derselben Gen2-Karte** ist davon getrennt ein echter offener Importpunkt.
+
+## Nächster abgegrenzter Importschritt: beide Anwendungen
+
+Dies ist eine technische Voranalyse, keine bereits umgesetzte Funktion. Der vorhandene physische Kartenschlüssel in DriverCardImportRepository.key enthält Ausstellerstaat, Nummer und Ausstellungs-/Gültigkeitszeiten, keine Anwendungsgeneration. Diesen stabilen Schlüssel nicht durch zwei scheinbar verschiedene physische Karten ersetzen.
+
+Der aktuelle Reader wählt Gen2 bevorzugt und Gen1 nur als Fallback; CardReadResult und SavedDriverImport tragen jeweils einen einzigen Generation-/Quellensatz. Die bestehenden Quellenverweise erlauben je Sitzung und Art einen konkreten Beleg. Die zweite Anwendung darf deshalb nicht einfach in dieselben Maps eingefügt oder über vorhandene Generationsfelder gelegt werden.
+
+Vor dem ersten Produktpatch ein eigenes Anwendungs-/Sitzungsmodell festlegen: Anwendung/AID und erkannte Generation explizit am jeweiligen Importzweig führen; Identifikation und Kapazitäten je DF unabhängig lesen und validieren; beide DFs an dieselbe bereits bestätigte physische Karte binden. Kartenweite MF-Dateien und anwendungsspezifische Original-/Zertifikats-/Fachdaten bewusst unterscheiden. Ältere Ein-Anwendungs-Sitzungen behalten ihr Modell und bekommen keinen Backfill. Eine ggf. nötige additive Migration muss mit echtem KSP-Export und Update über40120 geprüft werden.
+
+Mindestens prüfen: beide DFs erfolgreich; nur einer erfolgreich bei unabhängigen Dateifehlern; unterschiedliche Original-/Zertifikatsdateien derselben Art; keine Überschreibung/Quellenvermischung; dieselbe physische Karten-ID; Abbruch zwischen DFs; widersprüchliche zweite Fahreridentität; fremde/unbestätigte Karte ohne Persistenz; Snapshot während Kartenprüfung und frische Bestätigungslesung; Deduplizierung mit unveränderten historischen Requests; exakte Wiederöffnung beider Anwendungsbelege nach Neustart und Verlaufswechsel. Belegte Tagesdaten verschiedener Anwendungen nicht automatisch zu doppelter Zeit-/Abrechnungsabdeckung addieren.
+
+## Abschließender Dokumentationscheckpoint
+
+Der abschließende Checkpoint ist auf `docs/card-import-finalization-checkpoint-20261011` gesichert, ausgehend vom exakt geprüften integrierten PR62-Produktkopf. Änderungen dort nur an docs/ und WORK_STATUS.md; Quellcode, Tests, Buildskripte, Schema und Version bleiben bytegleich. Manifest über git-ls-tree-Zeilen in Git-Sortierung mit LF, ohne docs/,README.md,WORK_STATUS.md:292 Dateien, SHA256 `f5750896a878e8c84749c7d6251145822b33b8fcf35b87c65f6516a4502d4fe0`.
+
+PR62 bleibt am genau CI-geprüften Produktkopf stehen; seine Beschreibung verweist auf den vollständigen Checkpoint. Dieser Checkpoint enthält als Vorfahren auch den noch hardwareunbestätigten PR62-Code: **nicht als angeblich reines Docs-Update nach Main mergen**. Bei späterer ausdrücklicher40121-Freigabe den unveränderten freigegebenen Produktkopf behandeln und Dokumentation anschließend separat übernehmen. Bei weiteren Produktänderungen den GitHub-Checkpoint als Ausgang verwenden und erneut vollständig prüfen.
 
 ## Weiterarbeiten
 
