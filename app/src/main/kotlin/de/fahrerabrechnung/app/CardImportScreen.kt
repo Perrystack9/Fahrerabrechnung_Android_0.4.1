@@ -44,7 +44,6 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                 val date = Instant.ofEpochMilli(run.startedAtEpochMillis).atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
                 Text("Letzter Lesevorgang · $date", style = MaterialTheme.typography.titleMedium)
-                if (run.batchId != null) Text("Gemeinsamer Lesevorgang · Ansicht ${run.application?.name}. Beide Anwendungen findest du im Importverlauf.")
                 Text(run.status.label())
                 run.files.filter { it.status == CardImportFileStatus.STORED }.forEach {
                     when (it.kind) {
@@ -80,7 +79,7 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                     }
                 }
                 if (run.sessionId != null) {
-                    if (run.newSourceCount == 0 && run.batchId == null) Text("Die gelesenen Daten waren bereits vorhanden.")
+                    if (run.newSourceCount == 0) Text("Die gelesenen Daten waren bereits vorhanden.")
                     OutlinedButton(onClick = onOpenLatest) { Text("Gespeicherte Daten ansehen") }
                     if (run.files.any { it.kind == CardImportFileKind.VEHICLES && it.status == CardImportFileStatus.STORED })
                         OutlinedButton(onClick = onOpenVehicles) { Text("Fahrzeughistorie") }

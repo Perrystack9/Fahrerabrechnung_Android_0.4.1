@@ -1,7 +1,7 @@
 package de.fahrerabrechnung.data.card
 
 /** Fixed DFs, not two physical cards. Gen2V2 is a format of the Gen2 DF, not a third AID. */
-enum class CardApplication(val identificationReadLength: Int) {
+internal enum class CardApplication(val identificationReadLength: Int) {
     GEN1(10), GEN2(17);
     val aid: ByteArray get() = when (this) {
         GEN1 -> byteArrayOf(0xFF.toByte(), 0x54, 0x41, 0x43, 0x48, 0x4F)
@@ -13,11 +13,11 @@ enum class CardApplication(val identificationReadLength: Int) {
     }
 }
 
-enum class CardApplicationReadStatus { ABSENT, READ_FAILED, READ }
-enum class CardApplicationIdentityAgreement { NO_DRIVER, UNVERIFIED, AGREED, CONFLICT }
+internal enum class CardApplicationReadStatus { ABSENT, READ_FAILED, READ }
+internal enum class CardApplicationIdentityAgreement { NO_DRIVER, UNVERIFIED, AGREED, CONFLICT }
 
 /** Captured once under MF. Bytes are temporary originals, not authenticated or decoded claims. */
-class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val readFailed: Boolean) {
+internal class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val readFailed: Boolean) {
     private val captured = bytes?.copyOf()
     val bytes: ByteArray? get() = captured?.copyOf()
     init {
@@ -27,7 +27,7 @@ class CardMasterFileCapture(val fileId: Int, bytes: ByteArray?, val readFailed: 
 }
 
 /** Neither caller-owned buffers nor a returned snapshot can change this application attempt. */
-class CardApplicationAttempt private constructor(
+internal class CardApplicationAttempt private constructor(
     val application: CardApplication, val status: CardApplicationReadStatus,
     read: CardReadResult?, val failure: ReaderFailure?,
 ) {
@@ -65,7 +65,7 @@ class CardApplicationAttempt private constructor(
 }
 
 /** In-memory envelope only. This is deliberately not accepted by the single-DF persistence API. */
-class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: List<CardMasterFileCapture>) {
+internal class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: List<CardMasterFileCapture>) {
     private val attemptsByApplication = attempts.associateBy { it.application }
     private val masterById = master.associateBy { it.fileId }
     val applications: List<CardApplicationAttempt> get() = CardApplication.entries.map { attemptsByApplication.getValue(it) }
@@ -116,3 +116,4 @@ internal fun freezeApplicationRead(result: CardReadResult) = result.copy(
         directory = result.directory?.let { CardDirectoryFile(it.generation, it.bytes) },
         communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) },
     )
+

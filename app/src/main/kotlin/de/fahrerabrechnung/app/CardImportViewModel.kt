@@ -54,7 +54,6 @@ class CardImportViewModel @Inject constructor(
     private val coordinator = CardImportCoordinator(
         { DriverCardReader(transport).read() }, imports::review,
         { imports.bind(it, confirmedOwnCard = true); Unit }, pipeline::process,
-        { DriverCardReader(transport).readApplications() }, pipeline::processApplications,
     )
     val state = coordinator.state
     private var foreground = false

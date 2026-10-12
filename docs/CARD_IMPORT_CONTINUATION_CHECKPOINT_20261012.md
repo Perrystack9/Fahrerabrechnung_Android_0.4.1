@@ -1,20 +1,4 @@
-# Kartenimport-Fortsetzung – Checkpoint 12.10.2026
-
-## Aktuelle Speicherintegration – CI noch ausstehend
-
-Der vorhandene lokale PR65-Arbeitsstand ist am 12.10.2026 zuerst vollständig in einem separaten lokalen Sicherungscommit erhalten worden. Keine implementierte Datei wurde verworfen oder neu aufgebaut. Die Veröffentlichung folgt dem tatsächlichen GitHub-Parent `f1f92d69fff37eeaec5740b399d7df452b436098`; die lokale Snapshot-Abstammung wird nicht gepusht. Der vollständige Dateiabgleich enthält keine Löschungen. Die folgenden Reader-Abschnitte dokumentieren den früheren, bereits geprüften Zwischenstand.
-
-Kandidat **40122 / Schema 19** integriert jetzt den normalen Beide-Anwendungen-Reader, atomare SQLCipher-Gruppenspeicherung, gemeinsame MF-Belege und genaue Gen1-/Gen2-Sitzungswahl im Verlauf. Übersicht und normale Quellenlisten wählen die Primäranwendung ausdrücklich. Alte Sitzungen, Quellen und Request-Fingerprints bleiben unverändert. [Umfang und Grenzen](CARD_MULTI_APPLICATION_IMPORT.md), [konkrete Geräteanleitung](CARD_MULTI_APPLICATION_DEVICE_TEST.md).
-
-Echter Room/KSP-Export 19 vorhanden, SHA256 `01cdfdeee311e13efdcebd74d66783103f5bd0a8423ad8fedc8b9c12f897892e`, Identität `055b3aad563fd07d68ec0e56bf533124`. Migration 18→19 in SQLite gegen alle 42 compiler-generierten Tabellen einschließlich Spalten, Primärschlüsseln, Indizes und Fremdschlüsseln abgeglichen. Frühere Exporte bleiben unverändert.
-
-Aktueller lokaler Gradle-Lauf erfolgreich: Daten-Unit-Tests, App-Kompilierung, Kompilierung beider neuen Instrumentierungssuiten und `:app:assembleDeviceTest`. Der vorherige lokale inkrementelle Lauf meldete doppelte Kotlin-Overloads; der unveränderte Quellstand kompiliert im anschließenden Lauf erfolgreich. Keine Produktionskorrektur daraus abgeleitet. Projektgrenzen, zehn CI-Guard-Tests, Shellsyntax, Diff- und Schema-Guards bestehen.
-
-**Vollständige neue CI mit SQLCipher-/Compose-Emulatorprüfung und Prüfung des Updatepaars 40121→40122 steht noch aus.** Neun neue SQLCipher- und drei Compose-Testmethoden sind kompiliert, ihr Ausführungsergebnis ist noch nicht behauptet. Keine Gerätefreigabe für 40122. PR65 bleibt offen/Entwurf; kein Merge oder Auto-Merge. Kein zusätzlicher Paketworkflow, keine Budgetänderung, kein Browser, keine Unteragenten oder Bereinigung.
-
----
-
-## Historischer Reader-Checkpoint
+# Kartenimport-Fortsetzung – geprüfter Checkpoint12.10.2026
 
 ## Verbindlicher Ausgang und Eigentümerschaft
 

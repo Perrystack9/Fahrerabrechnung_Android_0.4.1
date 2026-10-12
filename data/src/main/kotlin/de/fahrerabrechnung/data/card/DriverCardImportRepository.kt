@@ -31,8 +31,6 @@ data class SavedDriverImport(
     val identitySources: Map<CardIdentitySourceKind, SavedCardIdentitySource> = emptyMap(),
     val directory: SavedCardDirectory? = null,
     val communication: Map<CardCommunicationKind, SavedCardCommunication> = emptyMap(),
-    val batchId: String? = null,
-    val application: CardApplication? = null,
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -275,12 +273,12 @@ class DriverCardImportRepository @Inject constructor(
 
     suspend fun all(): List<SavedDriverImport> = database.withTransaction {
         val profile = dao.localProfile() ?: return@withTransaction emptyList()
-        primaryImports(dao.imports(profile.id)).map { decode(it, profile.id) }
+        dao.imports(profile.id).map { decode(it, profile.id) }
     }
 
     suspend fun latest(): SavedDriverImport? = database.withTransaction {
         val profile = dao.localProfile() ?: return@withTransaction null
-        primaryImports(dao.imports(profile.id)).firstOrNull()?.let { decode(it, profile.id) }
+        dao.imports(profile.id).firstOrNull()?.let { decode(it, profile.id) }
     }
 
     suspend fun get(id: String): SavedDriverImport? = database.withTransaction {
@@ -291,14 +289,9 @@ class DriverCardImportRepository @Inject constructor(
         decode(sources, profile.id)
     }
 
-    private suspend fun primaryImports(rows: List<DriverImportSourcesEntity>) = rows.filter { row ->
-        val attempt = database.cardReadBatchDao().attemptForSession(row.sessionId)
-        attempt == null || database.cardReadBatchDao().batch(attempt.batchId)?.primaryApplication == attempt.application
-    }
-
     suspend fun vehicleSources(): List<SavedCardVehicles> = database.withTransaction {
         val profile = dao.localProfile() ?: return@withTransaction emptyList()
-        primaryImports(dao.imports(profile.id)).filter { it.vehicleId != null }
+        dao.imports(profile.id).filter { it.vehicleId != null }
             .distinctBy { it.driverCardId to it.vehicleId }.map {
                 decodeVehicles(it.driverCardId, checkNotNull(it.vehicleId))
             }
@@ -360,51 +353,13 @@ class DriverCardImportRepository @Inject constructor(
             check(row.activityId == sources.activityId && row.vehicleId == sources.vehicleId)
             SavedCardSourcePair(id, checkNotNull(activity), checkNotNull(vehicle), row.savedAtEpochMillis)
         }
-        val saved = SavedDriverImport(session.id, profileId, sources.driverCardId, session.createdAtEpochMillis,
+        return SavedDriverImport(session.id, profileId, sources.driverCardId, session.createdAtEpochMillis,
             sources.newSourceCount, activity, vehicle, pair, controls.load(sources.driverCardId, session.id),
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.EVENTS),
             eventFaults.load(sources.driverCardId, session.id, CardEventFaultKind.FAULTS),
             specificConditions.load(sources.driverCardId, session.id),
             gnss.positions(sources.driverCardId, session.id), gnss.authentication(sources.driverCardId, session.id),
             places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id), vehicleUnits.load(sources.driverCardId, session.id), metadata.load(sources.driverCardId, session.id), certificates.load(sources.driverCardId, session.id), identitySources.load(sources.driverCardId, session.id), directories.load(sources.driverCardId, session.id), communication.load(sources.driverCardId, session.id))
-        return withBatchMaster(saved)
-    }
-
-    /** Read-only projection of this exact parent's MF receipts. No child source is persisted here. */
-    private suspend fun withBatchMaster(saved: SavedDriverImport): SavedDriverImport {
-        val batches = database.cardReadBatchDao()
-        val attempt = batches.attemptForSession(saved.id) ?: return saved
-        val parent = checkNotNull(batches.batch(attempt.batchId))
-        check(parent.driverCardId == saved.driverCardId && attempt.driverCardId == saved.driverCardId)
-        val gen2 = batches.attempts(parent.id).single { it.application == CardApplication.GEN2.name }.generation?.let(CardGeneration::valueOf)
-        val generation = gen2 ?: CardGeneration.valueOf(checkNotNull(attempt.generation))
-        val mfMetadata = mutableMapOf<CardMetadataKind, SavedCardMetadata>()
-        val mfCommunication = mutableMapOf<CardCommunicationKind, SavedCardCommunication>()
-        var directory: SavedCardDirectory? = null
-        for (ref in batches.masterFiles(parent.id)) {
-            check(ref.driverCardId == saved.driverCardId)
-            val source = ref.sourceId?.let { checkNotNull(batches.master(it)) } ?: continue
-            check(source.driverCardId == saved.driverCardId && source.fileId == ref.fileId)
-            check(source.id == CardBatchRequests.master(saved.driverCardId, ref.fileId, source.bytes))
-            CardMetadataKind.entries.singleOrNull { it.inMasterFile && it.fileId == ref.fileId }?.let { kind ->
-                runCatching {
-                    val file = CardMetadataFile(kind, generation, source.bytes)
-                    mfMetadata[kind] = SavedCardMetadata(source.id, saved.driverCardId, file, CardMetadataParser.parse(file), source.savedAtEpochMillis)
-                }
-            }
-            if (gen2 != null && ref.fileId == CardDirectoryReader.FILE_ID) runCatching {
-                val file = CardDirectoryFile(gen2, source.bytes)
-                directory = SavedCardDirectory(source.id, saved.driverCardId, file, CardDirectoryParser.parse(file), source.savedAtEpochMillis)
-            }
-            if (gen2 != null) CardCommunicationKind.entries.singleOrNull { it.fileId == ref.fileId }?.let { kind ->
-                runCatching {
-                    val file = CardCommunicationFile(kind, gen2, source.bytes)
-                    mfCommunication[kind] = SavedCardCommunication(source.id, saved.driverCardId, file, CardCommunicationParser.parse(file), source.savedAtEpochMillis)
-                }
-            }
-        }
-        return saved.copy(metadata = saved.metadata + mfMetadata, directory = directory,
-            communication = mfCommunication, batchId = parent.id, application = CardApplication.valueOf(attempt.application))
     }
 
     private suspend fun decodeVehicles(cardId: String, sourceId: String): SavedCardVehicles {

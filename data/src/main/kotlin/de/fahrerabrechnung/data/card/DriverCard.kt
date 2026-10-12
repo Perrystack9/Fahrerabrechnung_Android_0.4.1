@@ -295,7 +295,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
     }
 
     /** One powered insertion, both fixed AIDs, isolated sources. Does not bind or persist a card. */
-    suspend fun readApplications(): CardApplicationReadBatch = withPoweredCard { session, atr ->
+    internal suspend fun readApplications(): CardApplicationReadBatch = withPoweredCard { session, atr ->
         val master = readMaster(session, atr, abortTransport = true)
         val attempts = CardApplication.entries.map { application ->
             try {

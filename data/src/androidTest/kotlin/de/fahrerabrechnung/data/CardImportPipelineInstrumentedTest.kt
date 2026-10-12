@@ -1708,7 +1708,7 @@ class CardImportPipelineInstrumentedTest {
             imports.get(fresh.id)!!.metadata.getValue(kind).file.bytes)
         assertEquals(oldRow, db.cardImportRunDao().run(old.id)); assertEquals(oldFiles, db.cardImportRunDao().files(old.id))
         assertEquals(3, imports.get(old.id)!!.metadata.size); assertEquals(old, pipeline.process(metadataRead(), old.id))
-        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(18, db.openHelper.readableDatabase.version)
     }
     @Test fun masterSourcesDeduplicateAndChangedRequestsCannotReuseTheirId() = runBlocking {
         imports.bind(card(), true)
@@ -2191,7 +2191,7 @@ class CardImportPipelineInstrumentedTest {
         for (kind in CardCertificateKind.entries) assertArrayEquals(certificateFixture(), saved.certificates.getValue(kind).file.bytes)
         assertTrue(imports.get(old.id)!!.certificates.isEmpty()); assertEquals(19, pipeline.history().first { it.id == old.id }.files.size)
         assertEquals(oldRow, db.cardImportRunDao().run(old.id)); assertEquals(oldFiles, db.cardImportRunDao().files(old.id))
-        assertEquals(old, pipeline.process(masterRead(), old.id)); assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
+        assertEquals(old, pipeline.process(masterRead(), old.id)); assertEquals(18, db.openHelper.readableDatabase.version)
     }
     @Test fun certificateKindsDeduplicateIndependentlyAndChangedAttemptCannotReuseId() = runBlocking {
         imports.bind(card(), true)

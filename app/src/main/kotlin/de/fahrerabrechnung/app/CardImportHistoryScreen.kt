@@ -24,7 +24,6 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
                                      imports: DriverCardImportRepository,
                                      onPreview: (SavedDriverImport) -> Unit, onOpenArchive: () -> Unit) {
     var runs by remember { mutableStateOf<List<CardImportRun>>(emptyList()) }
-    var batches by remember { mutableStateOf<Map<String, SavedCardReadBatch>>(emptyMap()) }
     var earlier by remember { mutableStateOf<List<EarlierDriverImportRow>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -33,14 +32,7 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
     var visibleCount by remember { mutableStateOf(20) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(pipeline) {
-        try {
-            runs = pipeline.history(); earlier = pipeline.earlierImports()
-            batches = runs.mapNotNull { it.batchId }.distinct().mapNotNull { id ->
-                try { pipeline.applicationBatch(id)?.let { id to it } }
-                catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { null }
-            }.toMap()
-        }
+        try { runs = pipeline.history(); earlier = pipeline.earlierImports() }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { error = "Der Importverlauf konnte nicht geladen werden." }
         finally { loading = false }
@@ -61,39 +53,6 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
                 Text(Instant.ofEpochMilli(entry.time).atZone(ZoneId.systemDefault()).format(formatter),
                     style = MaterialTheme.typography.titleMedium)
                 Text("${entry.generation.name} · Fahrerkarte ${maskCardNumber(entry.cardNumber)}")
-                if (entry.run?.batchId != null && entry.run.batchId !in batches)
-                    Text("Die Anwendungsgruppe dieses Vorgangs konnte nicht geöffnet werden. Andere Einträge bleiben verfügbar.")
-                entry.run?.batchId?.let { batchId -> batches[batchId]?.let { batch ->
-                    Text("Gemeinsamer Lesevorgang · getrennte Anwendungen")
-                    Text("Kartentage werden je ausgewählter Anwendung angezeigt.", style = MaterialTheme.typography.bodySmall)
-                    batch.applications.forEach { application ->
-                        Text("${application.application.name}: " + when (application.status) {
-                            CardApplicationReadStatus.ABSENT -> "nicht vorhanden"
-                            CardApplicationReadStatus.READ_FAILED -> "Lesen fehlgeschlagen"
-                            CardApplicationReadStatus.READ -> application.run?.status?.label().orEmpty()
-                        })
-                        application.run?.sessionId?.let { session ->
-                            OutlinedButton(enabled = opening == null,
-                                modifier = Modifier.testTag("open_application_${batch.id}_${application.application.name}"),
-                                onClick = {
-                                    opening = session; previewError = null
-                                    scope.launch {
-                                        try { onPreview(checkNotNull(imports.get(session))) }
-                                        catch (cancelled: CancellationException) { throw cancelled }
-                                        catch (_: Exception) { previewError = entry.id }
-                                        finally { opening = null }
-                                    }
-                                }) { Text("${application.application.name}-Daten ansehen") }
-                        }
-                    }
-                    batch.masterFiles.forEach { file ->
-                        val name = when (file.fileId) {
-                            0x0002 -> "Kartenkennung"; 0x0005 -> "Chipkennung"; 0x2F00 -> "Anwendungsverzeichnis"
-                            0x2F01 -> "Pufferinformation"; 0x0006 -> "Protokollunterstützung"; else -> "Kartenweite Datei"
-                        }
-                        Text("$name: " + if (file.readFailed) "Lesen fehlgeschlagen" else "${file.bytes?.size} Bytes gespeichert")
-                    }
-                } }
                 entry.run?.let { run ->
                     Text(run.status.label())
                     run.files.forEach { file -> Text(file.description()) }
@@ -102,7 +61,7 @@ internal fun CardImportHistoryScreen(padding: PaddingValues, pipeline: DriverCar
                         val last = file.lastUtcEpochSeconds?.let { Instant.ofEpochSecond(it).atOffset(ZoneOffset.UTC).toLocalDate() }
                         if (first != null && last != null) Text("Kartentage: $first – $last")
                     }
-                    if (run.sessionId != null && run.newSourceCount == 0 && run.batchId == null) Text("Die Daten waren bereits vorhanden.")
+                    if (run.sessionId != null && run.newSourceCount == 0) Text("Die Daten waren bereits vorhanden.")
                 }
                 entry.earlier?.let { old ->
                     Text("Früher gespeicherter Lesevorgang")

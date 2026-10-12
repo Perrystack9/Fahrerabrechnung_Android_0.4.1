@@ -1,7 +1,3 @@
-Aktueller Kandidat12.10.2026: Die folgende Modellentscheidung ist in PR65 als40122/Schema19 umgesetzt; neue Prüfungen/Hardwarefreigabe stehen noch aus. [Aktuelle Integration und genaue Grenzen](CARD_MULTI_APPLICATION_IMPORT.md). Die Modellentscheidung darunter beschreibt den ursprünglichen Plan.
-
----
-
 # Gemeinsamer Kartenlesevorgang – additive Speicherintegration
 
 Modellentscheidung12.10.2026 auf dem Reader-Fundament von PR65 (`f1f92d69fff37eeaec5740b399d7df452b436098`). **Dieser Text beschreibt die nächste Integration, keine bereits vorhandene Schema19-/Speicherfunktion.** Die normale App liest/speichert weiterhin eine ausgewählte Anwendung. [Reader-Umfang und Grenzen](CARD_MULTI_APPLICATION_IMPORT.md).

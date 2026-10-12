@@ -34,3 +34,4 @@ Das Gen2-BIN wurde unabhängig lokal als7F21 mit vollständigem kodierten7F4E-Bo
 Das V2-Primärformat ordnetVU_Configuration der ZugriffsbedingungSC5 zu: authentisierte und geschützte Kommunikation; normales ungeschütztes READ reicht nicht. Im Projekt steht kein belegter autorisierter VU-/Authentisierungs-/Secure-Messaging-Pfad mit den dazugehörigen legitimen Schlüsseln bereit. Die eigene Fahrerkarte oder ein öffentliches ERCA-Zertifikat liefert diese Berechtigung nicht. Deshalb weiterhin kein blindes0540-Lesen, keine vorgetäuschte VU-Identität oder erfundene Schlüssel. Ein zulässiger eigener Hardware-/Sicherheitsweg ist eine tatsächliche Voraussetzung für diesen Importbereich.
 
 Fahrzeug-/Spesen-/Abrechnungslogik, künstliche Routen, erfundene Zeitabdeckung oder Vertrauen bleiben außerhalb. Kein Browser/Unteragenten/Bereinigung. GitHub-Actions-Budget2USD und Stop-usage unverändert.
+
