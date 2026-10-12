@@ -38,12 +38,13 @@ class CardReadBatchInstrumentedTest {
         pipeline = DriverCardImportPipeline(db, imports, activities, vehicles, clock)
     }
     @After fun after() { db.close(); context.deleteDatabase(AppDatabase.DATABASE_NAME) }
-    private fun identity(number: String = "TESTCARD12345678", surname: String = "MUSTER") = ByteArrayOutputStream().apply {
+    private fun identity(number: String = "TESTCARD12345678", surname: String = "MUSTER",
+                         birthDate: ByteArray = byteArrayOf(0x20, 0, 0x02, 0x29)) = ByteArrayOutputStream().apply {
         fun name(value: String) { write(1); write(value.padEnd(35).toByteArray()) }
         write(1); write(number.toByteArray()); name("TEST AUTHORITY")
         write(byteArrayOf(0x65, 0x53, 0xF1.toByte(), 0)); write(byteArrayOf(0x65, 0x53, 0xF1.toByte(), 0))
         write(byteArrayOf(0x75, 0x53, 0xF1.toByte(), 0)); name(surname); name("ERIKA")
-        write(byteArrayOf(0x20, 0, 0x02, 0x29)); write("DE".toByteArray())
+        write(birthDate); write("DE".toByteArray())
     }.toByteArray()
     private fun read(generation: CardGeneration, raw: ByteArray = identity()): CardReadResult {
         val card = DriverCardDecoder.identity(raw, generation)
@@ -118,10 +119,11 @@ class CardReadBatchInstrumentedTest {
         rejected { pipeline.processApplications(conflict, "conflict", true) }
         assertNull(imports.profile()); assertEquals(0, count("driver_cards"))
         pipeline.processApplications(batch(), "own", true)
-        val foreignRaw = identity("OTHERCRD12345678", "FOREIGN")
+        val foreignRaw = identity("OTHERCRD12345678", "FOREIGN", byteArrayOf(0x19, 0x80.toByte(), 0x01, 0x01))
         val foreign = CardApplicationReadBatch(listOf(
             CardApplicationAttempt.read(CardApplication.GEN1, read(CardGeneration.GEN1, foreignRaw)),
             CardApplicationAttempt.read(CardApplication.GEN2, read(CardGeneration.GEN2, foreignRaw))), emptyList())
+        assertEquals(CardBindingKind.FOREIGN_CARD, imports.review(foreign.applications.first().result!!.card!!).kind)
         rejected { pipeline.processApplications(foreign, "foreign", true) }
         assertEquals(1, count("driver_cards")); assertEquals(1, count("card_read_batches"))
     }

@@ -50,7 +50,7 @@ class CardReadBatchHistoryUiTest {
     private fun batch(second: CardApplicationAttempt = CardApplicationAttempt.read(CardApplication.GEN2, read(CardGeneration.GEN2))) =
         CardApplicationReadBatch(listOf(CardApplicationAttempt.read(CardApplication.GEN1, read(CardGeneration.GEN1)), second),
             listOf(CardMasterFileCapture(0x0005, ByteArray(8), false)))
-    @Test fun historyOffersBothExactChildSessionsWithoutDuplicatingTheParent() = runBlocking {
+    @Test fun historyOffersBothExactChildSessionsWithoutDuplicatingTheParent(): Unit = runBlocking {
         val group = pipeline.processApplications(batch(), "ui-parent", true)
         var selected: SavedDriverImport? = null
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
@@ -66,7 +66,7 @@ class CardReadBatchHistoryUiTest {
         compose.onAllNodesWithText("Gemeinsamer Lesevorgang · getrennte Anwendungen").assertCountEquals(1)
         compose.onNodeWithText("Chipkennung: 8 Bytes gespeichert").performScrollTo().assertIsDisplayed()
     }
-    @Test fun failedApplicationOffersNoBorrowedOrNewerPreview() = runBlocking {
+    @Test fun failedApplicationOffersNoBorrowedOrNewerPreview(): Unit = runBlocking {
         pipeline.processApplications(batch(CardApplicationAttempt.failed(CardApplication.GEN2, ReaderFailure.IO)), "ui-failed", true)
         compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
             CardImportHistoryScreen(PaddingValues(), pipeline, imports, {}, {})
