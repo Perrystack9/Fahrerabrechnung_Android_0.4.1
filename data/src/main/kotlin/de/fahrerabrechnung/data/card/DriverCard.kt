@@ -284,7 +284,41 @@ object DriverCardDecoder {
 
 /** No storage side effects. Each supported EF is independent after validated identification. */
 class DriverCardReader(private val transport: CardReaderTransport) {
-    suspend fun read(): CardReadResult {
+    /** Legacy one-application API, retained until atomic multi-application persistence is ready. */
+    suspend fun read(): CardReadResult = withPoweredCard { session, atr ->
+        val master = readMaster(session, atr, abortTransport = false)
+        val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
+        val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
+        val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
+        if (recognized != CardRecognition.DRIVER) CardReadResult(recognized, generation)
+        else readSelected(session, checkNotNull(g2 ?: g1), recognized, generation, master, abortTransport = false)
+    }
+
+    /** One powered insertion, both fixed AIDs, isolated sources. Does not bind or persist a card. */
+    suspend fun readApplications(): CardApplicationReadBatch = withPoweredCard { session, atr ->
+        val master = readMaster(session, atr, abortTransport = true)
+        val attempts = CardApplication.entries.map { application ->
+            try {
+                val bytes = readApplication(session, application.aid, application.identificationReadLength)
+                if (bytes == null) CardApplicationAttempt.absent(application)
+                else {
+                    val (recognized, generation) = when (application) {
+                        CardApplication.GEN1 -> DriverCardDecoder.generation(bytes, null)
+                        CardApplication.GEN2 -> DriverCardDecoder.generation(null, bytes)
+                    }
+                    val result = if (recognized != CardRecognition.DRIVER) CardReadResult(recognized, generation)
+                        else readSelected(session, bytes, recognized, generation, MasterCapture(), abortTransport = true)
+                    CardApplicationAttempt.read(application, result.copy(directoryReadFailed = false))
+                }
+            } catch (error: ReaderException) {
+                fileFailure(error, abortTransport = true)
+                CardApplicationAttempt.failed(application, error.failure)
+            }
+        }
+        CardApplicationReadBatch(attempts, master.freeze())
+    }
+
+    private suspend fun <T> withPoweredCard(action: suspend (ApduSession, Atr) -> T): T {
         try {
             when (transport.open()) {
                 ReaderState.Open, ReaderState.CardPresent -> Unit
@@ -294,165 +328,185 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 ReaderState.Disconnected -> throw ReaderException(ReaderFailure.DISCONNECTED)
             }
             val atr = AtrDecoder.parse(transport.powerOn())
-            val session = ApduSession(transport)
-            // TCS18: MF is the current directory immediately after ATR. Read its EFs before
-            // selecting either application; retain only temporary bytes until driver identification.
-            val masterFiles = CardMetadataKind.entries.filter { it.inMasterFile }.associateWith { kind ->
-                try { readFile(session, kind.fileId, kind.fileLength) } catch (_: ReaderException) { null }
-            }
-            val rawDirectory = try { CardDirectoryReader.read(session) } catch (_: ReaderException) { null }
-            val extendedSupport = CardCommunicationParser.advertisedBy(atr)
-            val rawCommunication = if (extendedSupport != true) emptyMap() else
-                CardCommunicationKind.entries.associateWith { kind ->
-                    try { CardCommunicationReader.read(session, kind, extendedSupport) }
-                    catch (_: ReaderException) { null to true }
-                }.filterValues { (bytes, failed) -> bytes != null || failed }
-            val g2 = readApplication(session, DriverCardFiles.gen2Aid, 17)
-            val g1 = if (g2 == null) readApplication(session, DriverCardFiles.gen1Aid, 10) else null
-            val (recognized, generation) = DriverCardDecoder.generation(g1, g2)
-            if (recognized != CardRecognition.DRIVER) return CardReadResult(recognized, generation)
-            // The V2 extension supplies the new EF's capacity. A failure must not discard legacy EFs.
-            val applicationV2 = if (generation == CardGeneration.GEN2V2) try {
-                readFile(session, DriverCardFiles.APPLICATION_V2, 10)
-            } catch (_: ReaderException) { null } else null
-            return try {
-                val application = g2 ?: g1!!
-                val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
-                val identity = DriverCardDecoder.identity(identityBytes, generation)
-                // Failure of one EF must not prevent trying the other or expose incomplete bytes.
-                val activity = try {
-                    val length = DriverCardDecoder.activityLength(application, generation)
-                    DriverCardDecoder.activity(readFile(session, DriverCardFiles.DRIVER_ACTIVITY,
-                        length + 4), length)
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                val vehicles = try {
-                    val count = DriverCardDecoder.vehicleCount(application, generation)
-                    val width = if (generation == CardGeneration.GEN1) 31 else 48
-                    DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
-                        count * width + 2), count, generation)
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                val controls = try {
-                    CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
-                        CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                suspend fun eventFault(kind: CardEventFaultKind): CardEventFaultFile? = try {
-                    val count = DriverCardDecoder.eventFaultCount(application, generation, kind)
-                    CardEventFaultFile(kind, generation, count, readFile(session, kind.fileId,
-                        CardEventFaultParser.fileLength(kind, generation, count))).also { CardEventFaultParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                val events = eventFault(CardEventFaultKind.EVENTS)
-                val faults = eventFault(CardEventFaultKind.FAULTS)
-                val specificConditions = try {
-                    val count = DriverCardDecoder.specificConditionCount(application, generation)
-                    CardSpecificConditionFile(generation, count, readFile(session, DriverCardFiles.SPECIFIC_CONDITIONS,
-                        CardSpecificConditionParser.fileLength(generation, count))).also { CardSpecificConditionParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                val supportsPositions = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
-                val positions = if (supportsPositions) try {
-                    val count = DriverCardDecoder.gnssCount(application, generation)
-                    CardGnssAccumulatedDrivingFile(generation, count, readFile(session, DriverCardFiles.GNSS_PLACES,
-                        CardGnssAccumulatedDrivingParser.fileLength(generation, count))).also { CardGnssAccumulatedDrivingParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val supportsAuthentication = generation == CardGeneration.GEN2V2
-                val authentication = if (supportsAuthentication) try {
-                    CardGnssAuthenticationFile(generation, readFile(session, DriverCardFiles.GNSS_AUTHENTICATION,
-                        CardGnssAuthenticationParser.fileLength(generation))).also { CardGnssAuthenticationParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val places = try {
-                    val count = DriverCardDecoder.placeCount(application, generation)
-                    CardPlacesFile(generation, count, readFile(session, DriverCardFiles.PLACES,
-                        CardPlacesParser.fileLength(generation, count))).also { CardPlacesParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                val placesAuthentication = if (supportsAuthentication) try {
-                    CardPlacesAuthenticationFile(generation, readFile(session, DriverCardFiles.PLACES_AUTHENTICATION,
-                        CardPlacesAuthenticationParser.fileLength(generation))).also { CardPlacesAuthenticationParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val borderCrossings = if (supportsAuthentication) try {
-                    val count = DriverCardDecoder.borderCrossingCount(applicationV2
-                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable border capacity"), generation)
-                    CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
-                        CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val loadUnload = if (supportsAuthentication) try {
-                    val count = DriverCardDecoder.loadUnloadCount(applicationV2
-                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable load/unload capacity"), generation)
-                    CardLoadUnloadFile(generation, count, readFile(session, DriverCardFiles.LOAD_UNLOAD,
-                        CardLoadUnloadParser.fileLength(generation, count))).also { CardLoadUnloadParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val loadType = if (supportsAuthentication) try {
-                    val count = DriverCardDecoder.loadTypeCount(applicationV2
-                        ?: throw ParseError(0, "Application_Identification_V2", "unavailable load-type capacity"), generation)
-                    CardLoadTypeFile(generation, count, readFile(session, DriverCardFiles.LOAD_TYPE,
-                        CardLoadTypeParser.fileLength(generation, count))).also { CardLoadTypeParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val supportsVehicleUnits = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
-                val vehicleUnits = if (supportsVehicleUnits) try {
-                    val count = DriverCardDecoder.vehicleUnitCount(application, generation)
-                    CardVehicleUnitsFile(generation, count, readFile(session, DriverCardFiles.VEHICLE_UNITS,
-                        CardVehicleUnitsParser.fileLength(generation, count))).also { CardVehicleUnitsParser.parse(it) }
-                } catch (_: ParseError) { null } catch (_: ReaderException) { null } else null
-                val metadata = CardMetadataKind.entries.filter { !it.inMasterFile }.associateWith { kind ->
-                    val file = try {
-                        CardMetadataFile(kind, generation, readFile(session, kind.fileId, kind.fileLength))
-                            .also { CardMetadataParser.parse(it) }
-                    } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                    CardMetadataRead(file, readFailed = file == null)
-                } + masterFiles.mapValues { (kind, bytes) ->
-                    val file = try { bytes?.let { CardMetadataFile(kind, generation, it).also { frozen -> CardMetadataParser.parse(frozen) } } }
-                    catch (_: ParseError) { null }
-                    CardMetadataRead(file, readFailed = file == null)
-                }
-                val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
-                    val file = try { CardCertificateReader.read(session, kind, generation) }
-                    catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                    CardCertificateRead(file, readFailed = file == null)
-                }
-                val identitySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
-                    val captured = when (kind) {
-                        CardIdentitySourceKind.APPLICATION -> application
-                        CardIdentitySourceKind.IDENTIFICATION -> identityBytes
-                        CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
-                    }
-                    val file = try { captured?.let {
-                        CardIdentitySourceReader.freezeComplete(session, kind, generation, it)
-                            .also { frozen -> CardIdentitySourceParser.validate(frozen, identity) }
-                    } } catch (_: ParseError) { null } catch (_: ReaderException) { null }
-                    CardIdentitySourceRead(file, readFailed = file == null)
-                }
-                val supportsDirectory = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
-                val directory = if (supportsDirectory) try { rawDirectory?.let {
-                    CardDirectoryFile(generation, it).also { frozen -> CardDirectoryParser.parse(frozen) }
-                } } catch (_: ParseError) { null } else null
-                val communication = if (!supportsDirectory) emptyMap() else rawCommunication.mapValues { (kind, captured) ->
-                    val file = try { captured.first?.let {
-                        CardCommunicationFile(kind, generation, it).also { frozen -> CardCommunicationParser.parse(frozen) }
-                    } } catch (_: ParseError) { null }
-                    CardCommunicationRead(file, readFailed = captured.second || file == null)
-                }
-                CardReadResult(recognized, generation, identity, activity, vehicles,
-                    vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
-                    controls = controls, controlReadFailed = controls == null,
-                    events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null,
-                    specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null,
-                    gnssPositions = positions, gnssPositionReadFailed = supportsPositions && positions == null,
-                    gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null,
-                    places = places, placeReadFailed = places == null,
-                    placesAuthentication = placesAuthentication,
-                    placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null,
-                    borderCrossings = borderCrossings,
-                    borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null,
-                    loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
-                    loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
-                    vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
-                    metadata = metadata, certificates = certificates, identitySources = identitySources,
-                    directory = directory, directoryReadFailed = supportsDirectory && directory == null,
-                    communication = communication)
-            } catch (_: ParseError) {
-                CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
-            }
+            return action(ApduSession(transport), atr)
         } finally {
             runCatching { transport.powerOff() }
             transport.close()
+        }
+    }
+
+    private data class MasterCapture(
+        val metadata: Map<CardMetadataKind, ByteArray?> = emptyMap(),
+        val directory: ByteArray? = null,
+        val communication: Map<CardCommunicationKind, Pair<ByteArray?, Boolean>> = emptyMap(),
+    ) {
+        fun freeze(): List<CardMasterFileCapture> = metadata.map { (kind, bytes) ->
+            CardMasterFileCapture(kind.fileId, bytes, bytes == null)
+        } + CardMasterFileCapture(CardDirectoryReader.FILE_ID, directory, directory == null) +
+            communication.map { (kind, read) -> CardMasterFileCapture(kind.fileId, read.first, read.second) }
+    }
+
+    private suspend fun readMaster(session: ApduSession, atr: Atr, abortTransport: Boolean): MasterCapture {
+        // TCS18: MF is current immediately after ATR. Never re-read it underneath an AID.
+        val metadata = CardMetadataKind.entries.filter { it.inMasterFile }.associateWith { kind ->
+            try { readFile(session, kind.fileId, kind.fileLength) }
+            catch (error: ReaderException) { fileFailure(error, abortTransport) }
+        }
+        val directory = try { CardDirectoryReader.read(session) }
+            catch (error: ReaderException) { fileFailure(error, abortTransport) }
+        val advertised = CardCommunicationParser.advertisedBy(atr)
+        val communication = if (advertised != true) emptyMap() else
+            CardCommunicationKind.entries.associateWith { kind ->
+                try { CardCommunicationReader.read(session, kind, advertised) }
+                catch (error: ReaderException) { fileFailure(error, abortTransport); null to true }
+            }.filterValues { (bytes, failed) -> bytes != null || failed }
+        return MasterCapture(metadata, directory, communication)
+    }
+
+    private fun fileFailure(error: ReaderException, abortTransport: Boolean): Nothing? {
+        if (abortTransport && error.failure !in setOf(ReaderFailure.IO, ReaderFailure.MALFORMED_RESPONSE)) throw error
+        return null
+    }
+
+    private suspend fun readSelected(session: ApduSession, application: ByteArray, recognized: CardRecognition,
+        generation: CardGeneration, master: MasterCapture, abortTransport: Boolean): CardReadResult {
+        // Each DF supplies its own capacities. A missing V2 extension never erases legacy files.
+        val applicationV2 = if (generation == CardGeneration.GEN2V2) try {
+            readFile(session, DriverCardFiles.APPLICATION_V2, 10)
+        } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+        return try {
+            val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
+            val identity = DriverCardDecoder.identity(identityBytes, generation)
+            // Failure of one EF must not prevent trying the other or expose incomplete bytes.
+            val activity = try {
+                val length = DriverCardDecoder.activityLength(application, generation)
+                DriverCardDecoder.activity(readFile(session, DriverCardFiles.DRIVER_ACTIVITY,
+                    length + 4), length)
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val vehicles = try {
+                val count = DriverCardDecoder.vehicleCount(application, generation)
+                val width = if (generation == CardGeneration.GEN1) 31 else 48
+                DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
+                    count * width + 2), count, generation)
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val controls = try {
+                CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
+                    CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            suspend fun eventFault(kind: CardEventFaultKind): CardEventFaultFile? = try {
+                val count = DriverCardDecoder.eventFaultCount(application, generation, kind)
+                CardEventFaultFile(kind, generation, count, readFile(session, kind.fileId,
+                    CardEventFaultParser.fileLength(kind, generation, count))).also { CardEventFaultParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val events = eventFault(CardEventFaultKind.EVENTS)
+            val faults = eventFault(CardEventFaultKind.FAULTS)
+            val specificConditions = try {
+                val count = DriverCardDecoder.specificConditionCount(application, generation)
+                CardSpecificConditionFile(generation, count, readFile(session, DriverCardFiles.SPECIFIC_CONDITIONS,
+                    CardSpecificConditionParser.fileLength(generation, count))).also { CardSpecificConditionParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val supportsPositions = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+            val positions = if (supportsPositions) try {
+                val count = DriverCardDecoder.gnssCount(application, generation)
+                CardGnssAccumulatedDrivingFile(generation, count, readFile(session, DriverCardFiles.GNSS_PLACES,
+                    CardGnssAccumulatedDrivingParser.fileLength(generation, count))).also { CardGnssAccumulatedDrivingParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val supportsAuthentication = generation == CardGeneration.GEN2V2
+            val authentication = if (supportsAuthentication) try {
+                CardGnssAuthenticationFile(generation, readFile(session, DriverCardFiles.GNSS_AUTHENTICATION,
+                    CardGnssAuthenticationParser.fileLength(generation))).also { CardGnssAuthenticationParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val places = try {
+                val count = DriverCardDecoder.placeCount(application, generation)
+                CardPlacesFile(generation, count, readFile(session, DriverCardFiles.PLACES,
+                    CardPlacesParser.fileLength(generation, count))).also { CardPlacesParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val placesAuthentication = if (supportsAuthentication) try {
+                CardPlacesAuthenticationFile(generation, readFile(session, DriverCardFiles.PLACES_AUTHENTICATION,
+                    CardPlacesAuthenticationParser.fileLength(generation))).also { CardPlacesAuthenticationParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val borderCrossings = if (supportsAuthentication) try {
+                val count = DriverCardDecoder.borderCrossingCount(applicationV2
+                    ?: throw ParseError(0, "Application_Identification_V2", "unavailable border capacity"), generation)
+                CardBorderCrossingsFile(generation, count, readFile(session, DriverCardFiles.BORDER_CROSSINGS,
+                    CardBorderCrossingsParser.fileLength(generation, count))).also { CardBorderCrossingsParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val loadUnload = if (supportsAuthentication) try {
+                val count = DriverCardDecoder.loadUnloadCount(applicationV2
+                    ?: throw ParseError(0, "Application_Identification_V2", "unavailable load/unload capacity"), generation)
+                CardLoadUnloadFile(generation, count, readFile(session, DriverCardFiles.LOAD_UNLOAD,
+                    CardLoadUnloadParser.fileLength(generation, count))).also { CardLoadUnloadParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val loadType = if (supportsAuthentication) try {
+                val count = DriverCardDecoder.loadTypeCount(applicationV2
+                    ?: throw ParseError(0, "Application_Identification_V2", "unavailable load-type capacity"), generation)
+                CardLoadTypeFile(generation, count, readFile(session, DriverCardFiles.LOAD_TYPE,
+                    CardLoadTypeParser.fileLength(generation, count))).also { CardLoadTypeParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val supportsVehicleUnits = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+            val vehicleUnits = if (supportsVehicleUnits) try {
+                val count = DriverCardDecoder.vehicleUnitCount(application, generation)
+                CardVehicleUnitsFile(generation, count, readFile(session, DriverCardFiles.VEHICLE_UNITS,
+                    CardVehicleUnitsParser.fileLength(generation, count))).also { CardVehicleUnitsParser.parse(it) }
+            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) } else null
+            val metadata = CardMetadataKind.entries.filter { !it.inMasterFile }.associateWith { kind ->
+                val file = try {
+                    CardMetadataFile(kind, generation, readFile(session, kind.fileId, kind.fileLength))
+                        .also { CardMetadataParser.parse(it) }
+                } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+                CardMetadataRead(file, readFailed = file == null)
+            } + master.metadata.mapValues { (kind, bytes) ->
+                val file = try { bytes?.let { CardMetadataFile(kind, generation, it).also { frozen -> CardMetadataParser.parse(frozen) } } }
+                catch (_: ParseError) { null }
+                CardMetadataRead(file, readFailed = file == null)
+            }
+            val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                val file = try { CardCertificateReader.read(session, kind, generation) }
+                catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+                CardCertificateRead(file, readFailed = file == null)
+            }
+            val identitySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                val captured = when (kind) {
+                    CardIdentitySourceKind.APPLICATION -> application
+                    CardIdentitySourceKind.IDENTIFICATION -> identityBytes
+                    CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
+                }
+                val file = try { captured?.let {
+                    CardIdentitySourceReader.freezeComplete(session, kind, generation, it)
+                        .also { frozen -> CardIdentitySourceParser.validate(frozen, identity) }
+                } } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+                CardIdentitySourceRead(file, readFailed = file == null)
+            }
+            val supportsDirectory = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
+            val directory = if (supportsDirectory) try { master.directory?.let {
+                CardDirectoryFile(generation, it).also { frozen -> CardDirectoryParser.parse(frozen) }
+            } } catch (_: ParseError) { null } else null
+            val communication = if (!supportsDirectory) emptyMap() else master.communication.mapValues { (kind, captured) ->
+                val file = try { captured.first?.let {
+                    CardCommunicationFile(kind, generation, it).also { frozen -> CardCommunicationParser.parse(frozen) }
+                } } catch (_: ParseError) { null }
+                CardCommunicationRead(file, readFailed = captured.second || file == null)
+            }
+            CardReadResult(recognized, generation, identity, activity, vehicles,
+                vehicleReadFailed = vehicles == null, activityReadFailed = activity == null,
+                controls = controls, controlReadFailed = controls == null,
+                events = events, eventReadFailed = events == null, faults = faults, faultReadFailed = faults == null,
+                specificConditions = specificConditions, specificConditionReadFailed = specificConditions == null,
+                gnssPositions = positions, gnssPositionReadFailed = supportsPositions && positions == null,
+                gnssAuthentication = authentication, gnssAuthenticationReadFailed = supportsAuthentication && authentication == null,
+                places = places, placeReadFailed = places == null,
+                placesAuthentication = placesAuthentication,
+                placesAuthenticationReadFailed = supportsAuthentication && placesAuthentication == null,
+                borderCrossings = borderCrossings,
+                borderCrossingsReadFailed = supportsAuthentication && borderCrossings == null,
+                loadUnload = loadUnload, loadUnloadReadFailed = supportsAuthentication && loadUnload == null,
+                loadType = loadType, loadTypeReadFailed = supportsAuthentication && loadType == null,
+                vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
+                metadata = metadata, certificates = certificates, identitySources = identitySources,
+                directory = directory, directoryReadFailed = supportsDirectory && directory == null,
+                communication = communication)
+        } catch (_: ParseError) {
+            CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
         }
     }
 

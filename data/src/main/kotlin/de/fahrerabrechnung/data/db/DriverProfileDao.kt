@@ -40,7 +40,7 @@ data class DriverCardIdentityEntity(
     ForeignKey(entity = CardActivityImportEntity::class, parentColumns = ["id"], childColumns = ["activityId"], onDelete = ForeignKey.RESTRICT),
     ForeignKey(entity = CardVehicleImportEntity::class, parentColumns = ["id"], childColumns = ["vehicleId"], onDelete = ForeignKey.RESTRICT),
     ForeignKey(entity = CardSourcePairEntity::class, parentColumns = ["id"], childColumns = ["pairId"], onDelete = ForeignKey.RESTRICT),
-], indices = [Index("driverCardId"), Index("activityId"), Index("vehicleId"), Index("pairId")])
+], indices = [Index("driverCardId"), Index("activityId"), Index("vehicleId"), Index("pairId"), Index(value = ["sessionId", "driverCardId"], unique = true)])
 data class DriverImportSourcesEntity(
     @PrimaryKey val sessionId: String,
     val driverCardId: String,

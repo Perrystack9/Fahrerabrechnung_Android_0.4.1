@@ -217,8 +217,8 @@ fun AppRoot(
     LaunchedEffect(currentRoute, importState?.lastRun?.sessionId) {
         if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null && selectedControlSnapshot == null && selectedEventSnapshot == null && selectedFaultSnapshot == null && selectedConditionsSnapshot == null && selectedGnssPositions == null && selectedGnssAuthentication == null && selectedPlaces == null && selectedPlacesAuthentication == null && selectedBorderCrossings == null && selectedLoadUnload == null && selectedLoadType == null && selectedVehicleUnits == null && selectedMetadata.isEmpty() && selectedCertificates.isEmpty() && selectedIdentitySources.isEmpty() && selectedDirectory == null && selectedCommunication.isEmpty() && selectedPreviewDriverCardId == null) {
             try {
-                val saved = importState?.lastRun?.sessionId?.let { driverCardImports?.get(it) }
-                    ?: driverCardImports?.latest()
+                val sessionId = importState?.lastRun?.sessionId
+                val saved = if (sessionId != null) driverCardImports?.get(sessionId) else driverCardImports?.latest()
                 selectedSourcePair = saved?.pair
                 selectedActivitySnapshot = saved?.activity
                 selectedVehicleSnapshot = saved?.vehicles
@@ -491,6 +491,8 @@ fun AppRoot(
                         archive = previewIsArchive,
                         driverCardId = selectedPreviewDriverCardId, events = selectedEventSnapshot, faults = selectedFaultSnapshot,
                         specificConditions = selectedConditionsSnapshot,
+                        receiptId = selectedReceiptId,
+                        applicationGeneration = selectedIdentitySources[de.fahrerabrechnung.data.card.CardIdentitySourceKind.IDENTIFICATION]?.file?.generation,
                         onOpenDetails = if (previewIsArchive || driverCardImports == null) null else ({ navController.navigate(DetailRoutes.CARD_DETAILS) }),
                         onOpenVehicles = { query, useStart, nation ->
                             vehicleHistoryQuery = query.orEmpty(); vehicleHistoryUseStart = useStart; vehicleHistoryNation = nation
@@ -550,7 +552,7 @@ fun AppRoot(
                 DetailRoutes.CARD_IC to CardMetadataKind.IC_IDENTIFICATION)) {
                 composable(route) {
                     if (visibleRoute.value == route && !previewIsArchive && driverCardImports != null)
-                        CardMetadataScreen(padding, kind, selectedMetadata[kind])
+                        CardMetadataScreen(padding, kind, selectedMetadata[kind], selectedReceiptId)
                 }
             }
             composable(DetailRoutes.CARD_VEHICLE_UNITS) {
