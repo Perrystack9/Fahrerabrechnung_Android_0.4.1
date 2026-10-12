@@ -2,6 +2,20 @@
 
 Stand 12.10.2026. **Aktueller Produktkopf gesichert; Build/JVM/Signatur/Schema bestanden. Die Emulatorprüfung wird von GitHub vor der Runner-Zuweisung abgewiesen. Keine vollständige CI-Freigabe und keine Hardwarefreigabe für 40122.**
 
+## Bestätigter Startfehler: Actions-Budget
+
+Tobi hat am 12.10.2026 um 18:04 Europe/Berlin den GitHub-Annotations-Screenshot des fehlgeschlagenen Instrumentierungsjobs bereitgestellt. GitHub meldet ausdrücklich:
+
+> The job was not started because an Actions budget is preventing further use.
+
+Damit ist der Runner-Checkpoint als **Actions-Budgetsperre** geklärt. Kein Emulator wurde gestartet und nach den letzten Testkorrekturen wurde weiterhin keine aktuelle Instrumentierung ausgeführt. Der daneben angezeigte Hinweis zur späteren Ubuntu-Runner-Migration ist ein Notice und nicht die hier benannte Startursache.
+
+Der Screenshot nennt weder Budgetbetrag noch genaue Budgetstufe oder Verbrauch. Das bestehende Projektlimit bleibt 2 USD / Stop-usage; keine Behauptung, dass genau dieses Budget oder eine bestimmte Summe im Konto ausgeschöpft ist. Nach der offiziellen [GitHub-Budgetanleitung](https://docs.github.com/en/billing/how-tos/set-up-budgets) kann jedes anwendbare ausgeschöpfte Budget mit aktiviertem Stop-usage weitere Nutzung blockieren.
+
+**Nächster notwendiger Schritt:** Tobi prüft in der [GitHub-Abrechnung](https://github.com/settings/billing) unter „Budgets and alerts“ das blockierende Actions-Budget und entscheidet über eine Freigabe bzw. einen neuen Höchstbetrag. Stop-usage muss dafür nicht deaktiviert werden. Kein automatisches Erhöhen, Löschen oder Umgehen des Budgets. Keine weitere Startfehlermeldung oder Karte von Tobi erforderlich; nur die Budget-/Nutzungsfreigabe fehlt jetzt.
+
+Erst nach aufgehobener Sperre ausschließlich die fehlgeschlagenen Jobs von Lauf 38243540172 am unveränderten Produktkopf 62fc0d2 wiederholen. Der erfolgreiche Build bleibt erhalten. Vollständiger SQLCipher-/Compose-Lauf und Gesamtprüfung müssen tatsächlich bestehen; danach erst geprüfte ZIP 40122. Kein Merge vor eigener Hardwarebestätigung. Die bisherigen unbekannten Diagnoseangaben darunter dokumentieren den Stand vor diesem Screenshot.
+
 ## Fortsetzung 12.10.2026: aktueller Versuch 3 und zusätzliche Sicherung
 
 Der unveränderte Produktkopf wurde erneut direkt mit PR65 und GitHub abgeglichen. Bei der Fortsetzung lag lokal wieder ein älterer Arbeitsbaum mit elf ungesicherten Dateien vor. Zuerst vollständiger lokaler Commit `d71f2ae` / Sicherungsbranch `backup/pr65-existing-local-20261012-1535`; dann vollständiger GitHub-Archivcommit **`453c81799bc6d5f4d4cfee9f8e6ee9d6d9c124aa`** auf derselben Sicherungsbranch. Alle 355 Dateien sind durch den identischen Tree **`97d9c0be953f79d1c3dd20ed9ccc9c6d6a7fbb73`** erhalten. Keine lokale Snapshot-Abstammung auf den Produktbranch gepusht. Diese ältere Archivbranch ist kein neuer Produktstand und darf nicht gemergt werden.
