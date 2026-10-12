@@ -1,3 +1,7 @@
+Aktueller gesicherter PR65-Stand 12.10.2026: gemeinsamer Gen1-/Gen2-Import, atomare SQLCipher-Speicherung und exakte Verlaufswahl umgesetzt; Kandidat 40122 / Schema 19, Produktkopf 62fc0d2. Build, JVM-Tests, Signatur, Updatepaar und Schema bestanden. Aktuelle Emulator-/Gesamtprüfung wird von GitHub vor dem Runnerstart abgewiesen, auch nach gezieltem Retry. Keine volle CI- oder Hardwarefreigabe, keine Test-ZIP, kein Merge. [Verbindlicher Übergabestand mit konkretem CI-Blocker und Fortsetzung](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md). Actions-Budget 2 USD / Stop-usage unverändert. Die Angaben darunter sind historische Checkpoints.
+
+---
+
 Aktueller offener Folgeentwurf12.10.2026: PR65 integriert den gemeinsamen Import beider Anwendungen derselben physischen Karte, atomare SQLCipher-Gruppenspeicherung und genaue Gen1-/Gen2-Auswahl im Verlauf. Kandidat40122/Schema19; echter Room/KSP-Export19 erzeugt, Migration gegen42 compiler-generierte Tabellen (Spalten/PK/Indizes/FKs) in SQLite abgeglichen. Neue27 JVM-, neun SQLCipher- und drei Compose-Testmethoden gegenüber Main; vollständige neue CI und eigene Gerätefreigabe stehen noch aus. Alte Requests/Sitzungen unverändert, kein Backfill oder jüngerer Fallback. [Aktuelle Integration und Grenzen](CARD_MULTI_APPLICATION_IMPORT.md). PR65 bleibt offen/Entwurf, Main40121 unverändert. Keine Browser/Unteragenten/Bereinigung; Actions-Budget2USD/Stop-usage unverändert. Die folgenden Abschnitte sind frühere Checkpoints.
 
 ---
