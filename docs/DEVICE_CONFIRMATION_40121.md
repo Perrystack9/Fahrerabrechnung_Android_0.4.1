@@ -25,7 +25,7 @@ Damit liegt ein realer positiver Fall für beide neuen bedingten MF-Quellen vor.
 
 ## Abschluss und selbstständige Fortsetzung
 
-Den unveränderten freigegebenen PR62-Kopf über einen Merge-Commit übernehmen und dessen Tree mit dem geprüften Produktbaum vergleichen. Exakte Merge-ID anschließend im PR-Checkpoint festhalten. Die neue Gerätebasis ist danach40121/Schema18, mit dem oben begrenzten Geräteumfang.
+PR62 wurde unverändert über Merge-Commit **26a9f14c34523fa4ba884d8dd9891c24e1736ab4** abgeschlossen. Eltern: bisheriger Main f2984027643a27ea55dc44c10fae9cdf6d115938 und geprüfter Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756. Merge-Tree11e79e492b381f9d515bee796ffea30da3099592 bytegleich zum CI-/Gerätekopf. Die neue Gerätebasis ist40121/Schema18 mit dem oben begrenzten positiven Wiederlese-/Anzeigeumfang. Der Merge löst die bereits eingerichtete eigenständige Produktfortsetzung aus; Abschlussagent übernimmt ausschließlich Markdown-Dokumentation nach Main.
 
 Die bereits eingerichtete automatische Fortsetzung reagiert auf den Merge von PR62 und prüft zusätzlich diese dokumentierte40121-Gerätefreigabe. Sie übernimmt die Produktfortsetzung: getrennte Anwendungen derselben Gen2-Karte, anschließend belegte Pufferinhalts-/Download-/Vertrauens-/geschützte Verfahren. Keine zweite parallele Produktimplementierung durch den abschließenden Agenten. Dieser Agent sichert ausschließlich Geräte-/Merge-Dokumentation; die Fortsetzung prüft vor Produktpatches den jeweils aktuellen Main und dokumentiert ihren eigenen Stand.
 
