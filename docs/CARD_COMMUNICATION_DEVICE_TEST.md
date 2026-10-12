@@ -1,3 +1,7 @@
+Aktuelle positive Gerätebestätigung12.10.2026 für den Wiederlese-/Anzeigefall: beide Dateien11/3Bytes, T=1 aufgezeichnet. [Exakter Umfang und Grenzen](DEVICE_CONFIRMATION_40121.md). Die folgenden Schritte dokumentieren die ausgegebene ursprüngliche Anleitung; nicht genannte Prüfungen nicht als bestanden behaupten.
+
+---
+
 # Gerätetest PR62 – Version40121
 
 **Testupdate40121 ist bereit; die Gerätebestätigung steht noch aus.** Version40121, Schema 18, gleiches Testpaket und derselbe feste Testschlüssel. Bereits ausgegebenes Testupdate PR60/40120 bleibt unverändert; dessen [Gerätetest ist jetzt bestanden](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/blob/main/docs/DEVICE_CONFIRMATION_40120.md). Die neue Geräte-/Merge-Sperre gilt für40121 und spätere Änderungen.
