@@ -1,3 +1,7 @@
+Aktuelle Fortsetzung 12.10.2026, 15:37 UTC: PR65 bleibt exakt auf `62fc0d299f87b26109a98ff11e94c9202a27ae01` / 40122 / Schema 19. Auch CI-Versuch 3 wird vor Runnerstart abgewiesen; Build und Projektgrenzen bleiben bestanden. Älterer lokaler Arbeitsstand zuerst als `d71f2ae` vollständig gesichert, danach mit identischem vollständigem Baum als `453c81799bc6d5f4d4cfee9f8e6ee9d6d9c124aa` auf der GitHub-Sicherungsbranch erhalten. Vorhandene PR65-Implementierung exakt aus ihren Git-Objekten hinzugeholt; keine Source-/CI-/Budgetänderung. [Aktueller Runner-/Übergabecheckpoint](docs/CARD_MULTI_APPLICATION_CHECKPOINT_40122.md) · [vorbereitete nächste Importpunkte](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Vollständige CI, 40122-Paketausgabe und eigene Hardwarebestätigung fehlen weiterhin; kein Merge/Auto-Merge. Die folgenden Angaben sind frühere Checkpoints.
+
+---
+
 Aktueller gesicherter PR65-Stand 12.10.2026: gemeinsamer Gen1-/Gen2-Import, atomare SQLCipher-Speicherung und exakte Verlaufswahl umgesetzt; Kandidat 40122 / Schema 19, Produktkopf 62fc0d2. Build, JVM-Tests, Signatur, Updatepaar und Schema bestanden. Aktuelle Emulator-/Gesamtprüfung wird von GitHub vor dem Runnerstart abgewiesen, auch nach gezieltem Retry. Keine volle CI- oder Hardwarefreigabe, keine Test-ZIP, kein Merge. [Verbindlicher Übergabestand mit konkretem CI-Blocker und Fortsetzung](docs/CARD_MULTI_APPLICATION_CHECKPOINT_40122.md). Actions-Budget 2 USD / Stop-usage unverändert. Die Angaben darunter sind historische Checkpoints.
 
 ---

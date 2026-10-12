@@ -2,6 +2,27 @@
 
 Stand 12.10.2026. **Aktueller Produktkopf gesichert; Build/JVM/Signatur/Schema bestanden. Die Emulatorprüfung wird von GitHub vor der Runner-Zuweisung abgewiesen. Keine vollständige CI-Freigabe und keine Hardwarefreigabe für 40122.**
 
+## Fortsetzung 12.10.2026: aktueller Versuch 3 und zusätzliche Sicherung
+
+Der unveränderte Produktkopf wurde erneut direkt mit PR65 und GitHub abgeglichen. Bei der Fortsetzung lag lokal wieder ein älterer Arbeitsbaum mit elf ungesicherten Dateien vor. Zuerst vollständiger lokaler Commit `d71f2ae` / Sicherungsbranch `backup/pr65-existing-local-20261012-1535`; dann vollständiger GitHub-Archivcommit **`453c81799bc6d5f4d4cfee9f8e6ee9d6d9c124aa`** auf derselben Sicherungsbranch. Alle 355 Dateien sind durch den identischen Tree **`97d9c0be953f79d1c3dd20ed9ccc9c6d6a7fbb73`** erhalten. Keine lokale Snapshot-Abstammung auf den Produktbranch gepusht. Diese ältere Archivbranch ist kein neuer Produktstand und darf nicht gemergt werden.
+
+Die vorhandenen GitHub-Blobs, Trees und Commitobjekte 62fc0d2/a8728d6 wurden mit SHA-Prüfung exakt lokal ergänzt. Ein zusätzlicher Worktree öffnet den bestehenden aktuellen Dokumentationsstand; der zuerst gesicherte ältere Worktree bleibt erhalten. Produkt-Tree und alle 302 Produktblobs sind unverändert. Die in den älteren Abschnitten genannten lokalen Build-/APK-Prüfungen sind historische Belege, keine neue lokale Ausführung in dieser Fortsetzung.
+
+Auf den erneuten Fortsetzungsauftrag wurde einmal ausschließlich `rerun-failed-jobs` am unveränderten Lauf 38243540172 ausgeführt. **Versuch 3 endet am 12.10.2026 um 15:37:55 UTC wieder mit failure vor Runner-Zuweisung.**
+
+| Job in Versuch 3 | ID | Tatsächlicher Zustand |
+|---|---|---|
+| Project boundaries and CI scope | 114887035994 | success; Prüfung aus Versuch 1 erhalten |
+| Build, test, lint and APK verification | 114887037828 | success; Prüfung aus Versuch 1 erhalten |
+| Room SQLCipher and Compose instrumentation | 114887036597 | failure, `runner_id=0`, keine Schritte |
+| Android verification | 114887061097 | failure, `runner_id=0`, keine Schritte |
+
+[Konkreter fehlgeschlagener Emulatorjob](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38243540172/job/114887036597). Die REST-Check-Daten zeigen Fehlerannotationszählung, aber keinen Fehlertext; die verfügbare Connector-Route für Annotations wird abgewiesen. Kein Browserfallback. Der genaue Konten-/Runnergrund bleibt **unbekannt**; ein ausgeschöpftes 2-USD-Limit wird weiterhin nicht behauptet. Budget und Stop-usage unverändert. Kein weiterer identischer Retry ohne geklärte/veränderte Voraussetzung.
+
+**Erforderliche Rückmeldung:** den von GitHub angezeigten Job-Startfehler bereitstellen; falls dieser eine Konto-/Budgetentscheidung verlangt, trifft Tobi diese ausdrücklich. Danach die fehlgeschlagenen Jobs am selben Produktkopf wiederholen. Keine Quelle ändern, Tests überspringen oder bestehende CI-Sperren abschwächen, um diesen externen Startfehler zu umgehen. Aktuelle Instrumentierung nach den Testkorrekturen weiterhin nicht ausgeführt; 40122-ZIP und Merge bleiben gesperrt.
+
+Die Abdeckungsübersicht wurde auf die tatsächlich implementierte, noch ungeprüfte Dual-Anwendungs-Speicherung berichtigt. [Weitere Importpunkte und konkrete Prüfkriterien](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) sind vorbereitet, einschließlich kurzer Paket-/Hardware-Abfolge. Ausschließlich Markdown-Dokumentation; keine neue Import-, Schema-, Signatur-, Schreib- oder Sicherheitsfunktion. Die Abschnitte darunter bleiben als frühere Nachweise erhalten.
+
 ## Aktuelle Quelle und unveränderte Sperren
 
 | Beleg | Wert |
