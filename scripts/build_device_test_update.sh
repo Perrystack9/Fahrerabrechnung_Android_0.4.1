@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$project_root"
-baseline_sha=1b592d627d5d18db9fc909f5c8cf2c796fd8578b
+baseline_sha=9e7670f05b7c35a585244aeca539be9d0fe7c6fb
 baseline_root="${RUNNER_TEMP:?}/fahrer-card-schema18-baseline"
 output_dir="$project_root/ci-artifacts/device-test-update"
 sdk_tools="${ANDROID_SDK_ROOT:?}/build-tools/36.0.0"
@@ -11,7 +11,7 @@ test ! -e "$baseline_root"
 mkdir -p "$output_dir" ci-logs
 git worktree add --detach "$baseline_root" "$baseline_sha"
 
-# Build-only overlay: preserve the confirmed PR58 product sources and schema18.
+# Build-only overlay: preserve the confirmed PR60/40120 product sources and schema18.
 cp app/build.gradle.kts "$baseline_root/app/build.gradle.kts"
 mkdir -p "$baseline_root/ci" "$baseline_root/app/src/deviceTest/res/values" "$baseline_root/gradle/wrapper"
 cp ci/device-test.jks "$baseline_root/ci/device-test.jks"
@@ -25,7 +25,7 @@ root = Path(sys.argv[1])
 config = root / 'app/build.gradle.kts'
 content = config.read_text()
 assert len(re.findall(r'versionCode = \d+', content)) == 1
-config.write_text(re.sub(r'versionCode = \d+', 'versionCode = 40117', content))
+config.write_text(re.sub(r'versionCode = \d+', 'versionCode = 40120', content))
 assert 'const val SCHEMA_VERSION = 18' in (root / 'data/src/main/kotlin/de/fahrerabrechnung/data/db/AppDatabase.kt').read_text()
 PY
 "$baseline_root/gradlew" -p "$baseline_root" :app:assembleDeviceTest --stacktrace > ci-logs/device-test-baseline-build.log 2>&1
@@ -37,7 +37,7 @@ test "${#baseline_apks[@]}" -eq 1
 test "${#current_apks[@]}" -eq 1
 cp "${baseline_apks[0]}" "$output_dir/01-FahrerTagebuch-Test-Schema18.apk"
 cp "${current_apks[0]}" "$output_dir/02-FahrerTagebuch-Test-Update.apk"
-cp docs/CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md "$output_dir/ANLEITUNG.md"
+cp docs/CARD_COMMUNICATION_DEVICE_TEST.md "$output_dir/ANLEITUNG.md"
 
 keytool -exportcert -keystore ci/device-test.jks -storepass android -alias androiddebugkey > ci-logs/device-test-public-cert.der
 for variant in 01-FahrerTagebuch-Test-Schema18 02-FahrerTagebuch-Test-Update; do
@@ -58,7 +58,7 @@ for variant in ('01-FahrerTagebuch-Test-Schema18', '02-FahrerTagebuch-Test-Updat
     assert package and package.group(1) == 'de.fahrerabrechnung.app.devicetest'
     assert 'FahrerTagebuch Test' in manifest
     versions.append(int(package.group(2)))
-assert versions[0] == 40117 and versions[1] > versions[0], versions
+assert versions[0] == 40120 and versions[1] > versions[0], versions
 output = Path('ci-artifacts/device-test-update')
 lines = [hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name for p in sorted(output.glob('*.apk'))]
 (output / 'SHA256SUMS.txt').write_text('\n'.join(lines) + '\n')

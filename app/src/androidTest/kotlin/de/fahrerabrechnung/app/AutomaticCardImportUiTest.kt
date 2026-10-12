@@ -679,6 +679,58 @@ class AutomaticCardImportUiTest {
         compose.onNodeWithText("Kartennummer: verborgen").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun communicationHistoryUsesOnlySelectedSessionAndClearsForOldMissingAndEmptySources() {
+        val newest = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(read(), "communication-ui-before")
+            pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(),
+                communication = CommunicationUiFixtures.read()), "communication-ui-only")
+            pipeline.process(read().copy(communication = CommunicationUiFixtures.sources(empty = true).mapValues { (_, source) ->
+                CardCommunicationRead(source.file) }), "communication-ui-empty")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.IMPORTED, lastRun = newest))
+        } }
+        await("Fahrerkarte aktualisiert"); compose.onNodeWithText("Importverlauf").performScrollTo().performClick()
+        fun open(id: String) {
+            compose.waitUntil(10_000) { compose.onAllNodesWithTag("open_import_$id").fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("open_import_$id").performScrollTo().performClick(); await("Fahrerkarten-Details")
+            compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+            compose.onNodeWithText("Kommunikationsangaben").performScrollTo().performClick()
+        }
+        open("communication-ui-only")
+        compose.onNodeWithText("Erweiterte Länge für T=1: aufgezeichnet").performScrollTo().assertIsDisplayed()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("communication-ui-before")
+        compose.onAllNodesWithText("Für diese Übernahme ist diese bedingte Kartenangabe nicht gespeichert.").assertCountEquals(2)
+        compose.onNodeWithText("Erweiterte Länge für T=1: aufgezeichnet").assertDoesNotExist()
+        repeat(3) { compose.onNodeWithTag("back").performClick() }
+        open("communication-ui-empty")
+        compose.onAllNodesWithText("Diese gespeicherte Kartendatei ist leer.").assertCountEquals(2)
+        compose.onNodeWithText("Erweiterte Länge für T=1: aufgezeichnet").assertDoesNotExist()
+        assertEquals(3, runBlocking { pipeline.history().size })
+    }
+    @Test fun latestCommunicationOnlyImportOpensThroughActualRootAndSurvivesReopening() {
+        val run = runBlocking {
+            imports.bind(card(), true)
+            pipeline.process(CardReadResult(CardRecognition.DRIVER, card().generation, card(),
+                communication = CommunicationUiFixtures.read()), "communication-ui-latest-only")
+        }
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            AppRoot(ThemeMode.LIGHT, {}, activities, vehicles, pairs, driverCardImports = imports,
+                cardImportPipeline = pipeline, importState = CardImportUiState(CardImportPhase.INCOMPLETE, lastRun = run))
+        } }
+        await("Gespeicherte Daten ansehen"); compose.onNodeWithText("Gespeicherte Daten ansehen").performScrollTo().performClick()
+        await("Fahrerkarten-Details"); compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Kommunikationsangaben").performScrollTo().performClick()
+        compose.onNodeWithText("Erweiterte Länge für T=1: aufgezeichnet").performScrollTo().assertIsDisplayed()
+        repeat(2) { compose.onNodeWithTag("back").performClick() }
+        compose.onNodeWithText("Fahrerkarten-Details").performScrollTo().performClick()
+        compose.onNodeWithText("Kommunikationsangaben").performScrollTo().performClick()
+        compose.onNodeWithText("Erweiterte Länge für T=1: aufgezeichnet").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun directoryHistoryNavigationUsesOnlySelectedSessionAndClearsForMissingAndEmptySources() {
         val newest = runBlocking {
             imports.bind(card(), true)

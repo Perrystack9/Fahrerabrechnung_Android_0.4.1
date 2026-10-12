@@ -2352,4 +2352,153 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(originalIdentity, db.driverProfileDao().cards(imports.profile()!!.id).first { it.cardId == first.driverCardId })
         assertEquals(first, pipeline.history().first { it.id == "original" })
     }
+    private fun communicationBytes(kind: CardCommunicationKind): ByteArray = when (kind) {
+        CardCommunicationKind.ATR_INFO -> byteArrayOf(0x7F, 0x66, 4, 2, 2, 1, 0)
+        CardCommunicationKind.EXTENDED_LENGTH -> byteArrayOf(2, 1, 0x11)
+    }
+    private fun communicationRead(driver: DriverCard = card()) = directoryRead(driver).copy(
+        communication = CardCommunicationKind.entries.associateWith { kind -> CardCommunicationRead(
+            CardCommunicationFile(kind, driver.generation, communicationBytes(kind))) })
+
+    @Test fun all29SourcesStayIndependentAndHistorical19To27SourceRequestsStayUnchanged() = runBlocking {
+        imports.bind(card(), true)
+        val attempts = listOf(masterRead(), certificateRead(), originalRead(), directoryRead())
+        val old = attempts.mapIndexed { index, attempt -> pipeline.process(attempt, "communication-old-$index") }
+        val fresh = pipeline.process(communicationRead(), "communication-complete")
+        assertEquals(CardImportRunStatus.SAVED, fresh.status); assertEquals(29, fresh.files.size)
+        assertEquals(29, fresh.files.count { it.status == CardImportFileStatus.STORED }); assertEquals(2, fresh.newSourceCount)
+        old.forEachIndexed { index, run ->
+            assertTrue(imports.get(run.id)!!.communication.isEmpty())
+            assertEquals(run, pipeline.process(attempts[index], run.id))
+        }
+        val saved = imports.get(fresh.id)!!
+        assertEquals(2, saved.communication.size); assertEquals(5, saved.metadata.size)
+        assertEquals(4, saved.certificates.size); assertEquals(3, saved.identitySources.size); assertNotNull(saved.directory)
+        for (kind in CardCommunicationKind.entries) {
+            val source = saved.communication.getValue(kind)
+            assertEquals(saved.driverCardId, source.driverCardId); assertArrayEquals(communicationBytes(kind), source.file.bytes)
+        }
+    }
+    @Test fun communicationDeduplicatesPerPhysicalCardWhileSessionAndRetryContentRemainExact() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(communicationRead(), "communication-first")
+        assertEquals(29, first.newSourceCount); assertEquals(first, pipeline.process(communicationRead(), first.id))
+        val second = pipeline.process(communicationRead(), "communication-second"); assertEquals(0, second.newSourceCount)
+        val before = imports.get(first.id)!!; val after = imports.get(second.id)!!
+        assertNotEquals(before.id, after.id)
+        assertEquals(before.communication.mapValues { it.value.id }, after.communication.mapValues { it.value.id })
+        val changed = communicationRead().copy(communication = mapOf(CardCommunicationKind.EXTENDED_LENGTH to CardCommunicationRead(
+            CardCommunicationFile(CardCommunicationKind.EXTENDED_LENGTH, card().generation, byteArrayOf(2, 1, 1)))))
+        rejected<IllegalArgumentException> { pipeline.process(changed, first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(directoryRead(), first.id) }
+        val last = pipeline.process(changed, "communication-changed"); assertEquals(1, last.newSourceCount)
+        assertEquals(0x11, (imports.get(first.id)!!.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH).record as CardExtendedLengthRecord).protocolCodeRaw)
+        assertEquals(1, (imports.get(last.id)!!.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH).record as CardExtendedLengthRecord).protocolCodeRaw)
+        assertEquals(3, pipeline.history().size)
+    }
+    @Test fun failedInvalidAndWrongGenerationCommunicationNeverDiscardsTheOther28Sources() = runBlocking {
+        imports.bind(card(), true)
+        for (kind in CardCommunicationKind.entries) {
+            val original = communicationRead()
+            val bad = communicationBytes(kind).also { it[0] = 3 }
+            val cases = listOf(CardCommunicationRead(readFailed = true) to CardImportFileStatus.READ_FAILED,
+                original.communication.getValue(kind).copy(readFailed = true) to CardImportFileStatus.READ_FAILED,
+                CardCommunicationRead(CardCommunicationFile(kind, card().generation, bad)) to CardImportFileStatus.INVALID,
+                CardCommunicationRead(CardCommunicationFile(kind, CardGeneration.GEN2, communicationBytes(kind))) to CardImportFileStatus.INVALID)
+            cases.forEachIndexed { index, (value, expected) ->
+                val attempt = original.copy(communication = original.communication + (kind to value))
+                val run = pipeline.process(attempt, "communication-invalid-${kind.name}-$index")
+                assertEquals(CardImportRunStatus.PARTIAL, run.status)
+                val fileKind = if (kind == CardCommunicationKind.ATR_INFO) CardImportFileKind.MF_ATR_INFO else CardImportFileKind.MF_EXTENDED_LENGTH
+                assertEquals(expected, run.file(fileKind).status); assertEquals(28, run.files.count { it.status == CardImportFileStatus.STORED })
+                val saved = imports.get(run.id)!!
+                assertFalse(kind in saved.communication); assertEquals(1, saved.communication.size)
+                assertNotNull(saved.directory); assertEquals(3, saved.identitySources.size); assertEquals(4, saved.certificates.size)
+            }
+        }
+    }
+    @Test fun completeDefaultCommunicationIsStoredWithoutRecordedTimeCoverageOrInventedProtocols() = runBlocking {
+        imports.bind(card(), true)
+        for (fill in listOf(0, 255)) {
+            val attempt = communicationRead().copy(activity = null, vehicles = null,
+                communication = CardCommunicationKind.entries.associateWith { kind -> CardCommunicationRead(
+                    CardCommunicationFile(kind, card().generation, ByteArray(kind.minimumLength) { fill.toByte() })) })
+            val run = pipeline.process(attempt, "communication-empty-$fill")
+            for (kind in listOf(CardImportFileKind.MF_ATR_INFO, CardImportFileKind.MF_EXTENDED_LENGTH)) {
+                val result = run.file(kind); assertEquals(CardImportFileStatus.STORED, result.status)
+                assertEquals(0, result.decodedCount); assertNull(result.firstUtcEpochSeconds); assertNull(result.lastUtcEpochSeconds)
+            }
+            assertTrue(imports.get(run.id)!!.communication.values.all { it.record == null })
+        }
+    }
+    @Test fun communicationOnlyOwnImportHasNoActivityVehicleOrIdentityTimeCoverage() = runBlocking {
+        imports.bind(card(), true)
+        val attempt = CardReadResult(CardRecognition.DRIVER, card().generation, card(), communication = communicationRead().communication)
+        val run = pipeline.process(attempt, "communication-only")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status); assertEquals(2, run.newSourceCount)
+        val saved = imports.get(run.id)!!; assertNull(saved.activity); assertNull(saved.vehicles); assertNull(saved.directory)
+        assertEquals(2, saved.communication.size)
+        assertTrue(run.files.filter { it.status == CardImportFileStatus.STORED }.all { it.firstUtcEpochSeconds == null && it.lastUtcEpochSeconds == null })
+    }
+    @Test fun communicationTransactionRollbackLeavesNoSourcesSessionOrNormalizedRows() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_communication BEFORE INSERT ON driver_import_metadata_sources WHEN NEW.kind = 'MASTER_COMMUNICATION_EXTENDED_LENGTH' BEGIN SELECT RAISE(ABORT, 'synthetic'); END")
+        val failed = pipeline.process(communicationRead(), "communication-rollback")
+        assertEquals(CardImportRunStatus.FAILED, failed.status)
+        assertEquals(0, count("card_metadata_imports")); assertEquals(0, count("driver_import_metadata_sources"))
+        assertEquals(0, count("import_sessions")); assertEquals(0, count("driver_import_sources"))
+        assertEquals(CardImportRunStatus.FAILED, pipeline.history().single().status)
+        assertTrue(pipeline.history().single().files.none { it.status == CardImportFileStatus.STORED })
+    }
+    @Test fun foreignAndUnconfirmedCommunicationImportsWriteNoProfileOrSourceRows() = runBlocking {
+        rejected<CardBindingRequired> { pipeline.process(communicationRead(), "communication-unconfirmed") }
+        assertNull(imports.profile()); assertEquals(0, count("card_import_runs")); assertEquals(0, count("card_metadata_imports"))
+        imports.bind(card(), true)
+        val foreign = card("foreign-comm", DriverIdentity("FOREIGN", "OTHER", LocalDate.of(2001, 3, 4), "de"))
+        rejected<ForeignCardRejected> { pipeline.process(communicationRead(foreign), "communication-foreign") }
+        val uncertain = card("uncertain-comm", card().holder.copy(surname = "OTHER"))
+        rejected<CardBindingRequired> { pipeline.process(communicationRead(uncertain), "communication-uncertain") }
+        assertEquals(1, count("driver_cards")); assertEquals(0, count("import_sessions")); assertEquals(0, count("card_metadata_imports"))
+        assertEquals(0, count("card_import_runs"))
+    }
+    @Test fun sameNumberPhysicalReplacementGetsIndependentCommunicationFingerprints() = runBlocking {
+        imports.bind(card(), true); val first = pipeline.process(communicationRead(), "communication-physical-old")
+        val replacement = card().copy(card = card().card.copy(validFrom = card().card.validFrom.plusSeconds(1)))
+        val next = pipeline.process(communicationRead(replacement), "communication-physical-next")
+        val old = imports.get(first.id)!!; val fresh = imports.get(next.id)!!
+        assertNotEquals(old.driverCardId, fresh.driverCardId)
+        for (kind in CardCommunicationKind.entries) {
+            assertNotEquals(old.communication.getValue(kind).id, fresh.communication.getValue(kind).id)
+            assertArrayEquals(old.communication.getValue(kind).file.bytes, fresh.communication.getValue(kind).file.bytes)
+        }
+    }
+    @Test fun encryptedReopeningKeepsOldMissingCurrentAndCompleteEmptyCommunicationSeparate() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(directoryRead(), "communication-reopen-old")
+        val current = pipeline.process(communicationRead(), "communication-reopen-current")
+        val empty = pipeline.process(communicationRead().copy(communication = CardCommunicationKind.entries.associateWith { kind ->
+            CardCommunicationRead(CardCommunicationFile(kind, card().generation, ByteArray(kind.minimumLength))) }), "communication-reopen-empty")
+        val before = imports.get(current.id)!!.communication.mapValues { it.value.id }
+        db.close(); assertFalse(context.getDatabasePath(AppDatabase.DATABASE_NAME).readBytes().take(16).toByteArray().contentEquals("SQLite format 3\u0000".toByteArray()))
+        open(); assertTrue(imports.get(old.id)!!.communication.isEmpty())
+        assertEquals(before, imports.get(current.id)!!.communication.mapValues { it.value.id })
+        assertTrue(imports.get(empty.id)!!.communication.values.all { it.record == null })
+        assertEquals(3, pipeline.history().size)
+    }
+    @Test fun communicationCombinedKindAndCardForeignKeysAreNotMaskedByDuplicateKeys() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(read(), "communication-fk-old")
+        val fresh = pipeline.process(communicationRead(), "communication-fk-fresh")
+        val source = imports.get(fresh.id)!!.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH)
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, CardCommunicationKind.ATR_INFO.storageKind, source.driverCardId, source.id)) }
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id, source.file.kind.storageKind, "wrong-card", source.id)) }
+        assertEquals(0, db.cardMetadataDao().sources(old.id).size)
+        assertEquals(2, imports.get(fresh.id)!!.communication.size)
+    }
+    @Test fun corruptedCommunicationOnlyBreaksItsExactSessionAndNeverFallsBackToNewerSource() = runBlocking {
+        imports.bind(card(), true); val old = pipeline.process(directoryRead(), "communication-corrupt-old")
+        val fresh = pipeline.process(communicationRead(), "communication-corrupt-source")
+        val source = imports.get(fresh.id)!!.communication.getValue(CardCommunicationKind.EXTENDED_LENGTH)
+        db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(byteArrayOf(2, 1, 1), source.id))
+        rejected<Exception> { imports.get(fresh.id) }
+        assertTrue(imports.get(old.id)!!.communication.isEmpty())
+    }
+
 }

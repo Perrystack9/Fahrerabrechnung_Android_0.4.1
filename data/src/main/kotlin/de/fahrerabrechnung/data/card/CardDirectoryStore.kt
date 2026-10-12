@@ -26,7 +26,8 @@ internal class CardDirectoryStore(private val dao: CardMetadataDao) {
     suspend fun load(cardId: String, sessionId: String): SavedCardDirectory? {
         var result: SavedCardDirectory? = null
         for (source in dao.sources(sessionId)) {
-            if (source.kind in CardMetadataKind.entries.map { it.name } ||
+            if (source.kind in CardCommunicationKind.entries.map { it.storageKind } ||
+                source.kind in CardMetadataKind.entries.map { it.name } ||
                 source.kind in CardCertificateKind.entries.map { it.storageKind } ||
                 source.kind in CardIdentitySourceKind.entries.map { it.storageKind }) continue
             check(source.kind == STORAGE_KIND && source.driverCardId == cardId)

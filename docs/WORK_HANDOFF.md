@@ -2,6 +2,10 @@ Aktueller bestätigter Stand11.10.2026: Gerätetest PR60/40120 ausdrücklich bes
 
 ---
 
+Aktueller Importfolgeentwurf PR62/40121/Schema18: bedingte MF-Kommunikationsquellen, exakte eigene Karten-/Sitzungsspeicherung und Quellenmap-Snapshots; bis29 unterstützte Gen2V2-Quellen nur bei eindeutiger ATR-Ankündigung. 38 zusätzliche Testmethoden. Kommunikationskopf93d1eca6b14c2b0bb0edc23d24648f49e7d7b081 hat alle vier CI-Jobs38165084869 bestanden. Der Folgeentwurf wird mit dem dokumentierten Main f2984027643a27ea55dc44c10fae9cdf6d115938 integriert und das CI-Updatepaar auf die bestätigte Basis40120 gestellt; dafür ist eine neue vollständige CI erforderlich. PR62 und spätere Änderungen bleiben ausdrücklich hardwareunbestätigt und ungemergt. [Verbindlicher Folgecheckpoint und genaue offene Grenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Ältere Checkpoints darunter dokumentieren historische Stände.
+
+---
+
 Aktueller gemeinsamer Checkpoint11.10.2026: Tobi hat die Fortsetzung um14:41 und14:45 Europe/Prague erneut beauftragt. Der frühere Ausgabetermin11:10 ist überholt. PR59 ist vollständig grün; PR60 bündelt Originaldateien und zusätzlich das MF-Anwendungsverzeichnis. Version40120, Schema18, stabile Testkennung/-signatur, bestätigte UpdatebasisPR58/40117. 44 Originaldateien- und31 DIR-Testmethoden, zusammen mit PR59 insgesamt129 zusätzliche Methoden. CI38122321988 fand einen widersprüchlichen Fahrzeug-Testdatensatz; dieser ist an die tatsächlich gelieferten zwei Plätze angepasst, ohne Prüfungen zu entfernen oder Produktionsgrenzen zu lockern. Neue vollständige Android-/SQLCipher-/Compose-CI erforderlich; APK-Ausgabe danach. Kein neuer Hardwaretest bestätigt, kein Import-Merge vor ausdrücklicher Gerätebestätigung. Kein Browser, keine Subagenten, keine Bereinigung; Actions-Budget unverändert2USD. [DIR-Umfang und Primärformat](CARD_DIRECTORY_IMPORT.md), [gebündelte Geräteanleitung](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md).
 
 Die älteren Checkpoints darunter bleiben als damalige Stände erhalten.

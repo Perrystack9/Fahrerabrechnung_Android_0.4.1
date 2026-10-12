@@ -2,6 +2,10 @@ Aktueller bestätigter Stand11.10.2026: Gerätetest PR60/40120 ausdrücklich bes
 
 ---
 
+Aktueller Importfolgeentwurf PR62/40121/Schema18: bedingte MF-Kommunikationsquellen, exakte eigene Karten-/Sitzungsspeicherung und Quellenmap-Snapshots; bis29 unterstützte Gen2V2-Quellen nur bei eindeutiger ATR-Ankündigung. 38 zusätzliche Testmethoden. Kommunikationskopf93d1eca6b14c2b0bb0edc23d24648f49e7d7b081 hat alle vier CI-Jobs38165084869 bestanden. Der Folgeentwurf wird mit dem dokumentierten Main f2984027643a27ea55dc44c10fae9cdf6d115938 integriert und das CI-Updatepaar auf die bestätigte Basis40120 gestellt; dafür ist eine neue vollständige CI erforderlich. PR62 und spätere Änderungen bleiben ausdrücklich hardwareunbestätigt und ungemergt. [Verbindlicher Folgecheckpoint und genaue offene Grenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Ältere Checkpoints darunter dokumentieren historische Stände.
+
+---
+
 Aktueller gemeinsamer Checkpoint11.10.2026: Tobis erneuter Auftrag09:10:27 Europe/Berlin gilt für zwei Stunden bis11:10:27. PR59 ist vollständig grün, CI38119878793 am unveränderten Kopf c535c01. PR60 ist der gemeinsame kumulative Originaldateien-Entwurf40119/Schema18. Der parallel entstandene PR61 ergänzt dieselben Dateien und wurde deshalb ungemergt geschlossen; seine Dateien und Branch bleiben erhalten. Kein Browser, keine Subagenten, keine Bereinigung, Actions-Budget unverändert2USD. Kein neuer Import-Merge vor späterer ausdrücklicher Gerätebestätigung.
 
 Abgleich ergänzt: Kartennummer und Zertifikatsreferenzen bei Wechsel der ausgewählten ImportSession auch dann erneut verbergen, wenn identische Originalbytes denselben Quellenfingerprint besitzen. Sämtliche in0501/0525 dekodierten Speicherkapazitäten werden in der Detailansicht angezeigt, einschließlich Ereignissen/Störungen/besonderen Bedingungen und VU-Konfigurationsgröße. Diese Größe ist kein Import von EF0540. Drei zusätzliche Compose-Prüfungen; insgesamt44 Originaldateien-Testmethoden bzw.98 zusammen mit PR59. Vollständige CI am endgültigen gemeinsamen Kopf erforderlich. Testpaket frühestens am Blockende11:10:27 ausgeben; keine neue Gerätebestätigung vorweggenommen.

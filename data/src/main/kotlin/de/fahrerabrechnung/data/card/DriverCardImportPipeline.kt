@@ -14,7 +14,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY, MF_ATR_INFO, MF_EXTENDED_LENGTH }
+
+internal fun CardCommunicationKind.importFileKind(): CardImportFileKind = when (this) {
+    CardCommunicationKind.ATR_INFO -> CardImportFileKind.MF_ATR_INFO
+    CardCommunicationKind.EXTENDED_LENGTH -> CardImportFileKind.MF_EXTENDED_LENGTH
+}
 
 internal fun CardIdentitySourceKind.importFileKind(): CardImportFileKind = when (this) {
     CardIdentitySourceKind.APPLICATION -> CardImportFileKind.APPLICATION_IDENTIFICATION
@@ -189,7 +194,8 @@ class DriverCardImportPipeline @Inject constructor(
             metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) },
             certificates = result.certificates.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCertificateFile(it.kind, it.generation, it.bytes) }) },
             directory = result.directory?.let { CardDirectoryFile(it.generation, it.bytes) },
-            identitySources = result.identitySources.mapValues { (_, value) -> value.copy(file = value.file?.let { CardIdentitySourceFile(it.kind, it.generation, it.bytes) }) })
+            identitySources = result.identitySources.mapValues { (_, value) -> value.copy(file = value.file?.let { CardIdentitySourceFile(it.kind, it.generation, it.bytes) }) },
+            communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) })
         val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
             val days = CardActivityParser.parse(checkNotNull(read.activity))
             val prepared = activities.prepare(read)
@@ -334,6 +340,15 @@ class DriverCardImportPipeline @Inject constructor(
                 CardImportFileResult(kind.importFileKind(), CardImportFileStatus.READY, if (record == null) 0 else 1, null, null, null)
             }
         } }
+        val communication = CardCommunicationKind.entries.mapNotNull { kind -> read.communication[kind]?.let { value ->
+            inspect(kind.importFileKind(), value.file != null, value.readFailed) {
+                val file = checkNotNull(value.file)
+                require(file.kind == kind && file.generation == read.generation && kind.supports(read.generation))
+                val record = CardCommunicationParser.parse(file)
+                CardImportFileResult(kind.importFileKind(), CardImportFileStatus.READY,
+                    if (record == null) 0 else 1, null, null, null)
+            }
+        } }
         val directory = if (read.directory != null || read.directoryReadFailed)
             inspect(CardImportFileKind.MF_DIRECTORY, read.directory != null, read.directoryReadFailed) {
                 val file = checkNotNull(read.directory)
@@ -344,7 +359,7 @@ class DriverCardImportPipeline @Inject constructor(
             } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory))
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory) + communication)
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -387,6 +402,7 @@ class DriverCardImportPipeline @Inject constructor(
             certificates = read.certificates.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
             directory = read.directory.takeIf { files.any { it.kind == CardImportFileKind.MF_DIRECTORY && it.status == CardImportFileStatus.READY } },
             identitySources = read.identitySources.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
+            communication = read.communication.filter { (kind, _) -> files.any { it.kind == kind.importFileKind() && it.status == CardImportFileStatus.READY } },
         )
 
         fun fingerprint(cardId: String): String {
@@ -504,6 +520,12 @@ class DriverCardImportPipeline @Inject constructor(
                 digest.update(if (value.readFailed) 1.toByte() else 0.toByte())
             }
             // No DIR attempt means the exact pre-DIR fingerprint remains unchanged.
+            for (kind in CardCommunicationKind.entries) read.communication[kind]?.let { value ->
+                text("CARD_COMMUNICATION_${kind.name}")
+                value.file?.let { text(it.kind.name); text(it.generation.name)
+                    digest.update(ByteBuffer.allocate(4).putInt(it.bytes.size).array()); digest.update(it.bytes) }
+                digest.update(if (value.readFailed) 1.toByte() else 0.toByte())
+            }
             if (read.directory != null || read.directoryReadFailed) {
                 text("MF_DIRECTORY")
                 read.directory?.let { text(it.generation.name)

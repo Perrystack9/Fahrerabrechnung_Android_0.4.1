@@ -2,13 +2,17 @@ Aktueller bestätigter Stand11.10.2026: Gerätetest PR60/40120 ausdrücklich bes
 
 ---
 
+Aktueller Importfolgeentwurf PR62/40121/Schema18: bedingte MF-Kommunikationsquellen, exakte eigene Karten-/Sitzungsspeicherung und Quellenmap-Snapshots; bis29 unterstützte Gen2V2-Quellen nur bei eindeutiger ATR-Ankündigung. 38 zusätzliche Testmethoden. Kommunikationskopf93d1eca6b14c2b0bb0edc23d24648f49e7d7b081 hat alle vier CI-Jobs38165084869 bestanden. Der Folgeentwurf wird mit dem dokumentierten Main f2984027643a27ea55dc44c10fae9cdf6d115938 integriert und das CI-Updatepaar auf die bestätigte Basis40120 gestellt; dafür ist eine neue vollständige CI erforderlich. PR62 und spätere Änderungen bleiben ausdrücklich hardwareunbestätigt und ungemergt. [Verbindlicher Folgecheckpoint und genaue offene Grenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Ältere Checkpoints darunter dokumentieren historische Stände.
+
+---
+
 Aktueller gemeinsamer FolgestandPR60/40120: Originaldateien plus MF-DIR für erkannte Gen2/Gen2V2-Karten, bis27 Quellen. Lokale Prüfungen bestanden; neue vollständige CI vor Ausgabe erforderlich. Keine neue Hardwarebestätigung. [DIR-Umfang](CARD_DIRECTORY_IMPORT.md). Ältere Checkpoints dokumentieren ihre damaligen Stände.
 
 # Abdeckung der Fahrerkarte
 
 Stand11.10.2026: Tobi hat PR58/40117 um08:36 Europe/Berlin allgemein bestätigt („Funktioniert alles“). PR54–58 sind unverändert kumulativ gemergt; Main1b592d6 hat den getesteten Tree2e314a4. Diese Bestätigung enthält keine zusätzlichen Einzelmesswerte oder nichtleeren Quellenfälle.
 
-PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an c535c01 bestanden, einschließlich Room/SQLCipher/Compose. Kumulativer PR60-Originaldateien-/DIR-Entwurf40120: lokale Prüfungen bestanden, vollständige CI und späterer Gerätetest erforderlich. Neue Entwürfe bleiben ungemergt. Vollständige Kartenabdeckung wird noch nicht behauptet.
+PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an c535c01 bestanden, einschließlich Room/SQLCipher/Compose. PR60/40120 hat CI38145473572, Paketlauf38148088141 und den ausdrücklich bestätigten Gerätetest bestanden; Zertifikate, Kartenangaben und DIR bleiben nach Kartenentnahme/App-Neustart sichtbar, alter Import unverändert. PR62/40121 ergänzt die beiden bedingten MF-Kommunikationsdateien. PR59/60 sind nach bestätigtem Gerätetest40120 unverändert kumulativ gemergt; PR62 bleibt ohne eigene Hardwarebestätigung ungemergt. Vollständige Kartenabdeckung wird noch nicht behauptet.
 
 | Quelldatei | EF | Generation | Stand |
 |---|---|---|---|
@@ -31,26 +35,30 @@ PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an
 | Card_Download | `050E` | Gen1/Gen2/Gen2V2 | PR57 bestätigt/gemergt,4Byte; ausschließlich lesen |
 | ICC-Identifikation | `0002` unter MF | Gen1/Gen2/Gen2V2 | PR58 bestätigt/gemergt,25Byte; vor AID, Serienwert verborgen |
 | IC-Identifikation | `0005` unter MF | Gen1/Gen2/Gen2V2 | PR58 bestätigt/gemergt,8Originalbytes; vor AID, Kennung verborgen |
-
 | Karten-/CA-Zertifikat | `C100`/`C108` | Gen1/Gen2/Gen2V2 | PR59, vollständige unabhängige Originalquelle; struktureller Decoder |
 | Signatur-/Link-Zertifikat | `C101`/`C109` | Gen2/Gen2V2 | PR59, eigene Originalquellen; keine Kryptoprüfung |
 | Application_Identification | `0501` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige Originalbytes10/15/17 |
 | Application_Identification_V2 | `0525` | Gen2V2 | PR60 auf PR59; vollständige Originalbytes10 |
 | Identification | `0520` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige143Bytes, exakte Identitätsprüfung |
 | MF DIR | `2F00` | Gen2/Gen2V2 | PR60 kumulativ; exakt20Bytes mit unabhängiger Dateiendprüfung, genaue Karte/Sitzung |
+| MF ATR/INFO | `2F01` | Gen2/Gen2V2, bedingt | PR62; vollständige7–128Originalbytes und äußere `7F66`-Struktur, keine Puffergrößeninterpretation |
+| MF Extended_Length | `0006` | Gen2/Gen2V2, bedingt | PR62; exakt3Bytes, T=0/T=1-Angaben aus der Datei, unbekannte Codes bleiben unbekannt |
 
 ## Herkunft und offene Quellen
 
-Neue Gen2V2-Lesevorgänge können27 unterstützte Quellen enthalten. Historische19-/23-/26-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Schema18 unverändert.
+Neue Gen2V2-Lesevorgänge enthalten bis27 bisherige und zwei zusätzlich bedingte Quellenarten, insgesamt bis29. Die neuen Dateien werden nur bei eindeutiger ATR-Ankündigung versucht. Gen1 hat16 Arten, Gen2 bis21 beziehungsweise23 mit beiden bedingten Dateien. Das zählt keine Zeitabdeckung und keine Datensätze. Historische19-/23-/26-/27-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Schema18 unverändert.
+
+[Annex IC §4.5.2.2–4.5.2.4](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0799-20160526) sieht DIR und beide Kommunikationsdateien nur auf Karten der zweiten Generation vor. Eine Standard-DIR-Datei auf reinen Gen1-Karten fehlt somit nicht im Importumfang. Die getrennte Gen1-Anwendung auf einer Gen2-Karte wird dagegen noch nicht zusätzlich zur ausgewählten Gen2-Anwendung importiert.
 
 | Noch offene Datei/Funktion | EF | Klärung vor Umsetzung |
 |---|---|---|
 | VU_Configuration | `0540` | Gen2V2, eigenes Sicherheits-/Zugriffsverfahren SC5; nicht blind als gewöhnliche EF lesen |
-| DIR außerhalb des Gen2-Formats | `2F00` | Gen1-/andere Verzeichnisformate getrennt am Primärformat klären |
-| Bedingte ATR/INFO- und Extended_Length-EFs | MF | Vorhandensein, Längen und Zugriff am amtlichen Format prüfen |
+| Getrennter Import beider Anwendungen auf Gen2-Karte | zwei DFs | Eigenständige generationsgetrennte Quellen-/Sitzungsmodellierung statt Überlagerung |
+| ATR/INFO-Inhalt | `2F01` | Originalbytes sind importiert; vollständigen ISO7816-4:2013-Decoder für den `7F66`-Inhalt anhand belegten Primärformats ergänzen |
+| Unbekanntes ATR-Historienformat | ATR | Bedingte Dateien nicht versucht; unbekannt nicht als fehlend oder vollständig behaupten |
 | Vollständiger signierter Standarddownload | mehrere | Download-/Authentisierungsprotokoll und Original-Signaturen separat implementieren |
 | Kryptografische Zertifikats-/Signaturprüfung | mehrere | RSA-Nachrichtenrückgewinnung bzw. EC-Prüfung und überprüfbare Vertrauenskette |
 
 Arbeitsliste relevanter offener Quellen; vor einer Vollständigkeitsbehauptung sind sämtliche MF-/Gen1-/Gen2-Dateien zusätzlich abzugleichen. Fahrzeug-/Kilometer-/Spesen- und weitere Timeline-Auswertung folgen erst nach zuverlässig vollständig übernommenen relevanten Kartenquellen.
 
-[Zertifikatsformat und Grenze](CARD_CERTIFICATE_IMPORT.md) · [Originaldateien](CARD_ORIGINAL_IDENTIFICATION_IMPORT.md) · [Gebündelter späterer Gerätetest](CARD_ORIGINAL_IDENTIFICATION_DEVICE_TEST.md)
+[Zertifikatsformat und Grenze](CARD_CERTIFICATE_IMPORT.md) · [Originaldateien](CARD_ORIGINAL_IDENTIFICATION_IMPORT.md) · [Kommunikationsquellen](CARD_COMMUNICATION_IMPORT.md) · [Übergabe](CARD_IMPORT_FINALIZATION_HANDOFF.md)

@@ -171,5 +171,9 @@ class CardImportCoordinator(
         loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
         vehicleUnits = result.vehicleUnits?.let { CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes) },
         metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) },
+        certificates = result.certificates.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCertificateFile(it.kind, it.generation, it.bytes) }) },
+        identitySources = result.identitySources.mapValues { (_, value) -> value.copy(file = value.file?.let { CardIdentitySourceFile(it.kind, it.generation, it.bytes) }) },
+        directory = result.directory?.let { CardDirectoryFile(it.generation, it.bytes) },
+        communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) },
     )
 }
