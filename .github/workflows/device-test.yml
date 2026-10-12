@@ -1,6 +1,8 @@
 name: FahrerTagebuch targeted device-test package
 
 on:
+  push:
+    branches: [build/pr62-device-update-40121]
   workflow_dispatch:
     inputs:
       source_sha:
@@ -41,7 +43,7 @@ jobs:
 
       - name: Validate exact source commit
         env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_SHA: ${{ inputs.source_sha || 'efbf49cdf92bd5e5ddb2e042b3e14e9372169756' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -51,7 +53,7 @@ jobs:
       - name: Require a successful full Android CI for the exact source
         uses: actions/github-script@v7
         env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_SHA: ${{ inputs.source_sha || 'efbf49cdf92bd5e5ddb2e042b3e14e9372169756' }}
         with:
           script: |
             const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
@@ -77,7 +79,7 @@ jobs:
       - name: Checkout exact product source separately
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ inputs.source_sha || 'efbf49cdf92bd5e5ddb2e042b3e14e9372169756' }}
           path: product
           fetch-depth: 0
 
@@ -100,9 +102,9 @@ jobs:
 
       - name: Package only requested device-test files
         env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_SHA: ${{ inputs.source_sha || 'efbf49cdf92bd5e5ddb2e042b3e14e9372169756' }}
           WORKFLOW_SHA: ${{ github.sha }}
-          INCLUDE_BASELINE: ${{ inputs.include_baseline }}
+          INCLUDE_BASELINE: ${{ inputs.include_baseline || false }}
         shell: bash
         run: |
           set -euo pipefail
@@ -123,7 +125,7 @@ jobs:
       - name: Upload requested stable test ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: FahrerTagebuch-device-test-${{ inputs.source_sha }}-${{ github.run_id }}
+          name: FahrerTagebuch-device-test-${{ inputs.source_sha || 'efbf49cdf92bd5e5ddb2e042b3e14e9372169756' }}-${{ github.run_id }}
           retention-days: 7
           if-no-files-found: error
           path: |
