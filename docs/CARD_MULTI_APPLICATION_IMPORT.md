@@ -1,3 +1,7 @@
+Aktueller geprüfter Folgecheckpoint12.10.2026: vollständige CI38204376573 an Produktkopf f1f92d69fff37eeaec5740b399d7df452b436098 in allen vier Jobs erfolgreich; lokale Kotlin2.4.20-Reader-Prüfung mit20Tests ebenfalls bestanden. Die neue API bleibt intern; normale Batch-Speicherung/Migration/Verlaufsansichten noch offen. [Genauer Übergabestand](CARD_IMPORT_CONTINUATION_CHECKPOINT_20261012.md) · [Festgelegte Speicherintegration](CARD_APPLICATION_STORAGE_DESIGN.md) · [Sicherheitsabgleich](CARD_IMPORT_SECURITY_RESEARCH.md). Spätere Änderungen brauchen eigene Hardwarefreigabe; kein neues Testpaket ausgegeben.
+
+---
+
 # Beide Kartenanwendungen – Modell und Reader-Fundament
 
 Stand 12.10.2026. Eigenständiger offener Folgeentwurf nach dem bestätigten PR62/40121, keine Gerätefreigabe dieses neuen Codes. Ausgangs-Main `ace6b7bca4fb1ccb105f32f6d5de5be30bc04c4b`, Tree `a0101ba452bcebd75eaf34b44cd9518a2ac4f1d9`; PR62-Merge `26a9f14c34523fa4ba884d8dd9891c24e1736ab4` hat exakt den geprüften Produktbaum `11e79e492b381f9d515bee796ffea30da3099592`. Gerätebestätigung40121 auf Main gelesen; Umfang bleibt Wiederlesung/Anzeige der beiden MF-Quellen11/3Bytes, keine zusätzliche Update-/Historien-/Neustartbehauptung.
