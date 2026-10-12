@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gerätetest: normalisierte Kartentage und Datenbank-Update 5 → 6
 
 Die ZIP enthält zwei APKs derselben dauerhaft aktualisierbaren App **FahrerTagebuch Test**. Sie wird zusätzlich zur bisherigen Debug-/Internal-App installiert. Bestehende Apps und deren Daten nicht löschen. Die sichtbare technische Oberfläche bleibt für diesen Entwicklungsschritt bestehen; die spätere vereinfachte automatische Bedienung steht in CURRENT_RULES.

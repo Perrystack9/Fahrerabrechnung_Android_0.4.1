@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # GNSS-Import: vorgesehener Gerätetest
 
 Stand 10.10.2026: neuer Leser-/Persistenzschritt, Version **40110**, Schema **12**. CI und Gerätetest dieses Schritts sind noch offen. Diese Anleitung ist vorbereitet; sie belegt keinen Testerfolg. Test-ZIP erst nach vollständig grüner Android-CI für den exakten Quellcommit bereitstellen. PR erst nach ausdrücklicher Testbestätigung mergen.

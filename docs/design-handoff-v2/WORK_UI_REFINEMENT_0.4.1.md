@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – überholte Produkt-/UI-/PDF-Planung.** Historische Referenz, kein aktueller Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung entfallen vollständig; neutraler Bericht nicht verbindlich geplant. Alte Tabanzahl, Navigationsplätze und sieben/acht Schritte sind keine Ziele. Ganze Oberfläche und Einrichtung später neu konzipieren, jetzt keine UI-Umsetzung aus diesem Paket. Historische Tests/Beobachtungen nicht umgeschrieben. Verbindlich ist die [neue Produktentscheidung](../PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 > **Historischer UI-Auftrag; seine Acht-Schritte- und Phasengrenzen gelten heute nicht mehr.** Maßgeblich sind [aktuelle Produktregeln](../CURRENT_RULES.md) und [Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3); den heutigen Implementierungsstand beschreibt [WORK_STATUS](../../WORK_STATUS.md). Bei Widersprüchen haben die aktuellen Quellen Vorrang. Historische Aussagen unten bleiben als Zeitdokument erhalten.
 
 # Work-Auftrag – UI-Feinschliff & verbindliche Designübernahme 0.4.1

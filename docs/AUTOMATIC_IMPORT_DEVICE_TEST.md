@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gerätetest: automatisches Lesen und Übernehmen im Vordergrund
 
 Die ZIP aktualisiert **FahrerTagebuch Test** von Schema 7 (40102, bestandener PR-34-Stand) auf Schema 8 (40103). Paket und Testsignatur bleiben gleich. **Bei vorhandener PR-34-Test-App nur `02-FahrerTagebuch-Test-Update.apk` installieren. Nicht deinstallieren, keine Daten löschen, die Ausgangs-APK nicht erneut installieren.**

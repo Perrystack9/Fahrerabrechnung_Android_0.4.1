@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Beginn-/Ende-Orte: unabhängige Kartenquelle
 
 Stand 10.10.2026. Ausgangsbasis ist der unverändert gemergte, CI-geprüfte PR #51 (main `1c73cb4d2fa4f656e069362a3e159cee12b0d884`, Schema 12/Testversion 40110). Nutzerbestätigung: GNSS-Anzeige passt und bleibt nach Wiederöffnung vorhanden. Diese Rückmeldung bestätigt keine ungenannten Fehler- oder Fremdkartentests.

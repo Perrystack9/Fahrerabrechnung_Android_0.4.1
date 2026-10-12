@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # PR #39 – Kontrolldaten der eigenen Fahrerkarte
 
 Ausgangsbasis: bestandene PR-37-Test-App, Schema 8, Version 40104. Update: Schema 9, Version 40105, gleiche Paketkennung und Testsignatur. Bei vorhandener **FahrerTagebuch Test** ausschließlich `02-FahrerTagebuch-Test-Update.apk` installieren. Nicht deinstallieren oder Daten löschen. Die Ausgangs-APK ist nur für eine neue, getrennte Testinstallation vorgesehen.

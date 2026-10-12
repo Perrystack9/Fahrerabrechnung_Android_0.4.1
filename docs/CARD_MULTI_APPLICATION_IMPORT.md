@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gemeinsamer Import beider Kartenanwendungen
 
 Fortsetzung am12.10.2026 im offenen PR65. Neuer Kandidat40122/Schema19, noch keine eigene Gerätefreigabe. Ausgang: vollständig grüne Reader-CI38204376573 am Kopf f1f92d69fff37eeaec5740b399d7df452b436098 und dokumentierter Checkpointd99660271726dcee413369b8fde9b61f3d5f7553. Mainace6b7bca4fb1ccb105f32f6d5de5be30bc04c4b/40121 bleibt unverändert.
@@ -23,6 +25,6 @@ Vor Ausgabe: echter aktueller Compilerexport, lokale Kompilierung/Unit-Tests, ko
 
 ## Verbleibende Importgrenzen
 
-7F66-Pufferinhaltsdecoder, signierte Standarddownloads/DDD, ERCA-/MSCA-Vertrauen und geschützteVU_Configuration0540 bleiben gesonderte nächste Arbeiten. [Primär-/Vertrauensabgleich](CARD_IMPORT_SECURITY_RESEARCH.md). Keine geratenen Puffergrößen, Authentisierung, Schlüssel oder Originalsignaturen. Fahrzeug-/Spesen-/Abrechnungsarbeit bleibt zurückgestellt.
+7F66-Pufferinhaltsdecoder, signierte Standarddownloads/DDD, ERCA-/MSCA-Vertrauen und geschützteVU_Configuration0540 bleiben gesonderte nächste Arbeiten. [Primär-/Vertrauensabgleich](CARD_IMPORT_SECURITY_RESEARCH.md). Keine geratenen Puffergrößen, Authentisierung, Schlüssel oder Originalsignaturen. Fahrzeugauswertung bleibt eine spätere Arbeit; Spesen, Lohn/Zuschläge und Abrechnung entfallen vollständig als Produktziele.
 
 Keine Browser, Unteragenten oder Bereinigung/Löschung. Actions-Budget2USD/Stop-usage unverändert. GitHub-Parent/Tree/Ref-Lease vor Updates prüfen; lokale Snapshot-Historie niemals pushen. Diese Fortsetzung übernimmt den bestehenden PR65, keine zweite Produktbranch.
