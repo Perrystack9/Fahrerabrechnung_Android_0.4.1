@@ -60,6 +60,73 @@ class CardReadBatchInstrumentedTest {
                       master: ByteArray = ByteArray(8)) = CardApplicationReadBatch(listOf(
         CardApplicationAttempt.read(CardApplication.GEN1, read(CardGeneration.GEN1)), second),
         listOf(CardMasterFileCapture(0x0005, master, false)))
+    private fun signedRead(generation: CardGeneration): CardReadResult {
+        val raw = read(generation)
+        val originals = CardCoreEf.entries.associateWith { kind ->
+            CardCoreRead(kind, CardCoreReadStatus.COMPLETE, CardCoreSnapshot(kind, generation,
+                ByteArray(if (kind == CardCoreEf.ACTIVITY) 68 else if (generation == CardGeneration.GEN1) 33 else 50)))
+        }
+        fun tlv(tag: Int, bytes: ByteArray): ByteArray {
+            val prefix = if (tag > 255) byteArrayOf((tag ushr 8).toByte(), tag.toByte()) else byteArrayOf(tag.toByte())
+            val size = if (bytes.size < 128) byteArrayOf(bytes.size.toByte()) else byteArrayOf(0x81.toByte(), bytes.size.toByte())
+            return prefix + size + bytes
+        }
+        val certificate = if (generation == CardGeneration.GEN1) null else {
+            val body = tlv(0x5F29, byteArrayOf(0)) + tlv(0x42, ByteArray(8) { 1 }) +
+                tlv(0x5F4C, DriverCardFiles.gen2Aid + byteArrayOf(17)) +
+                tlv(0x7F49, tlv(6, byteArrayOf(0x2A, 0x86.toByte(), 0x48, 0xCE.toByte(), 0x3D, 3, 1, 7)) +
+                    tlv(0x86, ByteArray(65) { if (it == 0) 4 else 7 })) +
+                tlv(0x5F20, ByteArray(8) { 9 }) + tlv(0x5F25, ByteArray(4)) + tlv(0x5F24, ByteArray(4))
+            CardCertificateFile(CardCertificateKind.SIGNING, generation, tlv(0x7F21,
+                tlv(0x7F4E, body) + tlv(0x5F37, ByteArray(64) { 3 })))
+        }
+        val policy = if (generation == CardGeneration.GEN1) CardSignaturePolicy.RSA_SHA1 else CardSignaturePolicy.NIST_P256
+        return raw.copy(coreReads = originals,
+            certificates = certificate?.let { mapOf(CardCertificateKind.SIGNING to CardCertificateRead(it)) }.orEmpty(),
+            coreSignatures = originals.mapValues { (kind, source) ->
+                CardCoreSignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy, CardSignaturePhase.SIGN,
+                    statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = policy.length,
+                    original = source.snapshot, certificate = certificate, bytes = ByteArray(policy.length) { 7 })
+            })
+    }
+
+    @Test fun signaturesBindOnlyToFreshGen1AndGen2V2ChildrenAndSurviveReopen() = runBlocking {
+        val old = pipeline.processApplications(batch(), "signature-group-old", true)
+        val input = CardApplicationReadBatch(listOf(
+            CardApplicationAttempt.read(CardApplication.GEN1, signedRead(CardGeneration.GEN1)),
+            CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))),
+            listOf(CardMasterFileCapture(0x0005, ByteArray(8), false)))
+        val saved = pipeline.processApplications(input, "signature-group-new")
+        for (attempt in saved.applications) {
+            val child = imports.get(attempt.run!!.sessionId!!)!!
+            assertEquals(attempt.application, child.application)
+            assertEquals(2, child.coreSignatures.size)
+            assertTrue(child.coreSignatures.values.all { it.generation == attempt.generation &&
+                it.bytes!!.size == if (attempt.application == CardApplication.GEN1) 128 else 64 })
+        }
+        for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.coreSignatures.isEmpty())
+        assertEquals(4, db.cardCoreSignatureDao().receipts(saved.applications[0].run!!.sessionId!!).size +
+            db.cardCoreSignatureDao().receipts(saved.applications[1].run!!.sessionId!!).size)
+        db.close(); open()
+        assertEquals(saved, pipeline.applicationBatch(saved.id))
+        assertEquals(saved, pipeline.processApplications(input, saved.id))
+    }
+
+    @Test fun secondChildSignatureFailureRollsBackTheEntireNewGroup() = runBlocking {
+        val old = pipeline.processApplications(batch(), "signature-group-before", true)
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_second_signature BEFORE INSERT ON card_core_signature_receipts
+            WHEN NEW.generation = 'GEN2V2' BEGIN SELECT RAISE(ABORT, 'synthetic second signature rollback'); END""")
+        val input = CardApplicationReadBatch(listOf(
+            CardApplicationAttempt.read(CardApplication.GEN1, signedRead(CardGeneration.GEN1)),
+            CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))))
+        try { pipeline.processApplications(input, "signature-group-failed"); fail() } catch (_: IllegalStateException) { }
+        assertNull(pipeline.applicationBatch("signature-group-failed"))
+        assertEquals(old, pipeline.applicationBatch(old.id))
+        db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM card_core_signature_receipts").use {
+            it.moveToFirst(); assertEquals(0, it.getInt(0))
+        }
+    }
+
     @Test fun coreOriginalsBindToExactGen1AndGen2V2ChildrenWithoutMfOrHistoricalBackfill() = runBlocking {
         val old = pipeline.processApplications(batch(), "core-group-old", true)
         fun value(generation: CardGeneration): CardReadResult {

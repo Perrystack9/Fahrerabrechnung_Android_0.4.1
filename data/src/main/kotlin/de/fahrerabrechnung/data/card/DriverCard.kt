@@ -3,6 +3,8 @@ package de.fahrerabrechnung.data.card
 import java.nio.charset.Charset
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class CardGeneration { GEN1, GEN2, GEN2V2, UNKNOWN, UNSUPPORTED }
 enum class CardCapability { BASIC_IDENTITY, G2_FILES, V2_FILES }
@@ -56,7 +58,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap(),
                           val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false,
                           val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap(),
-                          val coreReads: Map<CardCoreEf, CardCoreRead> = emptyMap())
+                          val coreReads: Map<CardCoreEf, CardCoreRead> = emptyMap(),
+                          val coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -285,6 +288,7 @@ object DriverCardDecoder {
 
 /** No storage side effects. Each supported EF is independent after validated identification. */
 class DriverCardReader(private val transport: CardReaderTransport) {
+    private val captureMutex = Mutex()
     /** Legacy one-application API, retained until atomic multi-application persistence is ready. */
     suspend fun read(): CardReadResult = withPoweredCard { session, atr ->
         val master = readMaster(session, atr, abortTransport = false)
@@ -319,7 +323,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         CardApplicationReadBatch(attempts, master.freeze())
     }
 
-    private suspend fun <T> withPoweredCard(action: suspend (ApduSession, Atr) -> T): T {
+    private suspend fun <T> withPoweredCard(action: suspend (ApduSession, Atr) -> T): T = captureMutex.withLock {
         try {
             when (transport.open()) {
                 ReaderState.Open, ReaderState.CardPresent -> Unit
@@ -329,7 +333,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 ReaderState.Disconnected -> throw ReaderException(ReaderFailure.DISCONNECTED)
             }
             val atr = AtrDecoder.parse(transport.powerOn())
-            return action(ApduSession(transport), atr)
+            action(ApduSession(transport), atr)
         } finally {
             runCatching { transport.powerOff() }
             transport.close()
@@ -378,8 +382,15 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         return try {
             val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
             val identity = DriverCardDecoder.identity(identityBytes, generation)
-            // Failure of one EF must not prevent trying the other or expose incomplete bytes.
-            val coreReads = CardCoreEf.entries.associateWith { kind ->
+            val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                val file = try { CardCertificateReader.read(session, kind, generation) }
+                catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+                CardCertificateRead(file, readFailed = file == null)
+            }
+            // C101 is frozen before any core hash. Each EF owns a fresh uninterrupted sequence.
+            val signingCertificate = certificates[if (generation == CardGeneration.GEN1)
+                CardCertificateKind.CARD else CardCertificateKind.SIGNING]?.file
+            val captures = CardCoreEf.entries.associateWith { kind ->
                 val length = try {
                     when (kind) {
                         CardCoreEf.ACTIVITY -> DriverCardDecoder.activityLength(application, generation) + 4
@@ -387,20 +398,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                             (if (generation == CardGeneration.GEN1) 31 else 48) + 2
                     }
                 } catch (_: ParseError) { null }
-                if (length == null) CardCoreRead(kind, CardCoreReadStatus.NOT_ATTEMPTED)
-                else try {
-                    val selected = session.send(CardCommands.selectFile(kind.fileId))
-                    if (selected.statusWord == 0x6A82) CardCoreRead(kind, CardCoreReadStatus.ABSENT)
-                    else {
-                        if (!selected.success) throw ReaderException(ReaderFailure.IO)
-                        CardCoreRead(kind, CardCoreReadStatus.COMPLETE,
-                            CardCoreSnapshot(kind, generation, readSelectedFile(session, length)))
-                    }
-                } catch (error: ReaderException) {
-                    fileFailure(error, abortTransport)
-                    CardCoreRead(kind, CardCoreReadStatus.READ_FAILED, failure = error.failure)
+                CardCoreSignatureReader.read(session, kind, generation, length, signingCertificate) {
+                    fileFailure(it, abortTransport = true)
                 }
             }
+            val coreReads = captures.mapValues { it.value.core }
+            val coreSignatures = captures.mapValues { it.value.signature }
             val activity = try { coreReads.getValue(CardCoreEf.ACTIVITY).snapshot?.activity() }
                 catch (_: ParseError) { null }
             val vehicles = try { coreReads.getValue(CardCoreEf.VEHICLES).snapshot?.vehicles() }
@@ -476,11 +479,6 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 catch (_: ParseError) { null }
                 CardMetadataRead(file, readFailed = file == null)
             }
-            val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
-                val file = try { CardCertificateReader.read(session, kind, generation) }
-                catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
-                CardCertificateRead(file, readFailed = file == null)
-            }
             val identitySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
                 val captured = when (kind) {
                     CardIdentitySourceKind.APPLICATION -> application
@@ -520,7 +518,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
                 metadata = metadata, certificates = certificates, identitySources = identitySources,
                 directory = directory, directoryReadFailed = supportsDirectory && directory == null,
-                communication = communication, coreReads = coreReads)
+                communication = communication, coreReads = coreReads, coreSignatures = coreSignatures)
         } catch (_: ParseError) {
             CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
         }

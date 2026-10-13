@@ -162,6 +162,8 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.MF_DIRECTORY -> "Anwendungsverzeichnis"
         CardImportFileKind.MF_ATR_INFO -> "Pufferinformation"
         CardImportFileKind.MF_EXTENDED_LENGTH -> "Protokollunterstützung"
+        CardImportFileKind.ACTIVITY_SIGNATURE -> "Kartensignatur der Tätigkeiten"
+        CardImportFileKind.VEHICLES_SIGNATURE -> "Kartensignatur der Fahrzeuge"
         CardImportFileKind.ACTIVITY_ORIGINAL -> "Originaldatei der Tätigkeiten"
         CardImportFileKind.VEHICLES_ORIGINAL -> "Originaldatei der Fahrzeuge"
         CardImportFileKind.WORK_PERIOD_PLACES -> "Beginn-/Ende-Orte"
@@ -169,7 +171,8 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
     }
     return when (status) {
-        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.ACTIVITY_ORIGINAL, CardImportFileKind.VEHICLES_ORIGINAL))
+        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.ACTIVITY_SIGNATURE, CardImportFileKind.VEHICLES_SIGNATURE))
+            "$label: aufgenommen · ungeprüft" else if (kind in setOf(CardImportFileKind.ACTIVITY_ORIGINAL, CardImportFileKind.VEHICLES_ORIGINAL))
             "$label: vollständig gespeichert" else if (kind in setOf(CardImportFileKind.CARD_CERTIFICATE, CardImportFileKind.CARD_SIGNING_CERTIFICATE,
             CardImportFileKind.CA_CERTIFICATE, CardImportFileKind.LINK_CERTIFICATE,
             CardImportFileKind.APPLICATION_IDENTIFICATION_V2, CardImportFileKind.MF_DIRECTORY,

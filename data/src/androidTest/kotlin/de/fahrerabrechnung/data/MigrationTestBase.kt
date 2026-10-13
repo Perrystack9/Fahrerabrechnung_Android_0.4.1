@@ -18,6 +18,18 @@ class MigrationTestBase {
         AppDatabase::class.java,
     )
 
+    @Test fun migration_19_20_addsEmptySessionBoundReceiptsWithoutBackfill() {
+        val name = "core-signature-migration-test"
+        helper.createDatabase(name, 19).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p', 'Old profile', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 20, true, DatabaseMigrations.MIGRATION_19_20).use { db ->
+            db.query("SELECT COUNT(*) FROM card_core_signature_receipts").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
+            db.query("SELECT name FROM profiles WHERE id = 'p'").use { it.moveToFirst(); assertEquals("Old profile", it.getString(0)) }
+        }
+    }
+
     @Test fun migration_1_2_keepsProfilesAndAddsActivitySnapshots() {
         val name = "activity-migration-test"
         helper.createDatabase(name, 1).apply {

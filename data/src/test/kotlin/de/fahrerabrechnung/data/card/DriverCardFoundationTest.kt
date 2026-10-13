@@ -1741,6 +1741,7 @@ class DriverCardFoundationTest {
                 }
                 return data.copyOfRange(offset, minOf(offset + actualLength, data.size)) + byteArrayOf(0x90.toByte(), 0)
             }
+            if (ins == 0x2A) return byteArrayOf(0x6D, 0) // synthetic legacy card: no signing support
             throw AssertionError("Unexpected APDU instruction")
         }
         override suspend fun powerOff() = Unit
