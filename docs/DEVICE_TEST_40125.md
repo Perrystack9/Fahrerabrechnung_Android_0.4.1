@@ -1,6 +1,6 @@
-# Geplante Geräteabnahme 40125 - Identifikationssignaturen
+# Geräteabnahme 40125 - Identifikationssignaturen
 
-**VORBEREITET, NICHT DURCHGEFÜHRT.** Produktkandidat **40125 / Schema 21** in offenem Draft-[PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76): zusätzliche neue 0501-/0520-/V2-0525-Aufnahmen und additive Migration 20→21 nach dem [Plan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md). main/ installierte bestätigte Basis bleibt 40124 / Schema20. Kein neues Paket oder Geräteergebnis aus der früheren 40124-Abnahme ableiten.
+**POSITIVE GESAMTRÜCKMELDUNG ERHALTEN**, Tobi am 13.10.2026 17:32 Europe/Berlin: „Wurde getestet, und funktioniert 1a“. [Gerätebeleg40125](DEVICE_CONFIRMATION_40125.md) bindet dies an den bereitgestellten exakten Quellstand, volle grüne CI, geprüftes Paket und Produktmerge aus PR #76. Die nachfolgende ursprüngliche Checkliste bleibt als Abnahmeplan erhalten; Einzelmesswerte, Screenshots, Modellnamen und einzelne Schritte wurden diesmal nicht separat berichtet. Keine erwarteten Tabellenwerte als tatsächlich gemessene Größen ausgeben.
 
 Vor Installation endgültigen vollständig grünen Produktkopf live prüfen und bestehendes Gerätepaket genau dafür erzeugen; `include_baseline=false` bei vorhandener 40124-Installation. Nach Update folgende Punkte eigenständig bestätigen:
 
