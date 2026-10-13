@@ -12,11 +12,17 @@ Tobi bestätigt am 13.10.2026 13:57 Europe/Berlin ausdrücklich sämtliche Check
 
 Erhalten: vollständige Originale, eigene Profil-/Karten-/Parent-/Child-Bindung, MF am Parent, unveränderliche Historie/Fingerprints, unsigned Rohaufnahme bei lokalen Signaturfehlern und Gruppenabbruch bei Transportverlust. SELECT/HASH/READ/Grenze/SIGN ununterbrochen, C101-Policy, defensive Kopien und serialisierte Sessions. Neue verschlüsselte sitzungseigene Receipts/FKs, additive 19→20, keine Alt-Signaturen oder jüngeren Quellen. Room-20-Export echt, SHA256 `34a9253cb546255ce9c12bef2d9808933e1af8a8dca1c27a783eb7322e6ab6e6`; Schema 19 unverändert. Keine Filter/Quarantäne oder CI-/Upload-/Budgetänderung. Lokaler Gradle-Download blockiert, Android-Nachweis aus echter CI.
 
+## Abgeschlossener nächster Plan-Meilenstein
+
+[Identifikations-Signaturplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) für **40125 / Schema 21** ausgearbeitet, noch keine Produktfunktion implementiert. Genau 0501/0520 in GEN1 und GEN2(V2), 0525 nur auf V2 wenn vorhanden; fünf neue Belege auf üblicher G1+G2V2-Karte. Neue vollständige post-HASH-READ-Aufnahmen, bytegenauer Bootstrap-Vergleich, nicht verschluckter Konsistenzabbruch der gesamten Gruppe, unsigned Erhalt bei lokalen Hash-/Signierstörungen, eigene sitzungseigene Identitäts-Receipts neben unveränderten Core-Receipts, additive 20→21. Historische 15-Byte-Originale/Fingerprints nicht ändern; keine unbewiesene 17-Byte-V2-Signatur aus einem kürzeren Präfix. [Neue Gerätecheckliste](DEVICE_TEST_40125.md) vorbereitet, nicht durchgeführt.
+
+Planbasis main `71eac7163e53148952b09639c1fcd203a2a7b8a4`, bestätigtes 40124 / Schema 20. Zusätzliche volle Produkt-Main-CI 38394108412 und Docs-Main-CI 38395123764 am Einstieg erfolgreich geprüft. Primärmatrix um aktuellen 40124-Core-Signaturstand und den nächsten begrenzten Umfang berichtigt. Nur dokumentarische Markdown-Dateien geändert; aktuelle App/DB/Workflows unverändert.
+
 ## Exakt nächste Arbeit
 
-1. Aktuellen main und offene PRs/Checks live prüfen. Zusätzliche Produkt-Main-CI [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412) für Merge 3298b70 war beim Abschluss noch laufend; nicht als grün behaupten. Dokumentations-Folgeprüfungen ebenfalls aktuell abfragen.
-2. Als **eigenen Plan-Meilenstein** den Pflichtdateiumfang für weitere EF-Signaturen aus [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und Primärmatrix festlegen: tatsächliche neue Originalquellen, Befehlssequenz, Byte-/Sitzungsbindung, Fehler-/Abbruchfälle, vollständige CI und eigenes Gerätegate. In diesem Abschluss keine neue Produktfunktion beginnen.
-3. Den begrenzten Plan separat sichern und Sitzung beenden; weitere Reader-/Persistenz-/UI-Umsetzung erst als folgenden eigenen Produkt-Meilenstein behandeln.
+1. Aktuellen main, offene PRs und sämtliche relevanten Checks live prüfen; keine alten Pending-/Grün-Angaben als aktuellen HEAD behandeln.
+2. Den Identifikationsplan gezielt öffnen. **40125 als eigenen Produkt-Meilenstein** umsetzen: neue Modelle und Befehls-/Konsistenz-/Fehler-/Freeze-Tests zuerst; dann Reader-Reihenfolge, konkrete Quellenbindung, atomare Persistenz/additive 20→21 und kleine Anzeige in vorhandenen Kartenangaben. Core-Enum/Fingerprints/Receipts und komplette bestehende Tests erhalten.
+3. Room-21-Export nur aus echtem Compiler, alte Exporte unverändert. Vollständige unveränderte Android-/API36-CI für endgültigen Kopf, exaktes Paket und eigene erforderliche 40125-Gerätebestätigung **vor Merge**. 40124-Geräteumfang nicht übertragen. Nach Sicherung dieses Produkt-Meilensteins Sitzung beenden.
 
 ## Grenzen
 
