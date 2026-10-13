@@ -127,6 +127,16 @@ class CardImportPipelineInstrumentedTest {
         assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
     }
 
+    @Test fun unknownUnusedVehiclePointerKeepsOriginalButIsNotReportedAsValidEmpty() = runBlocking {
+        imports.bind(card(), true)
+        val bytes = ByteArray(98).also { it[1] = 1 }
+        val run = pipeline.process(coreRead(ByteArray(68), bytes), "core-unknown-unused-pointer")
+        assertEquals(CardImportFileStatus.INVALID, run.file(CardImportFileKind.VEHICLES).status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.VEHICLES_ORIGINAL).status)
+        assertArrayEquals(bytes, imports.get(run.id)!!.coreSnapshots.getValue(CardCoreEf.VEHICLES).snapshot.bytes)
+        assertNull(imports.get(run.id)!!.vehicles)
+    }
+
     @Test fun coreReceiptsDistinguishCapacityAbsenceAndFailedAttemptWithoutRawBackfill() = runBlocking {
         imports.bind(card(), true); pipeline.process(coreRead(), "core-before-failures")
         for (capture in listOf(CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.NOT_ATTEMPTED),

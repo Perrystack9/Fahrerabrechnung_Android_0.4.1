@@ -28,7 +28,7 @@ Basis des Snapshot-PRs: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c7
 
 ## Exakt nächster Schritt
 
-Den **Implementierungs-PR für vollständige 0504-/0505-Originalsnapshots** im Branch `feat/card-ef-snapshots-20261013` abschließen: exakten endgültigen Kopf und vollständige Android-CI live prüfen, danach 40123 mit dem bestehenden gezielten Geräte-Workflow bauen und die eigene Geräteabnahme einholen. Byteaufnahme, leere Originale und getrennte Roh-/Parserzustände sind implementiert; **noch kein Produktmerge oder Gerätefreigabe**. Details und nächster Arbeitszustand im [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Keine Signatur-/Schreib-/Vertrauensbefehle oder UI-Neukonzeption in diesem Paket.
+Den **Implementierungs-PR für vollständige 0504-/0505-Originalsnapshots** im Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013` abschließen: exakten endgültigen Kopf und vollständige Android-CI live prüfen, danach 40123 mit dem bestehenden gezielten Geräte-Workflow bauen und die eigene Geräteabnahme einholen. Byteaufnahme, leere Originale und getrennte Roh-/Parserzustände sind implementiert; **noch kein Produktmerge oder Gerätefreigabe**. Details und nächster Arbeitszustand im [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Keine Signatur-/Schreib-/Vertrauensbefehle oder UI-Neukonzeption in diesem Paket.
 
 ## Sitzungsroutine
 

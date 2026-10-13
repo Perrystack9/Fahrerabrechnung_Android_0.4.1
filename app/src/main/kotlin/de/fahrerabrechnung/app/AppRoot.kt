@@ -68,6 +68,8 @@ import de.fahrerabrechnung.data.card.SavedCardIdentitySource
 import de.fahrerabrechnung.data.card.SavedCardDirectory
 import de.fahrerabrechnung.data.card.CardCommunicationKind
 import de.fahrerabrechnung.data.card.SavedCardCommunication
+import de.fahrerabrechnung.data.card.CardCoreEf
+import de.fahrerabrechnung.data.card.SavedCardCoreSnapshot
 import de.fahrerabrechnung.data.card.SavedCardControl
 import de.fahrerabrechnung.data.card.DriverCardImportRepository
 import de.fahrerabrechnung.data.card.DriverCardImportPipeline
@@ -216,7 +218,7 @@ fun AppRoot(
         }
     }
     LaunchedEffect(currentRoute, importState?.lastRun?.sessionId) {
-        if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null && selectedControlSnapshot == null && selectedEventSnapshot == null && selectedFaultSnapshot == null && selectedConditionsSnapshot == null && selectedGnssPositions == null && selectedGnssAuthentication == null && selectedPlaces == null && selectedPlacesAuthentication == null && selectedBorderCrossings == null && selectedLoadUnload == null && selectedLoadType == null && selectedVehicleUnits == null && selectedMetadata.isEmpty() && selectedCertificates.isEmpty() && selectedIdentitySources.isEmpty() && selectedDirectory == null && selectedCommunication.isEmpty() && selectedPreviewDriverCardId == null) {
+        if (currentRoute == DetailRoutes.CARD_PREVIEW && !previewIsArchive && selectedActivitySnapshot == null && selectedVehicleSnapshot == null && selectedControlSnapshot == null && selectedEventSnapshot == null && selectedFaultSnapshot == null && selectedConditionsSnapshot == null && selectedGnssPositions == null && selectedGnssAuthentication == null && selectedPlaces == null && selectedPlacesAuthentication == null && selectedBorderCrossings == null && selectedLoadUnload == null && selectedLoadType == null && selectedVehicleUnits == null && selectedMetadata.isEmpty() && selectedCertificates.isEmpty() && selectedIdentitySources.isEmpty() && selectedDirectory == null && selectedCommunication.isEmpty() && selectedCoreSnapshots.isEmpty() && selectedPreviewDriverCardId == null) {
             try {
                 val sessionId = importState?.lastRun?.sessionId
                 val saved = if (sessionId != null) driverCardImports?.get(sessionId) else driverCardImports?.latest()

@@ -21,7 +21,7 @@ Gerätebestätigung 40122 deckt Installation, Altbestand, Gen1-/Gen2-Zustände/D
 
 ## Neuer begrenzter Kandidat
 
-Branch `feat/card-ef-snapshots-20261013`, Testversion **40123**. Noch nicht gemergt.
+Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013`, Testversion **40123**. Noch nicht gemergt.
 
 - `CardCoreSnapshot`: vollständige READ-BINARY-Originale von 0504/0505 einschließlich Pointer; defensive Kopien. Aufnahme unabhängig von Pointer-/Record-/Tageskettenparser.
 - `CardCoreRead`: COMPLETE, ABSENT, READ_FAILED mit tatsächlichem Readerfehler oder NOT_ATTEMPTED wegen fehlender Kapazität. Originalaufnahme hat eigene Importbelege; Auswertung kann EMPTY oder INVALID bleiben. Keine Teilbytes als Original.

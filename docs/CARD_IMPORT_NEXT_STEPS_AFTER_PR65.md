@@ -8,7 +8,7 @@ Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX
 
 ## Jetzt: Snapshot-PR 40123 prüfen und am Gerät abnehmen
 
-Im Branch `feat/card-ef-snapshots-20261013` sind **vollständige unabhängige EF-Originale für Driver_Activity_Data 0504 und Vehicles_Used 0505** implementiert. Grundlage ist main nach PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Die frühere Matrix beschreibt den Ausgangsbefund 40122; sie ist kein neuer Produktnachweis.
+Im Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013` sind **vollständige unabhängige EF-Originale für Driver_Activity_Data 0504 und Vehicles_Used 0505** implementiert. Grundlage ist main nach PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Die frühere Matrix beschreibt den Ausgangsbefund 40122; sie ist kein neuer Produktnachweis.
 
 | Ausgangslücke 40122 | Implementierter Kandidat 40123 |
 |---|---|

@@ -4,7 +4,7 @@ Einstieg über [WORK_START.md](../WORK_START.md) und aktuellen Git/GitHub-Stand;
 
 ## Aktueller Meilenstein
 
-**13.10.2026: vollständige 0504-/0505-Originalaufnahme als begrenzter Produktkandidat 40123 implementiert.** Basis: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`; beim Start keine offenen PRs. Branch `feat/card-ef-snapshots-20261013`. Endgültigen Kopf, PR und CI live prüfen.
+**13.10.2026: vollständige 0504-/0505-Originalaufnahme als begrenzter Produktkandidat 40123 implementiert.** Basis: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`; beim Start keine offenen PRs. Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013`. Endgültigen Kopf, PR und CI live prüfen.
 
 Rohdateien einschließlich Pointer/unbenutzter Bytes werden vor dem fachlichen Parser eingefroren. Bestehende verschlüsselte Schema-19-Tabellen mit neuen Original-Quellarten/Fingerprints; genaue Karten-/EF-/Generations-/Child-Sitzungsbindung. Keine Migration, Altquellenrekonstruktion oder Backfill. Leere und ungültige Auswertungen erhalten vollständige Rohaufnahme. Fehlende Kapazität/nicht versucht, EF abwesend und tatsächlicher Readerfehler bleiben getrennt; Transportabbruch verwirft die Mehranwendungsgruppe.
 

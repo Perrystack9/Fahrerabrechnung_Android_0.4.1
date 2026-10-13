@@ -330,6 +330,8 @@ class DriverCardImportPipeline @Inject constructor(
                 vehicleRaw == null && read.vehicleReadFailed) {
             val file = read.vehicles ?: throw ParseError(0, "Vehicles_Used", "invalid original pointer")
             val uses = CardVehiclesParser.parse(file)
+            if (uses.isEmpty() && vehicleRaw?.snapshot != null && file.newestRecordIndex != 0)
+                throw ParseError(0, "vehiclePointerNewestRecord", "unused file has non-default pointer")
             if (uses.isEmpty()) CardImportFileResult(CardImportFileKind.VEHICLES, CardImportFileStatus.EMPTY,
                 0, null, null, "EMPTY")
             else CardImportFileResult(CardImportFileKind.VEHICLES, CardImportFileStatus.READY, vehicles.prepare(read).useCount,
