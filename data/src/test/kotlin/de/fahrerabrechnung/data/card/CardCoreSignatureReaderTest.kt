@@ -70,6 +70,18 @@ class CardCoreSignatureReaderTest {
         }
     }
 
+    @Test fun pureGen2UsesItsOwnSigningCertificateAndVehiclesKeepAllOriginalBytes() = runBlocking {
+        val certificate = certificate(CardSignaturePolicy.NIST_P384, CardGeneration.GEN2)
+        val raw = ByteArray(50) { (it + 1).toByte() }
+        val script = Script(raw, 7)
+        val value = CardCoreSignatureReader.read(ApduSession(script), CardCoreEf.VEHICLES, CardGeneration.GEN2,
+            raw.size, certificate) { throw it }
+        assertEquals(CardSignaturePolicy.NIST_P384, value.signature.policy)
+        assertEquals(96, value.signature.bytes!!.size)
+        assertArrayEquals(raw, value.signature.original!!.bytes)
+        assertArrayEquals(CardCommands.selectFile(CardCoreEf.VEHICLES.fileId).encode(), script.commands.first().encode())
+    }
+
     @Test fun missingBlankDamagedUnknownOrAuthenticationCertificatesNeverCauseAHashGuess() = runBlocking {
         val valid = certificate(CardSignaturePolicy.NIST_P256)
         val unknown = CardCertificateFile(CardCertificateKind.SIGNING, CardGeneration.GEN2V2,
@@ -116,7 +128,10 @@ class CardCoreSignatureReaderTest {
         assertEquals(CardSignatureStatus.FAILED, capture(script).signature.status)
         assertEquals(1, script.commands.count { it.p1 == 0x9E })
         assertEquals(CardSignatureReason.BOUNDARY_UNSUPPORTED, capture(Script(ByteArray(32768))).signature.reason)
-        assertEquals(CardSignatureReason.BOUNDARY_UNPROVEN, capture(Script(ByteArray(69)), length = 68).signature.reason)
+        val incomplete = capture(Script(ByteArray(69)), length = 68)
+        assertEquals(CardSignatureReason.BOUNDARY_UNPROVEN, incomplete.signature.reason)
+        assertEquals(CardCoreReadStatus.READ_FAILED, incomplete.core.status)
+        assertNull(incomplete.core.snapshot); assertNull(incomplete.signature.original)
     }
 
     @Test fun truncatedReadsAndEverySignatureFailureKeepOnlyProvenOriginals() = runBlocking {

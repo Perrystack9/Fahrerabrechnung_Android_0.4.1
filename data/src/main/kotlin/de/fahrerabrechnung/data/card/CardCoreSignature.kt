@@ -14,9 +14,9 @@ enum class CardSignaturePolicy(val oid: String?, val hash: String, val length: I
     companion object {
         fun from(generation: CardGeneration, certificate: CardCertificateFile?): CardSignaturePolicy? {
             if (generation == CardGeneration.GEN1) return RSA_SHA1
-            if (generation !in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2) ||
-                certificate?.kind != CardCertificateKind.SIGNING || certificate.generation != generation) return null
-            val record = try { CardCertificateParser.parse(certificate) as? CardEccCertificateRecord }
+            if (generation !in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)) return null
+            val source = certificate?.takeIf { it.kind == CardCertificateKind.SIGNING && it.generation == generation } ?: return null
+            val record = try { CardCertificateParser.parse(source) as? CardEccCertificateRecord }
                 catch (_: ParseError) { null } ?: return null
             if (record.equipmentTypeRaw != 17) return null
             val oid = record.curveOidBytes.joinToString("") { "%02X".format(it) }

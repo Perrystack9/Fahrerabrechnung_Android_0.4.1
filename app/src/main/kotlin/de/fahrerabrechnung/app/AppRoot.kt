@@ -172,7 +172,7 @@ fun AppRoot(
     var selectedDirectory by androidx.compose.runtime.remember { mutableStateOf<SavedCardDirectory?>(null) }
     var selectedCommunication by androidx.compose.runtime.remember { mutableStateOf<Map<CardCommunicationKind, SavedCardCommunication>>(emptyMap()) }
     var selectedCoreSnapshots by androidx.compose.runtime.remember { mutableStateOf<Map<CardCoreEf, SavedCardCoreSnapshot>>(emptyMap()) }
-    var selectedCoreSignatures by remember { mutableStateOf<Map<CardCoreEf, CardCoreSignature>>(emptyMap()) }
+    var selectedCoreSignatures by androidx.compose.runtime.remember { mutableStateOf<Map<CardCoreEf, CardCoreSignature>>(emptyMap()) }
     var selectedReceiptId by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
     var selectedPreviewDriverCardId by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
     var selectedSourcePair by androidx.compose.runtime.remember { mutableStateOf<SavedCardSourcePair?>(null) }

@@ -28,7 +28,7 @@ Geprüfte Planbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c` nach Dokume
 
 ## Exakt nächster Schritt
 
-Aktuellen main, PRs und CI prüfen; dann den **getrennten Produkt-PR für echte 0504-/0505-Signaturaufnahme umsetzen**. Der [konkrete Plan](docs/CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist fertig: beide Anwendungen, P2=00, Card_Sign-Policy, vollständige neue Byteaufnahme, eigene Sitzungsbelege und additive Schema 19→20-Migration. Zuerst Modelle/Befehle/Sequenztests, danach Persistenz und kleine Abnahmeanzeige. Eigene volle CI und neues Gerätegate vor Merge; keine Altquellen-Signaturen, Trust-/DDD-/Schreib-/UI-Erweiterung. Der aktuelle Meilenstein liefert nur diesen Plan und endet nach Sicherung; Implementierung erst im nächsten getrennten Meilenstein.
+**40124 / Schema 20 ist im Produkt-PR [#73](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/73) umgesetzt, noch nicht freigegeben.** Aktuellen PR-Kopf, volle CI und offenen Geräteumfang live prüfen; Umsetzung nicht nochmals beginnen. Echter Room-20-Compilerexport übernommen. Erst endgültigen vollen Lauf inklusive API36 abschließen, dann gezieltes Paket desselben Kopfs und [eigene Geräteabnahme](docs/DEVICE_TEST_40124.md). Vor bestätigtem Gerätegate kein Merge. Signaturen heißen aufgenommen/ungeprüft; keine Vertrauens-/DDD-/Schreib-/UI-Folgephase beginnen.
 
 ## Sitzungsroutine
 

@@ -12,13 +12,11 @@ Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX
 
 Rohsnapshots einschließlich Pointer/unbenutzter Bytes vor Parser, auch bei EMPTY/INVALID-Auswertung; nicht versucht/EF abwesend/tatsächlicher Lesefehler getrennt. Nullring mit Nullpointern ist belegte unbenutzte 0504, unbekannter unbenutzter Fahrzeugpointer bleibt INVALID mit Original. Exakte Karte/Anwendung/neue Child-Sitzung; MF am Parent. Keine Migration, Rekonstruktion, Backfill oder jüngerer Ersatz für alte Quellen. Nichtleere Projektionen, Normalisierung und Request-Fingerprints erhalten. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle oder Navigation in diesem Paket.
 
-## Plan abgeschlossen: jetzt getrennten Signaturaufnahme-PR umsetzen
+## Umsetzung 40124 vorhanden: volle CI und eigenes Gerätegate abschließen
 
-Der [konkrete 0504-/0505-Signaturaufnahmeplan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist auf live geprüftem main 632e0df ausgearbeitet. Produkt-Main-CI 38360671532 und Docs-Main-CI 38361629250 erfolgreich. Vier neue echte Signaturbelege auf der vorhandenen Dual-Anwendungskarte sind der geplante erste Geräteumfang; keine Signatur für weitere EFs behaupten.
+Der [begrenzte Plan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist im offenen Produkt-PR [#73](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/73) umgesetzt: SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, Policy aus frisch gelesenem C101/Card_Sign, eigene verschlüsselte Sitzung/FKs, additive Migration 19→20 und kleine Statusanzeige. Originale bleiben bei Signaturfehler erhalten; alte Imports bleiben unsigned. Aufnahme beweist keine mathematische Gültigkeit/Vertrauenskette.
 
-DDP038/TCS118-131 und Appendix11 gezielt geprüft: SELECT→HASH(P2=00)→vollständiges READ→SIGN; GEN2-Hash/Länge aus frisch gelesenem C101/Card_Sign, nicht aus Card_MA/Aussteller. Zusätzliche defensive Dateiende-Prüfung, getrennte Fehlerzustände und unsigned Rohimport bei fehlender Voraussetzung festgelegt. Signaturen ausschließlich an die gemeinsam neu aufgenommenen Originale/Karte/AID/Child-Sitzung; keine historischen Ergänzungen.
-
-Als Nächstes im getrennten Produkt-Meilenstein zuerst Modelle/Command-Factories/Sequenztests umsetzen, dann eigene Sitzungsbelege mit additiver Schema 19→20-Migration, kleine Statusanzeige und vollständige Byte-/Negativ-/Abbruch-/Transaktions-/Historien-/Compose-Prüfungen. Erst eigene volle CI und neue passende Gerätebestätigung erlauben Merge. 40124/Schema 20 sind **geplant, noch nicht gebaut**; 40123 gibt keine spätere Signatur-/Vertrauens-/DDD-Funktion frei.
+**Noch keine Produktfreigabe.** Endgültigen Kopf und komplette CI einschließlich SQLCipher/Compose/API36 live prüfen, tatsächliche Fehler beheben. Room-20-Schema ausschließlich aus echtem Compilerlauf übernommen. Danach gezieltes Gerätepaket exakt desselben grünen Kopfs; [konkrete 40124-Abnahme](DEVICE_TEST_40124.md) inklusive Update/Altbestand, vier Kernsignaturen, Wiederöffnung, Quellenwechsel, erneuter Aufnahme und Kartenentnahme. Eigene erforderliche Bestätigung vor Merge; 40123-Bestätigung nicht übertragen. Umsetzung nicht erneut planen/duplizieren; keine neue Folgephase beginnen.
 
 ## Danach weiterhin getrennte Pakete
 

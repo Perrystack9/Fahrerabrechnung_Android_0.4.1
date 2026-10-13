@@ -73,7 +73,13 @@ internal object CardCoreSignatureReader {
             phase = CardSignaturePhase.BOUNDARY; lastSw = null
             val boundary = session.send(CardCommands.readBinary(length, 1), correctLength = false)
             lastSw = boundary.statusWord
-            if (boundary.data.isNotEmpty() || boundary.statusWord !in setOf(0x6700, 0x6B00))
+            if (boundary.data.isNotEmpty()) {
+                // An actual additional byte contradicts the declared capacity: the prefix is not a full EF.
+                snapshot = null
+                return Capture(CardCoreRead(kind, CardCoreReadStatus.READ_FAILED, failure = ReaderFailure.MALFORMED_RESPONSE),
+                    receipt(CardSignatureStatus.FAILED, CardSignatureReason.BOUNDARY_UNPROVEN))
+            }
+            if (boundary.statusWord !in setOf(0x6700, 0x6B00))
                 return Capture(core, receipt(CardSignatureStatus.FAILED, CardSignatureReason.BOUNDARY_UNPROVEN))
             phase = CardSignaturePhase.SIGN; lastSw = null
             val signature = session.send(CardCommands.computeDigitalSignature(checkNotNull(policy).length), correctLength = false)
