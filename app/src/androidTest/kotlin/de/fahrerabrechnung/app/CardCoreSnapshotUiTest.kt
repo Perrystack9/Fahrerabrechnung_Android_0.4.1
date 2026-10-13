@@ -33,6 +33,31 @@ class CardCoreSnapshotUiTest {
         compose.onNodeWithText("Für diese Auswahl sind keine auswertbaren Kartendaten verfügbar.").assertIsDisplayed()
     }
 
+    @Test fun signatureSelectionNeverShowsNewerReceiptInAnUnsignedOrArchivedImport() {
+        val raw = CardCoreSnapshot(CardCoreEf.ACTIVITY, CardGeneration.GEN1, ByteArray(68))
+        val signature = CardCoreSignature(CardCoreEf.ACTIVITY, CardGeneration.GEN1,
+            CardSignatureStatus.CAPTURED_UNVERIFIED, CardSignaturePolicy.RSA_SHA1, CardSignaturePhase.SIGN,
+            statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = 128,
+            original = raw, bytes = ByteArray(128) { 7 })
+        val selected = mutableStateOf(mapOf(CardCoreEf.ACTIVITY to signature))
+        val archive = mutableStateOf(false)
+        compose.setContent { FahrerTagebuchTheme(ThemeMode.LIGHT) {
+            SavedCardPreviewScreen(PaddingValues(), null, null, { _, _, _ -> }, archive = archive.value,
+                coreSignatures = selected.value)
+        } }
+        compose.onNodeWithText("Tätigkeiten: 128 Bytes · aufgenommen · ungeprüft").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Fahrzeuge: Signatur in diesem Import nicht aufgenommen").assertIsDisplayed()
+        compose.runOnIdle { selected.value = mapOf(CardCoreEf.ACTIVITY to CardCoreSignature(CardCoreEf.ACTIVITY,
+            CardGeneration.GEN2V2, CardSignatureStatus.NOT_ATTEMPTED, reason = CardSignatureReason.SIGNING_CERTIFICATE_UNAVAILABLE)) }
+        compose.onNodeWithText("Tätigkeiten: nicht versucht · passendes Signaturzertifikat fehlt").assertIsDisplayed()
+        compose.onNodeWithText("Tätigkeiten: 128 Bytes · aufgenommen · ungeprüft").assertDoesNotExist()
+        compose.runOnIdle { selected.value = emptyMap() }
+        compose.onNodeWithText("Tätigkeiten: Signatur in diesem Import nicht aufgenommen").assertIsDisplayed()
+        compose.runOnIdle { selected.value = mapOf(CardCoreEf.ACTIVITY to signature); archive.value = true }
+        compose.onNodeWithText("Kartensignaturen").assertDoesNotExist()
+        compose.onNodeWithText("Tätigkeiten: 128 Bytes · aufgenommen · ungeprüft").assertDoesNotExist()
+    }
+
     @Test fun rawOnlyImportShowsOriginalsWithoutInventingAnyParsedDayOrVehicle() {
         val run = CardImportRun("raw-only", "own", "synthetic-own", CardGeneration.GEN2V2,
             CardImportRunStatus.PARTIAL, 0, 0, "raw-only", 2, null, listOf(

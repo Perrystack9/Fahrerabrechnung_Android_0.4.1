@@ -280,12 +280,21 @@ class DriverCardFoundationTest {
         }
     }
 
-    @Test fun activityTransportFailureDoesNotDiscardReadableVehicles() = runBlocking {
+    @Test fun localActivityIoFailureDoesNotDiscardReadableVehicles() = runBlocking {
         for (generation in supportedGenerations) {
-            val fake = CardFixtureTransport(generation, identityFixture(), activityFailure = ReaderException(ReaderFailure.TIMEOUT))
+            val fake = CardFixtureTransport(generation, identityFixture(), activityFailure = ReaderException(ReaderFailure.IO))
             val result = DriverCardReader(fake).read()
             assertNull(result.activity); assertTrue(result.activityReadFailed)
             assertNotNull(result.vehicles); assertFalse(result.vehicleReadFailed); assertTrue(fake.closed)
+        }
+    }
+
+    @Test fun coreTransportLossAbortsWithoutReturningSiblingBytesOrSignatureReceipts() = runBlocking {
+        for (generation in supportedGenerations) for (failure in listOf(ReaderFailure.TIMEOUT, ReaderFailure.CARD_REMOVED, ReaderFailure.DISCONNECTED)) {
+            val fake = CardFixtureTransport(generation, identityFixture(), activityFailure = ReaderException(failure))
+            try { DriverCardReader(fake).read(); fail("Transport loss must discard the capture") }
+            catch (error: ReaderException) { assertEquals(failure, error.failure) }
+            assertTrue(fake.closed)
         }
     }
 
@@ -992,7 +1001,7 @@ class DriverCardFoundationTest {
             .put(byteArrayOf(0, 127)).array(),
         CardMetadataKind.IC_IDENTIFICATION to byteArrayOf(0, 127, 128.toByte(), 255.toByte(), 222.toByte(), 173.toByte(), 190.toByte(), 239.toByte()))
 
-    @Test fun threeFixedMetadataFilesUseExactLengthsInEverySupportedGenerationAndOnlyReadCommands() = runBlocking {
+    @Test fun threeFixedMetadataFilesUseExactLengthsWithoutEfWritesInEverySupportedGeneration() = runBlocking {
         for (g in supportedGenerations) {
             val input = metadataFixtureBytes()
             val fake = CardFixtureTransport(g, identityFixture(), metadataBytes = input)
@@ -1003,7 +1012,7 @@ class DriverCardFoundationTest {
                 assertArrayEquals(input.getValue(kind), result.metadata.getValue(kind).file!!.bytes)
                 assertEquals(listOf(0 to kind.fileLength), fake.metadataReads.getValue(kind.fileId))
             }
-            assertTrue(fake.instructions.all { it == 0xA4 || it == 0xB0 }); assertTrue(fake.closed)
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands()); assertTrue(fake.closed)
         }
     }
     @Test fun missingTruncatedTimedOutAndOversizedMetadataSourcesFailIndependently() = runBlocking {
@@ -1109,7 +1118,7 @@ class DriverCardFoundationTest {
                 assertArrayEquals(metadataFixtureBytes().getValue(kind), result.metadata.getValue(kind).file!!.bytes)
                 assertEquals(generation, result.metadata.getValue(kind).file!!.generation)
             }
-            assertTrue(fake.instructions.all { it == 0xA4 || it == 0xB0 }); assertTrue(fake.closed)
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands()); assertTrue(fake.closed)
         }
     }
     @Test fun masterSourceFailureNeverPreventsTheOtherMasterOrApplicationSources() = runBlocking {
@@ -1219,7 +1228,7 @@ class DriverCardFoundationTest {
                 assertTrue(fake.commandOrder.indexOf(0xB0 to DriverCardFiles.IDENTIFICATION) <
                     fake.commandOrder.indexOf(0xB0 to kind.fileId))
             }
-            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) }); assertTrue(fake.closed)
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands()); assertTrue(fake.closed)
             if (generation == CardGeneration.GEN1) assertTrue(fake.readFiles.none { it in setOf(0xC101, 0xC109) })
         }
     }
@@ -1305,7 +1314,7 @@ class DriverCardFoundationTest {
             assertArrayEquals(identityFixture(), original.bytes)
             assertEquals(read.card, (CardIdentitySourceParser.parse(original) as CardOriginalIdentityRecord).card)
             assertEquals(generation, original.generation)
-            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) }); assertTrue(fake.closed)
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands()); assertTrue(fake.closed)
         }
     }
     @Test fun completeLegacyApplicationPreserves15BytesWithoutInventingVehicleUnitCapacity() = runBlocking {
@@ -1373,7 +1382,7 @@ class DriverCardFoundationTest {
             val firstAid = fake.commandOrder.indexOf(0xA4 to 0)
             assertTrue(fake.commandOrder.take(firstAid).any { it == 0xB0 to CardDirectoryReader.FILE_ID })
             assertTrue(fake.commandOrder.drop(firstAid).none { it.second == CardDirectoryReader.FILE_ID })
-            assertTrue(fake.instructions.all { it == 0xA4 || it == 0xB0 }); assertTrue(fake.closed)
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands()); assertTrue(fake.closed)
         }
     }
     @Test fun missingTruncatedOverlongMalformedAndBadBoundaryDirectoryDoNotBlockOtherSources() = runBlocking {
@@ -1496,7 +1505,7 @@ class DriverCardFoundationTest {
             assertEquals(CardCoreReadStatus.COMPLETE, vehicle.status)
             assertEquals(generation, vehicle.snapshot!!.generation)
             assertEquals(if (generation == CardGeneration.GEN1) 64 else 98, vehicle.snapshot!!.bytes.size)
-            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) })
+            assertTrue(fake.hasOnlyReadAndCoreHashCommands())
         }
     }
 
@@ -1604,7 +1613,12 @@ class DriverCardFoundationTest {
         override suspend fun availability() = SourceAvailability.AVAILABLE
         override suspend fun open() = ReaderState.Open
         override suspend fun powerOn() = communicationAtr.copyOf()
+        private val capturedCommands = mutableListOf<ByteArray>()
+        fun hasOnlyReadAndCoreHashCommands() = capturedCommands.all {
+            (it[1].toInt() and 255) in setOf(0xA4, 0xB0) || it.contentEquals(CardCommands.performHashOfFile().encode())
+        }
         override suspend fun exchange(apdu: ByteArray): ByteArray {
+            capturedCommands += apdu.copyOf()
             val ins = apdu[1].toInt() and 255
             instructions += ins
             if (ins == 0xA4 && apdu[2].toInt() == 4) {
@@ -1741,6 +1755,7 @@ class DriverCardFoundationTest {
                 }
                 return data.copyOfRange(offset, minOf(offset + actualLength, data.size)) + byteArrayOf(0x90.toByte(), 0)
             }
+            if (ins == 0x2A) return byteArrayOf(0x6D, 0) // synthetic legacy card: no signing support
             throw AssertionError("Unexpected APDU instruction")
         }
         override suspend fun powerOff() = Unit

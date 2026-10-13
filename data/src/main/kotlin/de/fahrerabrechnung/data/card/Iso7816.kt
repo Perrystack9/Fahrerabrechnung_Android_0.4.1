@@ -64,6 +64,13 @@ class ApduSession(private val transport: CardReaderTransport) {
 }
 
 object CardCommands {
+    /** Appendix2 TCS124: implicit algorithm in both DFs, no Lc/data/Le. */
+    fun performHashOfFile() = CommandApdu(0x80, 0x2A, 0x90, 0)
+    fun computeDigitalSignature(length: Int): CommandApdu {
+        require(length in setOf(64, 96, 128, 132))
+        return CommandApdu(0, 0x2A, 0x9E, 0x9A, le = length)
+    }
+
     fun selectFile(id: Int) = CommandApdu(0, 0xA4, 2, 0x0C,
         byteArrayOf((id ushr 8).toByte(), id.toByte()))
     fun selectAid(aid: ByteArray) = CommandApdu(0, 0xA4, 4, 0x0C, aid)

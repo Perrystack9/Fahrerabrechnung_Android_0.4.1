@@ -31,7 +31,7 @@ class CardApplicationAttempt private constructor(
     val application: CardApplication, val status: CardApplicationReadStatus,
     read: CardReadResult?, val failure: ReaderFailure?,
 ) {
-    private val frozen = read?.let(::freezeApplicationRead)
+    private val frozen = read?.let(::freezeApplicationRead)?.also(::validateCoreSignatures)
     val result: CardReadResult? get() = frozen?.let(::freezeApplicationRead)
     init {
         require((status == CardApplicationReadStatus.READ) == (read != null))
@@ -97,6 +97,7 @@ class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: L
 }
 
 internal fun freezeApplicationRead(result: CardReadResult) = result.copy(
+        coreSignatures = result.coreSignatures.mapValues { it.value.freeze() }.toMap(),
         coreReads = result.coreReads.mapValues { (kind, value) ->
             require(kind == value.kind)
             value.copy(snapshot = value.snapshot?.let { CardCoreSnapshot(kind, it.generation, it.bytes) })

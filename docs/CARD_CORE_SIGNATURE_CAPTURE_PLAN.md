@@ -1,6 +1,6 @@
 # Fahrerkarte - begrenzter Plan für echte Signaturaufnahme
 
-**DETAIL-AKTIV, Plan vom 13.10.2026.** Geprüfte Ausgangsbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c`, **40123 / Room-Schema 19**. Produkt- und Main-CI grün; eigene Gerätebestätigung gilt für den unveränderten Snapshot-Produktbaum. Dieser Meilenstein ändert ausschließlich Dokumentation. Die folgenden Befehle, Tabellen und Anzeigen sind **geplant, noch nicht implementiert oder gerätebestätigt**. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-AKTIV, Plan vom 13.10.2026.** Geprüfte Ausgangsbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c`, **40123 / Room-Schema 19**. Produkt- und Main-CI grün; eigene Gerätebestätigung gilt für den unveränderten Snapshot-Produktbaum. Der ursprüngliche Plan-Meilenstein PR #72 änderte ausschließlich Dokumentation. **Umsetzungsstand jetzt: 40124 / Schema 20 in offenem Produkt-PR #73, eigene volle CI und Gerätefreigabe noch offen.** Dieser Text bleibt die Abnahmegrundlage; aktuellen Stand in WORK_STATUS/WORK_HANDOFF prüfen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Ziel und erster Dateiumfang
 
@@ -24,7 +24,7 @@ Links, PDF-Fingerprints und vollständige Pflichtdateien stehen in der [Primärm
 | PSO: COMPUTE DIGITAL SIGNATURE | **`00 2A 9E 9A Le`**, kein Datenfeld, genau die unten festgelegte Länge. `correctLength=false`; keine automatische Wiederholung mit anderer Signaturlänge. Vorhandene begrenzte GET-RESPONSE-Behandlung darf Antwortteile sammeln; nur abschließendes `9000`, exakte Gesamtlänge und kein durchgehend `00`/`FF` belegter Blankwert ergeben einen aufgenommenen Signaturblob. |
 | Gemeinsame Aufnahme | Original, tatsächliche Signaturbytes, Algorithmus-/Formatbeleg und Versuchszustand defensiv kopieren. Nach SIGN erst nächste EF/andere Leser. Zwischen Hash und Signatur keine andere EF/DF-Auswahl, Zertifikatslesung, neuer Hash, Reset oder fremde APDU-Sequenz. |
 
-Die Dateiende-Prüfung ist eine zusätzliche defensive Voraussetzung dieser ersten Implementierung, keine neue allgemeine Standardforderung. Der bestehende Originalimport bleibt bei unklarer Grenze erhalten, sein neuer Signaturbeleg wird als nicht aufgenommen mit genauem Grund gezeigt. TCS121 nennt neuen Hash, DF-Auswahl und Reset als Hashlöschgründe; ein EF-Wechsel wird hier aus Bindungsgründen ausgeschlossen, ohne ihn als zusätzlich normativ belegten Löschgrund auszugeben.
+Die Dateiende-Prüfung ist eine zusätzliche defensive Voraussetzung dieser ersten Implementierung, keine neue allgemeine Standardforderung. Bei datenloser unklarer Grenze bleibt die reguläre Aufnahme der deklarierten Bytes erhalten, der Signaturbeleg wird als nicht aufgenommen gezeigt. Präzisierung bei der Umsetzung: **Ein tatsächlich zusätzlich empfangenes Byte widerspricht der Kapazität und beweist einen unvollständigen Präfix.** Diesen Präfix nicht als vollständigen Core-Snapshot speichern (READ_FAILED, keine SIGN-APDU); andere Quellen bleiben unabhängig erhalten. TCS121 nennt neuen Hash, DF-Auswahl und Reset als Hashlöschgründe; ein EF-Wechsel wird hier aus Bindungsgründen ausgeschlossen, ohne ihn als zusätzlich normativ belegten Löschgrund auszugeben.
 
 | Anwendung / tatsächlich gelesenes Card_Sign-OID | Algorithmus / Kartenhash | Signaturformat und Le |
 |---|---|---|
@@ -46,7 +46,7 @@ Eigenes unveränderliches Signaturergebnis je Core-EF: `CAPTURED_UNVERIFIED`, `F
 | GEN2 C101 fehlt, blank, beschädigt, falsches CHA oder unbekanntes OID | Reguläre vollständige Rohaufnahme fortsetzen; Signatur NOT_ATTEMPTED. Kein Ratversuch mit Le 64/128, kein historisches Zertifikat als Ersatz. |
 | Hash `6985/6986/6400/6581` oder andere nicht erfolgreiche SW | Signatur FAILED mit tatsächlicher SW; nach sicherer EF-Auswahl reguläre Rohdatei weiter lesen, ohne Signaturbefehl. Andere Core-EF weiter unabhängig versuchen. |
 | Vollständiges READ gescheitert oder Daten überschießen die Anfrage | Bestehendes READ_FAILED; keine Teilbytes als Original und keine SIGN-APDU. Signatur FAILED/READ. |
-| Rohbytes vollständig, Grenze unklar/überschritten | Original und fachliche Auswertung behalten; Signatur FAILED/BOUNDARY, SIGN nicht versuchen. Nicht adressierbare Grenze vor Hash als NOT_ATTEMPTED. |
+| Deklarierte Bytes gelesen, Grenze unklar/überschritten | Bei datenloser unklarer Grenze reguläre Originalaufnahme behalten, Signatur FAILED/BOUNDARY. Tatsächliche zusätzliche Daten: Präfix verwerfen/READ_FAILED, kein vollständiges Original behaupten. SIGN nicht versuchen. Nicht adressierbare Grenze vor Hash als NOT_ATTEMPTED. |
 | Signatur `6985/6400/6581`, falsche Länge, Blankantwort, falsche End-SW oder begrenzte Antwortkette überschritten | Vollständiges Original behalten; Signatur FAILED, tatsächliche SW/Länge soweit bekannt. Keine Null-/Dummy-Signatur, kein gültiger Ersatz aus einem anderen Versuch. |
 | Erfolgreiche Rohsequenz, fachlich EMPTY/INVALID | Echte Signatur unabhängig von der fachlichen Projektion speichern; kein neuer Tätigkeits-/Fahrzeuginhalt erfinden. |
 | Kartenentnahme, Disconnect, Timeout, Coroutine-Abbruch | Gleiche Transport-/Abbruchgrenze wie vorhandener Gruppenreader: gesamte laufende Aufnahme verwerfen, keine Teilgruppe/Signatur speichern, kein Signieren nach Wiederverbindung mit altem Hash. Vorher gespeicherte Historie bleibt. |
@@ -104,6 +104,8 @@ Erst nach voller grüner CI ein Paket für **genau denselben endgültigen Produk
 
 Screenshots/Rückmeldung nur Status, Quelle und Größen; keine privaten Dumps. Exakten Buildkopf, Paketlauf, Geräte-/Leserumfang, reale Generation und tatsächlich bestätigte Punkte dokumentieren. Reine GEN2-Karte ohne V2, reale leere/defekte EFs und sechs verschiedene reale Kurven nicht pauschal als gerätegeprüft ausgeben; diese Varianten sind automatisiert abzudecken und echte Hardwarebelege getrennt zu benennen. Schlägt die echte Aufnahme auf dem vorhandenen Gerät fehl, bleibt der Produkt-PR vor Merge gesperrt, bis Ursache behoben oder Umfang ausdrücklich neu entschieden ist.
 
-## Exakter Einstieg in die Implementierung
+## Ursprünglicher Einstieg / aktueller Abschluss
 
 Im nächsten getrennten Produkt-Meilenstein: aktuellen main/PR/CI live prüfen, diesen Plan gezielt öffnen, Signaturmodelle/Command-Factories/Sequenztests zuerst implementieren und die unveränderte unsigned Rohaufnahme belegen. Dann Sitzungsbindung/Migration, kleine Abnahmeanzeige und vollständige Tests. Eigene volle CI, exaktes Gerätepaket und obige Gerätebestätigung **vor Merge**. Erst danach Pflichtdateiumfang für weitere EF-Signaturen planen; keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen.
+
+Aktuell ist diese Umsetzung vorhanden; nicht nochmals beginnen. Endgültige volle CI und [eigene 40124-Geräteabnahme](DEVICE_TEST_40124.md) bleiben vor Merge erforderlich.

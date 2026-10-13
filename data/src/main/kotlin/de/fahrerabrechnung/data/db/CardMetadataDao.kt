@@ -16,7 +16,8 @@ data class CardMetadataImportEntity(
         childColumns = ["sessionId"], onDelete = ForeignKey.RESTRICT),
     ForeignKey(entity = CardMetadataImportEntity::class, parentColumns = ["id", "driverCardId", "kind"],
         childColumns = ["sourceId", "driverCardId", "kind"], onDelete = ForeignKey.RESTRICT),
-], indices = [Index(value = ["sourceId", "driverCardId", "kind"])])
+], indices = [Index(value = ["sourceId", "driverCardId", "kind"]),
+    Index(value = ["sessionId", "driverCardId", "kind", "sourceId"], unique = true)])
 data class DriverImportMetadataSourceEntity(
     val sessionId: String, val kind: String, val driverCardId: String, val sourceId: String,
 )

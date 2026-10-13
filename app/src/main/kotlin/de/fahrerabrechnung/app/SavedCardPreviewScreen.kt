@@ -23,7 +23,8 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
                                     events: SavedCardEventFault? = null, faults: SavedCardEventFault? = null,
                                     specificConditions: SavedCardSpecificConditions? = null,
                                     receiptId: String? = null, applicationGeneration: CardGeneration? = null,
-                                    coreSnapshots: Map<CardCoreEf, SavedCardCoreSnapshot> = emptyMap()) {
+                                    coreSnapshots: Map<CardCoreEf, SavedCardCoreSnapshot> = emptyMap(),
+                                    coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap()) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
     var selected by remember(activity, receiptId) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
@@ -41,6 +42,19 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
                 val original = coreSnapshots[kind]?.snapshot
                 Text(if (original == null) "$label: keine Originaldatei in dieser Übernahme"
                     else "$label: ${original.bytes.size} Bytes · ${original.generation.name}")
+            }
+        }
+        if (!archive) SectionCard {
+            Text("Kartensignaturen", style = MaterialTheme.typography.titleMedium)
+            CardCoreEf.entries.forEach { kind ->
+                val label = if (kind == CardCoreEf.ACTIVITY) "Tätigkeiten" else "Fahrzeuge"
+                val signature = coreSignatures[kind]
+                Text(when (signature?.status) {
+                    CardSignatureStatus.CAPTURED_UNVERIFIED -> "$label: ${signature.actualLength} Bytes · aufgenommen · ungeprüft"
+                    CardSignatureStatus.FAILED -> "$label: Aufnahme fehlgeschlagen · ${signature.reason.signatureMessage()}"
+                    CardSignatureStatus.NOT_ATTEMPTED -> "$label: nicht versucht · ${signature.reason.signatureMessage()}"
+                    null -> "$label: Signatur in diesem Import nicht aufgenommen"
+                })
             }
         }
         if (uses.isNotEmpty()) SectionCard {
@@ -79,4 +93,19 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
         }
         if (days.isEmpty() && uses.isEmpty()) Text("Für diese Auswahl sind keine auswertbaren Kartendaten verfügbar.")
     }
+}
+
+private fun CardSignatureReason?.signatureMessage(): String = when (this) {
+    CardSignatureReason.CAPACITY_UNAVAILABLE -> "Dateigröße unbekannt"
+    CardSignatureReason.EF_ABSENT -> "Datei nicht vorhanden"
+    CardSignatureReason.SIGNING_CERTIFICATE_UNAVAILABLE -> "passendes Signaturzertifikat fehlt"
+    CardSignatureReason.BOUNDARY_UNSUPPORTED -> "Dateiende nicht prüfbar"
+    CardSignatureReason.BOUNDARY_UNPROVEN -> "Dateiende nicht bestätigt"
+    CardSignatureReason.INCOMPLETE_READ -> "Datei nicht vollständig gelesen"
+    CardSignatureReason.HASH_RESPONSE -> "Dateihash nicht bestätigt"
+    CardSignatureReason.SIGNATURE_LENGTH -> "unerwartete Signaturlänge"
+    CardSignatureReason.BLANK_SIGNATURE -> "leere Signaturantwort"
+    CardSignatureReason.CARD_STATUS -> "Karte meldet einen Fehler"
+    CardSignatureReason.READER_FAILURE -> "Leserfehler"
+    null -> "kein Beleg"
 }

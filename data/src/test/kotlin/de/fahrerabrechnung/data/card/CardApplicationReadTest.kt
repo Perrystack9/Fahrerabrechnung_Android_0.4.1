@@ -3,6 +3,9 @@ package de.fahrerabrechnung.data.card
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.yield
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -24,7 +27,7 @@ private class DualApplicationTransport(
     private var file = 0
     override suspend fun availability() = SourceAvailability.AVAILABLE
     override suspend fun open(): ReaderState { opens++; return ReaderState.CardPresent }
-    override suspend fun powerOn(): ByteArray { powers++; return byteArrayOf(0x3B, 0) }
+    override suspend fun powerOn(): ByteArray { powers++; selected = null; file = 0; return byteArrayOf(0x3B, 0) }
     override suspend fun powerOff() { offs++ }
     override fun close() { closes++ }
     override suspend fun exchange(apdu: ByteArray): ByteArray {
@@ -44,6 +47,7 @@ private class DualApplicationTransport(
             if (bytes() == null) return status(0x6A82)
             return status(0x9000)
         }
+        if (ins == 0x2A) return status(0x6D00) // synthetic legacy reader: signatures unsupported
         check(ins == 0xB0)
         selected?.let { errors[it to file]?.let { error -> throw error } }
         val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)
@@ -106,6 +110,29 @@ private fun dualIdentity(number: String = "TESTCARD12345678", surname: String = 
     }.toByteArray()
 
 class CardApplicationReaderTest {
+    @Test fun poweredSessionsCannotInterleaveSelectionsOrResetAnotherCapture() = runBlocking {
+        val delegate = DualApplicationTransport()
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        var first = true
+        val transport = object : CardReaderTransport by delegate {
+            override suspend fun exchange(apdu: ByteArray): ByteArray {
+                if (first) { first = false; entered.complete(Unit); release.await() }
+                return delegate.exchange(apdu)
+            }
+        }
+        val reader = DriverCardReader(transport)
+        val a = async { reader.readApplications() }
+        entered.await()
+        val b = async { reader.readApplications() }
+        yield()
+        assertEquals(1, delegate.opens); assertEquals(1, delegate.powers)
+        release.complete(Unit)
+        assertEquals(CardApplicationIdentityAgreement.AGREED, a.await().identityAgreement)
+        assertEquals(CardApplicationIdentityAgreement.AGREED, b.await().identityAgreement)
+        assertEquals(2, delegate.opens); assertEquals(2, delegate.offs); assertEquals(2, delegate.closes)
+    }
+
     @Test fun bothDfsUseOnePoweredInsertionWithIndependentCapacitiesAndSources() = runBlocking {
         val fake = DualApplicationTransport(); val batch = DriverCardReader(fake).readApplications()
         assertEquals(CardApplicationIdentityAgreement.AGREED, batch.identityAgreement)
@@ -128,7 +155,8 @@ class CardApplicationReaderTest {
         assertEquals(194, g1.certificates.getValue(CardCertificateKind.CARD).file!!.bytes.size)
         assertEquals(204, g2.certificates.getValue(CardCertificateKind.CARD).file!!.bytes.size)
         assertEquals(1, fake.opens); assertEquals(1, fake.powers); assertEquals(1, fake.offs); assertEquals(1, fake.closes)
-        assertTrue(fake.commands.all { it[1].toInt() and 255 in setOf(0xA4, 0xB0) })
+        assertTrue(fake.commands.all { (it[1].toInt() and 255) in setOf(0xA4, 0xB0) ||
+            it.contentEquals(CardCommands.performHashOfFile().encode()) })
         assertFalse(fake.reads.any { it.second == 0x0540 })
     }
     @Test fun masterCapturesBelongToEnvelopeAndNeverAppearInEitherApplicationMap() = runBlocking {

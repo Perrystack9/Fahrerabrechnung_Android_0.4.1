@@ -43,6 +43,7 @@ import androidx.room.RoomDatabase
         DriverImportVehicleUnitsSourceEntity::class,
         CardMetadataImportEntity::class,
         DriverImportMetadataSourceEntity::class,
+        CardCoreSignatureEntity::class,
         CardReadBatchEntity::class,
         CardApplicationAttemptEntity::class,
         CardMasterSourceEntity::class,
@@ -72,10 +73,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardLoadTypeDao(): CardLoadTypeDao
     abstract fun cardVehicleUnitsDao(): CardVehicleUnitsDao
     abstract fun cardMetadataDao(): CardMetadataDao
+    abstract fun cardCoreSignatureDao(): CardCoreSignatureDao
     abstract fun cardReadBatchDao(): CardReadBatchDao
 
     companion object {
-        const val SCHEMA_VERSION = 19
+        const val SCHEMA_VERSION = 20
         const val DATABASE_NAME = "fahrerabrechnung.db"
     }
 }

@@ -77,6 +77,138 @@ class CardImportPipelineInstrumentedTest {
                 CardCoreSnapshot(CardCoreEf.VEHICLES, value.generation, vehicle))))
     }
 
+    private fun signedCoreRead(salt: Int = 7, input: CardReadResult = coreRead()): CardReadResult {
+        val certificate = CardCertificateFile(CardCertificateKind.SIGNING, input.generation, certificateFixture())
+        return input.copy(certificates = mapOf(CardCertificateKind.SIGNING to CardCertificateRead(certificate)),
+            coreSignatures = input.coreReads.mapValues { (kind, source) ->
+                CardCoreSignature(kind, input.generation, CardSignatureStatus.CAPTURED_UNVERIFIED,
+                    CardSignaturePolicy.NIST_P256, CardSignaturePhase.SIGN, statusWord = 0x9000,
+                    hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = 64,
+                    original = source.snapshot, certificate = certificate, bytes = ByteArray(64) { (salt + it).toByte() })
+            })
+    }
+
+    @Test fun newSignaturesSurviveReopenWithoutBackfillingUnsignedHistoryOrChangingReplay() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(coreRead(), "signature-old")
+        val oldFingerprint = db.cardImportRunDao().run(old.id)!!.requestFingerprint
+        val firstInput = signedCoreRead()
+        val first = pipeline.process(firstInput, "signature-new")
+        assertEquals(CardImportRunStatus.SAVED, first.status)
+        assertEquals(CardImportFileStatus.STORED, first.file(CardImportFileKind.ACTIVITY_SIGNATURE).status)
+        assertEquals(first, pipeline.process(firstInput, first.id))
+        val second = pipeline.process(signedCoreRead(13), "signature-next")
+        assertEquals(2, second.newSourceCount) // only the two new session-owned signatures; raw sources deduplicate
+        assertEquals(4, count("card_core_signature_receipts"))
+        rejected<IllegalArgumentException> { pipeline.process(signedCoreRead(13), first.id) }
+        rejected<IllegalArgumentException> { pipeline.process(firstInput, old.id) }
+        rejected<IllegalStateException> { imports.save(firstInput, old.id, CardImportSelection.ALL_AVAILABLE) }
+        db.close(); open()
+        assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
+        assertEquals(oldFingerprint, db.cardImportRunDao().run(old.id)!!.requestFingerprint)
+        assertEquals(old, pipeline.process(coreRead(), old.id))
+        for (kind in CardCoreEf.entries) {
+            val saved = imports.get(first.id)!!.coreSignatures.getValue(kind)
+            assertArrayEquals(firstInput.coreSignatures.getValue(kind).bytes, saved.bytes)
+            assertArrayEquals(firstInput.coreReads.getValue(kind).snapshot!!.bytes, saved.original!!.bytes)
+            assertEquals(CardSignaturePolicy.NIST_P256, saved.policy)
+            saved.bytes!!.fill(0)
+            assertEquals(7, imports.get(first.id)!!.coreSignatures.getValue(kind).bytes!![0].toInt())
+            assertEquals(13, imports.get(second.id)!!.coreSignatures.getValue(kind).bytes!![0].toInt())
+        }
+    }
+
+    @Test fun signatureReceiptsPersistEmptyInvalidAndFailedRawSourcesIndependently() = runBlocking {
+        imports.bind(card(), true)
+        for ((id, input) in listOf("empty" to coreRead(ByteArray(68), ByteArray(50)),
+            "invalid" to coreRead(ByteArray(68).also { it[0] = -1 }, ByteArray(50).also { it[0] = -1 }))) {
+            val run = pipeline.process(signedCoreRead(input = input), "signed-$id")
+            val saved = imports.get(run.id)!!
+            assertNull(saved.activity); assertNull(saved.vehicles)
+            assertEquals(2, saved.coreSignatures.size)
+            assertTrue(saved.coreSignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        }
+        val raw = coreRead()
+        val failed = raw.copy(coreSignatures = raw.coreReads.mapValues { (kind, source) ->
+            CardCoreSignature(kind, raw.generation, CardSignatureStatus.FAILED,
+                phase = CardSignaturePhase.HASH, reason = CardSignatureReason.CARD_STATUS,
+                statusWord = 0x6985, hashStatusWord = 0x6985, original = source.snapshot)
+        })
+        val run = pipeline.process(failed, "signature-hash-failure")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status)
+        db.close(); open()
+        val saved = imports.get(run.id)!!
+        assertEquals(2, saved.coreSnapshots.size)
+        assertTrue(saved.coreSignatures.values.all { it.statusWord == 0x6985 && it.bytes == null })
+        val missing = raw.copy(coreReads = raw.coreReads + (CardCoreEf.ACTIVITY to CardCoreRead(CardCoreEf.ACTIVITY, CardCoreReadStatus.ABSENT)),
+            coreSignatures = mapOf(CardCoreEf.ACTIVITY to CardCoreSignature(CardCoreEf.ACTIVITY, raw.generation,
+                CardSignatureStatus.NOT_ATTEMPTED, phase = CardSignaturePhase.SELECT, reason = CardSignatureReason.EF_ABSENT)))
+        val absent = pipeline.process(missing, "signature-absent")
+        assertEquals(CardSignatureReason.EF_ABSENT, imports.get(absent.id)!!.coreSignatures.getValue(CardCoreEf.ACTIVITY).reason)
+    }
+
+    @Test fun excludingOriginalsFromPartialSelectionDoesNotPersistDetachedSignatures() = runBlocking {
+        imports.bind(card(), true)
+        val saved = imports.save(signedCoreRead(), "signature-partial-selection", CardImportSelection.ACTIVITY)
+        assertTrue(saved.coreSnapshots.isEmpty()); assertTrue(saved.coreSignatures.isEmpty())
+        assertEquals(0, count("card_core_signature_receipts"))
+    }
+
+    @Test fun contradictoryRawOrCertificateBytesCannotCreateAnySignatureRun() = runBlocking {
+        imports.bind(card(), true)
+        val signed = signedCoreRead()
+        val corrupt = coreRead(activityBytes = ByteArray(68)).copy(certificates = signed.certificates, coreSignatures = signed.coreSignatures)
+        rejected<IllegalArgumentException> { pipeline.process(corrupt, "signature-wrong-original") }
+        val cert = CardCertificateFile(CardCertificateKind.SIGNING, signed.generation, certificateFixture(role = 1))
+        rejected<IllegalArgumentException> { pipeline.process(signed.copy(certificates = mapOf(CardCertificateKind.SIGNING to
+            CardCertificateRead(cert))), "signature-wrong-certificate") }
+        assertEquals(0, count("card_import_runs")); assertEquals(0, count("card_core_signature_receipts"))
+    }
+
+    @Test fun sameSessionForeignKeysRejectDetachedSourcesAndCorruptionIsDetectedOnLoad() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(coreRead(), "signature-fk-old")
+        val run = pipeline.process(signedCoreRead(), "signature-fk-new")
+        val row = db.cardCoreSignatureDao().receipts(run.id).first()
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardCoreSignatureDao().insert(row.copy(sessionId = old.id))
+        }
+        rejected<android.database.sqlite.SQLiteException> {
+            db.cardCoreSignatureDao().insert(row.copy(kind = "CERTIFICATE_CA"))
+        }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_core_signature_receipts SET bytes = zeroblob(64) WHERE sessionId = ?", arrayOf(run.id))
+        rejected<IllegalStateException> { imports.get(run.id) }
+    }
+
+    @Test fun signatureStoreFailureRollsBackSourcesNormalizationAndSessionAtomically() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(coreRead(), "signature-rollback-old")
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_signature BEFORE INSERT ON card_core_signature_receipts
+            WHEN NEW.kind = 'ORIGINAL_EF_0505' BEGIN SELECT RAISE(ABORT, 'synthetic signature rollback'); END""")
+        val run = pipeline.process(signedCoreRead(), "signature-rollback")
+        assertEquals("STORAGE_FAILED", run.failureCode); assertNull(run.sessionId)
+        assertEquals(0, count("card_core_signature_receipts")); assertEquals(1, count("import_sessions"))
+        assertEquals(2, count("card_metadata_imports")); assertEquals(1, count("driver_activity_days"))
+        assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
+    }
+
+    @Test fun encryptedMigrationNineteenToTwentyKeepsAllOldSourcesUnsigned() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(coreRead(), "signature-upgrade-old")
+        val profile = imports.profile(); val request = db.cardImportRunDao().run(old.id)
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_core_signature_receipts")
+            execSQL("DROP INDEX index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId")
+            execSQL("DELETE FROM room_master_table"); version = 19
+        }
+        db.close(); open()
+        assertEquals(20, db.openHelper.readableDatabase.version)
+        assertEquals(profile, imports.profile()); assertEquals(request, db.cardImportRunDao().run(old.id))
+        assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
+        assertEquals(2, imports.get(old.id)!!.coreSnapshots.size)
+        assertNotNull(pipeline.process(signedCoreRead(), "signature-upgrade-new").sessionId)
+    }
+
     @Test fun coreOriginalsPersistPointersUnusedTailAndSeparateProjectionsAcrossReopen() = runBlocking {
         imports.bind(card(), true)
         val input = coreRead()
