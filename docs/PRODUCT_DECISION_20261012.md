@@ -1,3 +1,5 @@
+> **HISTORISCH - nicht als aktuelle Anforderung verwenden. Einordnung: HISTORISCH.** Zeitgebundener Nachweis; ursprüngliche Aussagen und Testgrenzen bleiben erhalten. Aktueller Einstieg: [WORK_START.md](../WORK_START.md); verbindlich sind [CURRENT_RULES.md](CURRENT_RULES.md). Nicht pauschal lesen.
+
 # FahrerTagebuch – verbindliche Produktentscheidung vom 12.10.2026
 
 Tobi hat diese Entscheidung am **12.10.2026 um 20:53 Europe/Berlin** ausdrücklich beauftragt. Sie ersetzt alle widersprechenden früheren Anforderungen, insbesondere **Punkt 8 und Punkt 9 des bisherigen Berater-Handoffs in Issue #3 vollständig**. Die frühere Einschränkung auf „keine Steuerlogik“ reicht nicht mehr: Die gesamte Spesen-, Lohn- und Abrechnungsfunktion entfällt.

@@ -1,12 +1,12 @@
-> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # Gemeinsamer Import beider Kartenanwendungen
 
-Fortsetzung am12.10.2026 im offenen PR65. Neuer Kandidat40122/Schema19, noch keine eigene Gerätefreigabe. Ausgang: vollständig grüne Reader-CI38204376573 am Kopf f1f92d69fff37eeaec5740b399d7df452b436098 und dokumentierter Checkpointd99660271726dcee413369b8fde9b61f3d5f7553. Mainace6b7bca4fb1ccb105f32f6d5de5be30bc04c4b/40121 bleibt unverändert.
+Implementiert und abgeschlossen mit PR #65: 40122 / Schema 19. Der [aktuelle Status](../WORK_STATUS.md) nennt geprüften Kopf und bestätigten Geräteumfang.
 
 Der Reader erfasst die festen Gen1-/Gen2-AIDs in einer eingeschalteten Sitzung. Gen2V2 ist ein Format des Gen2-DF, kein drittes AID. Identität, Kapazitäten, Originaldateien, Zertifikate und Dateifehler gehören jeweils zum eigenen Anwendungssatz. MF-Dateien werden einmal vorher erfasst. Transportverlust oder Abbruch ergibt keinen erfolgreichen Batch. Keine0540-, PSO-, Schreib-, Authentisierungs- oder erweiterten APDU-Befehle.
 
-## Neue Speicher-/Bedienintegration im Kandidaten
+## Implementierte Speicher-/Bedienintegration
 
 - Additive Migration18→19: vier neue Parent-/Anwendungs-/MF-Tabellen und zusätzliche eindeutige Indizes auf bestehenden Karten-/Run-/Sitzungspaaren. Keine historische Zeile, Quellenbindung oder Request-Fingerprint wird nachbefüllt oder geändert. Schemaexport ausschließlich durch echten Room/KSP-Compiler.
 - Batch-Identität vor allen neuen Bindungs-/Quellenmutationen prüfen: genau dieselben Karten-/Inhaberfelder und vollständige gültige0520-Belege. Widerspruch, unbestätigte und fremde Karte werden nicht persistiert. Die eigene Bestätigung liest beide Anwendungen frisch; neue Bindung und gesamte Gruppe werden gemeinsam gespeichert.
@@ -17,14 +17,12 @@ Der Reader erfasst die festen Gen1-/Gen2-AIDs in einer eingeschalteten Sitzung. 
 - Normale Übersicht und Verlauf zeigen pro Gruppe ausdrücklich den Gen2-Child, falls dieser gelesen/identifiziert wurde; sonst den Gen1-Child. Beide Child-Belege sind im selben Vorgang einzeln auswählbar. Kein jüngerer Fallback. Tageszeiten und Fahrzeugquellen beider DFs werden nicht addiert.
 - MF-Dateien bleiben am Parent. Für die Detailansicht wird ausschließlich die Quelle genau dieses Parents gelesen und ihr Hash geprüft. Alte Sitzungen bekommen keine neue MF-Projektion. Defekte Gruppen lassen andere Verlaufseinträge sichtbar. Sensible Angaben werden nach Sitzungs-/Anwendungswechsel erneut verborgen.
 
-## Nachweise und Gerätepunkt
+## Prüfbelege bei Bedarf
 
-Die Codeintegration ist noch kein CI-/Hardwarebeweis. Neue JVM-Tests prüfen Requests, Snapshots und den Koordinator einschließlich frischer Bestätigung/Kartentausch. Neue SQLCipher-Fälle prüfen beide Anwendungen, genaue Generation und Quellen, Deduplizierung, Widerspruch/Fremd-/unbestätigte Karten, ganze Rückrolle nach dem ersten Child, getrennte Fehler, zusammengesetzte FKs und den verschlüsselten Updatepfad18→19. Neue Compose-Fälle prüfen beide tatsächlichen Verlaufsschaltflächen, fehlenden jüngeren Fallback und erneute Maskierung gemeinsamer MF-Quellen.
-
-Vor Ausgabe: echter aktueller Compilerexport, lokale Kompilierung/Unit-Tests, komplette CI am endgültigen Produktkopf einschließlich SQLCipher/Compose, feste Testsignatur/Paketkennung und40121→40122. [Konkrete Geräteanleitung](CARD_MULTI_APPLICATION_DEVICE_TEST.md). Das ausgegebene40121-Paket wird nicht ersetzt. PR65 bleibt offen/Entwurf, kein Merge/Auto-Merge vor eigener ausdrücklicher Freigabe.
+Reader/JVM-, SQLCipher-/Room- und Compose-Prüfungen des endgültigen Produktkopfs sind vollständig grün; der explizite Geräteumfang ist in [DEVICE_CONFIRMATION_40122.md](DEVICE_CONFIRMATION_40122.md) dokumentiert. Historische Kandidaten-/Retry-/Paketzustände bleiben in [CARD_MULTI_APPLICATION_CHECKPOINT_40122.md](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md); keine neuen Einzeltests daraus ableiten.
 
 ## Verbleibende Importgrenzen
 
 7F66-Pufferinhaltsdecoder, signierte Standarddownloads/DDD, ERCA-/MSCA-Vertrauen und geschützteVU_Configuration0540 bleiben gesonderte nächste Arbeiten. [Primär-/Vertrauensabgleich](CARD_IMPORT_SECURITY_RESEARCH.md). Keine geratenen Puffergrößen, Authentisierung, Schlüssel oder Originalsignaturen. Fahrzeugauswertung bleibt eine spätere Arbeit; Spesen, Lohn/Zuschläge und Abrechnung entfallen vollständig als Produktziele.
 
-Keine Browser, Unteragenten oder Bereinigung/Löschung. Actions-Budget2USD/Stop-usage unverändert. GitHub-Parent/Tree/Ref-Lease vor Updates prüfen; lokale Snapshot-Historie niemals pushen. Diese Fortsetzung übernimmt den bestehenden PR65, keine zweite Produktbranch.
+Für Folgeänderungen gelten die aktuellen CI-/Hardware-/Git-Regeln. Der abgeschlossene PR #65 wird nicht neu aufgebaut.

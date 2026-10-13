@@ -1,3 +1,5 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Begrenzte Kontrolldaten-Quelle
 
 Diese Stufe ergänzt ausschließlich `EF Control_Activity_Data` der bereits identifizierten eigenen Fahrerkarte. Keine vollständige Kartenabdeckung, VU-Kontrollkarten-Historie, Verstoßbewertung oder Zuordnung des Kontrollkarteninhabers zum Fahrerprofil.

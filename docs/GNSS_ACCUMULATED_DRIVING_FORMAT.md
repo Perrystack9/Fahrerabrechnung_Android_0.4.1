@@ -1,10 +1,8 @@
-> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # GNSS-Einzelpunkte – begrenzte Decoder-Grundlage
 
-Stand: 10.10.2026. Die nachstehenden Decodergrenzen beschreiben die Grundlage aus PR #49/#50. Die neue Leser-/Speicheranbindung ist im [separaten Integrationsschritt](GNSS_IMPORT_IMPLEMENTATION.md) dokumentiert.
-
-Stand der ursprünglichen Decoder-Grundlage: 10.10.2026. Ausgangsbasis ist main nach PR #45 und dem Dokumentationsabschluss PR #48. Dieser Schritt ergänzt ausschließlich einen Decoder und synthetische Unit-Tests für die vollständige Generation-2-Datei **EF GNSS_Places**. Er ist noch kein neuer Kartenimport: Leser/APDU, Importrequests, Datenbank/Schema 11, Signatur/Version und Oberfläche verwenden den Decoder noch nicht.
+Formatgrundlage der vorhandenen GNSS-Decoder. Die implementierte Leser-/Speicheranbindung ist in [GNSS_IMPORT_IMPLEMENTATION.md](GNSS_IMPORT_IMPLEMENTATION.md) dokumentiert. Dieser Decoder erzeugt keine Route; für eine spätere Karte gelten CURRENT_RULES.md.
 
 ## Geprüfte Primärquellen
 
@@ -53,8 +51,14 @@ Status `00` bedeutet aufgezeichnet „nicht authentisiert“, `01` aufgezeichnet
 
 Vollständige Dateilänge und Generation werden vor der defensiven Kopie geprüft. Zeiger außerhalb 0–335 werden abgewiesen. Ringreihenfolge, physische Slots, Duplikate und alle unbekannten Teilfelder bleiben erhalten. Nur vollständig mit 00 oder FF gefüllte Slots werden ausgelassen. Unbekannte Zeiten ersetzen weder einen Status noch einen anderen Zeitpunkt. 12 neue synthetische Unit-Testmethoden prüfen diese Grenzen, alle reservierten Statuswerte, volle/belegte Ringe und eingefrorene Bytes.
 
-## Prüfungen und nächster Integrationspunkt
+## HISTORISCH - Decoderprüfung und damaliger Integrationsplan
 
 18 neue Unit-Testmethoden prüfen Kapazitäten/Dateigrenzen, Ringzeiger/Umbruch, Herkunft/Zeiten, unbekannte Felder, unsigned Zeiten, alle Vorzeichen, Nullkoordinaten, Pole/Datumsgrenze, unzulässige Minuten, HDOP, Tacho-Rohwerte, Füller und eingefrorene Bytes. Vollständige Android-CI bleibt erforderlich; der Abschlussnachweis steht im zugehörigen PR. Kein neuer Gerätetest-Erfolg wird aus diesen synthetischen Tests abgeleitet.
 
 Für die spätere Leser-/Persistenzanbindung zuerst die vollständige **17-Byte-Anwendungsidentifikation** und Kapazität an Offsets 11–12 prüfen; die bestehende Lesung verwendet bisher nur den für ihre unterstützten Quellen benötigten 15-Byte-Präfix. Separaten Authentisierungsstatus, unabhängige vollständige EF-Lesung, bestätigte physische Karte, eingefrorene Bytes, exakte eigene Sitzung, atomare Persistenz, historische Requests, leere/fehlende/fehlerhafte Quelle, Rollback und Migration gesondert absichern. Erst dann gezielte Update-ZIP und Karten-/Lesertest, bevor dieser Import-Schritt gemergt wird. Keine Smartphone-Ortung oder künstliche Verbindungsroute.
+
+## HISTORISCH - Entstehungsbezug
+
+Stand: 10.10.2026. Die nachstehenden Decodergrenzen beschreiben die Grundlage aus PR #49/#50. Die neue Leser-/Speicheranbindung ist im [separaten Integrationsschritt](GNSS_IMPORT_IMPLEMENTATION.md) dokumentiert.
+
+Stand der ursprünglichen Decoder-Grundlage: 10.10.2026. Ausgangsbasis ist main nach PR #45 und dem Dokumentationsabschluss PR #48. Dieser Schritt ergänzt ausschließlich einen Decoder und synthetische Unit-Tests für die vollständige Generation-2-Datei **EF GNSS_Places**. Er ist noch kein neuer Kartenimport: Leser/APDU, Importrequests, Datenbank/Schema 11, Signatur/Version und Oberfläche verwenden den Decoder noch nicht.

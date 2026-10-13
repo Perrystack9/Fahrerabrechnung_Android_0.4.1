@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Fähre/Zug und Out of Scope – begrenzte Kartenquelle
 
-Ausgangsbasis ist PR #43 auf main (`10eefb6d8b33f119948349d3ffea63f0c55c25cf`): Schema 10 und vollständig grüne CI mit 262 Tests. Letzte bestätigte Hardwarebasis bleibt PR #41 vom 03.10.2026, 08:06 Uhr. Der Folgeschritt ergänzt ausschließlich EF Specific_Conditions, die verschlüsselte eigene Quelle, deren exakten Sitzungsverweis und eine read-only Ansicht in den bestehenden Fahrerkarten-Details. Timeline-Marker dieser neuen Quelle, Zeitintervalle und Fachberechnungen gehören nicht zu diesem Schritt.
+Implementierte unabhängige Quelle EF Specific_Conditions mit verschlüsselter eigener Herkunft und exakter Sitzungswahl. Markerprojektion ist separat in [SPECIFIC_CONDITION_TIMELINE_CHECK.md](SPECIFIC_CONDITION_TIMELINE_CHECK.md) dokumentiert.
 
 ## Primärquellen und Formatprüfung
 
@@ -30,4 +32,10 @@ Der echte KSP-Export `data/schemas/de.fahrerabrechnung.data.db.AppDatabase/11.js
 
 Ältere Zwei-/Drei-/Fünf-Datei-Requests behalten Status, Umfang und Fingerprint. Ohne tatsächlichen damaligen Leseversuch wird kein neuer Dateistatus ergänzt. Erkennbar fremde und unbestätigte Karten schreiben nichts; Folge-/Ersatzkarten behalten getrennte physische Kartenidentitäten. Altarchive werden nicht zugeordnet. Das Öffnen zeigt nur die Quelle der ausgewählten eigenen Sitzung; ältere Imports erhalten keine neueren Dateien.
 
+## HISTORISCH - PR-44-Prüfung und konkrete Geräteausnahme
+
 16 neue Unit-, neun SQLCipher- und fünf Compose-Testmethoden prüfen Parser/Generation/Slots, vollständige unabhängige Lesung und Abbruch, eingefrorene Quellbytes/Bestätigung, Deduplizierung, Teilfehler, historische Requests, physische Bindung, atomaren Rollback, Migration, Korruption und echte Navigation. Die vollständige CI muss am endgültigen Kopf einschließlich echtem Schemaexport grün sein, bevor eine Test-APK ausgegeben wird. Dieser Nachweis liegt mit 292 fehlerfreien Tests vor. Der [Gerätetest](SPECIFIC_CONDITION_DEVICE_TEST.md) wurde wegen neuer EF-Lesung und Migration vorgesehen und als ZIP bereitgestellt, am 03.10.2026 aber ausdrücklich vom Nutzer übersprungen. Nach erneuter Codeprüfung wurde der unveränderte geprüfte Kopf gemergt. Das ist keine bestandene Hardwareprüfung; letzte bestätigte Gerätebasis bleibt PR #41. Timeline-Marker folgen als gesonderter Projektions-/UI-Schritt, ohne Änderung dieser Importquelle.
+
+## HISTORISCH - Entstehungsbezug
+
+Ausgangsbasis ist PR #43 auf main (`10eefb6d8b33f119948349d3ffea63f0c55c25cf`): Schema 10 und vollständig grüne CI mit 262 Tests. Letzte bestätigte Hardwarebasis bleibt PR #41 vom 03.10.2026, 08:06 Uhr. Der Folgeschritt ergänzt ausschließlich EF Specific_Conditions, die verschlüsselte eigene Quelle, deren exakten Sitzungsverweis und eine read-only Ansicht in den bestehenden Fahrerkarten-Details. Timeline-Marker dieser neuen Quelle, Zeitintervalle und Fachberechnungen gehören nicht zu diesem Schritt.

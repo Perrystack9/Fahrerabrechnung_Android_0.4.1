@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Be- und Entladevorgänge als eigene Kartenquelle
 
-Stand 10.10.2026. Basis: am unveränderten getesteten Kopf gemergter PR53, main `22d41f64875de3aa5ac383d9d1ce80dc0dee1684`, Schema14/Testversion40112. Vollständige CI38065441534 Versuch1 und Paket38067285142 erfolgreich. Tobi bestätigt am10.10. um19:56 Europe/Berlin allgemein „Funktioniert alles prima.“ Keine zusätzlichen Einzelmesswerte oder bestimmten nichtleeren Grenzdatensätze behauptet.
+Implementierte unabhängige Gen2V2-Quelle für Be-/Entladevorgänge. Quellereignisse bleiben neutral und werden nicht zu Lohn-/Spesen-/Ruheentscheidungen umgedeutet.
 
 ## Amtliche Primärspezifikation
 
@@ -30,8 +32,12 @@ Verschlüsselte unveränderliche Quelle je physischer eigener Karte und exakte a
 
 Additive Migration14→15: ausschließlich `card_load_unload_imports` und `driver_import_load_unload_sources`. Alle30 bisherigen Tabellen bleiben erhalten. Der verbindliche15.json-Export wird unverändert aus KSP/CI übernommen, nicht handgeschrieben. Die Detailansicht zeigt nur die ausgewählte Sitzung und lädt weitere Vorgänge in20er-Portionen; Quellenwechsel setzt die Portion zurück. Fehlende und gültig leere Dateien haben verschiedene Meldungen.
 
-## Verifikation und aufgeschobener Gerätetest
+## HISTORISCH - Verifikation und aufgeschobener Gerätetest
 
 18 Parser-, neun Reader-, sieben SQLCipher-, ein Room- und vier Compose-Testmethoden ergänzen Ring-/Feld-/Zeit-/Koordinatenprüfung, vollständige Lesung nahe der Offsetgrenze, unabhängige Kapazitäten/Teilfehler/Cancellation, Deduplizierung/Kartenwechsel, Rollback, Upgrade14→15 und historische UI-Navigation. Lokale SQLite-Migrationsprüfung erhält alle30 bisherigen Tabellen, fügt zwei hinzu und hat keine FK-Verletzung. Vollständige Android-CI einschließlich SQLCipher/Room/Compose und bytegleichem echtem Schemaexport bleibt vor APK-Ausgabe erforderlich; Ergebnis am finalen PR-Kopf prüfen.
 
 Testversion40113, gleiches Paket `de.fahrerabrechnung.app.devicetest` und feste Testsignatur. Updatepaar baut den unveränderten PR53-Produktstand mit40112/Schema14. Benutzerpaket enthält nur Update-APK, Anleitung, Buildinfo und Prüfsummen. Tobi hat am10.10.19:56 ausdrücklich weitere Hardwaretests gebündelt: erster Block bis20:56, Pause bis22:56, zweiter Block bis11.10.00:56 Europe/Berlin. [Geräteanleitung](LOAD_UNLOAD_DEVICE_TEST.md) erst danach ausgeben; neuer Import-/Schema-PR bleibt bis neuer Bestätigung ungemergt.
+
+## HISTORISCH - Entstehungsbezug
+
+Stand 10.10.2026. Basis: am unveränderten getesteten Kopf gemergter PR53, main `22d41f64875de3aa5ac383d9d1ce80dc0dee1684`, Schema14/Testversion40112. Vollständige CI38065441534 Versuch1 und Paket38067285142 erfolgreich. Tobi bestätigt am10.10. um19:56 Europe/Berlin allgemein „Funktioniert alles prima.“ Keine zusätzlichen Einzelmesswerte oder bestimmten nichtleeren Grenzdatensätze behauptet.

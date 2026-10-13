@@ -1,63 +1,28 @@
-# Work-Handoff – FahrerTagebuch
+# FahrerTagebuch - aktuelle Übergabe
 
-**Verbindlicher Einstieg ab 12.10.2026, Produktentscheidung um 20:53 Europe/Berlin.**
+Einstieg ausschließlich über [WORK_START.md](../WORK_START.md) und aktuellen Git/GitHub-Stand. Regeln und bestätigten technischen Zustand nicht aus alten Handoffs rekonstruieren.
 
-## Vor jeder Fortsetzung lesen
+## Nächster Auftrag nach dem Dokumentationsabschluss
 
-1. [Neue Produktentscheidung](PRODUCT_DECISION_20261012.md), Vorrang vor früheren Vorgaben.
-2. [Aktuelle Regeln](CURRENT_RULES.md).
-3. [WORK_STATUS](../WORK_STATUS.md), [README](../README.md), tatsächlichen GitHub-/lokalen Stand.
-4. [Nächste Importpunkte](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und konkrete Implementierungs-/Testbelege.
+**Pflichtdateien-/Ausnahme-/Signaturmatrix für Gen1, Gen2 und Gen2V2 erarbeiten.** Der [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) legt Ausgabe und Prüfkriterien fest. Vorhandenen Import übernehmen; Reader, Profilbindung, Zwei-Anwendungs-Gruppen und Schema 19 sind bereits implementiert.
 
-[Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) ergänzend lesen. Frühere Punkte 8/9 vollständig aufgehoben. Alte Design-/Archivdateien dürfen gestrichene Ziele nicht wieder einführen.
+Die Matrix muss jede relevante MF-/DF-Datei ihrer Anwendung, vorhandenen Originalquelle, Pflicht/Ausnahme, erforderlichen Signatur und konkreten Primärstelle zuordnen. Getrennt dokumentieren, was noch fehlt und was ein bewusst ausgelöster Standarddownload zusätzlich verlangt. Keine Vollständigkeit oder Benutzerkarten-Vertrauensprüfung vorwegnehmen.
 
-## Neuer Umfang
+## Offene Sperren und Risiken
 
-Vollständig entfallen: Spesen/Reisekosten, Reise-/Abwesenheitsberechnung, Heimkehr/Übernachtung, Heimatstandort samt Standort-/Einrichtungslogik/Heimradius, Lohn/Gehalt/Arbeitgeberzuschläge, bezahlte/lohnrelevante Arbeitszeit und gesamte Abrechnungslogik. PDF-Abrechnungs-/Lohnexport ebenfalls gestrichen. Neutraler Tätigkeits-/Fahrtenbericht nicht verbindlich geplant.
+- `7F66`: inneres Primärformat ISO 7816-4:2013 §12.7.1 noch nicht vollständig belegt. Vorhandene Rohbytes/äußere Struktur erhalten; keine Puffergröße erraten.
+- Signaturaufnahme, ERCA/MSCA/Kartenvertrauen, Originalquellenexport und Standarddownload sind eigene spätere Schritte. Signatur, Originalbytes, konkrete Anwendung und Sitzung unveränderlich zusammenbinden.
+- Automatischer Import bleibt lesend. Download-Datum erst in einem getrennt belegten Schreib-/Fehler-/Hardwarepfad aktualisieren.
+- `0540`: legitimer authentisierter SC5-/Secure-Messaging-Weg fehlt; kein blindes Lesen oder Schlüsselersatz.
+- Neue relevante Produktänderung braucht eigene vollständige CI und erforderliche Gerätebestätigung. Freigabe 40122 ist keine Freigabe neuer Befehle, Migrationen oder Sicherheitsfunktionen.
+- Laufende CI und offene PRs live prüfen. Bei externer CI-/Budgetblockade tatsächlichen Stand sichern, Ursache nennen und keine eigenmächtige Budgetänderung oder Retryserie starten.
 
-Fahren, andere Arbeit, Bereitschaft und Pause/Ruhe erhalten, anzeigen, zeitlich zusammenfassen und neutral auswerten. Keine bezahlten, lohnrelevanten oder abrechnungsrelevanten Stunden.
+## Spätere Produktarbeit
 
-GNSS aus der Fahrerkarte erhalten. Spätere Karte darf echte sichtbare Punkte chronologisch mit einem klar **approximierten Verlauf** verbinden. Keine gefahrene Straßenroute, Zwischenmesspunkte oder Kilometer aus Linien erfinden; kein Smartphone-Tracking.
+Nach geklärter Import-/Quellenbasis: neutrale Tätigkeits-/Fahrzeugauswertung und grundlegende UI-/Einrichtungs-/GNSS-Konzeption. Zielrichtung etwa Start, Kalender, Auswertung, Einstellungen; Details offen. Keine Spesen-, Lohn-, Heimkehr-, Heimatstandort- oder PDF-Abrechnungsphase.
 
-## Bestätigte Ausgangsbasis
+## Sitzungsabschluss
 
-| Bezug | Wert |
-|---|---|
-| Test-App / DB | **40122 / Schema 19** |
-| PR65 geprüfter Produktkopf | `62fc0d299f87b26109a98ff11e94c9202a27ae01` |
-| PR65 Produktmerge | `21edb80ce46c0202204bb74d83486c634b3c90c6` |
-| Bytegleicher bestätigter Tree | `6f71f4ecc0f4b7a8976891d3ebeb726ad9281d94` |
-| Main vor dieser Docs-Entscheidung | `9d0c911d02ae39a29120224e813ba551b1a1e54f`, Docs-PR66 |
-| Vollständige Main-CI | [38281475535](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38281475535), erfolgreich einschließlich SQLCipher/Compose |
-| Gerätebestätigung | [DEVICE_CONFIRMATION_40122.md](DEVICE_CONFIRMATION_40122.md), 12.10.2026 um 18:57 Europe/Berlin |
+Nur diesen aktuellen Übergabetext und Status ersetzen, Arbeit im zugehörigen Branch/PR sichern, Prüf-/Freigabestatus knapp melden und Sitzung beenden. Historische Nachweise nur gezielt öffnen. Keine neue größere Produktarbeit im Dokumentations-Cleanup beginnen.
 
-Exakte Rückmeldung: „Version 40122 installiert, alte Daten erhalten, sichtbare Gen1-/Gen2-Zustände, passende Details und Wiederöffnung ohne Leser erfolgreich“. Keine weiteren manuellen Fälle daraus behaupten.
-
-PR65 abgeschlossen: beide Anwendungen, gemeinsame MF-Belege, atomare Gruppenspeicherung, genaue Anwendungs-/Historienwahl. Profilbindung, Quellenmodelle, Reader, Parser und Migrationen nicht erneut bauen. Keine Nachbefüllung/Addition beider Tätigkeitsbestände.
-
-## Jetzt Dokumentation, später grundlegende Oberfläche
-
-**Jetzt keine großflächige UI-Neuentwicklung, kein Rückbau des Imports, keine Datenmigration.**
-
-Aktuelle App kann noch Abrechnung, sieben Einrichtungsschritte, Heimatpunktwahl, Standortberechtigungen und alte Gehalts-/Spesenvorschauen enthalten. Technischer Altbestand, kein Zielprodukt. Bestehende Tests/CI-Boundary prüfen unveränderten Code; daraus keine künftige Heimatpunktpflicht ableiten.
-
-Später gesamte Oberfläche, Navigation, Einrichtung und Onboarding grundsätzlich neu konzipieren. Abrechnung entfernen/ersetzen, konkrete Struktur offen. Fünf Tabs, sieben/acht Schritte, alte Kalender-/Auswertungsplätze und 1:1-Layouts sind keine feste Vorgabe. Profile und Importdaten bei späteren Änderungen erhalten.
-
-## Nächste Priorität
-
-Kartenimport anhand des [Folgeplans](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) vervollständigen: Pflichtdateien/-ausnahmen, Originalquellenexport, echte Signaturaufnahme, Zertifikats-/Vertrauensverfahren. Öffentliche Forschungsbelege sind keine App-Kartenverifikation. 7F66 nur mit belegtem Primärformat, geschützte 0540 nur mit legitimen SC5-Voraussetzungen. Keine Schlüssel, Signaturen, Authentisierung oder Vollständigkeit erfinden.
-
-Fahrzeug-/Kilometer-/weitere neutrale Timeline-Auswertung später aus belastbaren Quellen. Keine spätere Spesen-/Lohn-/Heimkehr-/Übernachtungs-/PDF-Abrechnungsphase.
-
-## Git, CI, Hardware und Merge
-
-- Vor Änderungen HEAD, Branch, lokalen Diff, offene PRs und tatsächliche CI prüfen. Vorhandene Arbeit sichern, exakt fortsetzen; kein Reset, Löschen, Verwerfen oder Neuaufbau.
-- Kein Browser/Unteragenten. Budget-/Stop-usage-Einstellungen/Auslöser unverändert. Tobi hat Actions-Nutzung freigegeben; neuer Betrag nicht dokumentiert.
-- Leichte CI nur für explizit erlaubte Dokumentationspfade. Markdown-Asset im Report-Modul fällt nach bestehender konservativer Klassifikation unter volle Android-CI; keinen Bypass einbauen.
-- Normale CI: alle sieben Gradle-Aufrufe, Build/Unit/Lint/APK-/Signatur-/Updatepaar-/Schemaexportprüfung, vollständige SQLCipher/Compose-Suiten auf API 36, Abschlussjob. Keine Filter/Quarantäne.
-- Erfolgreiche normale CI ohne APK-/Reportuploads; Fehlerdiagnostik drei Tage. [CI-Regeln](CI_ARTIFACT_POLICY.md).
-- Neue relevante Hardware-/Import-/Parser-/Persistenz-/Schema-/Sicherheitsänderungen: eigene passende automatische Prüfung und erforderliche Gerätebestätigung vor Merge. Freigabe 40122 gilt nur für den unveränderten Testkopf.
-- Vereinbarung „Gerätetest spätestens jeder dritte PR, früher bei relevanten Hardware-/Import-/Parser-/Persistenz-/DB-Änderungen“ und konkrete Ausnahmen beibehalten. Alte Bündelungen nicht pauschal übertragen.
-- Diese rein dokumentarische Entscheidung erzeugt keine neue Test-App oder Hardwarebestätigung. Hardware-Sperren nicht mit Docs-Merges umgehen.
-
-[Historischer vollständiger Handoff](history/WORK_HANDOFF_BEFORE_PRODUCT_DECISION_20261012.md) bewahrt damalige Tests, Checkpoints, Code-Einstiege und Pläne; kein aktueller Fachauftrag.
+Nächster Startsatz: **„FahrerTagebuch am aktuellen Stand fortsetzen.“**

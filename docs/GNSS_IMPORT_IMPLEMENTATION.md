@@ -1,8 +1,8 @@
-> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # GNSS-Leser und exakte Importspeicherung
 
-Stand 10.10.2026. Folgeschritt auf den offenen, vollständig CI-geprüften Decoder-PRs #49/#50. Main und diese Decoderköpfe bleiben unverändert. Integration benötigt eigene vollständige CI und den [Gerätetest](GNSS_IMPORT_DEVICE_TEST.md).
+Implementierte unabhängige GNSS-Lesung und genaue verschlüsselte Sitzungsquellen. Originalpunkte und getrennte Authentisierungsbelege werden erhalten, ohne daraus Kartenvertrauen oder eine Straßenroute abzuleiten.
 
 ## Geprüfter Dateizugriff
 
@@ -18,8 +18,12 @@ Historische Requests ohne GNSS behalten ihren bisherigen Fingerprint und ihre Da
 
 Die Detailansicht zeigt Punkte und Statusaufzeichnungen unabhängig. Eigene Positionszeit mit Sekunden; fehlende Position/Zeit/HDOP bleiben unbekannt. HDOP ist keine Meterangabe. Keine Ringindex-Zuordnung zwischen Dateien, Route, Tätigkeits-, Heimkehr- oder Vertrauensentscheidung.
 
-## Verifikation
+## HISTORISCH - Verifikation
 
 15 neue Testmethoden: 5 Reader-Unit-Tests, 7 SQLCipher-Pipeline-Tests, 1 Room-Schema-Migrationstest und 2 Compose-Tests. Prüfen Generationen/volle Basisidentifikation, unabhängige Ausfälle, ungültige Kapazität/Zeiger, Cancellation, historische Wiederholung, genaue Sitzung nach Neustart, Deduplizierung, physische Ersatzkarte, leere Quelle, unbestätigte/fremde Karte, atomaren Rollback, Upgrade ohne Backfill, falsche Fremdschlüssel und beschädigte gespeicherte Bytes. Erster Lauf 38027322333 auf f9911fd05a4915fe054e460361e7117374ce4dd2: alle sieben Gradle-Kommandos, Lint, APKs und stabiles Updatepaar erfolgreich. Ausschließlich der noch nicht eingecheckte KSP-Export 12.json ließ den unveränderten Schema-Guard scheitern. Dieser Export (SHA-256 2b54a30e7683e0c1a3a66407ebae709b976be812b677ae242214b9ac1a69403a) ist unverändert übernommen; alle 24 alten Entity-Exporte sind bytegleich und der Migrations-SQL entspricht seinen neuen Spalten/Fremdschlüsseln. Die vollständige CI einschließlich Emulator des Folgekopfs ist noch offen; Ergebnis im PR nachtragen.
 
 Version 40110 behält Testpaket und öffentliche Testsignatur. Das CI-Updatepaar verwendet den gemergten PR-45-Produktstand 9f24a48845367502e585c87b1eb8e63f370b3dfb, Schema 11/40109, als Basis. Normale erfolgreiche CI-Läufe laden weiterhin keine Artefakte hoch. Gezielte ZIP bleibt manuell und durch vollständig grüne CI geschützt.
+
+## HISTORISCH - Entstehungsbezug
+
+Stand 10.10.2026. Folgeschritt auf den offenen, vollständig CI-geprüften Decoder-PRs #49/#50. Main und diese Decoderköpfe bleiben unverändert. Integration benötigt eigene vollständige CI und den [Gerätetest](GNSS_IMPORT_DEVICE_TEST.md).

@@ -1,3 +1,5 @@
+> **HISTORISCH - nicht als aktuelle Anforderung verwenden. Einordnung: HISTORISCH.** Zeitgebundener Nachweis; ursprüngliche Aussagen und Testgrenzen bleiben erhalten. Aktueller Einstieg: [WORK_START.md](../../WORK_START.md); verbindlich sind [CURRENT_RULES.md](../CURRENT_RULES.md). Nicht pauschal lesen.
+
 > **Produktentscheidung 12.10.2026 – historischer Berater-Handoff.** Originalfassung von Issue #3 vor dieser Entscheidung. Gesamte Punkte 8/9 aufgehoben; frühere Heimat-/PDF-/Navigations- und pauschale GNSS-Verbindungsverbote überholt, kein Auftrag. Text als Entscheidungshistorie erhalten. Verbindlich ist die [neue Produktentscheidung](../PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
 
 # Berater-Handoff – FahrerTagebuch Produktentscheidungen (28.09.2026)

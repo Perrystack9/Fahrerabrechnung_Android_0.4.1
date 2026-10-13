@@ -1,32 +1,6 @@
-> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+# Abdeckung des vorhandenen Fahrerkarte-Imports
 
-Aktueller bestätigter Main-Stand12.10.2026: PR65/40122/Schema19 nach vollständiger grüner CI und ausdrücklicher Gerätebestätigung unverändert gemergt (21edb80, Tree6f71f4e bytegleich). Beide Anwendungen derselben Karte bleiben getrennt, MF-Belege einmal am Parent. [Bestätigung und Grenzen](DEVICE_CONFIRMATION_40122.md). Die früheren noch offenen Freigabeangaben darunter sind historische Stände.
-
----
-
-Aktueller PR65-Kandidat 12.10.2026: gemeinsamer Import beider Anwendungen derselben physischen Karte, atomare Speicherung und genaue Verlaufswahl sind in `62fc0d299f87b26109a98ff11e94c9202a27ae01` umgesetzt, 40122 / Schema 19. Gen2V2 gehört zum Gen2-DF; MF-Dateien werden am gemeinsamen Parent einmal gespeichert, DF-Quellen bleiben getrennt. **Vollständige aktuelle CI bestanden, eigene Hardwarefreigabe ausstehend:** Versuch4 nach Budgetfreigabe vollständig grün; geprüftes Testpaket40122 bereitgestellt. [Aktueller Hardwarecheckpoint](PR65_DEVICE_DELIVERY_40122.md). Keine Vollständigkeits-, Standarddownload- oder Vertrauensbehauptung. [Aktueller Checkpoint](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md) · [nächste Importpunkte](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Ältere Freigabe-/Versionsangaben darunter sind historische Belege.
-
----
-
-Aktueller Gerätecheckpoint12.10.2026: Tobi bestätigt den neuen40121-Wiederlese-/Anzeigefall nach erneutem Einstecken positiv. Beide neuen MF-Quellen real vorhanden: ATR/INFO11Bytes, Extended_Length3Bytes, T=1 aufgezeichnet/T=0 nicht aufgezeichnet. PR62-Produktkopfefbf49cdf92bd5e5ddb2e042b3e14e9372169756 unverändert und vollständige CI38172596871 sowie Paketlauf38201601458 erneut grün. [Genaue40121-Gerätebestätigung und Grenzen](DEVICE_CONFIRMATION_40121.md). Keine zusätzlichen40121-Neustart-/Altdaten-/Historienfälle behaupten. PR62 unverändert gemergt als26a9f14c34523fa4ba884d8dd9891c24e1736ab4, Tree11e79e492b381f9d515bee796ffea30da3099592 bytegleich zum Testkopf. Selbstständige Produktfortsetzung durch die eingerichtete Aufgabe;  spätere Änderungen weiterhin bis eigener Freigabe ungemergt. Keine Browser/Unteragenten/Bereinigung, Budget2USD unverändert. Die folgenden Angaben sind historische Checkpoints.
-
----
-
-Aktueller bestätigter Stand11.10.2026: Gerätetest PR60/40120 ausdrücklich bestanden: Update und alte Daten, neue Kartenlesung, Zertifikate/Kartenangaben/Anwendungsverzeichnis, Bestand nach Kartenentnahme und App-Neustart sowie unveränderter alter Import. PR60 am unveränderten geprüften Kopf85d0614 gemergt als9e7670f05b7c35a585244aeca539be9d0fe7c6fb, Tree78155b21cb76f9c27231360bd78dad0aa5472a22 exakt gleich dem Teststand. PR59 ist enthalten und von GitHub ebenfalls als gemergt abgeschlossen. Letzte Gerätebasis jetzt40120/Schema18. PR62/40121 und spätere Änderungen sind ausdrücklich noch nicht hardwarebestätigt und bleiben ungemergt. [Verbindliche Gerätebestätigung und Merge-Nachweise](DEVICE_CONFIRMATION_40120.md). Selbstständige Importfortsetzung beauftragt; Projektregeln, kein Browser/Unteragenten/Bereinigung und Actions-Budget2USD bleiben bestehen. Ältere Checkpoints darunter sind historische Stände.
-
----
-
-Aktueller geprüfter Importfolgeentwurf PR62/40121/Schema18: bedingte MF-Kommunikationsquellen, exakte eigene Karten-/Sitzungsspeicherung und Quellenmap-Snapshots; bis29 Gen2V2-Quellenarten bei eindeutiger ATR-Ankündigung. 38 zusätzliche Testmethoden. Integrierter Produktkopf efbf49cdf92bd5e5ddb2e042b3e14e9372169756, Tree11e79e492b381f9d515bee796ffea30da3099592; vollständige CI38172596871 mit allen vier Jobs erfolgreich, einschließlich Build/Unit/Lint/APKs, Updatepaar40120→40121, unveränderten Room-Exporten und SQLCipher/Compose. Dokumentierter Main f2984027643a27ea55dc44c10fae9cdf6d115938 als zweiter Parent enthalten; PR62 ohne Konflikt mergebar, aber ausdrücklich hardwareunbestätigt und ungemergt. Gerätefreigabe40120 gilt nur für abgeschlossene PR59/60. [Vollständiger Folgecheckpoint und offene Grenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Abschließende Dokumentation liegt auf docs/card-import-finalization-checkpoint-20261011, Produktkopf unverändert. Ältere Checkpoints sind historische Stände.
-
----
-
-Aktueller gemeinsamer FolgestandPR60/40120: Originaldateien plus MF-DIR für erkannte Gen2/Gen2V2-Karten, bis27 Quellen. Lokale Prüfungen bestanden; neue vollständige CI vor Ausgabe erforderlich. Keine neue Hardwarebestätigung. [DIR-Umfang](CARD_DIRECTORY_IMPORT.md). Ältere Checkpoints dokumentieren ihre damaligen Stände.
-
-# Abdeckung der Fahrerkarte
-
-Stand11.10.2026: Tobi hat PR58/40117 um08:36 Europe/Berlin allgemein bestätigt („Funktioniert alles“). PR54–58 sind unverändert kumulativ gemergt; Main1b592d6 hat den getesteten Tree2e314a4. Diese Bestätigung enthält keine zusätzlichen Einzelmesswerte oder nichtleeren Quellenfälle.
-
-PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an c535c01 bestanden, einschließlich Room/SQLCipher/Compose. PR60/40120 hat CI38145473572, Paketlauf38148088141 und den ausdrücklich bestätigten Gerätetest bestanden; Zertifikate, Kartenangaben und DIR bleiben nach Kartenentnahme/App-Neustart sichtbar, alter Import unverändert. PR62/40121 ergänzt die beiden bedingten MF-Kommunikationsdateien. PR59/60 sind nach bestätigtem Gerätetest40120 unverändert kumulativ gemergt; PR62 bleibt ohne eigene Hardwarebestätigung ungemergt. Vollständige Kartenabdeckung wird noch nicht behauptet.
+**DETAIL-AKTIV - bei Quellenarbeit lesen.** Implementiertes Inventar auf 40122/Schema 19, keine vollständige Download-Pflichtdateienliste. Geräteumfang nur gemäß [WORK_STATUS.md](../WORK_STATUS.md); eine gespeicherte Quelle beweist keine kryptografische Echtheit.
 
 | Quelldatei | EF | Generation | Stand |
 |---|---|---|---|
@@ -40,39 +14,37 @@ PR59/40118 mit Zertifikatsquellen hat die vollständige Android-CI38119878793 an
 | GNSS_Places_Authentication | `0527` | Gen2V2 | eigene getrennte Sitzungsquelle |
 | Places | `0506` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
 | Places_Authentication | `0526` | Gen2V2 | eigene getrennte Sitzungsquelle |
-| Border_Crossings | `0528` | Gen2V2 | PR53, allgemein am Gerät bestätigt |
-| Load_Unload_Operations | `0529` | Gen2V2 | PR54–58 kumulativ bestätigt und gemergt |
-| Load_Type_Entries | `0530` | Gen2V2 | PR54–58 kumulativ bestätigt und gemergt |
-| VehicleUnits_Used | `0523` | Gen2/Gen2V2 | PR56 bestätigt/gemergt; unabhängiger Zähler |
-| Driving_Licence_Info | `0521` | Gen1/Gen2/Gen2V2 | PR57 bestätigt/gemergt,53Byte; Nummer zunächst verborgen |
-| Current_Usage | `0507` | Gen1/Gen2/Gen2V2 | PR57 bestätigt/gemergt,19Byte; historischer Kartenstand |
-| Card_Download | `050E` | Gen1/Gen2/Gen2V2 | PR57 bestätigt/gemergt,4Byte; ausschließlich lesen |
-| ICC-Identifikation | `0002` unter MF | Gen1/Gen2/Gen2V2 | PR58 bestätigt/gemergt,25Byte; vor AID, Serienwert verborgen |
-| IC-Identifikation | `0005` unter MF | Gen1/Gen2/Gen2V2 | PR58 bestätigt/gemergt,8Originalbytes; vor AID, Kennung verborgen |
-| Karten-/CA-Zertifikat | `C100`/`C108` | Gen1/Gen2/Gen2V2 | PR59, vollständige unabhängige Originalquelle; struktureller Decoder |
-| Signatur-/Link-Zertifikat | `C101`/`C109` | Gen2/Gen2V2 | PR59, eigene Originalquellen; keine Kryptoprüfung |
-| Application_Identification | `0501` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige Originalbytes10/15/17 |
-| Application_Identification_V2 | `0525` | Gen2V2 | PR60 auf PR59; vollständige Originalbytes10 |
-| Identification | `0520` | Gen1/Gen2/Gen2V2 | PR60 auf PR59; vollständige143Bytes, exakte Identitätsprüfung |
-| MF DIR | `2F00` | Gen2/Gen2V2 | PR60 kumulativ; exakt20Bytes mit unabhängiger Dateiendprüfung, genaue Karte/Sitzung |
-| MF ATR/INFO | `2F01` | Gen2/Gen2V2, bedingt | PR62; vollständige7–128Originalbytes und äußere `7F66`-Struktur, keine Puffergrößeninterpretation |
-| MF Extended_Length | `0006` | Gen2/Gen2V2, bedingt | PR62; exakt3Bytes, T=0/T=1-Angaben aus der Datei, unbekannte Codes bleiben unbekannt |
+| Border_Crossings | `0528` | Gen2V2 | eigene Sitzungsquelle |
+| Load_Unload_Operations | `0529` | Gen2V2 | eigene Sitzungsquelle |
+| Load_Type_Entries | `0530` | Gen2V2 | eigene Sitzungsquelle |
+| VehicleUnits_Used | `0523` | Gen2/Gen2V2 | eigene Sitzungsquelle; unabhängiger Zähler |
+| Driving_Licence_Info | `0521` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle,53Byte; Nummer zunächst verborgen |
+| Current_Usage | `0507` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle,19Byte; historischer Kartenstand |
+| Card_Download | `050E` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle,4Byte; ausschließlich lesen |
+| ICC-Identifikation | `0002` unter MF | Gen1/Gen2/Gen2V2 | eigene MF-Quelle,25Byte; vor AID, Serienwert verborgen |
+| IC-Identifikation | `0005` unter MF | Gen1/Gen2/Gen2V2 | eigene MF-Quelle,8Originalbytes; vor AID, Kennung verborgen |
+| Karten-/CA-Zertifikat | `C100`/`C108` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle, vollständige unabhängige Originalquelle; struktureller Decoder |
+| Signatur-/Link-Zertifikat | `C101`/`C109` | Gen2/Gen2V2 | eigene Sitzungsquelle, eigene Originalquellen; keine Kryptoprüfung |
+| Application_Identification | `0501` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle; vollständige Originalbytes10/15/17 |
+| Application_Identification_V2 | `0525` | Gen2V2 | eigene Sitzungsquelle; vollständige Originalbytes10 |
+| Identification | `0520` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle; vollständige143Bytes, exakte Identitätsprüfung |
+| MF DIR | `2F00` | Gen2/Gen2V2 | gemeinsame MF-Quelle; exakt20Bytes mit unabhängiger Dateiendprüfung, genaue Karte/Sitzung |
+| MF ATR/INFO | `2F01` | Gen2/Gen2V2, bedingt | gemeinsame MF-Quelle; vollständige7–128Originalbytes und äußere `7F66`-Struktur, keine Puffergrößeninterpretation |
+| MF Extended_Length | `0006` | Gen2/Gen2V2, bedingt | gemeinsame MF-Quelle; exakt3Bytes, T=0/T=1-Angaben aus der Datei, unbekannte Codes bleiben unbekannt |
 
-## Herkunft und offene Quellen
+## Herkunft
 
-Neue Gen2V2-Lesevorgänge enthalten bis27 bisherige und zwei zusätzlich bedingte Quellenarten, insgesamt bis29. Die neuen Dateien werden nur bei eindeutiger ATR-Ankündigung versucht. Gen1 hat16 Arten, Gen2 bis21 beziehungsweise23 mit beiden bedingten Dateien. Das zählt keine Zeitabdeckung und keine Datensätze. Historische19-/23-/26-/27-Quellen-Übernahmen behalten ihre damalige Abdeckung; keine Nachbefüllung und kein Rückgriff auf jüngere Sitzungen. Fehlende/ungültige Daten bleiben separat sichtbar. Diese Zahlen beschreiben die Quellenarten des bisherigen Ein-Anwendungs-Imports, nicht die Zahl der Belege einer PR65-Gruppe. PR65 ergänzt Schema19: MF-Belege einmal am Parent, Quellen je Anwendung getrennt; keine Addition beider Zeitsätze.
+Gen1-/Gen2-DFs werden derselben physischen Karte zugeordnet, als getrennte Anwendungs-/Sitzungsquellen atomar gespeichert und exakt ausgewählt. Gen2V2 ist ein Gen2-Format. Gemeinsame MF-Belege einmal am Parent. Alte Quellen/Requests/Imports nicht ergänzen; beide Zeitsätze nicht addieren. Fehlend, unlesbar, nicht versucht und gültig leer unterscheiden. Einzelne EF-Fehler sind keine Speicher-Rollback-Freigabe.
 
-[Annex IC §4.5.2.2–4.5.2.4](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0799-20160526) sieht DIR und beide Kommunikationsdateien nur auf Karten der zweiten Generation vor. Eine Standard-DIR-Datei auf reinen Gen1-Karten fehlt somit nicht im Importumfang. PR65 erfasst zusätzlich die getrennte Gen1-Anwendung derselben Gen2-Karte mit eigenem Anwendungs-/Sitzungsbeleg. Diese Codeintegration hat die vollständige CI und die ausdrückliche Gerätebestätigung bestanden und ist unverändert auf Main40122.
+## Noch offen
 
-| Noch offene Datei/Funktion | EF | Klärung vor Umsetzung |
-|---|---|---|
-| VU_Configuration | `0540` | Gen2V2, eigenes Sicherheits-/Zugriffsverfahren SC5; nicht blind als gewöhnliche EF lesen |
-| Freigabe des gemeinsamen Imports beider Anwendungen | zwei DFs | PR65: generationsgetrennte Quellen, gemeinsame MF-Belege und atomare Speicherung nach vollständiger CI und bestätigtem Gerätetest auf Main40122 |
-| ATR/INFO-Inhalt | `2F01` | Originalbytes sind importiert; vollständigen ISO7816-4:2013-Decoder für den `7F66`-Inhalt anhand belegten Primärformats ergänzen |
-| Unbekanntes ATR-Historienformat | ATR | Bedingte Dateien nicht versucht; unbekannt nicht als fehlend oder vollständig behaupten |
-| Vollständiger signierter Standarddownload | mehrere | Download-/Authentisierungsprotokoll und Original-Signaturen separat implementieren |
-| Kryptografische Zertifikats-/Signaturprüfung | mehrere | RSA-Nachrichtenrückgewinnung bzw. EC-Prüfung und überprüfbare Vertrauenskette |
+| Bereich | Grenze |
+|---|---|
+| Vollständige Download-Pflichtdateien-/Signaturmatrix | MF und beide Anwendungen gegen verifizierte Primärformate abgleichen; dieses Inventar ersetzt die Matrix nicht |
+| ATR/INFO-Inhalt `7F66` | Originalbytes und äußere Struktur vorhanden, vollständiges ISO-7816-4:2013-Inhaltsformat nicht belegt |
+| Unbekanntes ATR-Historienformat | Bedingte Dateien nicht versucht; unbekannt bleibt unbekannt |
+| Echte Signaturen / Standarddownload | Signatur-/Bytebindung und getrennten Download-/Schreibpfad implementieren und prüfen |
+| Zertifikats-/Kartenvertrauen | Vollständige überprüfbare Kette, Rollen, Referenzen und Gültigkeit noch offen |
+| `VU_Configuration 0540` | Legitimer SC5-Sicherheits-/Zugriffsweg fehlt |
 
-Arbeitsliste relevanter offener Quellen; vor einer Vollständigkeitsbehauptung sind sämtliche MF-/Gen1-/Gen2-Dateien zusätzlich abzugleichen. Fahrzeug-/Kilometer- und weitere neutrale Timeline-Auswertung folgen nach zuverlässig vollständig übernommenen relevanten Kartenquellen. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung entfallen vollständig; keine entsprechende Folgephase.
-
-[Zertifikatsformat und Grenze](CARD_CERTIFICATE_IMPORT.md) · [Originaldateien](CARD_ORIGINAL_IDENTIFICATION_IMPORT.md) · [Kommunikationsquellen](CARD_COMMUNICATION_IMPORT.md) · [Übergabe](CARD_IMPORT_FINALIZATION_HANDOFF.md)
+Nächster Schritt: [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Implementierung beider Anwendungen: [CARD_MULTI_APPLICATION_IMPORT.md](CARD_MULTI_APPLICATION_IMPORT.md). Gestrichene Produktbereiche werden nicht nach dem Kartenimport umgesetzt.
