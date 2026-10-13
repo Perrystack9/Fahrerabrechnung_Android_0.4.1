@@ -192,7 +192,12 @@ class CardReadBatchInstrumentedTest {
         val saved = pipeline.processApplications(eventBatch(), "event-tamper", true)
         val g1 = saved.applications.first().run!!.sessionId!!; val g2 = saved.applications.last().run!!.sessionId!!
         val row = db.cardEventFaultSignatureDao().receipts(g2).first()
-        rejected { db.cardEventFaultSignatureDao().insert(row.copy(sessionId = g1, kind = "FOREIGN_ORIGINAL")) }
+        val unsigned = pipeline.processApplications(identityBatch(), "event-receipt-foreign-session")
+        val unsignedG2 = unsigned.applications.last().run!!.sessionId!!
+        assertTrue(db.cardEventFaultSignatureDao().receipts(unsignedG2).isEmpty())
+        // Same card, generation and kind, but this exact child never captured the event original.
+        rejected { db.cardEventFaultSignatureDao().insert(row.copy(sessionId = unsignedG2)) }
+        assertTrue(db.cardEventFaultSignatureDao().receipts(unsignedG2).isEmpty())
         for (update in listOf("bytes = zeroblob(64)", "status = 'NOT_ATTEMPTED'", "fingerprint = 'damaged'",
             "application = 'GEN1'", "generation = 'GEN1'", "driverCardId = 'foreign'", "originalSourceId = NULL")) {
             rejected { db.withTransaction {

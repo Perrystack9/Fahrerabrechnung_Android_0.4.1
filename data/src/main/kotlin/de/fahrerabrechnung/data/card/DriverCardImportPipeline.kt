@@ -361,6 +361,7 @@ class DriverCardImportPipeline @Inject constructor(
                 when (receipt.reason) {
                     CardSignatureReason.EF_ABSENT -> CardImportFileStatus.MISSING
                     CardSignatureReason.CAPACITY_UNAVAILABLE -> CardImportFileStatus.NOT_ATTEMPTED
+                    CardSignatureReason.UNSUPPORTED_FORMAT -> CardImportFileStatus.INVALID
                     else -> CardImportFileStatus.READ_FAILED
                 }, 0, null, null, receipt.reason?.name)
             return if (file != null || failed)

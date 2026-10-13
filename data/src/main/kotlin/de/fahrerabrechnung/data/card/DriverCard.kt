@@ -450,8 +450,12 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     fileFailure(it, abortTransport = true)
                 }
             }
-            val events = eventCaptures.getValue(CardEventFaultKind.EVENTS).original
-            val faults = eventCaptures.getValue(CardEventFaultKind.FAULTS).original
+            fun eventProjection(kind: CardEventFaultKind): CardEventFaultFile? =
+                eventCaptures.getValue(kind).original?.let { raw ->
+                    try { CardEventFaultParser.parse(raw); raw } catch (_: ParseError) { null }
+                }
+            val events = eventProjection(CardEventFaultKind.EVENTS)
+            val faults = eventProjection(CardEventFaultKind.FAULTS)
             val eventFaultSignatures = eventCaptures.mapValues { it.value.signature }
             val specificConditions = try {
                 val count = DriverCardDecoder.specificConditionCount(application, generation)
