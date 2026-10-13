@@ -12,17 +12,21 @@ Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX
 
 Rohsnapshots einschließlich Pointer/unbenutzter Bytes vor Parser, auch bei EMPTY/INVALID-Auswertung; nicht versucht/EF abwesend/tatsächlicher Lesefehler getrennt. Nullring mit Nullpointern ist belegte unbenutzte 0504, unbekannter unbenutzter Fahrzeugpointer bleibt INVALID mit Original. Exakte Karte/Anwendung/neue Child-Sitzung; MF am Parent. Keine Migration, Rekonstruktion, Backfill oder jüngerer Ersatz für alte Quellen. Nichtleere Projektionen, Normalisierung und Request-Fingerprints erhalten. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle oder Navigation in diesem Paket.
 
-## Umsetzung 40124 vorhanden: volle CI und eigenes Gerätegate abschließen
+## Abgeschlossen: eigene 0504-/0505-Kartensignaturen
 
-Der [begrenzte Plan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist im offenen Produkt-PR [#73](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/73) umgesetzt: SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, Policy aus frisch gelesenem C101/Card_Sign, eigene verschlüsselte Sitzung/FKs, additive Migration 19→20 und kleine Statusanzeige. Originale bleiben bei Signaturfehler erhalten; alte Imports bleiben unsigned. Aufnahme beweist keine mathematische Gültigkeit/Vertrauenskette.
+Der [begrenzte Plan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist mit **PR #73 / 40124 / Schema 20** umgesetzt und übernommen: Merge `3298b707525a4f33162c835ce31deaf181d2e772`, identischer Tree `3540b26b775d17c9bdc6335549dafbfbd58bcd92` zum Produktkopf `a2e22d882bb707fe1a446c3a24f78387caa892b0`. Eigene volle [CI 38381962283](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38381962283) und exaktes [Paket 38388192092](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38388192092) erfolgreich. Tobi bestätigt sämtliche eigenen Gerätefälle am 13.10.2026 13:57 Europe/Berlin; [genauer Beleg](DEVICE_CONFIRMATION_40124.md).
 
-**Noch keine Produktfreigabe.** Endgültigen Kopf und komplette CI einschließlich SQLCipher/Compose/API36 live prüfen, tatsächliche Fehler beheben. Room-20-Schema ausschließlich aus echtem Compilerlauf übernommen. Danach gezieltes Gerätepaket exakt desselben grünen Kopfs; [konkrete 40124-Abnahme](DEVICE_TEST_40124.md) inklusive Update/Altbestand, vier Kernsignaturen, Wiederöffnung, Quellenwechsel, erneuter Aufnahme und Kartenentnahme. Eigene erforderliche Bestätigung vor Merge; 40123-Bestätigung nicht übertragen. Umsetzung nicht erneut planen/duplizieren; keine neue Folgephase beginnen.
+SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, Policy aus frisch gelesenem C101/Card_Sign, eigene verschlüsselte Sitzung/FKs, additive 19→20 und kleine Statusanzeige. Originale bleiben bei lokalen Signaturfehlern erhalten; Transportverlust verwirft die laufende Gruppe. Alte Imports bleiben ohne neue Signaturen. Room-20-Schema aus echtem Compilerexport; eigene 19→20-Prüfung erhalten. GEN1 beide Signaturen 128 Bytes, GEN2V2 beide 64 Bytes; Aufnahme bleibt ungeprüft.
+
+## Exakt nächster eigener Plan-Meilenstein
+
+Zunächst aktuelle zusätzliche Main-CI und PRs live prüfen; dann den **Pflichtdateiumfang für weitere EF-Signaturen** anhand der Primärmatrix planen. Tatsächliche Originalquellen, Befehlssequenz, konkrete Sitzungsbindung, Fehler-/Abbruchfälle, Tests und neues Gerätegate festlegen. Der Plan erweitert noch keinen Reader, keine DB und keine UI. Nach separater Sicherung Sitzung beenden; Umsetzung ist ein eigener folgender Produkt-Meilenstein. Keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Weitere EF-Signaturen | Erst begrenzte 0504/0505-Aufnahme selbst CI-/geräteprüfen; dann zusätzlichen tatsächlichen EF-Umfang mit gleicher Byte-/Sitzungsbindung planen |
+| Weitere EF-Signaturen | 0504/0505-Aufnahme ist selbst CI-/gerätebestätigt; jetzt zusätzlichen tatsächlichen Pflichtdateiumfang mit gleicher Byte-/Sitzungsbindung planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
 | Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |

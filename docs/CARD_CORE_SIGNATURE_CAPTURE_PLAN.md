@@ -1,6 +1,6 @@
 # Fahrerkarte - begrenzter Plan für echte Signaturaufnahme
 
-**DETAIL-AKTIV, Plan vom 13.10.2026.** Geprüfte Ausgangsbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c`, **40123 / Room-Schema 19**. Produkt- und Main-CI grün; eigene Gerätebestätigung gilt für den unveränderten Snapshot-Produktbaum. Der ursprüngliche Plan-Meilenstein PR #72 änderte ausschließlich Dokumentation. **Umsetzungsstand jetzt: 40124 / Schema 20 in offenem Produkt-PR #73, eigene volle CI und Gerätefreigabe noch offen.** Dieser Text bleibt die Abnahmegrundlage; aktuellen Stand in WORK_STATUS/WORK_HANDOFF prüfen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-AKTIV, Plan vom 13.10.2026.** Geprüfte Ausgangsbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c`, **40123 / Room-Schema 19**. Produkt- und Main-CI grün; eigene Gerätebestätigung gilt für den unveränderten Snapshot-Produktbaum. Der ursprüngliche Plan-Meilenstein PR #72 änderte ausschließlich Dokumentation. **Umsetzungsstand: PR #73 / 40124 / Schema 20 gemergt; eigene volle CI und Geräteabnahme am 13.10.2026 13:57 bestätigt.** [Gerätebeleg](DEVICE_CONFIRMATION_40124.md). Dieser Text bleibt die Abnahmegrundlage; aktuellen Stand in WORK_STATUS/WORK_HANDOFF prüfen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Ziel und erster Dateiumfang
 
@@ -106,6 +106,4 @@ Screenshots/Rückmeldung nur Status, Quelle und Größen; keine privaten Dumps. 
 
 ## Ursprünglicher Einstieg / aktueller Abschluss
 
-Im nächsten getrennten Produkt-Meilenstein: aktuellen main/PR/CI live prüfen, diesen Plan gezielt öffnen, Signaturmodelle/Command-Factories/Sequenztests zuerst implementieren und die unveränderte unsigned Rohaufnahme belegen. Dann Sitzungsbindung/Migration, kleine Abnahmeanzeige und vollständige Tests. Eigene volle CI, exaktes Gerätepaket und obige Gerätebestätigung **vor Merge**. Erst danach Pflichtdateiumfang für weitere EF-Signaturen planen; keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen.
-
-Aktuell ist diese Umsetzung vorhanden; nicht nochmals beginnen. Endgültige volle CI und [eigene 40124-Geräteabnahme](DEVICE_TEST_40124.md) bleiben vor Merge erforderlich.
+Der getrennte Produkt-Meilenstein ist mit PR #73 abgeschlossen: eigene volle CI 38381962283, exaktes Paket 38388192092, ausdrückliche Gerätebestätigung sämtlicher Checklistenpunkte und Merge des unveränderten getesteten Baums. Als nächster eigener Plan-Meilenstein Pflichtdateiumfang für weitere EF-Signaturen festlegen; keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen. Weitere Implementierung erst in einem getrennten eigenen Produkt-Meilenstein mit eigenen Gates.
