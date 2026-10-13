@@ -4,7 +4,7 @@ import android.os.Looper
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import de.fahrerabrechnung.core.design.FahrerTagebuchTheme
@@ -27,6 +27,7 @@ import org.junit.Test
 
 /** The normal UI has one import, explicit own-card confirmation and read-only history. */
 class AutomaticCardImportUiTest {
+    // Use queued composition dispatch: Room transaction notifications may originate on arch_disk_io.
     @get:Rule val compose = createComposeRule()
     private lateinit var db: AppDatabase
     private lateinit var activities: CardActivityImportRepository

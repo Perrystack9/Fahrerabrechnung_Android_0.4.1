@@ -118,7 +118,7 @@ class CardReadBatchInstrumentedTest {
             WHEN NEW.generation = 'GEN2V2' BEGIN SELECT RAISE(ABORT, 'synthetic second signature rollback'); END""")
         val input = CardApplicationReadBatch(listOf(
             CardApplicationAttempt.read(CardApplication.GEN1, signedRead(CardGeneration.GEN1)),
-            CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))))
+            CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))), emptyList())
         try { pipeline.processApplications(input, "signature-group-failed"); fail() } catch (_: IllegalStateException) { }
         assertNull(pipeline.applicationBatch("signature-group-failed"))
         assertEquals(old, pipeline.applicationBatch(old.id))
