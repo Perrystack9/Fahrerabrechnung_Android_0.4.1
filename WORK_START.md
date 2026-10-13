@@ -28,7 +28,7 @@ Basis des Snapshot-PRs: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c7
 
 ## Exakt nächster Schritt
 
-Den **Implementierungs-PR für vollständige 0504-/0505-Originalsnapshots** im Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013` abschließen: exakten endgültigen Kopf und vollständige Android-CI live prüfen, danach 40123 mit dem bestehenden gezielten Geräte-Workflow bauen und die eigene Geräteabnahme einholen. Byteaufnahme, leere Originale und getrennte Roh-/Parserzustände sind implementiert; **noch kein Produktmerge oder Gerätefreigabe**. Details und nächster Arbeitszustand im [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Keine Signatur-/Schreib-/Vertrauensbefehle oder UI-Neukonzeption in diesem Paket.
+Den **vollständig CI-geprüften Snapshot-PR #70** für die Geräteabnahme vorbereiten. Grüner Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031`, [CI 38335263243, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2); 40123 / Schema 19 noch nicht am Gerät bestätigt. Gezieltes Gerätepaket mit bestehendem `device-test.yml`, Workflow-Branch main, diesem `source_sha` und `include_baseline=false` bauen; aktueller GitHub-Zugriff kann den Dispatch nicht auslösen. Danach Paket prüfen/bereitstellen und eigene Gerätebestätigung einholen. **Kein Produktmerge vor dieser Abnahme.** Konkreter Arbeitszustand und Paketparameter in [Übergabe](docs/WORK_HANDOFF.md) und [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Der separate CI-Dokumentationsbranch verändert den grünen Produktkopf nicht.
 
 ## Sitzungsroutine
 

@@ -2,6 +2,17 @@
 
 **40123 / Schema 19, noch nicht am Gerät bestätigt.** Nur ein aus dem exakten endgültigen Produktkopf nach vollständiger grüner Android-CI gebautes Paket verwenden. Bestehendes `device-test.yml` mit diesem `source_sha` und `include_baseline=false` auslösen; stabile Testsignatur und Paket `de.fahrerabrechnung.app.devicetest` beibehalten. 40122 als Update installieren, nicht deinstallieren oder App-Daten löschen. CI-/Budget-/Artefaktregeln bleiben unverändert.
 
+## Verifizierte Paketparameter
+
+[Volle grüne CI, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2) für Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031` bestätigt. Der normale CI-Lauf hat keine Artefakte hochgeladen. Für den bestehenden [gezielten Geräte-Workflow](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/workflows/device-test.yml) auf Branch `main`:
+
+```text
+source_sha: 659f31c510752e5a06bf5f45bf2c93f4aff37031
+include_baseline: false
+```
+
+Noch kein Paketlauf ausgelöst: aktueller GitHub-Zugriff unterstützt keinen Dispatch. Nach Auslösung die erzeugte APK auf diesen Quellkopf, stabile Signatur und Version 40123 prüfen; erst dann bereitstellen. Keine ungeprüfte APK aus einem anderen Kopf verwenden.
+
 ## Konkreter Umfang
 
 - Tätigkeitsdatei 0504 und Fahrzeugdatei 0505 einschließlich originaler Pointer und unbenutzter Bytes einfrieren. Getrennte Gen1-/Gen2-Child-Sitzungen; V2 ist weiterhin das Gen2-AID. MF nur am Parent.

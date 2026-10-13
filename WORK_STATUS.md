@@ -1,6 +1,6 @@
 # FahrerTagebuch - aktueller technischer Zustand
 
-**Bestätigte Produktbasis 40122 / Room-Schema 19. Kandidat 40123 / Schema 19 noch ohne eigene Geräteabnahme.** Snapshot-Arbeit vom 13.10.2026 basiert auf main nach PR #69 (`5b1b9669af8614ec502d027a4c71d94ab81496ad`). Aktuellen main, offene PRs, endgültigen Kopf und dessen CI immer live prüfen. Produktregeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
+**Bestätigte Produktbasis 40122 / Room-Schema 19. Kandidat 40123 / Schema 19 mit vollständiger grüner CI, noch ohne eigene Geräteabnahme.** Snapshot-Arbeit vom 13.10.2026 basiert auf main nach PR #69 (`5b1b9669af8614ec502d027a4c71d94ab81496ad`). Aktuellen main, offene PRs, endgültigen Kopf und dessen CI immer live prüfen. Produktregeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
 ## Übernommen und bestätigt
 
@@ -32,9 +32,13 @@ Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pul
 
 ## Prüfzustand und Sperre
 
-Lokale Projektgrenzen, zehn CI-/Schema-Guard-Tests und Diff-Prüfung bestanden. Gradle lokal vor Build blockiert: Distribution nicht erreichbar (Netzwerk eingeschränkt); keine Android-Tests daraus als ausgeführt behaupten. Neue Unit-, SQLCipher-/Transaktions-/Historien-/Gen1-/Gen2V2- und Compose-Fälle ergänzt. **Volle unveränderte Android-CI für den endgültigen Kopf erforderlich; Live-Ergebnis und PR-Befunde im PR prüfen.**
+**Volle Android-CI erfolgreich:** [38335263243, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2), unveränderter Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031`, Abschluss 13.10.2026 um 08:18:33 Europe/Berlin. Projektgrenzen, alle sieben Gradle-Aufrufe, Unit/Lint/Debug/Internal/DeviceTest, APK-/Signatur-/Updatepaar-/Schemaexportprüfung, komplette SQLCipher-/Compose-Suiten auf API 36 und Abschlussjob bestanden. Kein Filter/Quarantäne, keine gelockerten Prüf- oder Uploadregeln. Erster Versuch war auf Nutzerwunsch abgebrochen, der zweite wurde nach ausdrücklicher Wiederaufnahme gestartet.
 
-40123 noch nicht am Gerät bestätigt oder als geprüfte APK ausgegeben. [Geräteprotokoll](docs/CARD_CORE_SNAPSHOT_DEVICE_TEST.md) vorbereitet. Vor Produktmerge eigener voller CI-Nachweis und erforderliche Gerätebestätigung; bloße Freigabe 40122 reicht nicht.
+PR #70 ist weiterhin Draft und mergefähig; kein Merge vor eigener Gerätebestätigung für 40123. Der erfolgreiche normale CI-Lauf hat wie vorgesehen **keine hochgeladenen Artefakte**. Daraus keine bereits verfügbare APK ableiten.
+
+**Gezieltes Gerätepaket vorbereitet, Auslösung offen:** bestehendes [device-test.yml](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/workflows/device-test.yml), Workflow-Branch main, `source_sha=659f31c510752e5a06bf5f45bf2c93f4aff37031`, `include_baseline=false`. Der verfügbare GitHub-Zugriff unterstützt keinen Workflow-Dispatch; kein Browser-/CI-/Budgetumbau als Ersatz. Sobald gezielter Lauf ausgelöst ist, dessen Paket und exakte Quellbindung prüfen und 40123 bereitstellen. [Geräteprotokoll](docs/CARD_CORE_SNAPSHOT_DEVICE_TEST.md) ist fertig. 40122 bleibt die bestätigte Gerätebasis.
+
+Lokaler Gradle-Download bleibt wegen eingeschränktem Netzwerk unerreichbar; vollständiger Build-/Testnachweis stammt aus GitHub-CI. Der CI-Nachweis wird in separatem Dokumentationsbranch gesichert, ohne den grünen Produktkopf zu ändern oder dessen CI neu auszulösen.
 
 ## Weiter offen
 
