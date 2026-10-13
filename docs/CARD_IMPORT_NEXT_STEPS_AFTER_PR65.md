@@ -1,37 +1,41 @@
 # Kartenimport - nächster überprüfbarer Schritt
 
-**DETAIL-AKTIV.** Einziger Fachtext im Startpfad für die nächste Importarbeit. PR #65 ist abgeschlossen; 40122/Schema 19 und der gemeinsame Import beider Anwendungen werden übernommen. Aktuelle Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-AKTIV.** Einziger Fachtext im Startpfad. PR #65 / 40122 / Schema 19 und der gemeinsame Import beider Anwendungen werden übernommen. Aktuelle Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
-## Zuerst: Pflichtdateien-/Ausnahme-/Signaturmatrix
+## Abgeschlossener Matrix-Meilenstein
 
-Eine kompakte Matrix für **Gen1, Gen2 und Gen2V2** anhand Appendix 7 DDP035, Appendix 2 §3.5.13/3.5.14 und Appendix 11 einschließlich der anwendbaren Änderungen erarbeiten. Keine bloße Liste der bisher implementierten Quellen als vollständigen Downloadumfang ausgeben.
+Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) ist anhand Appendix 2, 7 und 11 einschließlich der relevanten Änderungen erarbeitet: 5 MF-, 14 G1- und 25 G2-/V2-EF-Zeilen, tatsächliche Quellenpfade, bedingte Ausnahmen, Befehlsfolge, Card_Sign-Hash-/Längenwahl, offene Speicher-/Zugriffs-/Vertrauensgrenzen. Kein Reader-/DB-/Hardwarestand dadurch verändert. Weitere Fachtexte nur bei konkretem Bedarf.
 
-| Spalte je Datei/Vorgang | Erforderliche Aussage |
+## Zuerst: vollständige 0504-/0505-Originalsnapshots
+
+Der nächste begrenzte Produkt-PR soll **Driver_Activity_Data 0504 und Vehicles_Used 0505 vollständig und unabhängig vom fachlichen Parsergebnis** erfassen und unveränderlich speichern. Das schafft die notwendige Bytebasis vor echter Signaturaufnahme.
+
+| Befund in 40122 | Erforderlicher begrenzter Schritt |
 |---|---|
-| MF/DF, AID, Generation, EF | Gemeinsame MF-Belege und die beiden konkreten Child-Anwendungen eindeutig zuordnen |
-| Pflicht / bedingte Ausnahme | Primärstelle und Bedingung nennen; ungeprüfte Fälle ausdrücklich offen lassen |
-| Vorhandene Originalquelle | Tatsächlichen Reader-/Speicherpfad und genaue Sitzung referenzieren |
-| Originalsignatur / Hashverfahren | Benötigte Befehlsfolge, Bytebindung und belegte Hash-/Längenwahl benennen |
-| Fehlend / unlesbar / nicht versucht | Unterschiedliche Zustände erhalten; kein Backfill oder jüngerer Quellenersatz |
-| Standarddownload zusätzlich | LastCardDownload in beiden DFs und Teilfehler als getrennten bewusst ausgelösten Downloadpfad berücksichtigen |
+| Pointerwerte plus Ring-/Recordbytes gespeichert, kein eigener vollständiger EF-Blob | Originalbytes einschließlich Pointerbytes erhalten; vorhandene fachliche Projektionen weiter nutzen |
+| Vehicles_Used: gültig leer erhält EMPTY, `usableRead` entfernt Datei aus der Speicherung | Vollständigen vorhandenen Rohbeleg auch ohne Nutzungsrecord an der neuen Sitzung erhalten |
+| Driver_Activity_Data: Parser erwartet gültige Tageskette; unbenutzter Ring nicht als gültig leer abgesichert | Default-/Pointerformat gezielt prüfen; Rohaufnahme erhalten, „gültig leer“ nur bei belegtem Format |
+| Einige Parse-/Lese-/Kapazitätsfälle werden in null/readFailed zusammengefasst | Für diese beiden EFs Rohaufnahme, Parsergebnis und tatsächlichen Leseversuch getrennt belegen |
 
-Abnahme: Jede Aussage hat eine verifizierte Primärstelle und den Abgleich zur tatsächlichen Implementierung; fehlende Inhalte und Verfahren sind sichtbar. Die Matrix selbst verändert keinen Reader, keine DB und keine Hardwarefreigabe. Erst daraus einen begrenzten nächsten Implementierungs-PR ableiten.
+Abnahme:
 
-## Details erst bei Bedarf
+- Eigene Karte, EF, konkrete G1-/G2-Anwendung und neue Child-Sitzung binden; Gen2V2 bleibt im G2-AID, MF nur am Parent.
+- Vollständige Originalbytes, Leer-/Fehler-/Abbruchfälle und exakte spätere Quellenauswahl prüfen. Normalisierte Tätigkeiten/Fahrzeuge bleiben fachliche Darstellung, kein Ersatz für Originale.
+- Bestehende Daten, Requests/Fingerprints und Historie erhalten; keine rückwirkende Rekonstruktion/Backfill oder jüngerer Quellenersatz.
+- Rohbeleg mit Parsefehler nicht als fachlich vollständig/gültig präsentieren; unbekannt und nicht versucht nicht erraten. Atomare Persistenz erhalten.
+- Nötige additive Migration mit echtem Compiler-Schemaexport; vollständige unveränderte Android-CI und **eigene erforderliche Gerätebestätigung vor Merge**. Keine Produktfreigabe aus dem Dokumentations-PR.
 
-- [Vorhandene Quellenabdeckung](CARD_SOURCE_COVERAGE.md): Ausgangsinventar, keine vollständige Pflichtdateienliste.
-- [Signatur-/Vertrauens- und Downloadgrenzen](CARD_IMPORT_SECURITY_RESEARCH.md): bisheriger Primärabgleich; benötigte Originaltexte erneut verfügbar machen und konkret prüfen.
-- [Gen1-Forschungsbeleg](CARD_GEN1_PUBLIC_CERTIFICATE_AUDIT.md): echte öffentliche Mathematik, keine App-Kartenverifikation.
+Keine Hash-/Signatur-/Schreibbefehle, kein Vertrauensmodul, Standardexport oder UI-Umbau in diesem Paket. Weitere EF-Zustände erst in einem separat begrenzten Folgepaket behandeln.
 
-## Nachgelagerte getrennte Pakete und Sperren
+## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
+| Echte Signaturaufnahme | Nach vollständiger Bytebasis: DDP038, TCS118-131 und Appendix 11 umsetzen; P2=00, Card_Sign-Hash und echte Länge; eigene Byte-/Abbruch-/CI-/Geräteprüfung |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
-| Echte Signaturaufnahme | Reset-/AID-/EF-Wechsel, Fehler/Abbruch und Appendix-11-Regeln belegen; Originalbytes, Signatur, Anwendung und Sitzung unveränderlich zusammenbinden; eigene CI/Geräteprüfung |
-| ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Ausstellerkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
-| Standarddownload-Datum | Normaler Import bleibt lesend; Schreiben erst in getrenntem geprüften Downloadpfad |
-| ATR/INFO `7F66` | Vollständiges ISO-7816-4:2013-Primärformat §12.7.1 fehlt; bis dahin äußere Struktur und Originalbytes, keine geratenen Puffergrößen oder Transportänderung |
-| Geschützte `0540` | Legitimer SC5-/Authentisierungs-/Secure-Messaging-Weg fehlt; keine blinden Leseversuche, Schlüssel oder VU-Identität erfinden |
+| ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
+| Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |
+| ATR/INFO `7F66` | Vollständiges ISO-7816-4:2013-Primärformat §12.7.1 fehlt; Rohbytes/äußere Struktur erhalten |
+| Geschützte `0540` | Legitimer SC5-/Secure-Messaging-Weg fehlt; keine blinden Leseversuche, Schlüssel oder VU-Identität |
 
-Relevante Produkt-/Reader-/Parser-/Persistenz-/Schema-/Sicherheitsänderungen benötigen den eigenen vollständigen Prüf- und erforderlichen Gerätestand. Keine neue Produktarbeit im Dokumentations-Cleanup.
+Weitere Primär-/Forschungsdetails erst für das betreffende Paket öffnen. Produktbereiche ausschließlich nach CURRENT_RULES.md; keine Spesen-/Lohn-/Heimatstandort-/Abrechnungsphase.
