@@ -208,25 +208,5 @@ class CardImportCoordinator(
         mutableState.value = CardImportUiState(phase, token, card, mutableState.value.lastRun, failure)
     }
 
-    private fun freeze(result: CardReadResult) = result.copy(
-        activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
-        vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
-        controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
-        events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
-        faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
-        specificConditions = result.specificConditions?.let { CardSpecificConditionFile(it.generation, it.recordCount, it.bytes) },
-        gnssPositions = result.gnssPositions?.let { CardGnssAccumulatedDrivingFile(it.generation, it.recordCount, it.bytes) },
-        gnssAuthentication = result.gnssAuthentication?.let { CardGnssAuthenticationFile(it.generation, it.bytes) },
-        places = result.places?.let { CardPlacesFile(it.generation, it.recordCount, it.bytes) },
-        placesAuthentication = result.placesAuthentication?.let { CardPlacesAuthenticationFile(it.generation, it.bytes) },
-        borderCrossings = result.borderCrossings?.let { CardBorderCrossingsFile(it.generation, it.recordCount, it.bytes) },
-        loadUnload = result.loadUnload?.let { CardLoadUnloadFile(it.generation, it.recordCount, it.bytes) },
-        loadType = result.loadType?.let { CardLoadTypeFile(it.generation, it.recordCount, it.bytes) },
-        vehicleUnits = result.vehicleUnits?.let { CardVehicleUnitsFile(it.generation, it.recordCount, it.bytes) },
-        metadata = result.metadata.mapValues { (_, value) -> value.copy(file = value.file?.let { CardMetadataFile(it.kind, it.generation, it.bytes) }) },
-        certificates = result.certificates.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCertificateFile(it.kind, it.generation, it.bytes) }) },
-        identitySources = result.identitySources.mapValues { (_, value) -> value.copy(file = value.file?.let { CardIdentitySourceFile(it.kind, it.generation, it.bytes) }) },
-        directory = result.directory?.let { CardDirectoryFile(it.generation, it.bytes) },
-        communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) },
-    )
+    private fun freeze(result: CardReadResult) = freezeApplicationRead(result)
 }

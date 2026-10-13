@@ -52,6 +52,8 @@ class CardImportCoordinatorTest {
     }
 
     @Test fun allNewSourceMapsAreFrozenBeforeSuspendingForCardReview() = runBlocking {
+        val originals = mutableMapOf(CardCoreEf.ACTIVITY to CardCoreRead(CardCoreEf.ACTIVITY,
+            CardCoreReadStatus.COMPLETE, CardCoreSnapshot(CardCoreEf.ACTIVITY, CardGeneration.GEN2V2, ByteArray(68))))
         val certificates = mutableMapOf(CardCertificateKind.CARD to CardCertificateRead(
             CardCertificateFile(CardCertificateKind.CARD, CardGeneration.GEN2V2, ByteArray(204))))
         val identities = mutableMapOf(CardIdentitySourceKind.APPLICATION to CardIdentitySourceRead(
@@ -61,10 +63,13 @@ class CardImportCoordinatorTest {
         val reached = CompletableDeferred<Unit>(); val proceed = CompletableDeferred<Unit>()
         var saved = false
         val c = CardImportCoordinator({ result().copy(certificates = certificates, identitySources = identities,
-            communication = communication, directory = CardDirectoryFile(CardGeneration.GEN2V2, ByteArray(20))) }, {
+            communication = communication, coreReads = originals,
+            directory = CardDirectoryFile(CardGeneration.GEN2V2, ByteArray(20))) }, {
             reached.complete(Unit); proceed.await(); CardBindingReview(CardBindingKind.KNOWN_CARD, "Fixture")
         }, { error("Known card") }, { read, id ->
             assertEquals(setOf(CardCertificateKind.CARD), read.certificates.keys)
+            assertEquals(setOf(CardCoreEf.ACTIVITY), read.coreReads.keys)
+            assertArrayEquals(ByteArray(68), read.coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.bytes)
             assertFalse(read.certificates.getValue(CardCertificateKind.CARD).readFailed)
             assertEquals(setOf(CardIdentitySourceKind.APPLICATION), read.identitySources.keys)
             assertEquals(setOf(CardCommunicationKind.EXTENDED_LENGTH), read.communication.keys)
@@ -75,7 +80,7 @@ class CardImportCoordinatorTest {
         })
         val job = launch { c.observe(CardReaderObservation.Present(1)) }
         reached.await()
-        certificates.clear(); certificates[CardCertificateKind.LINK] = CardCertificateRead(readFailed = true)
+        originals.clear(); certificates.clear(); certificates[CardCertificateKind.LINK] = CardCertificateRead(readFailed = true)
         identities.clear(); communication.clear()
         proceed.complete(Unit); job.join(); assertTrue(saved)
     }
