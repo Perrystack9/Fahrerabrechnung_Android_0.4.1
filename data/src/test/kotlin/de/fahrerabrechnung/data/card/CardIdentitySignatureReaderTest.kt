@@ -77,6 +77,15 @@ class CardIdentitySignatureReaderTest {
                         assertTrue(result.original.bytes.any { it != 0.toByte() })
                     }
     }
+    @Test fun unprovenDiscoveryCannotAcquireAPositiveSignatureFromALaterCompleteRead() = runBlocking {
+        val raw = IdentitySourceFixtures.identity()
+        val script = Script(raw)
+        val result = CardIdentitySignatureReader.read(ApduSession(script), CardIdentitySourceKind.IDENTIFICATION,
+            DriverCardDecoder.identity(raw, CardGeneration.GEN1), raw.copyOf(), null, discoveryComplete = false) { throw it }
+        assertEquals(CardSignatureStatus.NOT_ATTEMPTED, result.signature.status)
+        assertEquals(CardSignatureReason.BOUNDARY_UNPROVEN, result.signature.reason)
+        assertNotNull(result.original); assertFalse(script.commands.any { it.ins == 0x2A })
+    }
     @Test fun everyBootstrapDifferenceAbortsRatherThanBecomingAToleratedReceipt() = runBlocking {
         for (kind in CardIdentitySourceKind.entries) {
             val baseline = raw(kind, CardGeneration.GEN2V2)

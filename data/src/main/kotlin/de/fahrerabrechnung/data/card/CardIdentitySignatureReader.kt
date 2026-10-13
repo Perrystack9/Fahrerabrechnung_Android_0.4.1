@@ -5,7 +5,8 @@ internal object CardIdentitySignatureReader {
     data class Capture(val original: CardIdentitySourceFile?, val signature: CardIdentitySignature)
 
     suspend fun read(session: ApduSession, kind: CardIdentitySourceKind, card: DriverCard,
-        discovery: ByteArray?, certificate: CardCertificateFile?, onFailure: (ReaderException) -> Unit): Capture {
+        discovery: ByteArray?, certificate: CardCertificateFile?, discoveryComplete: Boolean = true,
+        onFailure: (ReaderException) -> Unit): Capture {
         val generation = card.generation
         require(kind.supports(generation))
         val bootstrap = discovery?.copyOf()
@@ -25,6 +26,7 @@ internal object CardIdentitySignatureReader {
         } catch (_: ParseError) { false }
         val unavailable = when {
             !supported -> CardSignatureReason.UNSUPPORTED_FORMAT
+            !discoveryComplete -> CardSignatureReason.BOUNDARY_UNPROVEN
             policy == null -> CardSignatureReason.SIGNING_CERTIFICATE_UNAVAILABLE
             else -> null
         }

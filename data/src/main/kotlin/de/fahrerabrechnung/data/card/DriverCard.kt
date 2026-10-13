@@ -410,7 +410,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                     CardIdentitySourceKind.IDENTIFICATION -> identityBytes
                     CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
                 }
-                CardIdentitySignatureReader.read(session, kind, identity, discovery, signingCertificate) {
+                CardIdentitySignatureReader.read(session, kind, identity, discovery, signingCertificate,
+                    discoveryComplete = discoverySources[kind]?.file != null) {
                     fileFailure(it, abortTransport = true)
                 }
             }

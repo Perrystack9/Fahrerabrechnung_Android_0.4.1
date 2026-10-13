@@ -142,6 +142,27 @@ class CardReadBatchInstrumentedTest {
         for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.identitySignatures.isEmpty())
         assertEquals(10, count("card_identity_signature_receipts"))
     }
+    @Test fun identitySignaturesAloneCannotChangeAnyExistingSingleOrBatchRequest() = runBlocking {
+        val signed = signedIdentityRead(CardGeneration.GEN1)
+        val unsigned = signed.copy(identitySignatures = emptyMap())
+        imports.bind(unsigned.card!!, true)
+        val old = pipeline.process(unsigned, "identity-single-old")
+        val request = db.cardImportRunDao().run(old.id)
+        rejected { pipeline.process(signed, old.id) }
+        rejected { imports.save(signed, old.id, CardImportSelection.ALL_AVAILABLE) }
+        assertEquals(request, db.cardImportRunDao().run(old.id))
+        assertTrue(imports.get(old.id)!!.identitySignatures.isEmpty())
+        assertEquals(old, pipeline.process(unsigned.copy(identitySignatures = emptyMap()), old.id))
+        val signedBatch = identityBatch()
+        val oldBatch = CardApplicationReadBatch(signedBatch.applications.map {
+            CardApplicationAttempt.read(it.application, it.result!!.copy(identitySignatures = emptyMap()))
+        }, signedBatch.masterFiles)
+        val saved = pipeline.processApplications(oldBatch, "identity-batch-old")
+        rejected { pipeline.processApplications(signedBatch, saved.id) }
+        assertBatchContent(saved, pipeline.processApplications(oldBatch, saved.id))
+        assertEquals(0, count("card_identity_signature_receipts"))
+        assertEquals(3, count("import_sessions"))
+    }
     @Test fun secondIdentityReceiptFailureRollsBackNewBindingParentBothChildrenAndAllKindsOfReceipt() = runBlocking {
         db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_identity_g2 BEFORE INSERT ON card_identity_signature_receipts
             WHEN NEW.generation = 'GEN2V2' BEGIN SELECT RAISE(ABORT, 'synthetic identity second-child failure'); END""")

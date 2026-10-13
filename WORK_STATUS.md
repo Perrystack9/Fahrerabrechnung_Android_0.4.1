@@ -1,40 +1,28 @@
 # FahrerTagebuch - aktueller technischer Zustand
 
-**40124 / Room-Schema 20, eigener Geräteumfang bestätigt.** [PR #73](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/73) gemergt: `3298b707525a4f33162c835ce31deaf181d2e772`. Identischer Tree `3540b26b775d17c9bdc6335549dafbfbd58bcd92` zum vollständig CI- und gerätegeprüften Produktkopf `a2e22d882bb707fe1a446c3a24f78387caa892b0`. Aktuellen main, offene PRs und CI stets live prüfen; Produktregeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
+**main: bestätigtes 40124 / Schema 20. Produktkandidat: 40125 / Schema 21 in offenem Draft-[PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76).** Kein 40125-Merge und keine neue Gerätebestätigung. Git/main/PR-Kopf und CI live prüfen. Regeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
-## Implementiert und übernommen
+## Übernommene Basis
 
-- Automatischer Vordergrund-Import, USB-Freigabe, eigene Profil-/Kartenbindung und Folge-/Ersatzkartenregeln; SQLCipher/Keystore, additive Migrationen und exakte Importhistorie.
-- Gemeinsamer Gen1-/Gen2-Lesevorgang mit atomarem Parent/Child, MF am Parent und ausdrücklicher Anwendungswahl. V2 bleibt im Gen2-AID; beide Tätigkeitsbestände nicht addieren.
-- Vollständige unabhängige 0504-/0505-READ-BINARY-Originale einschließlich Pointer/unbenutzter Bytes, defensive Kopien vor Parser und vor wartender Kartenbestätigung; auch bei EMPTY/INVALID erhalten. Fehlend/nicht versucht/Lesefehler getrennt, keine Teilbytes oder Teilgruppe bei Transportverlust.
-- Echte neue 0504-/0505-Kartensignaturen in beiden Anwendungen: SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, ohne fremde APDU dazwischen. Card_Sign-Policy und tatsächliche Länge, serialisierte powered Reader-Sessions. Lokaler Signaturfehler erhält unsigned Rohdaten; Transportverlust verwirft die laufende Gruppe.
-- Unveränderliche sitzungseigene Receipts mit FKs zur gleichen Original-/Zertifikatsquelle, eigener Fingerprint und additive Migration 19→20. Alte Imports, Quellen und Request-Fingerprints ohne Signatur-Backfill oder jüngeren Ersatz.
-- Gespeicherte Vorschau zeigt Originalgrößen, Signaturstatus/-länge/Grund und ausdrücklich „aufgenommen · ungeprüft“. Quellenwahl und Altarchiv setzen die Anzeige passend zurück. Bestehende neutrale Tätigkeits-/Fahrzeug-/GNSS-/Orts-/Ereignis-/Störungsquellen erhalten; keine neue Navigation.
+40124 aus PR #73: Merge `3298b707525a4f33162c835ce31deaf181d2e772`, identischer Produktbaum `3540b26b775d17c9bdc6335549dafbfbd58bcd92` zum CI-/Gerätekopf `a2e22d882bb707fe1a446c3a24f78387caa892b0`. Volle CI 38381962283 und zusätzliche Produkt-Main-CI 38394108412 erfolgreich. Exaktes Gerätepaket 38388192092; Tobi bestätigt am 13.10.2026 13:57 Europe/Berlin sämtliche eigenen Checklistenpunkte. GEN1-Originale 13780/6202, Signaturen 128/128; GEN2V2-Originale 13780/9602, Signaturen 64/64 Bytes, alle ungeprüft. [Gerätebeleg](docs/DEVICE_CONFIRMATION_40124.md).
 
-## Nachweise und Umfang
+Automatischer eigener Vordergrund-Import, Profil-/Kartenbindung, vollständige Core-Originale, vier neue Core-Signaturen, unabhängige Anwendungen, MF am Parent, exakte Historie/Fingerprints und atomare SQLCipher-/Keystore-Speicherung bleiben erhalten. Additive 19→20 und deren eigenständige vollständige Migrationsprüfung bleiben bestehen. Room-20-Export unverändert: SHA256 `34a9253cb546255ce9c12bef2d9808933e1af8a8dca1c27a783eb7322e6ab6e6`.
 
-| Beleg | Ergebnis |
-|---|---|
-| Vollständige Produkt-CI | [38381962283](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38381962283), erfolgreich für `a2e22d882bb707fe1a446c3a24f78387caa892b0` |
-| Gerätepaket | [38388192092](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38388192092), erfolgreich für denselben Quellkopf, `include_baseline=false` |
-| Gerätebestätigung | 13.10.2026 13:57 Europe/Berlin, Tobi: sämtliche Checklistenpunkte problemfrei |
-| Originalgrößen | GEN1 13780/6202 Bytes; GEN2V2 13780/9602 Bytes |
-| Aufgenommene Signaturen | GEN1 Tätigkeiten/Fahrzeuge jeweils 128 Bytes; GEN2V2 jeweils 64 Bytes; alle vier ungeprüft |
-| Produktmerge | `3298b707525a4f33162c835ce31deaf181d2e772`, identischer vollständiger Tree zum geprüften Produktkopf |
-| Zusätzliche Produkt-Main-CI | [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412), vollständig erfolgreich einschließlich API36 und Abschlussgate; am Einstieg live geprüft |
+## Umsetzung im 40125-Kandidaten
 
-Alle sieben Gradle-Schritte, Unit/Lint/APK-/Signatur-/Updatepaar-/Schemaexportprüfung, komplette SQLCipher-/Compose-Suiten auf API 36 und Abschlussjob bestanden. Eigene verschlüsselte 19→20- und 18→20-Migrationsprüfungen, Gruppenrollback, exakte Historie, negative Signatur-/Readerfälle und Inhaltsvergleiche ohne Objektidentitätsfehler erhalten. Keine Assertions abgeschwächt, Tests gefiltert/quarantänisiert oder Workflow-/Upload-/Budgetregeln geändert. Normale erfolgreiche CI ohne Artefaktupload; Paket separat gezielt erzeugt.
+- Neue eigene 0501-/0520-Signaturaufnahmen in GEN1 und GEN2(V2), 0525 nur auf V2: bei üblicher G1+G2V2-Karte fünf zusätzliche Belege neben den vier Core-Belegen.
+- Zertifikate vor HASH eingefroren; deterministische SELECT/HASH/frische vollständige READ/strikte EOF/SIGN-Sequenzen. Card_Sign-Policy und echte Le wie 40124. Eigene Gruppen-Konsistenzverletzung bei abweichenden Bootstrap-Bytes; weder Teilgruppe noch Bestätigungs-Override.
+- Unabhängig bewiesene Vorablesung bleibt unsigned Fallback. Neue Originale ersetzen sie nur aus passender vollständiger Capture. Lokale Hash-/Signierstörungen erhalten vollständige unsigned Bytes; fehlgeschlagene neue READs haben im Receipt keinen Original-FK. Unbewiesene Erstgrenze erlaubt keinen späteren positiven Beleg.
+- Separate `card_identity_signature_receipts` mit exakten Child-/Karten-/Original-/Zertifikats-FKs und eigenem Fingerprint; Core-Enum, Core-Tabelle und alter Receipt-Digest unverändert. Kein Backfill oder jüngerer Quellenersatz; leere neue Map verändert alte Requests nicht.
+- Additive 20→21 in verschlüsselter Produktion registriert. Alte Exporte 1–20 unverändert; neuer Export ausschließlich aus echtem Compiler. Historische vollständige 15-Byte-Quellen bleiben lesbar; positive 15-Byte-0501 nur reine GEN2, keine behauptete 17-Byte-V2-Aufnahme.
+- Bestehende Fahrerkarten-Details zeigen Originalgröße, ungeprüfte Signaturlänge/Status/Grund. Alte Imports: Signatur in diesem Import nicht aufgenommen. GEN1/reine GEN2 erhalten keine erfundene V2-Quelle; Nummer nach Quellen-/Sitzungswechsel wieder verborgen. Keine neue Navigation oder technische Bedienknöpfe.
 
-Room-20-Export ausschließlich aus echtem Compilerlauf übernommen, SHA256 `34a9253cb546255ce9c12bef2d9808933e1af8a8dca1c27a783eb7322e6ab6e6`; endgültiger Build- und Emulatorjob bestätigen ihn. Schema 19 unverändert. Lokaler Gradle-Download netzbedingt blockiert; Android-Nachweis aus GitHub-CI.
+## Prüfung und nächster konkreter Schritt
 
-Tobi bestätigt Update/Altbestand, eigenen Import, vier Signaturanzeigen, plausible fachliche Daten, Wiederöffnung ohne Leser, historische Anwendungen/Sitzungen und Altarchiv soweit vorhanden, erneute Aufnahme ohne doppelte Tätigkeiten und Kartenentnahme mit erfolgreicher Wiederaufnahme. Eigenes Android-Gerät und bisheriger USB-Leser; genaue Modelle nicht erneut genannt. [Genauer Gerätebeleg](docs/DEVICE_CONFIRMATION_40124.md). Reine GEN2-Karten, andere Hardware, alle seltenen APDU-Abbruchphasen und alle Kurven nicht aus diesem Geräteumfang ableiten.
+Reader-/Format-/Policy-/Grenz-/Konsistenz-/Transport-/Freeze-Prüfungen sowie SQLCipher-Herkunfts-/Tamper-/Dedup-/Gruppenrollback-/20→21- und erhaltene 18-/19→21-Migrationsprüfungen, Request-Wiederholungen und Compose-Abnahme ergänzt. Lokale Projektgrenzen und zehn CI-Routing-/Schema-Guard-Regressionen bestehen. Lokaler Gradle-Download weiterhin netzbedingt blockiert; Android-Nachweis ausschließlich aus echter GitHub-CI.
 
-Die vorherige 40123-/Schema-19-Basis aus PR #70 bleibt erhalten; ihr eigener damaliger Umfang steht in [DEVICE_CONFIRMATION_40123.md](docs/DEVICE_CONFIRMATION_40123.md). Wiederholungs-/Abbruchfälle waren damals nicht separat bestätigt und sind erst für den jetzigen 40124-Umfang ausdrücklich bestätigt.
+**Maßgeblich sind die Checks des endgültigen PR-76-Kopfs:** alle sieben Gradle-Aufrufe, Unit/Lint/APK-/Signatur-/Updatepaar-/Compiler-Schemaprüfung, komplette SQLCipher-/Compose-Suiten API36 und Abschlussgate. Keine Filter/Quarantäne oder Workflow-/Upload-/Budgetänderung. Normale erfolgreiche CI ohne Artefakte.
 
-## Exakt nächste Arbeit und offene Grenzen
+Erst nach vollständiger grüner CI exaktes Paket über `device-test.yml` auf main mit vollem Produkt-`source_sha` aus PR #76 und `include_baseline=false` erzeugen. API/CLI-Dispatch fehlt im aktuellen Work-Zugang; Start über GitHub durch Tobi erforderlich, kein Browser-Ausweichen. Infrastruktur-/APK-Kopf getrennt prüfen. [40125-Checkliste](docs/DEVICE_TEST_40125.md) vorbereitet, noch nicht durchgeführt. Eigene ausdrückliche neue Gerätebestätigung vor Merge.
 
-Zusätzliche volle Produkt-Main-CI 38394108412 und Docs-Main-CI 38395123764 am Einstieg erfolgreich geprüft. Der nächste begrenzte [Identifikations-Signaturplan](docs/CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist ausgearbeitet: 0501/0520 in beiden Anwendungen, 0525 bedingt auf V2, neue post-HASH-READs mit bytegenauem Bootstrap-Vergleich, eigene sitzungseigene Receipts und additive 20→21. [40125-Gerätecheckliste](docs/DEVICE_TEST_40125.md) vorbereitet, nicht durchgeführt. Planbasis main 71eac71; Primärmatrix um aktuellen 40124-Signaturstand berichtigt. Keine App-/DB-/Schema-/Workflowänderung in diesem Docs-Meilenstein.
-
-**Nächste Arbeit:** aktuellen main/PR/CI live prüfen, Plan gezielt öffnen und **40125 / Schema 21** als eigenen Produkt-Meilenstein umsetzen; Modelle/Befehls-/Konsistenztests zuerst, dann Aufnahme/atomare Speicherung/Migration/kleine Anzeige. Eigene vollständige CI, exaktes Paket und erforderliche neue Gerätebestätigung vor Merge. Die App bleibt bis zur Umsetzung 40124 / Schema 20.
-
-Offen bleiben mathematische Signaturprüfung, produktive ERCA/MSCA/Card_Sign-Vertrauenskette, vollständige Kartenabdeckung, Originalquellenexport und DDD-/Standarddownload. `7F66` braucht ISO-Primärformat, `0540` legitimen SC5-Weg. Automatischer Import bleibt ohne LastCardDownload-Schreiben. Neue Oberfläche/Einrichtung/Onboarding/GNSS-Karte später; keine Abrechnungs-/Heimatstandortphase. [Aktuelle Übergabe](docs/WORK_HANDOFF.md).
+Offen: mathematische Prüfung/Trust, volle Kartenabdeckung, Export/DDD/Standarddownload und Schreibpfad. Keine gleichzeitige Folgephase; `7F66`/`0540` und Produktgrenzen unverändert. [Übergabe](docs/WORK_HANDOFF.md).

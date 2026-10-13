@@ -163,6 +163,43 @@ class CardApplicationReaderTest {
             assertEquals(1, fake.offs); assertEquals(1, fake.closes)
         }
     }
+    @Test fun lossInEveryNewSequencePhaseAbortsBothApisAndRecoveryStartsANewPoweredCapture() = runBlocking {
+        for (single in listOf(false, true)) for (phase in CardSignaturePhase.entries) {
+            val delegate = DualApplicationTransport(signing = true)
+            var file = 0; var active = false; var failOnce = true; var secondHashed = false
+            val transport = object : CardReaderTransport by delegate {
+                override suspend fun exchange(apdu: ByteArray): ByteArray {
+                    val ins = apdu[1].toInt() and 255
+                    if (ins == 0xA4 && apdu[2].toInt() == 0) {
+                        file = (apdu[5].toInt() and 255) * 256 + (apdu[6].toInt() and 255)
+                        active = false
+                    }
+                    if (delegate.selected == CardApplication.GEN2 && ins == 0x2A && apdu[2].toInt() and 255 == 0x90) secondHashed = true
+                    val target = delegate.selected == CardApplication.GEN2 && file == DriverCardFiles.IDENTIFICATION
+                    if (target && ins == 0x2A && apdu[2].toInt() and 255 == 0x90) active = true
+                    val current = when {
+                        target && ins == 0xA4 -> CardSignaturePhase.SELECT
+                        target && active && ins == 0x2A && apdu[2].toInt() and 255 == 0x90 -> CardSignaturePhase.HASH
+                        target && active && ins == 0x2A -> CardSignaturePhase.SIGN
+                        target && active && ins == 0xB0 && apdu[3].toInt() and 255 == 143 -> CardSignaturePhase.BOUNDARY
+                        target && active && ins == 0xB0 -> CardSignaturePhase.READ
+                        else -> null
+                    }
+                    // SELECT failure is limited to the new second selection, after discovery/certificates.
+                    val freshSelect = current != CardSignaturePhase.SELECT || secondHashed
+                    if (failOnce && current == phase && freshSelect) { failOnce = false; throw ReaderException(ReaderFailure.CARD_REMOVED) }
+                    return delegate.exchange(apdu)
+                }
+            }
+            val reader = DriverCardReader(transport)
+            try { if (single) reader.read() else reader.readApplications(); fail() }
+            catch (error: ReaderException) { assertEquals(ReaderFailure.CARD_REMOVED, error.failure) }
+            assertEquals(1, delegate.offs); assertEquals(1, delegate.closes)
+            if (single) assertEquals(3, reader.read().identitySignatures.size)
+            else assertEquals(5, reader.readApplications().applications.sumOf { it.result!!.identitySignatures.size })
+            assertEquals(2, delegate.powers); assertEquals(2, delegate.offs)
+        }
+    }
     @Test fun nonV2ApplicationNeverAttemptsV2SignatureOrInventsItsSource() = runBlocking {
         val fake = DualApplicationTransport(generations = mapOf(CardApplication.GEN1 to CardGeneration.GEN1,
             CardApplication.GEN2 to CardGeneration.GEN2), signing = true)
