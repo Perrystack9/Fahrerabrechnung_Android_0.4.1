@@ -24,11 +24,11 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Keine vollständige Kartenabdeckung, echte Downloadsignaturen, produktive Vertrauenskette oder DDD-/Standarddownload behaupten. Neue relevante Produktänderungen benötigen ihre eigene CI und erforderliche Gerätebestätigung. Laufende CI und offene PRs immer aktuell abfragen; frühere grüne Läufe geben spätere Änderungen nicht frei.
 
-Basis nach Produktmerge PR #70: `e783ad364b1692d8633c5e4b8846112adb256be6`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
+Geprüfte Planbasis: main `632e0dfa020adb1d190d76b9591b046c0332f58c` nach Dokumentations-PR #71. Produkt-Main-CI 38360671532 und Docs-Main-CI 38361629250 erfolgreich. Das sind Ausgangsbelege, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
 
 ## Exakt nächster Schritt
 
-Aktuellen main und dessen CI prüfen; dann den **eigenständigen begrenzten Signaturaufnahme-PR planen**. Die vollständige Bytebasis ist akzeptiert. Primärmatrix und [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) geben Hash-/Längen-/Befehlsgrenzen vor; eigene neue CI-/Geräte-/Abbruch-/Historienprüfung festlegen. Keine nachträglichen Signaturen an Altquellen, kein gleichzeitiger Vertrauens-/Standardexport-/Schreib-/UI-Umbau. Den abgeschlossenen Snapshot-Meilenstein in dieser Sitzung nur sichern, keine größere Folgeimplementierung beginnen.
+Aktuellen main, PRs und CI prüfen; dann den **getrennten Produkt-PR für echte 0504-/0505-Signaturaufnahme umsetzen**. Der [konkrete Plan](docs/CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist fertig: beide Anwendungen, P2=00, Card_Sign-Policy, vollständige neue Byteaufnahme, eigene Sitzungsbelege und additive Schema 19→20-Migration. Zuerst Modelle/Befehle/Sequenztests, danach Persistenz und kleine Abnahmeanzeige. Eigene volle CI und neues Gerätegate vor Merge; keine Altquellen-Signaturen, Trust-/DDD-/Schreib-/UI-Erweiterung. Der aktuelle Meilenstein liefert nur diesen Plan und endet nach Sicherung; Implementierung erst im nächsten getrennten Meilenstein.
 
 ## Sitzungsroutine
 
