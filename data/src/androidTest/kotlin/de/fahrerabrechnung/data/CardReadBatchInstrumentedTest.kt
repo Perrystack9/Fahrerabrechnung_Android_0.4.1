@@ -108,8 +108,8 @@ class CardReadBatchInstrumentedTest {
         assertEquals(4, db.cardCoreSignatureDao().receipts(saved.applications[0].run!!.sessionId!!).size +
             db.cardCoreSignatureDao().receipts(saved.applications[1].run!!.sessionId!!).size)
         db.close(); open()
-        assertEquals(saved, pipeline.applicationBatch(saved.id))
-        assertEquals(saved, pipeline.processApplications(input, saved.id))
+        assertBatchContent(saved, pipeline.applicationBatch(saved.id))
+        assertBatchContent(saved, pipeline.processApplications(input, saved.id))
     }
 
     @Test fun secondChildSignatureFailureRollsBackTheEntireNewGroup() = runBlocking {
@@ -121,7 +121,7 @@ class CardReadBatchInstrumentedTest {
             CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))), emptyList())
         try { pipeline.processApplications(input, "signature-group-failed"); fail() } catch (_: IllegalStateException) { }
         assertNull(pipeline.applicationBatch("signature-group-failed"))
-        assertEquals(old, pipeline.applicationBatch(old.id))
+        assertBatchContent(old, pipeline.applicationBatch(old.id))
         db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM card_core_signature_receipts").use {
             it.moveToFirst(); assertEquals(0, it.getInt(0))
         }
@@ -175,6 +175,19 @@ class CardReadBatchInstrumentedTest {
         for (table in listOf("profiles", "driver_cards", "card_read_batches", "card_application_attempts",
             "card_import_runs", "import_sessions", "driver_import_sources", "card_metadata_imports"))
             assertEquals(table, 0, count(table))
+    }
+
+    private fun assertBatchContent(expected: SavedCardReadBatch, actual: SavedCardReadBatch?) {
+        assertNotNull(actual)
+        val saved = checkNotNull(actual)
+        // Master-file wrappers intentionally use object identity; compare their exact contents separately.
+        assertEquals(expected.copy(masterFiles = emptyList()), saved.copy(masterFiles = emptyList()))
+        assertEquals(expected.masterFiles.size, saved.masterFiles.size)
+        for ((before, after) in expected.masterFiles.zip(saved.masterFiles)) {
+            assertEquals(before.fileId, after.fileId)
+            assertEquals(before.readFailed, after.readFailed)
+            assertArrayEquals(before.bytes, after.bytes)
+        }
     }
 
     private fun count(table: String) = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM $table").use { it.moveToFirst(); it.getInt(0) }
@@ -302,18 +315,21 @@ class CardReadBatchInstrumentedTest {
         val bytes = imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes
         // Remove only the new, empty additive relations to recreate the real encrypted v18 schema.
         db.openHelper.writableDatabase.apply {
-            for (table in listOf("card_batch_master_files", "card_application_attempts", "card_master_sources", "card_read_batches"))
+            for (table in listOf("card_core_signature_receipts", "card_batch_master_files", "card_application_attempts", "card_master_sources", "card_read_batches"))
                 execSQL("DROP TABLE $table")
             execSQL("DROP INDEX index_card_import_runs_id_driverCardId")
             execSQL("DROP INDEX index_driver_import_sources_sessionId_driverCardId")
+            execSQL("DROP INDEX index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId")
             execSQL("DELETE FROM room_master_table")
             version = 18
         }
         db.close(); open()
-        assertEquals(19, db.openHelper.writableDatabase.version)
+        assertEquals(20, db.openHelper.writableDatabase.version)
         assertEquals(old, pipeline.process(oldRead, "before-upgrade"))
         assertArrayEquals(bytes, imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes)
         assertEquals(0, count("card_read_batches")); assertEquals(0, count("card_application_attempts"))
+        assertEquals(0, count("card_core_signature_receipts"))
+        assertTrue(imports.get(old.sessionId!!)!!.coreSignatures.isEmpty())
         assertNull(imports.get(old.sessionId!!)!!.batchId)
         pipeline.processApplications(batch(), "after-upgrade")
         assertEquals(1, count("card_read_batches")); assertEquals(2, pipeline.history().size)
