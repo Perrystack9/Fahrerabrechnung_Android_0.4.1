@@ -170,7 +170,7 @@ class CardApplicationReaderTest {
             val transport = object : CardReaderTransport by delegate {
                 override suspend fun exchange(apdu: ByteArray): ByteArray {
                     val ins = apdu[1].toInt() and 255
-                    if (ins == 0xA4 && apdu[2].toInt() == 0) {
+                    if (ins == 0xA4 && apdu[2].toInt() == 2) {
                         file = (apdu[5].toInt() and 255) * 256 + (apdu[6].toInt() and 255)
                         active = false
                     }
@@ -192,11 +192,14 @@ class CardApplicationReaderTest {
                 }
             }
             val reader = DriverCardReader(transport)
-            try { if (single) reader.read() else reader.readApplications(); fail() }
+            try { if (single) reader.read() else reader.readApplications(); fail("Expected removal at $phase, single=$single") }
             catch (error: ReaderException) { assertEquals(ReaderFailure.CARD_REMOVED, error.failure) }
+            assertFalse("Failure injection at $phase, single=$single", failOnce)
             assertEquals(1, delegate.offs); assertEquals(1, delegate.closes)
-            if (single) assertEquals(3, reader.read().identitySignatures.size)
-            else assertEquals(5, reader.readApplications().applications.sumOf { it.result!!.identitySignatures.size })
+            val recovered = if (single) reader.read().identitySignatures.values.toList()
+                else reader.readApplications().applications.flatMap { it.result!!.identitySignatures.values }
+            assertEquals(if (single) 3 else 5, recovered.size)
+            assertTrue(recovered.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
             assertEquals(2, delegate.powers); assertEquals(2, delegate.offs)
         }
     }
