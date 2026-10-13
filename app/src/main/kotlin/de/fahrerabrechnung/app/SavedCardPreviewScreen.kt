@@ -22,7 +22,8 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
                                     driverCardId: String? = null,
                                     events: SavedCardEventFault? = null, faults: SavedCardEventFault? = null,
                                     specificConditions: SavedCardSpecificConditions? = null,
-                                    receiptId: String? = null, applicationGeneration: CardGeneration? = null) {
+                                    receiptId: String? = null, applicationGeneration: CardGeneration? = null,
+                                    coreSnapshots: Map<CardCoreEf, SavedCardCoreSnapshot> = emptyMap()) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
     var selected by remember(activity, receiptId) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
@@ -33,6 +34,15 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
         if (archive) Text("Diese Dateivorschau ordnet ältere Daten keinem Fahrerprofil zu.")
         if (!archive && onOpenDetails != null)
             OutlinedButton(onClick = onOpenDetails) { Text("Fahrerkarten-Details") }
+        if (!archive) SectionCard {
+            Text("Gespeicherte Originaldateien", style = MaterialTheme.typography.titleMedium)
+            CardCoreEf.entries.forEach { kind ->
+                val label = if (kind == CardCoreEf.ACTIVITY) "Tätigkeiten" else "Fahrzeuge"
+                val original = coreSnapshots[kind]?.snapshot
+                Text(if (original == null) "$label: keine Originaldatei in dieser Übernahme"
+                    else "$label: ${original.bytes.size} Bytes · ${original.generation.name}")
+            }
+        }
         if (uses.isNotEmpty()) SectionCard {
             Text("Fahrzeugnutzungen", style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = { onOpenVehicles(null, null, null) }) { Text("Fahrzeughistorie") }

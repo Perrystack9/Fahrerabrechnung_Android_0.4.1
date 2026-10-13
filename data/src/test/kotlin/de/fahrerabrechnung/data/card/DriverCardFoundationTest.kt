@@ -1483,6 +1483,47 @@ class DriverCardFoundationTest {
         }
     }
 
+    @Test fun fullCoreOriginalsAreCapturedBeforePointerOrRecordParsingForAllGenerations() = runBlocking {
+        for (generation in supportedGenerations) {
+            val fake = CardFixtureTransport(generation, identityFixture(), invalidActivityPointer = true)
+            val read = DriverCardReader(fake).read()
+            assertNull(read.activity)
+            val activity = read.coreReads.getValue(CardCoreEf.ACTIVITY)
+            assertEquals(CardCoreReadStatus.COMPLETE, activity.status)
+            assertEquals(20, activity.snapshot!!.bytes.size)
+            assertEquals(16, activity.snapshot!!.bytes[3].toInt())
+            val vehicle = read.coreReads.getValue(CardCoreEf.VEHICLES)
+            assertEquals(CardCoreReadStatus.COMPLETE, vehicle.status)
+            assertEquals(generation, vehicle.snapshot!!.generation)
+            assertEquals(if (generation == CardGeneration.GEN1) 64 else 98, vehicle.snapshot!!.bytes.size)
+            assertTrue(fake.instructions.all { it in setOf(0xA4, 0xB0) })
+        }
+    }
+
+    @Test fun originalCaptureDistinguishesMissingCapacityAbsentFileAndReadAbort() = runBlocking {
+        val capacity = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), invalidActivityLength = true)
+        val notAttempted = DriverCardReader(capacity).read().coreReads.getValue(CardCoreEf.ACTIVITY)
+        assertEquals(CardCoreReadStatus.NOT_ATTEMPTED, notAttempted.status)
+        assertFalse(capacity.commandOrder.any { it == (0xA4 to DriverCardFiles.DRIVER_ACTIVITY) })
+        val absent = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2, identityFixture(),
+            missingFiles = setOf(DriverCardFiles.DRIVER_ACTIVITY))).read().coreReads.getValue(CardCoreEf.ACTIVITY)
+        assertEquals(CardCoreReadStatus.ABSENT, absent.status); assertNull(absent.snapshot)
+        val truncated = DriverCardReader(CardFixtureTransport(CardGeneration.GEN2, identityFixture(),
+            truncateActivity = true)).read().coreReads.getValue(CardCoreEf.ACTIVITY)
+        assertEquals(CardCoreReadStatus.READ_FAILED, truncated.status); assertNull(truncated.snapshot)
+        assertEquals(ReaderFailure.MALFORMED_RESPONSE, truncated.failure)
+    }
+
+    @Test fun fullOriginalCaptureRetainsPointerAndEveryShortChunkAcrossBinaryOffsets() = runBlocking {
+        val original = ByteArray(604) { (it % 127).toByte() }.also { it[0] = 0; it[1] = 0; it[2] = 0; it[3] = 4 }
+        val application = ByteArray(17).also { it[0] = 1; it[1] = 1; it[5] = 2; it[6] = 88; it[8] = 2 }
+        val fake = CardFixtureTransport(CardGeneration.GEN2, identityFixture(), applicationBytes = application,
+            coreBytes = mapOf(DriverCardFiles.DRIVER_ACTIVITY to original), coreChunkLimit = 7)
+        val read = DriverCardReader(fake).read()
+        assertArrayEquals(original, read.coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.bytes)
+        assertNotNull(read.vehicles); assertTrue(fake.closed)
+    }
+
     private class CardFixtureTransport(private val generation: CardGeneration,
                                        private val identification: ByteArray,
                                        private val truncateActivity: Boolean = false,
@@ -1545,7 +1586,9 @@ class DriverCardFoundationTest {
                                        private val directoryEndReply: ByteArray? = null,
                                        private val communicationBytes: Map<CardCommunicationKind, ByteArray> = emptyMap(),
                                        private val communicationFailures: Map<CardCommunicationKind, Exception> = emptyMap(),
-                                       private val communicationAtr: ByteArray = byteArrayOf(0x3B, 0)) : CardReaderTransport {
+                                       private val communicationAtr: ByteArray = byteArrayOf(0x3B, 0),
+                                       private val coreBytes: Map<Int, ByteArray> = emptyMap(),
+                                       private val coreChunkLimit: Int = 256) : CardReaderTransport {
         var closed = false
         val readFiles = mutableSetOf<Int>()
         val loadReads = mutableListOf<Pair<Int, Int>>()
@@ -1632,10 +1675,10 @@ class DriverCardFoundationTest {
                     DriverCardFiles.LOAD_TYPE -> loadTypeBytes ?: ByteArray(1682)
                     DriverCardFiles.VEHICLE_UNITS -> vehicleUnitBytes ?: ByteArray(2 + vehicleUnitCount * 10)
                     DriverCardFiles.APPLICATION_V2 -> extensionBytes ?: ByteArray(10).also { it[1] = 8; it[2] = 4; it[3] = 96; it[4] = 6; it[5] = 88; it[6] = 1; it[7] = 80; it[8] = 12 }
-                    DriverCardFiles.DRIVER_ACTIVITY -> ByteArray(if (truncateActivity) 19 else 20).also {
+                    DriverCardFiles.DRIVER_ACTIVITY -> coreBytes[file] ?: ByteArray(if (truncateActivity) 19 else 20).also {
                         it[3] = if (invalidActivityPointer) 16 else 4
                     }
-                    DriverCardFiles.VEHICLES_USED -> ByteArray(2 + 2 *
+                    DriverCardFiles.VEHICLES_USED -> coreBytes[file] ?: ByteArray(2 + 2 *
                         (if (generation == CardGeneration.GEN1) 31 else 48))
                     DriverCardFiles.CONTROL_ACTIVITY -> controlBytes
                     CardEventFaultKind.EVENTS.fileId -> eventBytes ?: ByteArray(CardEventFaultParser.fileLength(CardEventFaultKind.EVENTS, generation, 12))
@@ -1688,6 +1731,7 @@ class DriverCardFoundationTest {
                 if (offset >= data.size) return byteArrayOf(0x6B, 0)
                 if (certificateKind != null && offset + length > data.size) return byteArrayOf(0x67, 0)
                 val actualLength = when {
+                    file in setOf(DriverCardFiles.DRIVER_ACTIVITY, DriverCardFiles.VEHICLES_USED) -> minOf(length, coreChunkLimit)
                     file == CardDirectoryReader.FILE_ID -> minOf(length, directoryChunkLimit)
                     file == DriverCardFiles.APPLICATION && offset >= 15 -> minOf(length, applicationTailChunkLimit)
                     file == DriverCardFiles.VEHICLE_UNITS -> minOf(length, vehicleUnitChunkLimit)

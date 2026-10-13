@@ -48,7 +48,8 @@ class CardApplicationAttempt private constructor(
                     it.loadUnload?.generation, it.loadType?.generation, it.vehicleUnits?.generation) +
                     it.metadata.values.mapNotNull { source -> source.file?.generation } +
                     it.certificates.values.mapNotNull { source -> source.file?.generation } +
-                    it.identitySources.values.mapNotNull { source -> source.file?.generation }
+                    it.identitySources.values.mapNotNull { source -> source.file?.generation } +
+                    it.coreReads.values.mapNotNull { source -> source.snapshot?.generation }
                 require(generations.all { generation -> generation == it.generation })
             } else require(it.card == null)
         }
@@ -96,6 +97,10 @@ class CardApplicationReadBatch(attempts: List<CardApplicationAttempt>, master: L
 }
 
 internal fun freezeApplicationRead(result: CardReadResult) = result.copy(
+        coreReads = result.coreReads.mapValues { (kind, value) ->
+            require(kind == value.kind)
+            value.copy(snapshot = value.snapshot?.let { CardCoreSnapshot(kind, it.generation, it.bytes) })
+        }.toMap(),
         activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
         vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
         controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },

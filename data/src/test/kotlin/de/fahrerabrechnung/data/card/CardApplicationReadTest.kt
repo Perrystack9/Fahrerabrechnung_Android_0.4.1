@@ -116,6 +116,13 @@ class CardApplicationReaderTest {
         assertEquals(12, g1.activity!!.dailyRecords.size); assertEquals(16, g2.activity!!.dailyRecords.size)
         assertEquals(1, g1.vehicles!!.recordCount); assertEquals(2, g2.vehicles!!.recordCount)
         assertEquals(31, g1.vehicles!!.records.size); assertEquals(96, g2.vehicles!!.records.size)
+        for (read in listOf(g1, g2)) {
+            assertEquals(CardCoreEf.entries.toSet(), read.coreReads.keys)
+            assertTrue(read.coreReads.values.all { it.status == CardCoreReadStatus.COMPLETE })
+            assertEquals(read.generation, read.coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.generation)
+            assertEquals(read.activity!!.dailyRecords.size + 4,
+                read.coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.bytes.size)
+        }
         assertEquals(10, g1.identitySources.getValue(CardIdentitySourceKind.APPLICATION).file!!.bytes.size)
         assertEquals(17, g2.identitySources.getValue(CardIdentitySourceKind.APPLICATION).file!!.bytes.size)
         assertEquals(194, g1.certificates.getValue(CardCertificateKind.CARD).file!!.bytes.size)

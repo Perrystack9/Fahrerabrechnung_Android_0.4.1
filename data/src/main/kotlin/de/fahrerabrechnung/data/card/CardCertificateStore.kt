@@ -26,6 +26,7 @@ internal class CardCertificateStore(private val dao: CardMetadataDao) {
     suspend fun load(cardId: String, sessionId: String): Map<CardCertificateKind, SavedCardCertificate> {
         val result = mutableMapOf<CardCertificateKind, SavedCardCertificate>()
         for (source in dao.sources(sessionId)) {
+            if (source.kind in CardCoreEf.entries.map { it.storageKind }) continue
             if (source.kind in CardCommunicationKind.entries.map { it.storageKind } ||
                 source.kind == CardDirectoryStore.STORAGE_KIND || source.kind in CardMetadataKind.entries.map { it.name } ||
                 source.kind in CardIdentitySourceKind.entries.map { it.storageKind }) continue

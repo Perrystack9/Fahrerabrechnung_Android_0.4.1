@@ -48,7 +48,9 @@ class CardReadBatchInstrumentedTest {
     }.toByteArray()
     private fun read(generation: CardGeneration, raw: ByteArray = identity()): CardReadResult {
         val card = DriverCardDecoder.identity(raw, generation)
-        val application = ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also { it[0] = 1; it[1] = 1 }
+        val application = ByteArray(if (generation == CardGeneration.GEN1) 10 else 15).also {
+            it[0] = 1; it[1] = 1; if (generation == CardGeneration.GEN2V2) it[2] = 1
+        }
         return CardReadResult(CardRecognition.DRIVER, generation, card,
             identitySources = mapOf(
                 CardIdentitySourceKind.IDENTIFICATION to CardIdentitySourceRead(CardIdentitySourceFile(CardIdentitySourceKind.IDENTIFICATION, generation, raw), false),
@@ -58,6 +60,56 @@ class CardReadBatchInstrumentedTest {
                       master: ByteArray = ByteArray(8)) = CardApplicationReadBatch(listOf(
         CardApplicationAttempt.read(CardApplication.GEN1, read(CardGeneration.GEN1)), second),
         listOf(CardMasterFileCapture(0x0005, master, false)))
+    @Test fun coreOriginalsBindToExactGen1AndGen2V2ChildrenWithoutMfOrHistoricalBackfill() = runBlocking {
+        val old = pipeline.processApplications(batch(), "core-group-old", true)
+        fun value(generation: CardGeneration): CardReadResult {
+            val raw = read(generation)
+            val width = if (generation == CardGeneration.GEN1) 31 else 48
+            return raw.copy(coreReads = mapOf(
+                CardCoreEf.ACTIVITY to CardCoreRead(CardCoreEf.ACTIVITY, CardCoreReadStatus.COMPLETE,
+                    CardCoreSnapshot(CardCoreEf.ACTIVITY, generation, ByteArray(68))),
+                CardCoreEf.VEHICLES to CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.COMPLETE,
+                    CardCoreSnapshot(CardCoreEf.VEHICLES, generation, ByteArray(2 + width)))))
+        }
+        val input = CardApplicationReadBatch(listOf(
+            CardApplicationAttempt.read(CardApplication.GEN1, value(CardGeneration.GEN1)),
+            CardApplicationAttempt.read(CardApplication.GEN2, value(CardGeneration.GEN2V2))),
+            listOf(CardMasterFileCapture(0x0005, ByteArray(8), false)))
+        val saved = pipeline.processApplications(input, "core-group-new")
+        val sources = saved.applications.map { application ->
+            val imported = imports.get(application.run!!.sessionId!!)!!
+            assertEquals(saved.driverCardId, imported.driverCardId)
+            assertEquals(saved.id, imported.batchId); assertEquals(application.application, imported.application)
+            assertEquals(2, imported.coreSnapshots.size)
+            assertTrue(imported.coreSnapshots.values.all { it.snapshot.generation == application.generation })
+            assertTrue(db.cardMetadataDao().sources(imported.id).all { it.kind != "IC_IDENTIFICATION" })
+            imported.coreSnapshots.getValue(CardCoreEf.ACTIVITY).id
+        }
+        assertNotEquals(sources[0], sources[1])
+        assertTrue(old.applications.all { imports.get(it.run!!.sessionId!!)!!.coreSnapshots.isEmpty() })
+        assertEquals(1, saved.masterFiles.size); assertEquals(1, count("card_master_sources"))
+        assertEquals(saved.id, imports.latest()!!.batchId)
+        db.close(); open()
+        for (application in saved.applications) assertEquals(2, imports.get(application.run!!.sessionId!!)!!.coreSnapshots.size)
+        assertTrue(old.applications.all { imports.get(it.run!!.sessionId!!)!!.coreSnapshots.isEmpty() })
+    }
+
+    @Test fun coreFailureInSecondChildRollsBackParentBindingAndFirstChildOriginals() = runBlocking {
+        fun value(generation: CardGeneration) = read(generation).copy(coreReads = mapOf(
+            CardCoreEf.ACTIVITY to CardCoreRead(CardCoreEf.ACTIVITY, CardCoreReadStatus.COMPLETE,
+                CardCoreSnapshot(CardCoreEf.ACTIVITY, generation, ByteArray(68)))))
+        val input = CardApplicationReadBatch(listOf(
+            CardApplicationAttempt.read(CardApplication.GEN1, value(CardGeneration.GEN1)),
+            CardApplicationAttempt.read(CardApplication.GEN2, value(CardGeneration.GEN2))), emptyList())
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER fail_core_g2 BEFORE INSERT ON card_metadata_imports
+            WHEN NEW.generation = 'GEN2' AND NEW.kind = 'ORIGINAL_EF_0504'
+            BEGIN SELECT RAISE(ABORT, 'synthetic core second-child failure'); END""")
+        rejected { pipeline.processApplications(input, "core-group-rollback", true) }
+        for (table in listOf("profiles", "driver_cards", "card_read_batches", "card_application_attempts",
+            "card_import_runs", "import_sessions", "driver_import_sources", "card_metadata_imports"))
+            assertEquals(table, 0, count(table))
+    }
+
     private fun count(table: String) = db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM $table").use { it.moveToFirst(); it.getInt(0) }
     private suspend fun rejected(action: suspend () -> Unit) {
         try { action() } catch (_: Exception) { return }; fail("Expected rejection")

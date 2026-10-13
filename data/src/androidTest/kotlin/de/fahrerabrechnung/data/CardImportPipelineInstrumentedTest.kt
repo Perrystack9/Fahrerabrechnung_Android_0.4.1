@@ -64,6 +64,155 @@ class CardImportPipelineInstrumentedTest {
         return CardReadResult(CardRecognition.DRIVER, card.generation, card, CardActivityFile(0, 0, day),
             CardVehiclesFile(0, 1, card.generation, record))
     }
+    /** Synthetic complete EF inputs; this helper is never used to backfill stored sources. */
+    private fun coreRead(activityBytes: ByteArray? = null, vehicleBytes: ByteArray? = null): CardReadResult {
+        val value = read()
+        val activity = activityBytes ?: ByteBuffer.allocate(18).putShort(0).putShort(0)
+            .put(value.activity!!.dailyRecords).array()
+        val vehicle = vehicleBytes ?: ByteBuffer.allocate(50).putShort(0).put(value.vehicles!!.records).array()
+        return value.copy(coreReads = mapOf(
+            CardCoreEf.ACTIVITY to CardCoreRead(CardCoreEf.ACTIVITY, CardCoreReadStatus.COMPLETE,
+                CardCoreSnapshot(CardCoreEf.ACTIVITY, value.generation, activity)),
+            CardCoreEf.VEHICLES to CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.COMPLETE,
+                CardCoreSnapshot(CardCoreEf.VEHICLES, value.generation, vehicle))))
+    }
+
+    @Test fun coreOriginalsPersistPointersUnusedTailAndSeparateProjectionsAcrossReopen() = runBlocking {
+        imports.bind(card(), true)
+        val input = coreRead()
+        val run = pipeline.process(input, "core-exact")
+        assertEquals(CardImportRunStatus.SAVED, run.status); assertEquals(4, run.newSourceCount)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.ACTIVITY_ORIGINAL).status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.VEHICLES_ORIGINAL).status)
+        val before = imports.get(run.id)!!
+        assertEquals(1, before.activity!!.days.size); assertEquals(1, before.vehicles!!.uses.size)
+        assertEquals(2, before.coreSnapshots.size)
+        for (kind in CardCoreEf.entries) assertArrayEquals(input.coreReads.getValue(kind).snapshot!!.bytes,
+            before.coreSnapshots.getValue(kind).snapshot.bytes)
+        before.coreSnapshots.getValue(CardCoreEf.ACTIVITY).snapshot.bytes.fill(1)
+        db.close(); open()
+        for (kind in CardCoreEf.entries) assertArrayEquals(input.coreReads.getValue(kind).snapshot!!.bytes,
+            imports.get(run.id)!!.coreSnapshots.getValue(kind).snapshot.bytes)
+        assertEquals(run, pipeline.history().single())
+    }
+
+    @Test fun bothUnusedFilesKeepOriginalsWithoutInventingAnyActivityOrVehicle() = runBlocking {
+        imports.bind(card(), true)
+        val vehicles = ByteArray(50).also { it[17] = 1; it[18] = 32 }
+        val run = pipeline.process(coreRead(ByteArray(68), vehicles), "core-unused")
+        assertEquals(CardImportRunStatus.SAVED, run.status); assertEquals(2, run.newSourceCount)
+        assertEquals(CardImportFileStatus.EMPTY, run.file(CardImportFileKind.ACTIVITIES).status)
+        assertEquals(CardImportFileStatus.EMPTY, run.file(CardImportFileKind.VEHICLES).status)
+        val saved = imports.get(run.id)!!
+        assertNull(saved.activity); assertNull(saved.vehicles); assertNull(saved.pair)
+        assertArrayEquals(vehicles, saved.coreSnapshots.getValue(CardCoreEf.VEHICLES).snapshot.bytes)
+        assertEquals(0, count("driver_activity_days")); assertEquals(0, count("driver_vehicle_uses"))
+        assertEquals(0, pipeline.process(coreRead(ByteArray(68), vehicles), "core-unused-again").newSourceCount)
+    }
+
+    @Test fun coreParseFailureRetainsCompleteRawBytesWithoutUsableProjectionOrBorrowedHistory() = runBlocking {
+        imports.bind(card(), true); pipeline.process(coreRead(), "core-valid-old")
+        val pointer = ByteArray(68).also { it[0] = -1; it[1] = -1 }
+        val record = ByteArray(50).also { it[15] = 1 } // nonempty timing prefix, invalid record
+        val run = pipeline.process(coreRead(pointer, record), "core-invalid")
+        assertEquals(CardImportRunStatus.PARTIAL, run.status)
+        assertEquals(CardImportFileStatus.INVALID, run.file(CardImportFileKind.ACTIVITIES).status)
+        assertEquals(CardImportFileStatus.INVALID, run.file(CardImportFileKind.VEHICLES).status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.ACTIVITY_ORIGINAL).status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.VEHICLES_ORIGINAL).status)
+        val saved = imports.get(run.id)!!
+        assertNull(saved.activity); assertNull(saved.vehicles); assertNull(saved.pair)
+        assertArrayEquals(pointer, saved.coreSnapshots.getValue(CardCoreEf.ACTIVITY).snapshot.bytes)
+        assertArrayEquals(record, saved.coreSnapshots.getValue(CardCoreEf.VEHICLES).snapshot.bytes)
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+    }
+
+    @Test fun unknownUnusedVehiclePointerKeepsOriginalButIsNotReportedAsValidEmpty() = runBlocking {
+        imports.bind(card(), true)
+        val bytes = ByteArray(98).also { it[1] = 1 }
+        val run = pipeline.process(coreRead(ByteArray(68), bytes), "core-unknown-unused-pointer")
+        assertEquals(CardImportFileStatus.INVALID, run.file(CardImportFileKind.VEHICLES).status)
+        assertEquals(CardImportFileStatus.STORED, run.file(CardImportFileKind.VEHICLES_ORIGINAL).status)
+        assertArrayEquals(bytes, imports.get(run.id)!!.coreSnapshots.getValue(CardCoreEf.VEHICLES).snapshot.bytes)
+        assertNull(imports.get(run.id)!!.vehicles)
+    }
+
+    @Test fun coreReceiptsDistinguishCapacityAbsenceAndFailedAttemptWithoutRawBackfill() = runBlocking {
+        imports.bind(card(), true); pipeline.process(coreRead(), "core-before-failures")
+        for (capture in listOf(CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.NOT_ATTEMPTED),
+            CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.ABSENT),
+            CardCoreRead(CardCoreEf.VEHICLES, CardCoreReadStatus.READ_FAILED, failure = ReaderFailure.TIMEOUT))) {
+            val input = coreRead().copy(coreReads = coreRead().coreReads + (CardCoreEf.VEHICLES to capture))
+            val run = pipeline.process(input, "core-${capture.status}")
+            assertEquals(capture.result().status, run.file(CardImportFileKind.VEHICLES_ORIGINAL).status)
+            assertEquals(capture.result().failureCode, run.file(CardImportFileKind.VEHICLES_ORIGINAL).failureCode)
+            assertEquals(capture.result().status, run.file(CardImportFileKind.VEHICLES).status)
+            val saved = imports.get(run.id)!!
+            assertNotNull(saved.activity); assertNull(saved.vehicles)
+            assertEquals(setOf(CardCoreEf.ACTIVITY), saved.coreSnapshots.keys)
+        }
+    }
+
+    @Test fun newCoreReadsNeverReconstructOlderSourcesOrChangeTheirRequestFingerprints() = runBlocking {
+        imports.bind(card(), true)
+        val oldInput = read()
+        val old = pipeline.process(oldInput, "core-legacy")
+        val fingerprint = db.cardImportRunDao().run(old.id)!!.requestFingerprint
+        val next = pipeline.process(coreRead(), "core-new")
+        assertEquals(2, next.newSourceCount)
+        assertTrue(imports.get(old.id)!!.coreSnapshots.isEmpty())
+        assertEquals(fingerprint, db.cardImportRunDao().run(old.id)!!.requestFingerprint)
+        assertEquals(old, pipeline.process(oldInput, old.id))
+        rejected<IllegalArgumentException> { pipeline.process(coreRead(), old.id) }
+        assertEquals(old.files, pipeline.history().single { it.id == old.id }.files)
+        db.close(); open()
+        assertTrue(imports.get(old.id)!!.coreSnapshots.isEmpty())
+        assertEquals(2, imports.get(next.id)!!.coreSnapshots.size)
+    }
+
+    @Test fun unusedCoreByteChangesAreIndependentSourcesAndCannotReuseExistingRequest() = runBlocking {
+        imports.bind(card(), true)
+        val padded = coreRead().coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.bytes.copyOf(68)
+        val firstInput = coreRead(activityBytes = padded)
+        val first = pipeline.process(firstInput, "core-tail-first")
+        val bytes = firstInput.coreReads.getValue(CardCoreEf.ACTIVITY).snapshot!!.bytes.also { it[67] = 42 }
+        val nextInput = coreRead(activityBytes = bytes)
+        rejected<IllegalArgumentException> { pipeline.process(nextInput, first.id) }
+        val next = pipeline.process(nextInput, "core-tail-next")
+        assertEquals(2, next.newSourceCount) // original and legacy ring projection; normalized day is unchanged
+        assertEquals(1, count("driver_activity_days")); assertEquals(1, count("driver_vehicle_uses"))
+        assertEquals(0, imports.get(first.id)!!.coreSnapshots.getValue(CardCoreEf.ACTIVITY).snapshot.bytes[67].toInt())
+        assertEquals(42, imports.get(next.id)!!.coreSnapshots.getValue(CardCoreEf.ACTIVITY).snapshot.bytes[67].toInt())
+    }
+
+    @Test fun failingCoreStorageRollsBackOriginalsProjectionsAndSessionTogether() = runBlocking {
+        imports.bind(card(), true)
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_core BEFORE INSERT ON card_metadata_imports
+            WHEN NEW.kind = 'ORIGINAL_EF_0505' BEGIN SELECT RAISE(ABORT, 'synthetic core rollback'); END""")
+        val run = pipeline.process(coreRead(), "core-rollback")
+        assertEquals(CardImportRunStatus.FAILED, run.status); assertEquals("STORAGE_FAILED", run.failureCode)
+        assertNull(run.sessionId); assertNull(imports.get(run.id))
+        assertTrue(run.files.all { it.status == CardImportFileStatus.NOT_STORED })
+        for (table in listOf("card_metadata_imports", "driver_import_metadata_sources", "import_sessions",
+            "card_activity_imports", "card_vehicle_imports", "driver_activity_days", "driver_vehicle_uses"))
+            assertEquals(table, 0, count(table))
+    }
+
+    @Test fun coreCardKindForeignKeysAndOriginalFingerprintRejectWrongOrCorruptSources() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(read(), "core-fk-old")
+        val fresh = pipeline.process(coreRead(), "core-fk-current")
+        val activity = imports.get(fresh.id)!!.coreSnapshots.getValue(CardCoreEf.ACTIVITY)
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id,
+            CardCoreEf.VEHICLES.storageKind, activity.driverCardId, activity.id)) }
+        rejected<Exception> { db.cardMetadataDao().insertSource(DriverImportMetadataSourceEntity(old.id,
+            CardCoreEf.ACTIVITY.storageKind, "wrong-card", activity.id)) }
+        val corrupt = activity.snapshot.bytes.also { it[it.lastIndex] = 42 }
+        db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(corrupt, activity.id))
+        rejected<Exception> { imports.get(fresh.id) }
+        assertTrue(imports.get(old.id)!!.coreSnapshots.isEmpty())
+    }
+
     private fun CardImportRun.file(kind: CardImportFileKind) = files.single { it.kind == kind }
     private suspend inline fun <reified T : Throwable> rejected(noinline action: suspend () -> Unit) {
         try { action() } catch (e: Throwable) { if (e is T) return; throw e }

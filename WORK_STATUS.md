@@ -1,38 +1,43 @@
 # FahrerTagebuch - aktueller technischer Zustand
 
-**Testversion 40122 / Room-Schema 19.** Matrix-Basis am 13.10.2026: main nach gemergtem PR #68 (`6190efa38762749a165922820b75ef61b998135f`), sauberer Arbeitsbaum, keine offenen PRs beim Start. Aktuellen main, PRs und CI beim Start live prüfen; diese Basis ist kein dauerhaft aktueller HEAD. Produktregeln stehen in [CURRENT_RULES.md](docs/CURRENT_RULES.md).
+**Bestätigte Produktbasis 40122 / Room-Schema 19. Kandidat 40123 / Schema 19 noch ohne eigene Geräteabnahme.** Snapshot-Arbeit vom 13.10.2026 basiert auf main nach PR #69 (`5b1b9669af8614ec502d027a4c71d94ab81496ad`). Aktuellen main, offene PRs, endgültigen Kopf und dessen CI immer live prüfen. Produktregeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
-## Implementiert
+## Übernommen und bestätigt
 
-- Automatischer Vordergrund-Import mit USB-Freigabe, eigener Profil-/Kartenbindung und Folge-/Ersatzkartenregeln.
-- Unabhängige Originalquellen, SQLCipher/Keystore, additive Migrationen und exakte Quellen-/Importhistorie ohne jüngere Ergänzungen.
-- Gemeinsamer Gen1-/Gen2-Lesevorgang mit atomaren Parent-/Child-Belegen, gemeinsamen MF-Quellen und ausdrücklicher Anwendungswahl. Keine Addition der Tätigkeitsbestände.
-- Tätigkeitsparser, Tagesprojektion und neutrale Quellzeit-Zusammenfassungen, Fahrzeugvorschau sowie unterstützte Kontroll-/Ereignis-/Störungs-/Sonderbedingungs-, GNSS-/Orts-/Grenz-/Lade-/VU-/Metadaten-/Zertifikats-/MF-Quellen.
-- Öffentliche Zertifikatsmathematik begrenzt untersucht; daraus entsteht keine App-Verifikation einer Benutzerquelle.
+- Automatischer Vordergrund-Import, USB-Freigabe, eigene Profil-/Kartenbindung und Folge-/Ersatzkartenregeln.
+- SQLCipher/Keystore, additive Migrationen und exakte Quellen-/Importhistorie ohne jüngere Ergänzungen.
+- Gemeinsamer Gen1-/Gen2-Lesevorgang mit atomaren Parent-/Child-Belegen, MF am Parent und ausdrücklicher Anwendungswahl. Tätigkeitsbestände nicht addieren.
+- Bestehende neutrale Tätigkeits-/Fahrzeug-/GNSS-/Orts-/Ereignis-/Störungs-/Sonderbedingungs- und weitere unterstützte Quellen samt Normalisierung erhalten.
 
-## Nachweis und Grenze
-
-| Beleg | Bestätigter Stand |
+| Nachweis | Bestätigter Umfang |
 |---|---|
-| Geprüfter Produktkopf PR #65 | `62fc0d299f87b26109a98ff11e94c9202a27ae01` |
+| Produktkopf PR #65 | `62fc0d299f87b26109a98ff11e94c9202a27ae01` |
 | Unveränderter Produktmerge | `21edb80ce46c0202204bb74d83486c634b3c90c6` |
-| Gerätebestätigung | 12.10.2026, 18:57 Europe/Berlin, exakt 40122 |
+| Gerät | 12.10.2026, 18:57 Europe/Berlin, exakt 40122 |
 | Vollständige Produkt-CI | [38243540172, Versuch 4](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38243540172/attempts/4), erfolgreich |
-| Vollständige PR-67-CI | [38296221786](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38296221786), erfolgreich |
-| Geprüfte Main-CI nach PR #68 | [38330641632](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38330641632), erfolgreich; Dokumentationspfad, keine neue Produktprüfung |
+| Matrix-PR #69 | Kopf `04abc29047dd227265c9d8e3821740dc1b6e0efe`, [38332587203](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38332587203), erfolgreich; reine Dokumentationsprüfung |
 
-Tobi bestätigte Installation, Erhalt alter Daten, sichtbare Gen1-/Gen2-Zustände mit passenden Details und Wiederöffnung ohne Leser. Keine zusätzlichen Einsteck-/Deduplizierungs-/Neustart-/Fremdkarten- oder Einzelmessfälle ableiten. Originalnachweis bei konkretem Bedarf: [DEVICE_CONFIRMATION_40122.md](docs/DEVICE_CONFIRMATION_40122.md).
+Gerätebestätigung 40122 deckt Installation, Altbestand, Gen1-/Gen2-Zustände/Details und Wiederöffnung ohne Leser ab. Weitere Fälle nicht ableiten; [Originalnachweis](docs/DEVICE_CONFIRMATION_40122.md) nur bei Bedarf. Keine frühere Freigabe bestätigt den neuen Snapshot-Pfad.
 
-## Noch nicht implementiert
+## Neuer begrenzter Kandidat
 
-Vollständige Kartenabdeckung, echte Downloadsignaturen, produktive Zertifikats-/Vertrauenskette und vollständiger DDD-/Standarddownload sind offen. `7F66`-Inhaltsdecoder benötigt belegtes Primärformat; für geschützte `0540` fehlt ein legitimer SC5-Zugriffsweg.
+Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013`, Testversion **40123**. Noch nicht gemergt.
 
-**Neu belegte Speichergrenze:** 0504/0505 speichern Pointerwerte und Ring-/Recordbytes statt eines unabhängigen vollständigen EF-Blobs. Gültig leere Fahrzeugbestände werden als EMPTY ohne Originalsnapshot behandelt; unbenutzte Aktivitätsdateien sind nicht als gültig leerer Originalbeleg abgesichert. Einige Readerfehler/fehlende Kapazitäten sind noch nicht vollständig von „nicht versucht“ getrennt. Bestehende erfolgreiche nichtleere Quellen bleiben erhalten; keine rückwirkende Ergänzung.
+- `CardCoreSnapshot`: vollständige READ-BINARY-Originale von 0504/0505 einschließlich Pointer; defensive Kopien. Aufnahme unabhängig von Pointer-/Record-/Tageskettenparser.
+- `CardCoreRead`: COMPLETE, ABSENT, READ_FAILED mit tatsächlichem Readerfehler oder NOT_ATTEMPTED wegen fehlender Kapazität. Originalaufnahme hat eigene Importbelege; Auswertung kann EMPTY oder INVALID bleiben. Keine Teilbytes als Original.
+- Unbenutzte 0504 nur bei **beiden Nullpointern und vollständig nullgefülltem Ring** gültig leer (Appendix 2 TCS150/154, Konsolidierung S. 281/284). Bestehende 0505-Leererkennung erhalten; Original einschließlich Text-/Identifikationsfiller bleibt gespeichert.
+- Speicherung in bestehenden verschlüsselten `card_metadata_imports`/`driver_import_metadata_sources`, getrennte Quellarten und Fingerprints mit physischer Karte, EF und Generation. FK-Bindung an die exakte Child-Sitzung. **Schema 19 unverändert; keine Migration und kein nachträglicher Backfill.**
+- Bestehende nichtleere Projektionen und Normalisierung erhalten. Historische Requests ohne Rohaufnahme behalten Fingerprint/Abdeckung. Historische Quellen werden weder rekonstruiert noch durch jüngere ersetzt.
+- Bestehende Vorschau zeigt die vollständigen Originalgrößen/Generation je Auswahl oder ausdrücklich fehlende Originaldatei. Kein Navigations-/Onboarding-Umbau.
 
-Neue Navigation/Einrichtung/Onboarding und GNSS-Karte sind noch nicht umgesetzt. Aktuelle App enthält weiterhin alte Abrechnungs-/Heimatpunkt-/Standort-/Konfigurationsartefakte. Diese begründen keine Produktziele; spätere Änderungen müssen Profile und Importdaten erhalten.
+## Prüfzustand und Sperre
 
-## Erreichter Dokumentationsmeilenstein
+Lokale Projektgrenzen, zehn CI-/Schema-Guard-Tests und Diff-Prüfung bestanden. Gradle lokal vor Build blockiert: Distribution nicht erreichbar (Netzwerk eingeschränkt); keine Android-Tests daraus als ausgeführt behaupten. Neue Unit-, SQLCipher-/Transaktions-/Historien-/Gen1-/Gen2V2- und Compose-Fälle ergänzt. **Volle unveränderte Android-CI für den endgültigen Kopf erforderlich; Live-Ergebnis und PR-Befunde im PR prüfen.**
 
-Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](docs/CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) verknüpft 5 MF-, 14 G1- und 25 G2-/V2-EF-Zeilen mit Primärstellen, Reader-/Speicherpfaden und Herkunft. Geprüft: Änderungen 2018/502 einschließlich P2=00/implizitem Card_Sign-Hash, V2-Pflichten, Signaturlängen aus TR-03111 v2.00 und getrennte Schreib-/Exportgrenzen. Kein Hardwaretest und keine Benutzer-Kryptoprüfung daraus ableiten.
+40123 noch nicht am Gerät bestätigt oder als geprüfte APK ausgegeben. [Geräteprotokoll](docs/CARD_CORE_SNAPSHOT_DEVICE_TEST.md) vorbereitet. Vor Produktmerge eigener voller CI-Nachweis und erforderliche Gerätebestätigung; bloße Freigabe 40122 reicht nicht.
 
-Dieser Meilenstein verändert ausschließlich Dokumentation; Produktcode, Tests, Reader, Parser, SQLCipher, Migrationen, Schemaexporte, Build/CI und funktionale Assets bleiben unverändert. Arbeitsbranch `docs/card-download-matrix-20261013`; endgültige CI-/Mergebelege stehen im zugehörigen PR. Offene Arbeit und exakt nächster Schritt: [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
+## Weiter offen
+
+Vollständige Kartenabdeckung, echte Downloadsignaturen, produktive ERCA/MSCA/Card_Sign-Vertrauenskette und DDD-/Standarddownload. `7F66`-Inhaltsformat und legitimer SC5-Zugriff auf `0540` weiter ungeklärt. Keine neuen Signatur-/Hash-/Schreib-/Vertrauensbefehle im Snapshot-Paket.
+
+Neue Navigation/Einrichtung/Onboarding/GNSS-Karte später. Alte Abrechnungs-/Heimatpunkt-/Standortartefakte erzeugen keinen Auftrag. Nächster Arbeitszustand: [WORK_HANDOFF.md](docs/WORK_HANDOFF.md).
