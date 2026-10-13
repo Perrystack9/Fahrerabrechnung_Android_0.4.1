@@ -1,6 +1,6 @@
 # 0502/0503 — begrenzte neue Signaturaufnahme
 
-Aktiver Auftrag: Tobi hat am 13.10.2026 den vorgeschlagenen 0502/0503-Meilenstein ausdrücklich freigegeben. Basis main `3c90e97cd598afb7f8b66344dc049b195898cd31`, bestätigtes 40125/Schema 21. [Regeln](CURRENT_RULES.md) und [Primärmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) gelten unverändert.
+**Abgeschlossen:** Tobi hat am 13.10.2026 den vorgeschlagenen 0502/0503-Meilenstein freigegeben und anschließend alle neun Chat-Gerätefälle als getestet zurückgemeldet. [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79) übernommen, Merge `6334b4f67485feaee4de5d649d6788475af940ec`, identischer Baum zum exakten CI-/Gerätekopf `e4b70aec0b555c340e45df193c4f3b93bccc8770`. Volle CI 38444430958 und Paket 38448369846 erfolgreich; [eigener Gerätebeleg](DEVICE_CONFIRMATION_40126.md). Umsetzung nicht wiederholen. Ursprüngliche Basis main `3c90e97cd598afb7f8b66344dc049b195898cd31`, bestätigtes 40125/Schema 21. [Regeln](CURRENT_RULES.md) und [Primärmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) gelten weiterhin.
 
 ## Umfang
 
