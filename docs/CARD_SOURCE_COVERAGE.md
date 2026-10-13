@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 Aktueller bestätigter Main-Stand12.10.2026: PR65/40122/Schema19 nach vollständiger grüner CI und ausdrücklicher Gerätebestätigung unverändert gemergt (21edb80, Tree6f71f4e bytegleich). Beide Anwendungen derselben Karte bleiben getrennt, MF-Belege einmal am Parent. [Bestätigung und Grenzen](DEVICE_CONFIRMATION_40122.md). Die früheren noch offenen Freigabeangaben darunter sind historische Stände.
 
 ---
@@ -71,6 +73,6 @@ Neue Gen2V2-Lesevorgänge enthalten bis27 bisherige und zwei zusätzlich bedingt
 | Vollständiger signierter Standarddownload | mehrere | Download-/Authentisierungsprotokoll und Original-Signaturen separat implementieren |
 | Kryptografische Zertifikats-/Signaturprüfung | mehrere | RSA-Nachrichtenrückgewinnung bzw. EC-Prüfung und überprüfbare Vertrauenskette |
 
-Arbeitsliste relevanter offener Quellen; vor einer Vollständigkeitsbehauptung sind sämtliche MF-/Gen1-/Gen2-Dateien zusätzlich abzugleichen. Fahrzeug-/Kilometer-/Spesen- und weitere Timeline-Auswertung folgen erst nach zuverlässig vollständig übernommenen relevanten Kartenquellen.
+Arbeitsliste relevanter offener Quellen; vor einer Vollständigkeitsbehauptung sind sämtliche MF-/Gen1-/Gen2-Dateien zusätzlich abzugleichen. Fahrzeug-/Kilometer- und weitere neutrale Timeline-Auswertung folgen nach zuverlässig vollständig übernommenen relevanten Kartenquellen. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung entfallen vollständig; keine entsprechende Folgephase.
 
 [Zertifikatsformat und Grenze](CARD_CERTIFICATE_IMPORT.md) · [Originaldateien](CARD_ORIGINAL_IDENTIFICATION_IMPORT.md) · [Kommunikationsquellen](CARD_COMMUNICATION_IMPORT.md) · [Übergabe](CARD_IMPORT_FINALIZATION_HANDOFF.md)

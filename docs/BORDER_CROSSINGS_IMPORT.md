@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Grenz-/Ländereinträge: unabhängige Gen2V2-Kartenquelle
 
 Stand 10.10.2026. Ausgangsbasis: der nach Tobis Gerätetest unverändert gemergte PR #52, main `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/Testversion 40111. Quellkopf `3a1c32d371d748cea0167b235dfe2470b5916583`, Tree `511f84f4c68b50b24f5016d68e5c78ae3f1074f6`, CI 38052970906 Versuch 1 und Paket 38054791654 erfolgreich. Die bestätigte Anzeige von Beginn-/Ende-Orten auch nach Kartenentnahme gilt PR52, nicht dieser Erweiterung.

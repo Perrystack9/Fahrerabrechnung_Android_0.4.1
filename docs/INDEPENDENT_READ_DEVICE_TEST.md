@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gerätetest: unabhängig gelesene Aktivitäten und Fahrzeugnutzungen
 
 Ausgangspunkt ist der bestandene PR-35-Stand (Schema 8, Version 40103). Dieses Update (40104) behält Schema 8, Paket und öffentliche Testsignatur bei. Bei vorhandener **FahrerTagebuch Test**-App ausschließlich `02-FahrerTagebuch-Test-Update.apk` installieren. Nicht deinstallieren oder App-Daten löschen; Ausgangs-APK nicht erneut installieren.

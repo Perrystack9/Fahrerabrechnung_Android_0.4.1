@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # FahrerTagebuch Test – Be-/Entlade- und Ladungsart-Einträge
 
 Vorbereitete gemeinsame Anleitung; nicht vor11.10.2026 00:56 Europe/Berlin zur Hardwareprüfung ausgeben. Nur nach vollständiger grüner CI des exakten Produktkopfs. Update40114/Schema16 auf die vorhandene Test-App40112/Schema14 mit gleicher Signatur installieren. App nicht deinstallieren oder Daten löschen.

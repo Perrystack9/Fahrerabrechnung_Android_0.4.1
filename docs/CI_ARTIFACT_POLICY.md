@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – Produktumfang bei unveränderter CI.** CI-/Artefaktregeln bleiben. Bestehende Home-Picker-/Berechtigungs-/Onboarding-Prüfungen sichern technischen Altbestand, keine zukünftige Heimatstandortpflicht. Oberfläche/Einrichtung später separat ändern. Spesen/Lohn/Abrechnung/PDF-Abrechnung werden nicht nach dem Import umgesetzt. Historische Build-/Testbelege bleiben zeitlich begrenzt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # CI-Prüfungen und gezielte Testdateien
 
 Stand: 10.10.2026. Infrastrukturvorgabe des Nutzers; keine Änderung an Produktregeln, App-Code, Kartenimport, Signatur oder Datenbankschema.

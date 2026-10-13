@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # GNSS-Leser und exakte Importspeicherung
 
 Stand 10.10.2026. Folgeschritt auf den offenen, vollständig CI-geprüften Decoder-PRs #49/#50. Main und diese Decoderköpfe bleiben unverändert. Integration benötigt eigene vollständige CI und den [Gerätetest](GNSS_IMPORT_DEVICE_TEST.md).

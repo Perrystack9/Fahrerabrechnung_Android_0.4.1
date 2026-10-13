@@ -1,10 +1,12 @@
+> **Produktentscheidung 12.10.2026 – Fahrzeugregeln bei späterer UI-Neukonzeption.** Belastbare Fahrzeugdaten und sichere Bild-/Fallbackregeln bleiben. Alte Navigation/Layoutplätze überholt, ganze Oberfläche/Einrichtung später neu konzipieren. Keine Lohn-/Spesenkennzahlen. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # FahrerTagebuch · verbindliche Fahrzeugdarstellung
 
-**Stand: 28.09.2026.** Diese Spezifikation konkretisiert die Fahrzeugdarstellung aus [CURRENT_RULES.md](CURRENT_RULES.md). Sie ist für die spätere Platzierung der Fahrzeugdaten in Tagesübersicht, Monatsübersicht und Fahrzeughistorie als **verbindliche Designvorgabe** zu behandeln. Sie ist kein Auftrag, die Funktion vor der dafür vorgesehenen Entwicklungsphase vorzuziehen.
+**Stand: 12.10.2026.** Fachliche Daten-/Zuordnungs-/Assetregeln konkretisieren [CURRENT_RULES.md](CURRENT_RULES.md). Alte Layouts sind Referenzen für die spätere grundlegende UI-Neukonzeption; Tabplätze und 1:1-Übernahme nicht mehr verbindlich. Kein Auftrag zur jetzigen Fahrzeug-/UI-Neuentwicklung.
 
 ## Grundsatz
 
-Die Fahrzeugdarstellung soll sich **1:1 an der bestehenden FahrerTagebuch-Designsprache** orientieren:
+Die bestehende FahrerTagebuch-Designsprache bleibt eine Referenz für die spätere Konzeption:
 
 - vorhandenes Material-3-Layout weiterverwenden;
 - helle Standardoberfläche wie im aktuellen Projekt;
@@ -12,9 +14,8 @@ Die Fahrzeugdarstellung soll sich **1:1 an der bestehenden FahrerTagebuch-Design
 - Petrol `#008B8B` als Akzent;
 - Weiß/Hellgrau als Flächen;
 - vorhandene `SectionCard`-/Typography-/Spacing-Komponenten verwenden;
-- keine neue Hauptnavigation und keine zusätzlichen Haupttabs nur für Fahrzeuge;
-- Tages-/Monatsdarstellung gehört in den bestehenden Bereich **Kalender**;
-- Fahrzeughistorie gehört später unter **Auswertung**;
+- Hauptnavigation/Tabstruktur später neu konzipieren, kein festgelegter Fahrzeug-Haupttab;
+- Tages-/Monatsdarstellung und Fahrzeughistorie bleiben sinnvolle Inhalte, endgültige Navigationsplätze offen;
 - Fahrerkarte bleibt Datenquelle/Import und wird nicht zur dauerhaften Fahrzeug-Hauptansicht.
 
 ## Daten, die an einem erkannten Fahrzeug sichtbar sein sollen
@@ -137,7 +138,7 @@ Beim Aufklappen gilt dieselbe Detailstruktur wie oben.
 
 ## Fahrzeughistorie
 
-Unter **Auswertung → Fahrzeuge/Fahrzeughistorie** soll dieselbe visuelle Identität weiterverwendet werden.
+Fahrzeughistorie mit derselben visuellen Identität; endgültiger Navigationsplatz erst bei der späteren UI-Neukonzeption festlegen.
 
 Der Nutzer soll ein Fahrzeug eindeutig wiedererkennen durch:
 
@@ -203,8 +204,8 @@ Zielverhältnis auf typischer Smartphonebreite:
 
 ## Nicht tun
 
-- keine zusätzliche Hauptnavigation „Fahrzeuge“;
-- keine eigenständige Karten-/Routenansicht nur wegen der Fahrzeugdarstellung;
+- alte Tabstruktur/Fahrzeugplätze nicht als freigegebene neue Navigation behandeln;
+- keine Strecke allein aus Fahrzeugidentität behaupten; spätere GNSS-Karte darf echte Kartenpunkte und klar approximierte Verbindungen zeigen;
 - keine erfundenen Kilometer;
 - kein geratenes Modell;
 - keine KI-Modellbilder;

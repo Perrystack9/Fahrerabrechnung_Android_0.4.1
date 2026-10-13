@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # PR65 – gemeinsamer Kartenimport 40122: gesicherter Übergabestand
 
 Stand12.10.2026. **Vollständige CI, Paketprüfung und Tobis ausdrückliche40122-Gerätebestätigung liegen vor. PR65 unverändert gemergt als21edb80, Mergebaum exakt gleich dem Teststand.** [Verbindlicher aktueller Auslieferungscheckpoint](PR65_DEVICE_DELIVERY_40122.md).

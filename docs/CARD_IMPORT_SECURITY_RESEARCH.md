@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Nachgelagerte Download-/Vertrauensgrenzen – Primärabgleich12.10.2026
 
 Forschung nach dem bestätigten PR65/40122-Abschluss. **Keine dieser nachgelagerten Funktionen ist dadurch in der App implementiert oder hardwarebestätigt.** Die Speicherung beider Anwendungen ist auf Main40122 bestätigt. Keine privaten Kartendaten/Schlüssel oder Benutzer-Screenshots wurden für diesen Abgleich in GitHub veröffentlicht.
@@ -33,4 +35,4 @@ Das Gen2-BIN wurde unabhängig lokal als7F21 mit vollständigem kodierten7F4E-Bo
 
 Das V2-Primärformat ordnetVU_Configuration der ZugriffsbedingungSC5 zu: authentisierte und geschützte Kommunikation; normales ungeschütztes READ reicht nicht. Im Projekt steht kein belegter autorisierter VU-/Authentisierungs-/Secure-Messaging-Pfad mit den dazugehörigen legitimen Schlüsseln bereit. Die eigene Fahrerkarte oder ein öffentliches ERCA-Zertifikat liefert diese Berechtigung nicht. Deshalb weiterhin kein blindes0540-Lesen, keine vorgetäuschte VU-Identität oder erfundene Schlüssel. Ein zulässiger eigener Hardware-/Sicherheitsweg ist eine tatsächliche Voraussetzung für diesen Importbereich.
 
-Fahrzeug-/Spesen-/Abrechnungslogik, künstliche Routen, erfundene Zeitabdeckung oder Vertrauen bleiben außerhalb. Kein Browser/Unteragenten/Bereinigung. Budget-/Stop-usage-Einstellungen vom Agenten unverändert; Tobi hat die Nutzung freigegeben, neuer Betrag nicht mitgeteilt.
+Fahrzeugauswertung bleibt außerhalb dieser Importforschung. Spesen, Lohn/Zuschläge und Abrechnung entfallen vollständig. Keine erfundenen Straßenrouten, Messpunkte, Zeitabdeckung oder Vertrauen; spätere klar approximierte Verbindungen echter Karten-GNSS-Punkte sind zulässig. Kein Browser/Unteragenten/Bereinigung. Budget-/Stop-usage-Einstellungen vom Agenten unverändert; Tobi hat die Nutzung freigegeben, neuer Betrag nicht mitgeteilt.

@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gerätetest: gespeicherte Fahrzeugnutzungen und Update 6 → 7
 
 Die ZIP enthält das Schema-7-Update derselben App **FahrerTagebuch Test**, die bereits für PR #32 eingerichtet wurde. Die Testsignatur und Paketkennung bleiben gleich. Bestehende Apps oder Daten nicht löschen. Die technische Oberfläche bleibt für diesen Entwicklungsschritt bestehen; die spätere automatische, einfache Bedienung folgt gesondert gemäß CURRENT_RULES.

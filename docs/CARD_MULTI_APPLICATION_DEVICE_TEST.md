@@ -1,3 +1,5 @@
+> **Produktentscheidung 12.10.2026 – historische Test-/Checkpointgrenzen erhalten.** Damalige Testschritte, Messwerte, Rückmeldungen und Freigabegrenzen bleiben erhalten. Erwähnte Einrichtung/Navigation/frühere Fachpläne sind kein zukünftiger Auftrag. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung vollständig gestrichen. Ganze Oberfläche/Einrichtung erst später neu konzipieren; bestehender Import und bestätigte Daten unverändert. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+
 # Gerätetest40122 – beide Anwendungen derselben Fahrerkarte
 
 Vorbereitung für PR65, Schema19. **Noch keine Gerätefreigabe und kein ausgeliefertes Paket.** Erst nach vollständiger grüner CI und eigener Signatur-/Prüfsummenprüfung ausgeben. Updatebasis ist das bereits installierte40121/Schema18, feste Testkennung `de.fahrerabrechnung.app.devicetest` und unverändertes Testzertifikat.
