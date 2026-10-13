@@ -24,13 +24,19 @@ Der [Identifikationsplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist in [PR #7
 
 Neu: frische 0501-/0520-/V2-0525-Captures, bytegenauer Bootstrap-Vergleich mit nicht toleriertem Gruppenabbruch, getrennte Child-Receipts, unabhängiger unsigned Fallback und kleine Anzeige. Alte Core-Belege/Originale/Fingerprints und historische 15-Byte-Quellen erhalten. Neue vollständige Reader-/SQLCipher-/Migrations-/Historien-/Compose-Prüfungen; eigenständige 19→20-Abnahme bleibt bestehen. Room21 echt, alte Exporte unverändert; keine CI-Abschwächung oder Workflowänderung.
 
-**Aktiver nächster Auftrag:** Tobi hat 0502/0503 am 13.10.2026 freigegeben. [Begrenzter Plan](CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md), Draft [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79), 40126 / Schema 22; Implementierung in eigener CI, kein neuer bestätigter Produktmerge. Aktuellen PR-Kopf und CI live prüfen, echter Room-Export, eigenes Paket und neue Geräteabnahme erforderlich. Andere Optionen unten bleiben getrennte, nicht automatisch freigegebene Pakete.
+## Abgeschlossen: Ereignis-/Störungssignaturen 40126
+
+Der [begrenzte 0502/0503-Plan](CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md) ist mit [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79) als **40126 / additive 21→22** umgesetzt und nach neuer eigener Geräteabnahme übernommen. Merge `6334b4f67485feaee4de5d649d6788475af940ec`, identischer vollständiger Baum `88ce8cdc6f62a71bcf0bc37ca38c447eb765ea6e` zum geprüften Kopf `e4b70aec0b555c340e45df193c4f3b93bccc8770`. Volle CI 38444430958 und exaktes Paket 38448369846 erfolgreich. Tobi am 13.10.2026 20:59 Europe/Berlin nach allen neun Chat-Testpunkten: „Hab alles getestet.“ Screenshot: Events 3168 / Faults 1152 Originalbytes und jeweils 64-Byte-Signatur, ungeprüft; keine sichtbare Anwendungsbezeichnung. [Genauer Beleg](DEVICE_CONFIRMATION_40126.md).
+
+Separate Rohquellen/Child-Receipts, vollständige Bytes auch bei EMPTY/INVALID, frische post-HASH-READs und strikter EOF-Beweis. Lokale HASH-/SIGN-Fehler erhalten unabhängig vollständige unsigned Originale, Transportverlust verwirft die Gruppe. Exakte historische Quellen ohne Backfill, unveränderte alte Maps/Digests/Fingerprints und alle 44 Tabellen von Schema 21 erhalten. Eigene vollständige Reader-/SQLCipher-/Migrations-/Rollback-/Compose-Abnahme; eigenständige 19→20-/20→21-Prüfungen bleiben bestehen. Room22 aus echtem Compilerexport, keine CI-Abschwächung oder Workflowänderung.
+
+**Kein aktiver nächster Produktauftrag.** Weitere Pakete anhand der bestehenden Matrix eng begrenzen und separat entscheiden; bestätigte Meilensteine nicht wiederholen. Andere Optionen unten sind nicht automatisch freigegeben.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Weitere EF-Signaturen | 0504/0505 und der begrenzte 40125-Identifikationsumfang sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs erst anhand eigener Originalpfade separat planen |
+| Weitere EF-Signaturen | 0504/0505, der begrenzte 40125-Identifikationsumfang und 0502/0503 sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs anhand der vorhandenen Matrix und eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
 | Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |
