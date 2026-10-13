@@ -24,11 +24,11 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Keine vollständige Kartenabdeckung, echte Downloadsignaturen, produktive Vertrauenskette oder DDD-/Standarddownload behaupten. Neue relevante Produktänderungen benötigen ihre eigene CI und erforderliche Gerätebestätigung. Laufende CI und offene PRs immer aktuell abfragen; frühere grüne Läufe geben spätere Änderungen nicht frei.
 
-Dokumentationsbasis dieses Cleanups: main nach PR #67, `11301b4078db7094a7b6d234cf9f58e612e6b203`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
+Basis des Matrix-Meilensteins: main nach PR #68, `6190efa38762749a165922820b75ef61b998135f`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
 
 ## Exakt nächster Schritt
 
-Die **Pflichtdateien-/Ausnahme-/Signaturmatrix für Gen1, Gen2 und Gen2V2** gegen die verifizierten Primärformate erarbeiten; vorhandene Quellen, fehlende Belege und notwendige Signatur-/Downloadvorgänge getrennt aufführen. Noch keine neuen Reader-, Schreib- oder Vertrauensbefehle aus einer unbelegten Annahme implementieren. Dieser Schritt folgt erst nach Abschluss des Dokumentationsauftrags.
+Die **vollständigen unveränderlichen EF-Snapshots für 0504 und 0505 einschließlich unbenutzter Dateien** als begrenzten Implementierungs-PR vorbereiten. Die Pflichtdateien-/Ausnahme-/Signaturmatrix ist erarbeitet; der [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) beschreibt die konkreten Byte-/Leer-/Fehlerlücken und Abnahme. Keine Rekonstruktion alter Quellen, neuen Signatur-/Schreib-/Vertrauensbefehle oder UI-Umbau in diesem Paket. Eigene volle CI und erforderliche Gerätebestätigung vor Produktmerge.
 
 ## Sitzungsroutine
 

@@ -2,27 +2,35 @@
 
 Einstieg ausschließlich über [WORK_START.md](../WORK_START.md) und aktuellen Git/GitHub-Stand. Regeln und bestätigten technischen Zustand nicht aus alten Handoffs rekonstruieren.
 
-## Nächster Auftrag nach dem Dokumentationsabschluss
+## Erreichter Meilenstein
 
-**Pflichtdateien-/Ausnahme-/Signaturmatrix für Gen1, Gen2 und Gen2V2 erarbeiten.** Der [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) legt Ausgabe und Prüfkriterien fest. Vorhandenen Import übernehmen; Reader, Profilbindung, Zwei-Anwendungs-Gruppen und Schema 19 sind bereits implementiert.
+**13.10.2026: Pflichtdateien-/Ausnahme-/Signaturmatrix erarbeitet.** Basis main nach PR #68, `6190efa38762749a165922820b75ef61b998135f`; dessen Main-CI [38330641632](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38330641632) grün. Beim Start keine offenen PRs, sauberer Arbeitsbaum. Arbeit gesichert im Branch `docs/card-download-matrix-20261013`; endgültigen PR-Kopf und CI/Merge beim nächsten Start live prüfen.
 
-Die Matrix muss jede relevante MF-/DF-Datei ihrer Anwendung, vorhandenen Originalquelle, Pflicht/Ausnahme, erforderlichen Signatur und konkreten Primärstelle zuordnen. Getrennt dokumentieren, was noch fehlt und was ein bewusst ausgelöster Standarddownload zusätzlich verlangt. Keine Vollständigkeit oder Benutzerkarten-Vertrauensprüfung vorwegnehmen.
+Die [Matrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) enthält 44 EF-Zeilen, konkrete Primärstellen, tatsächliche Reader-/Speicher-/Sitzungspfade, V2-/Kontrollausnahmen, Hash-/Signaturverfahren und getrennte Standarddownload-/Datums-/TLV-Anforderungen. Vollständige amtliche PDFs und die tatsächlich referenzierte TR-03111-Ausgabe 2.00 wurden gelesen; MF-/DF-Tabellen zusätzlich visuell geprüft. Keine historischen Chats rekonstruiert.
 
-## Offene Sperren und Risiken
+**Neue Erkenntnisse für die Folgearbeit:** P2=00 beim Datei-Hash beider DFs gemäß Änderung 2018, Gen2-Hash aus Card_Sign statt Aussteller-/Card_MA-Kurve. 0504/0505 haben noch keinen unabhängigen vollständigen EF-Blob; leerer Fahrzeugbestand erhält EMPTY ohne gespeichertes Original. Reader-/Parse-/Kapazitäts-/Nicht-versucht-Zustände sind noch nicht überall getrennt. Diese Dokumentation behebt keinen Produktpfad.
 
-- `7F66`: inneres Primärformat ISO 7816-4:2013 §12.7.1 noch nicht vollständig belegt. Vorhandene Rohbytes/äußere Struktur erhalten; keine Puffergröße erraten.
-- Signaturaufnahme, ERCA/MSCA/Kartenvertrauen, Originalquellenexport und Standarddownload sind eigene spätere Schritte. Signatur, Originalbytes, konkrete Anwendung und Sitzung unveränderlich zusammenbinden.
-- Automatischer Import bleibt lesend. Download-Datum erst in einem getrennt belegten Schreib-/Fehler-/Hardwarepfad aktualisieren.
-- `0540`: legitimer authentisierter SC5-/Secure-Messaging-Weg fehlt; kein blindes Lesen oder Schlüsselersatz.
-- Neue relevante Produktänderung braucht eigene vollständige CI und erforderliche Gerätebestätigung. Freigabe 40122 ist keine Freigabe neuer Befehle, Migrationen oder Sicherheitsfunktionen.
-- Laufende CI und offene PRs live prüfen. Bei externer CI-/Budgetblockade tatsächlichen Stand sichern, Ursache nennen und keine eigenmächtige Budgetänderung oder Retryserie starten.
+Produktbasis bleibt **40122 / Schema 19**, bestätigte Zwei-Anwendungs-Speicherung übernommen. Keine neuen Befehle, Migrationen, Vertrauensfunktionen, APK oder Gerätefreigabe.
 
-## Spätere Produktarbeit
+## Exakt nächster Auftrag
 
-Nach geklärter Import-/Quellenbasis: neutrale Tätigkeits-/Fahrzeugauswertung und grundlegende UI-/Einrichtungs-/GNSS-Konzeption. Zielrichtung etwa Start, Kalender, Auswertung, Einstellungen; Details offen. Keine Spesen-, Lohn-, Heimkehr-, Heimatstandort- oder PDF-Abrechnungsphase.
+**Begrenzter Implementierungs-PR für vollständige Originalsnapshots von 0504 und 0505**, einschließlich vorhandener unbenutzter Dateien. Details und Abnahme im [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md), konkrete Primär-/Codezuordnung in der Matrix erst für diese Facharbeit öffnen.
 
-## Sitzungsabschluss
+- Rohsnapshot unabhängig vom fachlichen Parsergebnis unveränderlich erfassen; tatsächliche Karte, Anwendung, EF und neue Child-Sitzung zusammenbinden.
+- Erfolgreiche Rohaufnahme, gültig leer, Parserfehler, Leseabbruch und nachweislich nicht versucht unterscheiden. Unklare Default-/Pointerfälle gezielt am Primärformat prüfen, nicht leer erraten.
+- Bestehende Importdaten, Requests, normalisierte Tätigkeiten/Fahrzeuge, beide Anwendungssätze und historische Auswahl erhalten; keine Rekonstruktion/Backfill alter Quellen.
+- Passende additive Migration nur mit Compiler-Schemaexport; volle unveränderte Android-CI, eigene erforderliche Gerätebestätigung vor Merge. **Kein Produktmerge mit bloßer Freigabe 40122.**
 
-Nur diesen aktuellen Übergabetext und Status ersetzen, Arbeit im zugehörigen Branch/PR sichern, Prüf-/Freigabestatus knapp melden und Sitzung beenden. Historische Nachweise nur gezielt öffnen. Keine neue größere Produktarbeit im Dokumentations-Cleanup beginnen.
+## Offene Sperren
 
-Nächster Startsatz: **„FahrerTagebuch am aktuellen Stand fortsetzen.“**
+- Echte Dateisignaturen fehlen für alle signierten Pflichtdateien. Erst nach gesicherter Byteaufnahme getrennten Signatur-PR planen; keine Signatur nachträglich an ältere Originale hängen.
+- Produktive ERCA/MSCA/Card_Sign-Vertrauenskette, Rollen/Gültigkeit/Rollover, Standardexport und LastCardDownload-Schreibpfad weiterhin offen. Automatischer Import bleibt lesend.
+- `7F66`: ISO 7816-4:2013 §12.7.1 fehlt weiterhin; äußere Struktur/Rohbytes erhalten, keine Puffergröße erraten.
+- `0540`: legitimer SC5-/Secure-Messaging-Weg fehlt; nicht versucht, keine Schlüssel/VU-Identität erfinden. Nicht im expliziten Mindestkatalog bedeutet keine belegte pauschale Download-Ausnahme.
+- Bei externer CI-/Budgetblockade Stand sichern, Ursache nennen; keine Budgetänderung oder Retryserie. Lange Emulatorläufe sparsam prüfen.
+
+## Spätere Produktarbeit und Abschluss
+
+Nach geklärter Import-/Quellenbasis: neutrale Auswertung, neue UI/Einrichtung/GNSS-Konzeption mit etwa Start, Kalender, Auswertung, Einstellungen. Keine Spesen-, Lohn-, Heimkehr-, Heimatstandort- oder PDF-Abrechnungsphase.
+
+Matrix-Meilenstein abschließen; keine größere Produktimplementierung in derselben Dokumentationssitzung beginnen. Status/Übergabe ersetzt, keine Checkpoint-Chronik angehängt. Nächster Startsatz: **„FahrerTagebuch am aktuellen Stand fortsetzen.“**

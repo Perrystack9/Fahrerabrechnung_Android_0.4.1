@@ -4,8 +4,8 @@
 
 | Quelldatei | EF | Generation | Stand |
 |---|---|---|---|
-| Driver_Activity_Data | `0504` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
-| Vehicles_Used | `0505` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
+| Driver_Activity_Data | `0504` | Gen1/Gen2/Gen2V2 | eigene nichtleere Sitzungsquelle: Pointerwerte/Ringbytes; unabhängiger vollständiger EF-Snapshot und unbenutzter Fall offen |
+| Vehicles_Used | `0505` | Gen1/Gen2/Gen2V2 | eigene nichtleere Sitzungsquelle: Pointerwert/Recordbytes; EMPTY derzeit ohne gespeicherten Originalsnapshot |
 | Control_Activity_Data | `0508` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
 | Events_Data | `0502` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
 | Faults_Data | `0503` | Gen1/Gen2/Gen2V2 | eigene Sitzungsquelle |
@@ -40,11 +40,12 @@ Gen1-/Gen2-DFs werden derselben physischen Karte zugeordnet, als getrennte Anwen
 
 | Bereich | Grenze |
 |---|---|
-| Vollständige Download-Pflichtdateien-/Signaturmatrix | MF und beide Anwendungen gegen verifizierte Primärformate abgleichen; dieses Inventar ersetzt die Matrix nicht |
+| Download-Pflichtdateien-/Signaturmatrix | [Primärmatrix erarbeitet](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md); dieses Inventar allein beweist keine Downloadvollständigkeit |
+| Originalbytes / Dateizustände 0504 und 0505 | Vollständige unabhängige EF-Snapshots einschließlich unbenutzter Dateien als nächsten begrenzten Produkt-PR vorbereiten; historische Daten nicht rekonstruieren |
 | ATR/INFO-Inhalt `7F66` | Originalbytes und äußere Struktur vorhanden, vollständiges ISO-7816-4:2013-Inhaltsformat nicht belegt |
 | Unbekanntes ATR-Historienformat | Bedingte Dateien nicht versucht; unbekannt bleibt unbekannt |
 | Echte Signaturen / Standarddownload | Signatur-/Bytebindung und getrennten Download-/Schreibpfad implementieren und prüfen |
 | Zertifikats-/Kartenvertrauen | Vollständige überprüfbare Kette, Rollen, Referenzen und Gültigkeit noch offen |
 | `VU_Configuration 0540` | Legitimer SC5-Sicherheits-/Zugriffsweg fehlt |
 
-Nächster Schritt: [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Implementierung beider Anwendungen: [CARD_MULTI_APPLICATION_IMPORT.md](CARD_MULTI_APPLICATION_IMPORT.md). Gestrichene Produktbereiche werden nicht nach dem Kartenimport umgesetzt.
+Nächster Schritt: [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Pflicht-/Ausnahme-/Signaturumfang und nachgewiesene Speichergrenzen: [Primärmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md). Weitere Implementierungsdetails nur bei Bedarf. Gestrichene Produktbereiche werden nicht nach dem Kartenimport umgesetzt.
