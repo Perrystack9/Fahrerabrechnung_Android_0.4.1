@@ -114,6 +114,7 @@ class CardCoreSignatureReaderTest {
         val localFailure = capture(Script(ByteArray(68)) { if (it.p1 == 0x90) throw ReaderException(ReaderFailure.IO) else null })
         assertEquals(CardCoreReadStatus.COMPLETE, localFailure.core.status)
         assertEquals(ReaderFailure.IO, localFailure.signature.failure)
+        assertNull(localFailure.signature.statusWord) // never borrow the successful fallback READ status
     }
 
     @Test fun boundaryAndWrongLengthResponsesNeverRetryTo256OrGuessSignatureLength() = runBlocking {
@@ -177,9 +178,19 @@ class CardCoreSignatureReaderTest {
             catch (error: ReaderException) { assertEquals(failure, error.failure) }
             assertFalse(script.commands.dropLast(1).any { it.p1 == 0x9E })
         }
-        for (phase in listOf(0xA4, 0xB0, 0x2A)) {
-            try { capture(Script(ByteArray(68)) { if (it.ins == phase) throw CancellationException() else null }); fail() }
-            catch (_: CancellationException) { }
+        for (phase in CardSignaturePhase.entries) {
+            val script = Script(ByteArray(68)) {
+                val active = when {
+                    it.ins == 0xA4 -> CardSignaturePhase.SELECT
+                    it.p1 == 0x90 -> CardSignaturePhase.HASH
+                    it.p1 == 0x9E -> CardSignaturePhase.SIGN
+                    it.ins == 0xB0 && it.p2 == 68 -> CardSignaturePhase.BOUNDARY
+                    else -> CardSignaturePhase.READ
+                }
+                if (active == phase) throw CancellationException() else null
+            }
+            try { capture(script); fail() } catch (_: CancellationException) { }
+            assertFalse(script.commands.dropLast(1).any { it.p1 == 0x9E })
         }
     }
     companion object { private fun sw(value: Int) = byteArrayOf((value ushr 8).toByte(), value.toByte()) }

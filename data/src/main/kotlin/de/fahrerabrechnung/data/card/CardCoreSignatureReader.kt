@@ -21,7 +21,7 @@ internal object CardCoreSignatureReader {
         var readerFailure: ReaderFailure? = null
         fun receipt(status: CardSignatureStatus, reason: CardSignatureReason?, bytes: ByteArray? = null) =
             CardCoreSignature(kind, generation, status, policy, failedPhase ?: phase, reason,
-                failedSw ?: lastSw, hashSw, signSw, readerFailure, actualLength, snapshot, sourceCertificate, bytes)
+                if (failedPhase != null) failedSw else lastSw, hashSw, signSw, readerFailure, actualLength, snapshot, sourceCertificate, bytes)
         fun failure(reason: CardSignatureReason) {
             failedReason = reason; failedPhase = phase; failedSw = lastSw
         }
@@ -58,6 +58,7 @@ internal object CardCoreSignatureReader {
             var offset = 0
             while (offset < length) {
                 val requested = minOf(256, length - offset)
+                lastSw = null
                 val response = session.send(CardCommands.readBinary(offset, requested)); lastSw = response.statusWord
                 if (!response.success || response.data.size !in 1..requested) {
                     failure(CardSignatureReason.INCOMPLETE_READ)

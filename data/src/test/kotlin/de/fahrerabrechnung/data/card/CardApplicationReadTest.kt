@@ -155,7 +155,8 @@ class CardApplicationReaderTest {
         assertEquals(194, g1.certificates.getValue(CardCertificateKind.CARD).file!!.bytes.size)
         assertEquals(204, g2.certificates.getValue(CardCertificateKind.CARD).file!!.bytes.size)
         assertEquals(1, fake.opens); assertEquals(1, fake.powers); assertEquals(1, fake.offs); assertEquals(1, fake.closes)
-        assertTrue(fake.commands.all { it[1].toInt() and 255 in setOf(0xA4, 0xB0) })
+        assertTrue(fake.commands.all { (it[1].toInt() and 255) in setOf(0xA4, 0xB0) ||
+            it.contentEquals(CardCommands.performHashOfFile().encode()) })
         assertFalse(fake.reads.any { it.second == 0x0540 })
     }
     @Test fun masterCapturesBelongToEnvelopeAndNeverAppearInEitherApplicationMap() = runBlocking {
