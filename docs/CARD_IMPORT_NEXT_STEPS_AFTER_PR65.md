@@ -6,26 +6,23 @@
 
 Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) ist anhand Appendix 2, 7 und 11 einschließlich der relevanten Änderungen erarbeitet: 5 MF-, 14 G1- und 25 G2-/V2-EF-Zeilen, tatsächliche Quellenpfade, bedingte Ausnahmen, Befehlsfolge, Card_Sign-Hash-/Längenwahl, offene Speicher-/Zugriffs-/Vertrauensgrenzen. Kein Reader-/DB-/Hardwarestand dadurch verändert. Weitere Fachtexte nur bei konkretem Bedarf.
 
-## Zuerst: vollständige 0504-/0505-Originalsnapshots
+## Jetzt: Snapshot-PR 40123 prüfen und am Gerät abnehmen
 
-Der nächste begrenzte Produkt-PR soll **Driver_Activity_Data 0504 und Vehicles_Used 0505 vollständig und unabhängig vom fachlichen Parsergebnis** erfassen und unveränderlich speichern. Das schafft die notwendige Bytebasis vor echter Signaturaufnahme.
+Im Branch `feat/card-ef-snapshots-20261013` sind **vollständige unabhängige EF-Originale für Driver_Activity_Data 0504 und Vehicles_Used 0505** implementiert. Grundlage ist main nach PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Die frühere Matrix beschreibt den Ausgangsbefund 40122; sie ist kein neuer Produktnachweis.
 
-| Befund in 40122 | Erforderlicher begrenzter Schritt |
+| Ausgangslücke 40122 | Implementierter Kandidat 40123 |
 |---|---|
-| Pointerwerte plus Ring-/Recordbytes gespeichert, kein eigener vollständiger EF-Blob | Originalbytes einschließlich Pointerbytes erhalten; vorhandene fachliche Projektionen weiter nutzen |
-| Vehicles_Used: gültig leer erhält EMPTY, `usableRead` entfernt Datei aus der Speicherung | Vollständigen vorhandenen Rohbeleg auch ohne Nutzungsrecord an der neuen Sitzung erhalten |
-| Driver_Activity_Data: Parser erwartet gültige Tageskette; unbenutzter Ring nicht als gültig leer abgesichert | Default-/Pointerformat gezielt prüfen; Rohaufnahme erhalten, „gültig leer“ nur bei belegtem Format |
-| Einige Parse-/Lese-/Kapazitätsfälle werden in null/readFailed zusammengefasst | Für diese beiden EFs Rohaufnahme, Parsergebnis und tatsächlichen Leseversuch getrennt belegen |
+| Nur Pointerwerte und Ring-/Recordbytes | `CardCoreSnapshot` erhält READ-BINARY-Originale einschließlich Pointer und unbenutzter Bytes, mit defensiven Kopien |
+| Leere Fahrzeugdatei ohne Original | Eigener Rohbeleg STORED; fachlicher Bestand EMPTY; kein erfundener Record |
+| Unbenutzter Aktivitätsring nicht abgesichert | Belegtes Defaultformat: beide Pointer null und gesamter Ring null (Appendix 2 TCS150/154, Konsolidierung S. 281/284); fachlich EMPTY, Rohbeleg gespeichert |
+| Rohaufnahme und Parse-/Lesefehler vermischt | Eigene Original-Dateiergebnisse plus getrennte fachliche Ergebnisse; NOT_ATTEMPTED bei fehlender Kapazität, MISSING bei EF-Abwesenheit, READ_FAILED mit tatsächlicher Fehlerart, INVALID bei Parserfehler trotz vollständigem Original |
+| Gefahr nachträglicher Quellenzuordnung | Exakte Quellreferenz an neuer Child-Sitzung, getrennte Generation; MF bleibt Parent. Kein Backfill, kein neuerer Ersatz für historische Quellen |
 
-Abnahme:
+Bestehende SQLCipher-/Schema-19-Tabellen reichen; keine Migration oder selbst geschriebenen Schemaexporte. Nichtleere Projektionen, Normalisierung, alte Requests/Fingerprints und Altarchiv bleiben erhalten. Geänderte unbenutzte Bytes schaffen einen neuen Originalbeleg, nicht neue normalisierte Tätigkeiten. Transportabbruch/Entfernen/Timeout im regulären Mehranwendungsimport liefert keine speicherbare Teilgruppe. Normale neue Importe können weiterhin partiell sein, weil dieses Paket nur zwei EFs verbessert.
 
-- Eigene Karte, EF, konkrete G1-/G2-Anwendung und neue Child-Sitzung binden; Gen2V2 bleibt im G2-AID, MF nur am Parent.
-- Vollständige Originalbytes, Leer-/Fehler-/Abbruchfälle und exakte spätere Quellenauswahl prüfen. Normalisierte Tätigkeiten/Fahrzeuge bleiben fachliche Darstellung, kein Ersatz für Originale.
-- Bestehende Daten, Requests/Fingerprints und Historie erhalten; keine rückwirkende Rekonstruktion/Backfill oder jüngerer Quellenersatz.
-- Rohbeleg mit Parsefehler nicht als fachlich vollständig/gültig präsentieren; unbekannt und nicht versucht nicht erraten. Atomare Persistenz erhalten.
-- Nötige additive Migration mit echtem Compiler-Schemaexport; vollständige unveränderte Android-CI und **eigene erforderliche Gerätebestätigung vor Merge**. Keine Produktfreigabe aus dem Dokumentations-PR.
+**Abnahme noch offen:** vollständige unveränderte Android-CI für endgültigen Kopf, anschließend [eigene Geräteabnahme 40123](CARD_CORE_SNAPSHOT_DEVICE_TEST.md). Lokal nur Projektgrenzen/Guard-/Diff-Prüfung möglich; Gradle-Distribution wegen eingeschränktem Netzwerk unerreichbar. CI/PR live prüfen. Bestehenden gezielten Geräte-Workflow erst nach vollständigem CI-Nachweis benutzen; erfolgreiche Normal-CI-Uploads bleiben aus. Gerätebasis 40122 gilt nicht für 40123; bis zur eigenen Bestätigung kein Produktmerge.
 
-Keine Hash-/Signatur-/Schreibbefehle, kein Vertrauensmodul, Standardexport oder UI-Umbau in diesem Paket. Weitere EF-Zustände erst in einem separat begrenzten Folgepaket behandeln.
+Neue automatisierte Prüfungen decken genaue Originalbytes, unbenutzte/ungültige/fehlende/abgebrochene Fälle, getrennte G1-/G2V2-Sitzungen, FK/Korruption, atomare Rollbacks, Reopen sowie historische Auswahl ab. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle, Standardexporte oder UI-/Onboarding-Neukonzeption. Weitere EF-Zustände separat behandeln.
 
 ## Danach weiterhin getrennte Pakete
 

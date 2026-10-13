@@ -24,11 +24,11 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Keine vollständige Kartenabdeckung, echte Downloadsignaturen, produktive Vertrauenskette oder DDD-/Standarddownload behaupten. Neue relevante Produktänderungen benötigen ihre eigene CI und erforderliche Gerätebestätigung. Laufende CI und offene PRs immer aktuell abfragen; frühere grüne Läufe geben spätere Änderungen nicht frei.
 
-Basis des Matrix-Meilensteins: main nach PR #68, `6190efa38762749a165922820b75ef61b998135f`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
+Basis des Snapshot-PRs: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
 
 ## Exakt nächster Schritt
 
-Die **vollständigen unveränderlichen EF-Snapshots für 0504 und 0505 einschließlich unbenutzter Dateien** als begrenzten Implementierungs-PR vorbereiten. Die Pflichtdateien-/Ausnahme-/Signaturmatrix ist erarbeitet; der [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) beschreibt die konkreten Byte-/Leer-/Fehlerlücken und Abnahme. Keine Rekonstruktion alter Quellen, neuen Signatur-/Schreib-/Vertrauensbefehle oder UI-Umbau in diesem Paket. Eigene volle CI und erforderliche Gerätebestätigung vor Produktmerge.
+Den **Implementierungs-PR für vollständige 0504-/0505-Originalsnapshots** im Branch `feat/card-ef-snapshots-20261013` abschließen: exakten endgültigen Kopf und vollständige Android-CI live prüfen, danach 40123 mit dem bestehenden gezielten Geräte-Workflow bauen und die eigene Geräteabnahme einholen. Byteaufnahme, leere Originale und getrennte Roh-/Parserzustände sind implementiert; **noch kein Produktmerge oder Gerätefreigabe**. Details und nächster Arbeitszustand im [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Keine Signatur-/Schreib-/Vertrauensbefehle oder UI-Neukonzeption in diesem Paket.
 
 ## Sitzungsroutine
 

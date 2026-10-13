@@ -34,6 +34,11 @@ object CardActivityParser {
             file.newestDayOffset !in ring.indices)
             throw ParseError(0, "Driver_Activity_Data", "invalid ring metadata")
 
+        // Appendix2 TCS150/154, default tables (consolidation pp281/284):
+        // both pointers and the entire unused ring are zero. A zero header alone proves nothing.
+        if (file.oldestDayOffset == 0 && file.newestDayOffset == 0 && ring.all { it == 0.toByte() })
+            return emptyList()
+
         fun u16(offset: Int): Int =
             ((ring[offset % size].toInt() and 255) shl 8) or
                 (ring[(offset + 1) % size].toInt() and 255)

@@ -55,7 +55,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val certificates: Map<CardCertificateKind, CardCertificateRead> = emptyMap(),
                           val identitySources: Map<CardIdentitySourceKind, CardIdentitySourceRead> = emptyMap(),
                           val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false,
-                          val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap())
+                          val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap(),
+                          val coreReads: Map<CardCoreEf, CardCoreRead> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -378,17 +379,32 @@ class DriverCardReader(private val transport: CardReaderTransport) {
             val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
             val identity = DriverCardDecoder.identity(identityBytes, generation)
             // Failure of one EF must not prevent trying the other or expose incomplete bytes.
-            val activity = try {
-                val length = DriverCardDecoder.activityLength(application, generation)
-                DriverCardDecoder.activity(readFile(session, DriverCardFiles.DRIVER_ACTIVITY,
-                    length + 4), length)
-            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
-            val vehicles = try {
-                val count = DriverCardDecoder.vehicleCount(application, generation)
-                val width = if (generation == CardGeneration.GEN1) 31 else 48
-                DriverCardDecoder.vehicles(readFile(session, DriverCardFiles.VEHICLES_USED,
-                    count * width + 2), count, generation)
-            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+            val coreReads = CardCoreEf.entries.associateWith { kind ->
+                val length = try {
+                    when (kind) {
+                        CardCoreEf.ACTIVITY -> DriverCardDecoder.activityLength(application, generation) + 4
+                        CardCoreEf.VEHICLES -> DriverCardDecoder.vehicleCount(application, generation) *
+                            (if (generation == CardGeneration.GEN1) 31 else 48) + 2
+                    }
+                } catch (_: ParseError) { null }
+                if (length == null) CardCoreRead(kind, CardCoreReadStatus.NOT_ATTEMPTED)
+                else try {
+                    val selected = session.send(CardCommands.selectFile(kind.fileId))
+                    if (selected.statusWord == 0x6A82) CardCoreRead(kind, CardCoreReadStatus.ABSENT)
+                    else {
+                        if (!selected.success) throw ReaderException(ReaderFailure.IO)
+                        CardCoreRead(kind, CardCoreReadStatus.COMPLETE,
+                            CardCoreSnapshot(kind, generation, readSelectedFile(session, length)))
+                    }
+                } catch (error: ReaderException) {
+                    fileFailure(error, abortTransport)
+                    CardCoreRead(kind, CardCoreReadStatus.READ_FAILED, failure = error.failure)
+                }
+            }
+            val activity = try { coreReads.getValue(CardCoreEf.ACTIVITY).snapshot?.activity() }
+                catch (_: ParseError) { null }
+            val vehicles = try { coreReads.getValue(CardCoreEf.VEHICLES).snapshot?.vehicles() }
+                catch (_: ParseError) { null }
             val controls = try {
                 CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
                     CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
@@ -504,7 +520,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
                 metadata = metadata, certificates = certificates, identitySources = identitySources,
                 directory = directory, directoryReadFailed = supportsDirectory && directory == null,
-                communication = communication)
+                communication = communication, coreReads = coreReads)
         } catch (_: ParseError) {
             CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
         }
@@ -541,6 +557,10 @@ class DriverCardReader(private val transport: CardReaderTransport) {
 
     private suspend fun readFile(session: ApduSession, id: Int, length: Int): ByteArray {
         if (!session.send(CardCommands.selectFile(id)).success) throw ReaderException(ReaderFailure.IO)
+        return readSelectedFile(session, length)
+    }
+
+    private suspend fun readSelectedFile(session: ApduSession, length: Int): ByteArray {
         if (length !in 1..32768) throw ReaderException(ReaderFailure.MALFORMED_RESPONSE)
         val data = ByteArray(length)
         var offset = 0

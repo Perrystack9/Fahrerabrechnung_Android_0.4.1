@@ -162,12 +162,15 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.MF_DIRECTORY -> "Anwendungsverzeichnis"
         CardImportFileKind.MF_ATR_INFO -> "Pufferinformation"
         CardImportFileKind.MF_EXTENDED_LENGTH -> "Protokollunterstützung"
+        CardImportFileKind.ACTIVITY_ORIGINAL -> "Originaldatei der Tätigkeiten"
+        CardImportFileKind.VEHICLES_ORIGINAL -> "Originaldatei der Fahrzeuge"
         CardImportFileKind.WORK_PERIOD_PLACES -> "Beginn-/Ende-Orte"
         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> "Orts-Authentisierungsstatus"
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
     }
     return when (status) {
-        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.CARD_CERTIFICATE, CardImportFileKind.CARD_SIGNING_CERTIFICATE,
+        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.ACTIVITY_ORIGINAL, CardImportFileKind.VEHICLES_ORIGINAL))
+            "$label: vollständig gespeichert" else if (kind in setOf(CardImportFileKind.CARD_CERTIFICATE, CardImportFileKind.CARD_SIGNING_CERTIFICATE,
             CardImportFileKind.CA_CERTIFICATE, CardImportFileKind.LINK_CERTIFICATE,
             CardImportFileKind.APPLICATION_IDENTIFICATION_V2, CardImportFileKind.MF_DIRECTORY,
             CardImportFileKind.MF_ATR_INFO, CardImportFileKind.MF_EXTENDED_LENGTH) && decodedCount == 0)
@@ -180,7 +183,8 @@ private fun CardImportFileResult.description(): String {
         CardImportFileStatus.MISSING -> "$label: nicht verfügbar"
         CardImportFileStatus.READ_FAILED -> "$label: Lesen fehlgeschlagen"
         CardImportFileStatus.INVALID -> "$label: Daten nicht auswertbar"
-        CardImportFileStatus.EMPTY -> "$label: keine auswertbaren Daten"
+        CardImportFileStatus.EMPTY -> "$label: keine Aufzeichnung"
         CardImportFileStatus.NOT_STORED -> "$label: nicht gespeichert"
+        CardImportFileStatus.NOT_ATTEMPTED -> "$label: nicht gelesen, Dateigröße unbekannt"
     }
 }

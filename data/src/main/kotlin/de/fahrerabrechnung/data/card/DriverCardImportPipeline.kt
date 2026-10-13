@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY, MF_ATR_INFO, MF_EXTENDED_LENGTH }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY, MF_ATR_INFO, MF_EXTENDED_LENGTH, ACTIVITY_ORIGINAL, VEHICLES_ORIGINAL }
 
 internal fun CardCommunicationKind.importFileKind(): CardImportFileKind = when (this) {
     CardCommunicationKind.ATR_INFO -> CardImportFileKind.MF_ATR_INFO
@@ -42,7 +42,7 @@ internal fun CardMetadataKind.importFileKind(): CardImportFileKind = when (this)
     CardMetadataKind.IC_IDENTIFICATION -> CardImportFileKind.IC_IDENTIFICATION
 }
 
-enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED }
+enum class CardImportFileStatus { READY, STORED, MISSING, READ_FAILED, INVALID, EMPTY, NOT_STORED, NOT_ATTEMPTED }
 
 data class CardImportFileResult(
     val kind: CardImportFileKind, val status: CardImportFileStatus, val decodedCount: Int,
@@ -204,7 +204,12 @@ class DriverCardImportPipeline @Inject constructor(
                     dao.updateFiles(dao.files(requestId).map {
                         if (it.status == CardImportFileStatus.READY.name) it.copy(status = CardImportFileStatus.STORED.name) else it
                     })
-                    dao.updateRun(current.copy(status = if (plan.files.all { it.status == CardImportFileStatus.READY })
+                    dao.updateRun(current.copy(status = if (plan.files.all { it.status == CardImportFileStatus.READY ||
+                        (it.status == CardImportFileStatus.EMPTY && when (it.kind) {
+                            CardImportFileKind.ACTIVITIES -> plan.read.coreReads[CardCoreEf.ACTIVITY]?.snapshot != null
+                            CardImportFileKind.VEHICLES -> plan.read.coreReads[CardCoreEf.VEHICLES]?.snapshot != null
+                            else -> false
+                        }) })
                         CardImportRunStatus.SAVED.name else CardImportRunStatus.PARTIAL.name,
                         finishedAtEpochMillis = clock.millis(), sessionId = saved.id, newSourceCount = saved.newSourceCount))
                 }
@@ -275,8 +280,19 @@ class DriverCardImportPipeline @Inject constructor(
 
     private fun prepare(result: CardReadResult): Plan {
         require(result.recognition == CardRecognition.DRIVER && result.card != null && result.card.generation == result.generation)
-        val read = result.copy(activity = result.activity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
-            vehicles = result.vehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
+        val core = result.coreReads.mapValues { (kind, value) ->
+            require(kind == value.kind && (value.snapshot == null || value.snapshot.generation == result.generation))
+            value.copy(snapshot = value.snapshot?.let { CardCoreSnapshot(kind, it.generation, it.bytes) })
+        }.toMap()
+        val rawActivity = if (CardCoreEf.ACTIVITY in core) try { core.getValue(CardCoreEf.ACTIVITY).snapshot?.activity() }
+            catch (_: ParseError) { null } else result.activity
+        val rawVehicles = if (CardCoreEf.VEHICLES in core) try { core.getValue(CardCoreEf.VEHICLES).snapshot?.vehicles() }
+            catch (_: ParseError) { null } else result.vehicles
+        val read = result.copy(coreReads = core,
+            activityReadFailed = core[CardCoreEf.ACTIVITY]?.let { it.status == CardCoreReadStatus.READ_FAILED } ?: result.activityReadFailed,
+            vehicleReadFailed = core[CardCoreEf.VEHICLES]?.let { it.status == CardCoreReadStatus.READ_FAILED } ?: result.vehicleReadFailed,
+            activity = rawActivity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
+            vehicles = rawVehicles?.let { CardVehiclesFile(it.newestRecordIndex, it.recordCount, it.generation, it.records.copyOf()) },
             controls = result.controls?.let { CardControlFile(it.generation, it.bytes) },
             events = result.events?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
             faults = result.faults?.let { CardEventFaultFile(it.kind, it.generation, it.recordsPerType, it.bytes) },
@@ -294,19 +310,30 @@ class DriverCardImportPipeline @Inject constructor(
             directory = result.directory?.let { CardDirectoryFile(it.generation, it.bytes) },
             identitySources = result.identitySources.mapValues { (_, value) -> value.copy(file = value.file?.let { CardIdentitySourceFile(it.kind, it.generation, it.bytes) }) },
             communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) })
-        val activity = inspect(CardImportFileKind.ACTIVITIES, read.activity != null, read.activityReadFailed) {
-            val days = CardActivityParser.parse(checkNotNull(read.activity))
-            val prepared = activities.prepare(read)
-            CardImportFileResult(CardImportFileKind.ACTIVITIES, CardImportFileStatus.READY, prepared.dayCount,
+        // Preserve historical result/fingerprint semantics when no full original was captured.
+        val activityRaw = core[CardCoreEf.ACTIVITY]
+        val vehicleRaw = core[CardCoreEf.VEHICLES]
+        val activity = activityRaw?.takeIf { it.status != CardCoreReadStatus.COMPLETE }?.result()
+            ?.copy(kind = CardImportFileKind.ACTIVITIES) ?: inspect(CardImportFileKind.ACTIVITIES,
+                read.activity != null || activityRaw?.snapshot != null,
+                activityRaw == null && read.activityReadFailed) {
+            val file = read.activity ?: throw ParseError(0, "Driver_Activity_Data", "invalid original pointer")
+            val days = CardActivityParser.parse(file)
+            if (days.isEmpty() && activityRaw?.snapshot != null) CardImportFileResult(CardImportFileKind.ACTIVITIES, CardImportFileStatus.EMPTY,
+                0, null, null, "EMPTY")
+            else CardImportFileResult(CardImportFileKind.ACTIVITIES, CardImportFileStatus.READY, activities.prepare(read).dayCount,
                 days.minOf { it.recordDateUtc.epochSecond }, days.maxOf { it.recordDateUtc.epochSecond }, null)
         }
-        val vehicle = inspect(CardImportFileKind.VEHICLES, read.vehicles != null, read.vehicleReadFailed) {
-            val uses = CardVehiclesParser.parse(checkNotNull(read.vehicles))
+        val vehicle = vehicleRaw?.takeIf { it.status != CardCoreReadStatus.COMPLETE }?.result()
+            ?.copy(kind = CardImportFileKind.VEHICLES) ?: inspect(CardImportFileKind.VEHICLES,
+                read.vehicles != null || vehicleRaw?.snapshot != null,
+                vehicleRaw == null && read.vehicleReadFailed) {
+            val file = read.vehicles ?: throw ParseError(0, "Vehicles_Used", "invalid original pointer")
+            val uses = CardVehiclesParser.parse(file)
             if (uses.isEmpty()) CardImportFileResult(CardImportFileKind.VEHICLES, CardImportFileStatus.EMPTY,
                 0, null, null, "EMPTY")
             else CardImportFileResult(CardImportFileKind.VEHICLES, CardImportFileStatus.READY, vehicles.prepare(read).useCount,
                 uses.minOf { it.firstUseUtc.epochSecond },
-                // An open end remains unknown; do not turn its first-use instant into an end.
                 if (uses.any { it.lastUseUtc == null }) null else uses.maxOf { checkNotNull(it.lastUseUtc).epochSecond }, null)
         }
         // A missing field on an older technical result means not attempted, not a failed control read.
@@ -457,7 +484,7 @@ class DriverCardImportPipeline @Inject constructor(
             } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory) + communication)
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory) + communication + CardCoreEf.entries.mapNotNull { core[it]?.result() })
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -473,6 +500,7 @@ class DriverCardImportPipeline @Inject constructor(
 
     private data class Plan(val read: CardReadResult, val files: List<CardImportFileResult>) {
         val selection: CardImportSelection? get() {
+            if (read.coreReads.values.any { it.snapshot != null }) return CardImportSelection.ALL_AVAILABLE
             if (files.any { it.kind !in setOf(CardImportFileKind.ACTIVITIES, CardImportFileKind.VEHICLES) && it.status == CardImportFileStatus.READY })
                 return CardImportSelection.ALL_AVAILABLE
             val activity = files[0].status == CardImportFileStatus.READY
@@ -517,6 +545,15 @@ class DriverCardImportPipeline @Inject constructor(
                 .putInt(it.newestRecordIndex).putInt(it.recordCount).array());
                 digest.update(ByteBuffer.allocate(4).putInt(it.records.size).array()); digest.update(it.records) }
                 ?: digest.update(0.toByte())
+            // Only new original captures extend a request; old fingerprints are untouched.
+            for (kind in CardCoreEf.entries) read.coreReads[kind]?.let { captured ->
+                text(kind.storageKind); text(captured.status.name); text(captured.failure?.name.orEmpty())
+                captured.snapshot?.let { file ->
+                    text(file.generation.name)
+                    val bytes = file.bytes
+                    digest.update(ByteBuffer.allocate(4).putInt(bytes.size).array()); digest.update(bytes)
+                }
+            }
             digest.update(if (read.vehicleReadFailed) 1.toByte() else 0.toByte())
             // Preserve the exact legacy fingerprint when no control EF was attempted.
             if (read.controls != null || read.controlReadFailed) {

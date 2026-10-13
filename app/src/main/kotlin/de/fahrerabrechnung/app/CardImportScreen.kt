@@ -74,6 +74,8 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.MF_DIRECTORY -> Text("Anwendungsverzeichnis übernommen")
                         CardImportFileKind.MF_ATR_INFO -> Text("Pufferinformation übernommen")
                         CardImportFileKind.MF_EXTENDED_LENGTH -> Text("Protokollunterstützung übernommen")
+                        CardImportFileKind.ACTIVITY_ORIGINAL -> Text("Originaldatei der Tätigkeiten gespeichert")
+                        CardImportFileKind.VEHICLES_ORIGINAL -> Text("Originaldatei der Fahrzeuge gespeichert")
                         CardImportFileKind.WORK_PERIOD_PLACES -> Text("Beginn-/Ende-Orte übernommen")
                         CardImportFileKind.WORK_PERIOD_PLACES_AUTHENTICATION -> Text("Orts-Authentisierungsstatus übernommen")
                         CardImportFileKind.SPECIFIC_CONDITIONS -> Text("Fähre/Zug und Out of Scope übernommen")
