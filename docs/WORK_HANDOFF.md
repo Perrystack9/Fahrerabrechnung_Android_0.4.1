@@ -2,7 +2,7 @@
 
 Einstieg: WORK_START und dessen fünf Startdateien. Branch/HEAD, Arbeitsbaum, aktuellen GitHub-main, offene PRs und relevante CI live prüfen.
 
-**40126-Produktmeilenstein abgeschlossen.** Keine weitere Umsetzung freigegeben. [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79) nach neuer eigener Geräteabnahme normal gemergt; Produkt-main `6334b4f67485feaee4de5d649d6788475af940ec`. Anschließend ausschließlich Gerätebeleg, Kernstatus, Folgeplan und diese Übergabe aktualisieren.
+**40126-Produktmeilenstein abgeschlossen.** Keine weitere Umsetzung freigegeben. [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79) nach neuer eigener Geräteabnahme normal gemergt; Produkt-main `6334b4f67485feaee4de5d649d6788475af940ec`. Anschließend ausschließlich Gerätebeleg, Kernstatus, Folgeplan und diese Übergabe in [Docs-PR #80](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/80) aktualisiert.
 
 ## Bestätigter Produktstand
 
@@ -18,11 +18,11 @@ Neu übernommen: eigene 0502/0503-Rohquellen und separate Child-Receipts; vollst
 
 Room22 echt: SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`; alle 44 bisherigen Tabellen und Exporte 1–21 unverändert. Vier Core-Belege aus 40124, fünf mögliche Identifikationsbelege aus40125 und deren unabhängige Migrationsabnahme vollständig erhalten. Vorgängerbelege nur bei Bedarf öffnen; Umsetzung nicht wiederholen.
 
-Zusätzlichen [Produkt-Main-Lauf 38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155) und Docs-Abschluss-CI vor endgültigem Sitzungsabschluss live prüfen. Der Produktmerge besitzt nachgewiesen denselben vollständigen Baum wie der bereits geprüfte/gerätebestätigte Kopf.
+Zusätzlicher [Produkt-Main-Lauf 38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155), Versuch 1, vollständig erfolgreich für Produktmerge: alle vier Jobs einschließlich ungekürzter SQLCipher-/Compose-Suiten. Keine laufende Produktabnahme mehr offen. Docs-PR #80 separat nach unverändertem Dokumentationsrouting prüfen; exaktes finales CI-/Mergeergebnis steht am PR. Der Produktmerge besitzt nachgewiesen denselben vollständigen Baum wie der bereits geprüfte/gerätebestätigte Kopf.
 
 ## Lokaler Arbeitsstand
 
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`. Produktbranch `work/40126-event-fault-remote` mit Remote `feat/event-fault-card-signatures-40126`; Docs-Abschlussbranch `docs/close-40126-session-20261013`. Git-Push hier ohne Schreibcredential; Veröffentlichung über verbundenen GitHub-Connector, danach Commit/Tree fetch und exakt vergleichen. Kein Reset oder Rewrite.
+Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`. Produktbranch `work/40126-event-fault-remote` mit Remote `feat/event-fault-card-signatures-40126`; Docs-Abschlussbranch `docs/close-40126-session-20261013`, lokal geprüfter Remote-Stand auf `work/40126-docs-remote`. Zum Sitzungsende auf einen neuen sauberen Branch vom tatsächlichen finalen main wechseln; bestehende Produkt-/Docs-/Sicherungsbranches erhalten. Git-Push hier ohne Schreibcredential; Veröffentlichung über verbundenen GitHub-Connector, danach Commit/Tree fetch und exakt vergleichen. Kein Reset oder Rewrite.
 
 Frühere lokale Implementierungsstände bleiben in `preserve/40126-local-tree-before-remote`, `preserve/40126-compiler-export-local-before-remote` und `preserve/40126-rollback-test-local-before-remote` erhalten. Keine Branch-/Artefaktlöschung.
 

@@ -49,6 +49,6 @@ Das Gerätegate gilt für diesen exakten bestätigten Produktbaum und Tobis tats
 
 ## Abschluss
 
-PR #79 nach Prüfung des exakten unveränderten Kopfes, aller grünen Checks, Mergefähigkeit und neuer Geräterückmeldung normal gemergt. Zusätzlichen [Produkt-Main-Lauf 38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155) vor endgültigem Sitzungsabschluss live prüfen; den vorherigen vollständigen CI-Nachweis nicht damit ersetzen.
+PR #79 nach Prüfung des exakten unveränderten Kopfes, aller grünen Checks, Mergefähigkeit und neuer Geräterückmeldung normal gemergt. Zusätzlicher [Produkt-Main-Lauf 38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155), Versuch 1, vollständig erfolgreich für Produktmerge: alle vier Jobs einschließlich vollständiger SQLCipher-/Compose-Suiten und Abschlussgate. Live vor Sitzungsabschluss geprüft. Reine Abnahmedokumentation in [PR #80](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/80).
 
 Gerätetest-Anleitungen künftig immer verständlich direkt im Chat. Die [Repository-Checkliste](DEVICE_TEST_40126.md) und ZIP-Anleitung ergänzen diese Kommunikation.

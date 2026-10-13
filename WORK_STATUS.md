@@ -23,7 +23,7 @@
 | Neue eigene Gerätebestätigung | Tobi, 13.10.2026 20:59 Europe/Berlin: „Hab alles getestet.“ nach sämtlichen neun Chat-Testpunkten; keine Auffälligkeit gemeldet |
 | Sichtbarer Screenshot | Events 3168 / Faults 1152 Originalbytes; jeweils 64-Byte-Signatur, aufgenommen · ungeprüft; Störungsliste gültig leer, Anwendungsbezeichnung nicht sichtbar |
 | Produktmerge | `6334b4f67485feaee4de5d649d6788475af940ec`; vollständiger identischer CI-/Gerätebaum |
-| Zusätzlicher Produkt-Main-Lauf | [38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155), Ergebnis vor endgültigem Sitzungsabschluss live prüfen |
+| Zusätzlicher Produkt-Main-Lauf | [38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155), Versuch 1, vollständig erfolgreich für Produktmerge; alle vier Jobs |
 
 Alle sieben Gradle-Schritte, Unit/Lint/APK-/Signatur-/Updatepaar-/Compiler-Schemaabgleich, ungekürzte SQLCipher-/Compose-Suiten API 36 und Abschlussgate bestanden. Reader-/Format-/Policy-/Grenz-/Transport-/Freeze-, Herkunfts-/Tamper-/Dedup-/Request-/Historien-, erster Kartenbindungs-/Gruppenrollback- und UI-Abnahme. Keine Filter/Quarantäne oder Workflow-/Upload-/Budgetänderung; erfolgreiche normale Produkt-CI ohne Artefakte. Lokaler Gradle-Download blockiert; Android-Nachweis aus echter CI.
 
@@ -37,4 +37,4 @@ Die neue Gesamtabnahme deckt Tobis tatsächlich getestete Karte-/Leser-Kombinati
 
 **Kein weiterer Produktauftrag freigegeben.** 0502/0503-Implementierung, exaktes Paket und Geräteabnahme abgeschlossen. Neue begrenzte Paketentscheidung anhand des [vorhandenen Folgeplans](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md); weitere EFs, mathematische Prüfung/Trust, Originalexport/DDD/Standarddownload, Schreibpfad, 7F66/0540 und Oberflächenneugestaltung bleiben getrennt. Keine Spesen-/Lohn-/Abrechnungs-/Heimatstandortphase.
 
-Gerätetest-Anleitungen immer verständlich direkt im Chat, Dokumente/ZIP als Ergänzung. Browser/Unteragenten ausgeschlossen. Ursprüngliche unvollständige Settings-Arbeit erhalten und separat gesichert; lokale Branches/Checkout in der [Übergabe](docs/WORK_HANDOFF.md). Reiner Docs-Abschluss verändert keinen Produktcode, Test, Schema oder eingebetteten App-Asset.
+Gerätetest-Anleitungen immer verständlich direkt im Chat, Dokumente/ZIP als Ergänzung. Browser/Unteragenten ausgeschlossen. Ursprüngliche unvollständige Settings-Arbeit erhalten und separat gesichert; lokale Branches/Checkout in der [Übergabe](docs/WORK_HANDOFF.md). Reiner Docs-Abschluss [PR #80](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/80) verändert keinen Produktcode, Test, Schema oder eingebetteten App-Asset; unverändertes Dokumentationsrouting.

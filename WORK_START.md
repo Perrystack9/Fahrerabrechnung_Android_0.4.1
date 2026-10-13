@@ -24,7 +24,7 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Neue eigene 0502/0503-Rohquellen und Child-Receipts in beiden Anwendungen; frische vollständige post-HASH-READs, strikte Dateigrenze und reale Card_Sign-Policy. Lokale HASH-/SIGN-Fehler erhalten unabhängig vollständige unsigned Originale; Transportverlust verwirft die Gruppe. Additive 21→22, echte Compilerexporte und eigene Reader-/SQLCipher-/Historien-/Rollback-/Compose-Abnahme. Vier Core- und fünf Identifikationsbelege, alte Originale/Fingerprints/Imports sowie eigenständige 19→20-/20→21-Prüfungen erhalten. Kein Backfill oder jüngerer Ersatz. Aufnahme bleibt ungeprüft.
 
-Die bestätigten Vorgänger 40124/40125 bleiben erhalten; [40125-Beleg](docs/DEVICE_CONFIRMATION_40125.md). Zusätzlichen Produkt-Main-Lauf [38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155) und aktuelle Docs-CI vor endgültigem Sitzungsabschluss live prüfen. Keinen Trust-/DDD-/Schreib-/UI-Folgeumfang aus der Abnahme ableiten.
+Die bestätigten Vorgänger 40124/40125 bleiben erhalten; [40125-Beleg](docs/DEVICE_CONFIRMATION_40125.md). Zusätzlicher Produkt-Main-Lauf [38451502155](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38451502155) vollständig erfolgreich, alle vier Jobs. Reiner Dokumentationsabschluss: [PR #80](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/80), aktuelles CI-Ergebnis dort live prüfen. Keinen Trust-/DDD-/Schreib-/UI-Folgeumfang aus der Abnahme ableiten.
 
 ## Nächste Arbeit
 
