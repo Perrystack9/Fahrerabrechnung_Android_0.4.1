@@ -18,17 +18,19 @@ Der [begrenzte Plan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist mit **PR #73 / 401
 
 SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, Policy aus frisch gelesenem C101/Card_Sign, eigene verschlüsselte Sitzung/FKs, additive 19→20 und kleine Statusanzeige. Originale bleiben bei lokalen Signaturfehlern erhalten; Transportverlust verwirft die laufende Gruppe. Alte Imports bleiben ohne neue Signaturen. Room-20-Schema aus echtem Compilerexport; eigene 19→20-Prüfung erhalten. GEN1 beide Signaturen 128 Bytes, GEN2V2 beide 64 Bytes; Aufnahme bleibt ungeprüft.
 
-## Aktueller Kandidat: Identifikationssignaturen 40125
+## Abgeschlossen: Identifikationssignaturen 40125
 
-Der [Identifikationsplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist in offenem Draft-[PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76) als **40125 / additive Migration 20→21** umgesetzt: neue 0501-/0520-/V2-0525-Captures, bytegenauer Bootstrap-Vergleich mit nicht toleriertem Gruppenabbruch, getrennte Child-Receipts, unabhängiger unsigned Fallback und kleine Anzeige in bestehenden Kartenangaben. Alte Core-Belege, Originale/Fingerprints und historische 15-Byte-Quellen erhalten. Neue Reader-/SQLCipher-/Migrations-/Historien-/Compose-Prüfungen; eigene vollständige 19→20-Abnahme bleibt bestehen.
+Der [Identifikationsplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist in [PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76) als **40125 / additive 20→21** umgesetzt und nach neuer eigener positiver Geräte-Rückmeldung übernommen. Merge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d`, identischer Produktbaum `36e014af6cbffa9add766bdd917c6d94313f87ec` zum geprüften Kopf `20d34a0fc7ce370fb4c1d22002905a500574ee06`. Volle CI 38408152663 und exaktes Paket 38414059875 erfolgreich. Tobi, 13.10.2026 17:32 Europe/Berlin: „Wurde getestet, und funktioniert 1a“; [genauer Gerätebeleg und Grenzen](DEVICE_CONFIRMATION_40125.md).
 
-**Nächster Schritt:** endgültigen PR-Kopf und vollständige Android-/API36-CI live prüfen, echtes Compiler-Room21 übernehmen und alte Exporte unverändert halten. Nach grünen endgültigen Checks exaktes Paket mit `source_sha` und `include_baseline=false` über bestehenden Workflow erzeugen; aktuelle Work-API kann keinen neuen Dispatch starten, Tobi übernimmt den Start. [40125-Gerätecheckliste](DEVICE_TEST_40125.md) vorbereitet, noch nicht durchgeführt. Kein Merge vor neuer ausdrücklicher Bestätigung. Status/Übergabe sind maßgeblich; keine Trust-/DDD-/Schreib-/UI-Folgephase.
+Neu: frische 0501-/0520-/V2-0525-Captures, bytegenauer Bootstrap-Vergleich mit nicht toleriertem Gruppenabbruch, getrennte Child-Receipts, unabhängiger unsigned Fallback und kleine Anzeige. Alte Core-Belege/Originale/Fingerprints und historische 15-Byte-Quellen erhalten. Neue vollständige Reader-/SQLCipher-/Migrations-/Historien-/Compose-Prüfungen; eigenständige 19→20-Abnahme bleibt bestehen. Room21 echt, alte Exporte unverändert; keine CI-Abschwächung oder Workflowänderung.
+
+**Nächster Einstieg:** aktuellen main/PR/CI und vorhandene lokale Settings-Arbeit gemäß Status/Übergabe prüfen. Meilenstein gesichert, Sitzung abschließen. Die folgenden Optionen sind getrennte spätere Pakete, kein bereits erteilter Implementierungsauftrag. Keine Trust-/DDD-/Schreib-/UI-Folgephase automatisch beginnen.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Weitere EF-Signaturen | 0504/0505 ist CI-/gerätebestätigt; 0501/0520/0525 ist separat geplant, weitere verbleibende EFs danach anhand eigener Originalpfade begrenzen |
+| Weitere EF-Signaturen | 0504/0505 und der begrenzte 40125-Identifikationsumfang sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs erst anhand eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
 | Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |

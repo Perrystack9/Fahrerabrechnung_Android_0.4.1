@@ -1,6 +1,6 @@
 # Weitere Kartensignaturen - begrenzter Identifikationsplan
 
-**DETAIL-AKTIV, Plan vom 13.10.2026.** Geprüfte Planbasis main `71eac7163e53148952b09639c1fcd203a2a7b8a4`, Produkt **40124 / Room-Schema 20**. Eigene Produkt-CI 38381962283, Gerätepaket 38388192092, Gerätebestätigung 13:57 und zusätzliche volle Produkt-Main-CI 38394108412 erfolgreich; Docs-Main-CI 38395123764 ebenfalls erfolgreich. Dieser Meilenstein ändert ausschließlich Dokumentation. Die getrennte Umsetzung ist **40125 / additive Migration 20→21**; noch nicht implementiert oder gerätefreigegeben. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-BELEG, ursprünglicher Plan vom 13.10.2026.** Planbasis main `71eac7163e53148952b09639c1fcd203a2a7b8a4`, damaliges 40124/Schema 20. Die begrenzte Umsetzung **40125 / additive 20→21** ist in PR #76 abgeschlossen, vollständig CI-geprüft, mit exaktem Paket ausgeliefert und nach neuer eigener positiver Geräte-Rückmeldung übernommen. [40125-Gerätebeleg](DEVICE_CONFIRMATION_40125.md), aktueller Status/Übergabe maßgeblich. Die folgenden Format-/Konsistenz-/Speicher-/Abnahmevorgaben dokumentieren den ursprünglichen Plan; sie eröffnen keinen neuen Implementierungsauftrag. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Ziel und genau erster Umfang
 
@@ -49,7 +49,7 @@ Nicht in diesem Produkt-PR: 0521/0507, Ereignisse/Störungen, Orte/Kontrollen/So
 
 ## Modelle und additive Speicherung
 
-**Geplante Umsetzung 40125 / Schema 21**, kein Schemaexport in diesem Docs-Meilenstein. Eigenes `CardIdentitySignature`-/Capture-Modell und `identitySignatures`-Map in Read/Saved-Ergebnis; bestehende Core-Map bleibt auf zwei EFs begrenzt. Policy, Status, Phasen und zulässige Befehle aus 40124 wiederverwenden; sofern eine gemeinsame Sequenz-Hilfsfunktion extrahiert wird, Verhalten und komplette Core-Tests/Belege erhalten. Kein universeller EF-/Signatur-/Trust-Umbau.
+**In40125/Schema 21 umgesetzte Planvorgabe.** Der ursprüngliche Plan-Meilenstein selbst enthielt keinen Schemaexport. Eigenes `CardIdentitySignature`-/Capture-Modell und `identitySignatures`-Map in Read/Saved-Ergebnis; bestehende Core-Map bleibt auf zwei EFs begrenzt. Policy, Status, Phasen und zulässige Befehle aus 40124 wiederverwenden; sofern eine gemeinsame Sequenz-Hilfsfunktion extrahiert wird, Verhalten und komplette Core-Tests/Belege erhalten. Kein universeller EF-/Signatur-/Trust-Umbau.
 
 Additive Tabelle `card_identity_signature_receipts` mit `(sessionId, kind)` als Schlüssel. `kind` entspricht exakt dem bestehenden `IDENTITY_SOURCE_*`-Quellkind. Felder wie beim bewiesenen Receipt-Vertrag: Fahrerkarte, Generation/Anwendung, optionaler tatsächlicher Original- und Zertifikatsverweis, Status/Policy/Phase/Grund, echte SWs/Failure/Länge, Signaturbytes und eigener Fingerprint. FK zu `(sessionId,driverCardId)` und zum jeweiligen `(sessionId,driverCardId,kind,sourceId)`-Original bzw. Zertifikat. Die dafür nötigen kombinierten Quellenindizes bestehen seit Schema 20.
 
@@ -82,8 +82,8 @@ Danach **unveränderte volle Android-CI**: sieben Gradle-Aufrufe, Unit/Lint/APK-
 
 ## Eigene Geräteabnahme und Abschluss des Folge-PRs
 
-[Geplante Checkliste 40125](DEVICE_TEST_40125.md), neue Abnahme vor Merge. Erst vollständig grüner endgültiger Produktkopf, dann exaktes Paket über bestehenden Workflow; `include_baseline=false` für vorhandene 40124-Installation. Infrastruktur- und APK-Quellkopf getrennt dokumentieren.
+[Checkliste 40125](DEVICE_TEST_40125.md), neue positive Geräteabnahme und anschließender Merge im [Beleg](DEVICE_CONFIRMATION_40125.md) dokumentiert. Ursprüngliche Voraussetzung: Erst vollständig grüner endgültiger Produktkopf, dann exaktes Paket über bestehenden Workflow; `include_baseline=false` für vorhandene 40124-Installation. Infrastruktur- und APK-Quellkopf getrennt dokumentieren.
 
 Erforderlich: Update/Altbestand, neuer eigener Import mit fünf neuen Identitätssignaturen plus vier weiter funktionierenden Core-Signaturen, gleiche Anwendungs-/Identitätsangaben und Originalgrößen, Reopen ohne Leser, EF-/Anwendungs-/Historien-/Altarchivwechsel, erneuter Import sowie Kartenentnahme mit erfolgreichem Neustart. Tatsächliche Quellgrößen/Längen festhalten; GEN2/V2-Länge aus realem C101, keine pauschale 64-Byte-Annahme. Neue problemfreie Rückmeldung gilt nur für tatsächlich getestete Karte/Hardware, nicht für alle Kurven/ältere Gen2-Layouts oder mathematisches Vertrauen.
 
-**Dieser Plan-Meilenstein endet nach Dokumentations-PR, dessen grüner CI und gesicherter Übergabe.** App bleibt 40124 / Schema 20. Die Umsetzung von 40125 startet als getrennten nächsten Produkt-Meilenstein bei Modellen/Befehls-/Konsistenztests, danach Aufnahme/atomare Persistenz/Migration/kleine Anzeige, vollständige CI und eigenes Gerätegate. Keine Trust-/DDD-/Schreib-/UI-Folgephase parallel beginnen.
+**Plan und Folgeumsetzung 40125 sind abgeschlossen.** Produktkopf, vollständige CI, exaktes Paket, neue positive eigene Geräte-Rückmeldung und identischer Produktmerge sind im Beleg gesichert. Keine Trust-/DDD-/Schreib-/UI-Folgephase automatisch beginnen; nächste Arbeit nur gemäß aktuellem Status/Übergabe und ausdrücklich ausgewähltem Auftrag.
