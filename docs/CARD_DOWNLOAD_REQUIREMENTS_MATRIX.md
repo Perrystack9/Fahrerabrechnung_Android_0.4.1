@@ -1,6 +1,6 @@
 # Fahrerkarte - Pflichtdateien, Ausnahmen und Signaturen
 
-**DETAIL-AKTIV, Primärabgleich 13.10.2026.** Dokumentationsmeilenstein auf main `6190efa38762749a165922820b75ef61b998135f`, Produktbasis **40122 / Schema 19**. Keine neuen Kartenbefehle, Datenbankänderungen, Vertrauensprüfung oder Gerätefreigabe. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-AKTIV, Primärabgleich 13.10.2026; Codeabgleich auf main `632e0dfa020adb1d190d76b9591b046c0332f58c`, Produktbasis 40123 / Schema 19.** Die 0504-/0505-Snapshotlücke ist durch PR #70 mit eigener CI-/Gerätebestätigung geschlossen; Dateisignaturen bleiben noch unimplementiert. Diese Matrix-/Planaktualisierung ändert keine Kartenbefehle, Datenbank oder Hardwarefreigabe. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Geprüfte Formatbasis
 
@@ -41,8 +41,9 @@ Reader **R**: [DriverCardReader.readApplications/readSelected](../data/src/main/
 | I | [CardIdentitySourceReader](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardIdentitySourceReader.kt) -> [CardIdentitySourceStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardIdentitySourceStore.kt), vollständige EF-Bytes und `DriverImportMetadataSourceEntity` |
 | C | [CardCertificateReader](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardCertificateReader.kt) -> [CardCertificateStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardCertificateStore.kt), vollständige EF-Bytes, eigener Zertifikatskind und Sitzungsbeleg |
 | M | [CardMetadataStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardMetadataStore.kt), vollständige EF-Bytes und Sitzungsbeleg |
-| A | [CardActivityImportRepository](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt), Ringbytes plus zwei Pointerwerte; **kein eigener vollständiger EF-Byteblob**, siehe Lücken |
-| V | [CardVehicleImportRepository](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt), Recordbytes plus Pointerwert; **kein eigener vollständiger EF-Byteblob**, siehe Lücken |
+| A | [CardActivityImportRepository](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardActivityImportRepository.kt), fachliche Ringprojektion; historisch keine eigenständige vollständige EF-Quelle. Neue Rohquelle separat über O |
+| V | [CardVehicleImportRepository](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardVehicleImportRepository.kt), fachliche Recordprojektion; neue Rohquelle unabhängig über O |
+| O | [CardCoreSnapshotStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardCoreSnapshotStore.kt), vollständiger unveränderlicher EF0504-/EF0505-Blob einschließlich Pointer/unbenutzter Bytes, eigener Kind-/Fingerprint-/Child-Sitzungsbeleg; auch bei fachlichem EMPTY/INVALID |
 | F | Im jeweiligen unten benannten `Card...Store`, vollständige EF-Bytes und eigene Sitzungsreferenz; Speicherung über B |
 
 **P** = ausdrücklich je Sitzung / Fahrerkarte vorgeschrieben nach DDP035. **D** = vom allgemeinen Satz über andere Anwendungsdaten erfasst, nicht zusätzlich im expliziten Mindestkatalog genannt; daraus folgt keine belegte pauschale Weglassfreigabe. **S1/S2** = zusätzliche echte Dateisignatur nach dem Protokoll unten, in der App für **alle** so markierten Zeilen noch fehlend. „Ohne“ bedeutet keine zusätzliche Download-Dateisignatur, nicht dass ein Zertifikat selbst unsigniert wäre.
@@ -73,8 +74,8 @@ Alle folgenden EFs gehören zur G1-Anwendung sowohl einer Gen1- als auch einer G
 | Driving_Licence_Info `0521` | D | S1 bei Download | M, vollständige 53 Bytes |
 | Events_Data `0502` | P | S1 | F: [CardEventFaultStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardEventFaultStore.kt), EVENTS |
 | Faults_Data `0503` | P | S1 | F: CardEventFaultStore, FAULTS |
-| Driver_Activity_Data `0504` | P | S1 | A; vollständiger unabhängiger EF-Snapshot und gültiger leerer Fall noch nicht abgesichert |
-| Vehicles_Used `0505` | P | S1 | V; gültig leerer Bestand erhält aktuell EMPTY, **keinen gespeicherten EF-Snapshot** |
+| Driver_Activity_Data `0504` | P | S1 | O + A; vollständiger unabhängiger neuer Snapshot, Nullring mit Nullpointern als gültig unbenutzt; historische Quellen nicht ergänzt |
+| Vehicles_Used `0505` | P | S1 | O + V; neuer vollständiger Snapshot unabhängig von EMPTY/INVALID-Projektion; unbekannter unbenutzter Pointer bleibt INVALID |
 | Places `0506` | P | S1 | F: [CardPlacesStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardPlacesStore.kt) |
 | Current_Usage `0507` | D | S1 bei Download | M, vollständige 19 Bytes; offenes Nutzungsende nicht ergänzen |
 | Control_Activity_Data `0508` | P | S1 | F: [CardControlStore](../data/src/main/kotlin/de/fahrerabrechnung/data/card/CardControlStore.kt) |
@@ -96,8 +97,8 @@ FIDs/Format: **TCS152/154, K S. 282-285 / 21 S. 45-48**. Downloadpflicht: **DDP0
 | Driving_Licence_Info `0521` | G2 | D | S2 bei Download | M, vollständige 53 Bytes |
 | Events_Data `0502` | G2 | P | S2 | F: CardEventFaultStore, EVENTS |
 | Faults_Data `0503` | G2 | P | S2 | F: CardEventFaultStore, FAULTS |
-| Driver_Activity_Data `0504` | G2 | P | S2 | A; unabhängiger vollständiger EF-Snapshot / leerer Fall offen |
-| Vehicles_Used `0505` | G2 | P | S2 | V; EMPTY derzeit ohne gespeicherten EF-Snapshot |
+| Driver_Activity_Data `0504` | G2 | P | S2 | O + A; neuer unabhängiger vollständiger Snapshot / belegter unbenutzter Fall; exakter GEN2-/GEN2V2-Child |
+| Vehicles_Used `0505` | G2 | P | S2 | O + V; neuer vollständiger Snapshot auch bei EMPTY/INVALID; exakte Generation/Child-Sitzung |
 | Places `0506` | G2 | P | S2 | F: CardPlacesStore |
 | Current_Usage `0507` | G2 | D | S2 bei Download | M, vollständige 19 Bytes |
 | Control_Activity_Data `0508` | G2 | P | S2 | F: CardControlStore |
@@ -118,7 +119,7 @@ SC5 bedeutet für gerades READ BINARY `SM-C-MAC-G2 AND SM-R-ENC-MAC-G2`; ungerad
 
 DDP038 (K S. 352-353, in 2018 geändert) verlangt je signierter EF: **SELECT EF -> PERFORM HASH OF FILE -> vollständiges READ BINARY -> PSO: COMPUTE DIGITAL SIGNATURE -> Daten und Signatur zusammen speichern**. Die dokumentierte SFID-Variante darf vor dem Hash selektieren/lesen; sie rechtfertigt keine Vermischung verschiedener Snapshots.
 
-| Vorgang | Verifiziertes Format / Fehler | Fehlend in 40122 |
+| Vorgang | Verifiziertes Format / Fehler | Stand 40123 |
 |---|---|---|
 | Datei-Hash | Appendix 2 §3.5.13, TCS118-125, K S. 271-273: `80 2A 90 00`, kein Datenfeld; **P2=00 für beide DFs**, Algorithmus implizit | Kein Reader-/Transportbefehl für dieses Verfahren |
 | Signaturabruf | §3.5.14, TCS126-131, K S. 273-274: `00 2A 9E 9A Le`; privater Schlüssel in Karte implizit bekannt | Keine echte Aufnahme, kein unveränderlicher Signaturbeleg |
@@ -126,7 +127,7 @@ DDP038 (K S. 352-353, in 2018 geändert) verlangt je signierter EF: **SELECT EF 
 | G1 / S1 | Appendix 11 Part A CSM004/033-035, K S. 430, 443: RSA, PKCS#1 v1.5 über SHA-1; **128 Bytes**; Appendix 1 §2.149, K S. 182 | Aufnahme/Prüfung für Benutzerkarte fehlt; nicht mit RSA-Nachrichtenrückgewinnung der Gen1-Zertifikate verwechseln |
 | G2/V2 / S2 | Part B CSM48-50/233/235, K S. 448-449, 499-500: ECDSA Plain, Hash aus **Card_Sign**, nicht aus Ausstellerkurve oder Card_MA | Aufnahme/Prüfung fehlt; weder generisches PSO:HASH noch freie Hashwahl verwenden |
 | Fehler | Hash: `6985` unzulässige EF, `6400/6581` Korruption, `6986` keine transparente aktuelle EF; Signatur: `6400/6581` Schlüsselkorruption, `6985` kein temporärer Datei-Hash | SW, Transportabbruch und „nicht versucht“ unverwechselbar erfassen; keine erfundene Signatur bei Teilfehler |
-| Bytebindung | DDP040, K S. 354: vollständige Datei-/Bitreihenfolge erhalten; Karte, Anwendung/AID, EF, Sitzung, Originalbytes, Signatur und tatsächlicher Algorithmus zusammenbinden | Vorhandene lokale SHA-256-Fingerprints sind **keine** Karten-Dateisignaturen; keine Signatur nachträglich an ältere Importbytes hängen |
+| Bytebindung | DDP040, K S. 354: vollständige Datei-/Bitreihenfolge erhalten; Karte, Anwendung/AID, EF, Sitzung, Originalbytes, Signatur und tatsächlicher Algorithmus zusammenbinden | Neue 0504-/0505-Originalbytes vorhanden; Signaturbeleg fehlt. Lokale SHA-256-Fingerprints sind **keine** Karten-Dateisignaturen; keine Signatur nachträglich an ältere Importbytes hängen |
 
 Die folgenden Längen sind aus CSM48/50/233 und TR-03111 v2.00 §5.2.1 abgeleitet: `R || S`, je Integer `ceil(log256(n))` Bytes für die Ordnung n. Appendix 1 §2.149 gibt für G2 den Bereich 64-132 Bytes vor. Eine Zertifikatssignatur richtet sich dagegen nach dem **Ausstellerschlüssel** (CSM150); beide Fälle unterscheiden.
 
@@ -149,15 +150,13 @@ Eine passende Länge oder strukturell gelesene Kurve beweist keine Echtheit. CSM
 | ESM-/DDD-Paket | DDP040-046, K S. 354-355: ein Sitzungsfile, TLV mit 2-Byte-Länge, G1/MF Daten `FID||00`, G1 Signatur `FID||01`, G2 Daten `FID||02`, G2 Signatur `FID||03`; Signatur direkt hinter Daten | Kein Standardexport implementiert. Nicht heruntergeladene Dateien ohne Tag/Null-Längenobjekt; ein vorhandener gültig leerer EF ist nicht „nicht heruntergeladen“ |
 | Extra Originalquellen | MF DIR/ATR/Extended_Length, G2 CardMAcertificate und vorhandene read-only EF050E-Snapshots | Exakten Originalquellenexport separat benennen; nicht als vollständiges DDD-Paket ausgeben oder automatisch neue TLV-Konventionen erfinden |
 
-## Sichtbare Lücken und begrenzter Folge-PR
+## Geschlossene Snapshotlücke und begrenzter Folge-PR
 
-1. **Alle S1/S2-Dateisignaturen fehlen.** Zertifikatsbytes sind vorhanden, produktive Vertrauenskette und Originalquellen-/Standardexport fehlen weiterhin. Signaturen erst nach gesicherter vollständiger Byteaufnahme planen.
-2. **0504/0505 sind Sonderfälle der Originalspeicherung.** Decoder trennen 16-Bit-Pointer von Ring-/Recordbytes; Speicher verwendet Werte plus Restbytes. Erfolgreiche nichtleere Belege sind rekonstruierbar, besitzen aber keinen unabhängigen EF-Blob. `vehicles.prepare` fordert nichtleere Nutzungen, Pipeline stuft leer als EMPTY ein und entfernt es aus `usableRead`. Der Aktivitätsparser verlangt eine gültige Tageskette; ein unbenutzter Default-Ring ist nicht als gültig leerer Originalbeleg abgesichert. Nicht still zu EMPTY oder vollständiger Quelle umdeuten.
-3. **Fehlend / unlesbar / nicht versucht noch nicht überall vollständig differenziert.** Kind-/Run-Status und Anwendungsstatus existieren; `readSelected` fasst teilweise Parse-/Lese-/fehlende Kapazitätsfälle zu null plus readFailed zusammen. Unversuchte bedingte MF-Dateien erscheinen nicht im Capture; ein fehlendes V2-Kapazitäts-EF kann abhängige Leser verhindern. Matrix beschreibt die Unterschiede fachlich, behauptet keinen bereits vollständigen Statusautomaten.
-4. **0540 und inneres 7F66 bleiben gesperrt.** Weder ein zusätzlicher Dateiname noch eine bekannte äußere TLV-Struktur liefert den fehlenden legitimen Sicherheitsweg bzw. ISO-Primärabschnitt.
+1. **Alle S1/S2-Dateisignaturen fehlen weiterhin.** Zertifikatsbytes sind vorhanden, produktive Vertrauenskette und Originalquellen-/Standardexport fehlen. Der [begrenzte Signaturaufnahmeplan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist jetzt dokumentiert; noch keine Befehle implementiert.
+2. **Neue 0504/0505 sind als vollständige Originale abgesichert.** PR #70 / 40123 speichert unabhängige defensive READ-BINARY-Blobs vor fachlichem Parsen. 0504 mit Nullpointern und ganzem Nullring ist gültig unbenutzt; 0505-Originale bleiben auch bei EMPTY oder unklarem Pointer/INVALID erhalten. Historische Projektionen sind keine nachträglich ergänzten Originalbelege. Eigene CI und Geräteumfang stehen im [40123-Beleg](DEVICE_CONFIRMATION_40123.md).
+3. **Fehlend / unlesbar / nicht versucht nicht überall vollständig differenziert.** Für neue Core-EFs bestehen ausdrückliche Zustände inklusive Kapazitätsausfall, EF-Abwesenheit und Readerfehler. Andere `readSelected`-Quellen fassen weiterhin teilweise Parse-/Lese-/Kapazitätsfälle zusammen; bedingte MF-/V2-Versuche bleiben begrenzt. Kein vollständiger universeller Statusautomat behauptet.
+4. **0540 und inneres 7F66 bleiben gesperrt.** Weder ein zusätzlicher Dateiname noch die äußere TLV-Struktur liefert den fehlenden legitimen Sicherheitsweg bzw. ISO-Primärabschnitt.
 
-**Nächster begrenzter Implementierungs-PR:** vollständige unveränderliche EF-Snapshots für **0504 und 0505**, einschließlich vorhandener unbenutzter Dateien, unabhängig vom fachlichen Parsergebnis aufnehmen und exakt an die neue Child-Sitzung binden. Vorhandene Originale, normalisierte Tätigkeiten/Fahrzeuge, Requests und historische Auswahl erhalten; keine Rekonstruktion/Backfill alter Quellen. Neues Dateiergebnis trennt erfolgreichen Rohsnapshot, gültig leer, Parserfehler, Leseabbruch und nachweislich nicht versucht. Unklare Default-/Pointerfälle vor einer „gültig leer“-Einstufung am Primärformat gezielt prüfen.
-
-Abnahme des Folge-PRs: exakte Byte-/Pointer-Erhaltung, Gen1 und Gen2/V2 getrennt, Leer-/Fehler-/Abbruchfälle, atomare Bindung und erneute historische Auswahl; nötige additive Migration mit Compiler-Schemaexport, volle unveränderte Android-CI und **eigene erforderliche Gerätebestätigung vor Merge**. Keine neuen Hash-/Signatur-/Schreibbefehle, keine Vertrauensfreigabe und kein UI-Umbau in diesem Paket.
+**Nächster begrenzter Implementierungs-PR:** echte Signaturaufnahme nur für **neu gemeinsam gelesene 0504 und 0505** in beiden Anwendungen. Reihenfolge, Card_Sign-Policy, defensive Vollständigkeitsprüfung, eigene Sitzungsbelege/Schema 19→20, Fehler-/Abbruch-/Historienprüfungen und eigenes CI-/Gerätegate sind im Plan konkret festgelegt. Passende Länge und Aufnahme sind kein mathematischer oder vertrauenswürdiger Signaturnachweis. Keine weiteren EFs, Vertrauenskette, DDD-/Export-/Card_Download-Schreib-/UI-Umbauphase gleichzeitig beginnen.
 
 **Matrix-Abnahme:** 5 MF-, 14 G1- und 25 G2-/V2-EF-Zeilen gegen TCS142/148/152 und DDP035 abgeglichen; G2-Mindestliste, V2-Bedingungen, Signatur-/Schreib-/Exportvorgänge und tatsächliche Speicherlücken getrennt. Die explizit offenen Punkte sind keine Vollständigkeitsbehauptung und blockieren einen vollständig behaupteten Standarddownload.

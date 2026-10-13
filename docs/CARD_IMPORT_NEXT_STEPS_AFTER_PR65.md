@@ -1,6 +1,6 @@
 # Kartenimport - nächster überprüfbarer Schritt
 
-**DETAIL-AKTIV.** Einziger Fachtext im Startpfad. PR #65 / 40122 / Schema 19 und der gemeinsame Import beider Anwendungen werden übernommen. Aktuelle Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**DETAIL-AKTIV.** Einziger Fachtext im Startpfad. Gemeinsamer Import beider Anwendungen aus PR #65 und vollständige neue Originale aus PR #70 / 40123 / Schema 19 werden übernommen. Aktuelle Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Abgeschlossener Matrix-Meilenstein
 
@@ -12,17 +12,19 @@ Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX
 
 Rohsnapshots einschließlich Pointer/unbenutzter Bytes vor Parser, auch bei EMPTY/INVALID-Auswertung; nicht versucht/EF abwesend/tatsächlicher Lesefehler getrennt. Nullring mit Nullpointern ist belegte unbenutzte 0504, unbekannter unbenutzter Fahrzeugpointer bleibt INVALID mit Original. Exakte Karte/Anwendung/neue Child-Sitzung; MF am Parent. Keine Migration, Rekonstruktion, Backfill oder jüngerer Ersatz für alte Quellen. Nichtleere Projektionen, Normalisierung und Request-Fingerprints erhalten. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle oder Navigation in diesem Paket.
 
-## Jetzt: separaten Signaturaufnahme-PR planen
+## Plan abgeschlossen: jetzt getrennten Signaturaufnahme-PR umsetzen
 
-Nach live geprüfter Main-CI den begrenzten Plan für **echte Signaturaufnahme** festlegen. Nur dazu die Primärmatrix öffnen: DDP038, TCS118-131 und Appendix11; P2=00, implizites Card_Sign-Hashverfahren und echte Länge. Signatur muss zu tatsächlich neu gemeinsam gelesenen Originalbytes, EF, Karte, Anwendung und Sitzung gehören. Keine Signatur nachträglich an eine historische oder rekonstruierte Quelle hängen.
+Der [konkrete 0504-/0505-Signaturaufnahmeplan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist auf live geprüftem main 632e0df ausgearbeitet. Produkt-Main-CI 38360671532 und Docs-Main-CI 38361629250 erfolgreich. Vier neue echte Signaturbelege auf der vorhandenen Dual-Anwendungskarte sind der geplante erste Geräteumfang; keine Signatur für weitere EFs behaupten.
 
-Vor Implementierung vollständige Byte-/Abbruch-/Negativ-/Transaktions-/Historienprüfungen und eigene passende Geräteabnahme festlegen. Keine Signatur-/Vertrauens-/DDD-Freigabe aus 40123 ableiten. ERCA/MSCA-Vertrauen, Originalexport, Standarddownload-Datum und UI bleiben getrennte Pakete.
+DDP038/TCS118-131 und Appendix11 gezielt geprüft: SELECT→HASH(P2=00)→vollständiges READ→SIGN; GEN2-Hash/Länge aus frisch gelesenem C101/Card_Sign, nicht aus Card_MA/Aussteller. Zusätzliche defensive Dateiende-Prüfung, getrennte Fehlerzustände und unsigned Rohimport bei fehlender Voraussetzung festgelegt. Signaturen ausschließlich an die gemeinsam neu aufgenommenen Originale/Karte/AID/Child-Sitzung; keine historischen Ergänzungen.
+
+Als Nächstes im getrennten Produkt-Meilenstein zuerst Modelle/Command-Factories/Sequenztests umsetzen, dann eigene Sitzungsbelege mit additiver Schema 19→20-Migration, kleine Statusanzeige und vollständige Byte-/Negativ-/Abbruch-/Transaktions-/Historien-/Compose-Prüfungen. Erst eigene volle CI und neue passende Gerätebestätigung erlauben Merge. 40124/Schema 20 sind **geplant, noch nicht gebaut**; 40123 gibt keine spätere Signatur-/Vertrauens-/DDD-Funktion frei.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Echte Signaturaufnahme | Nach vollständiger Bytebasis: DDP038, TCS118-131 und Appendix 11 umsetzen; P2=00, Card_Sign-Hash und echte Länge; eigene Byte-/Abbruch-/CI-/Geräteprüfung |
+| Weitere EF-Signaturen | Erst begrenzte 0504/0505-Aufnahme selbst CI-/geräteprüfen; dann zusätzlichen tatsächlichen EF-Umfang mit gleicher Byte-/Sitzungsbindung planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
 | Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |
