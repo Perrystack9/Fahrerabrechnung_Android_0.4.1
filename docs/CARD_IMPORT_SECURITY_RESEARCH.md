@@ -1,4 +1,4 @@
-> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # Nachgelagerte Download-/Vertrauensgrenzen – Primärabgleich12.10.2026
 
@@ -10,7 +10,7 @@ Der [amtliche Anhang IC, Appendix2 TCS146](https://dtc.jrc.ec.europa.eu/iot_doc/
 
 ## Signierte Quellen und Standarddownload
 
-Primärbasis: Appendix2 §3.5.13/3.5.14 und Appendix7 DDP035; V2-Ergänzung im [amtlichen Änderungsformat2021/1228](https://dtc.jrc.ec.europa.eu/iot_doc/EU_2021-1228.pdf). Die vollständigen Texte liegen aus der früheren JRC-Recherche lokal vor; öffentliche Web-Textabfrage dieser großen PDFs scheiterte an der Größenbegrenzung. Die folgenden Schritte sind Modell-/Protokollklärung, keine implementierten Befehle.
+Primärbasis: Appendix2 §3.5.13/3.5.14 und Appendix7 DDP035; V2-Ergänzung im [amtlichen Änderungsformat2021/1228](https://dtc.jrc.ec.europa.eu/iot_doc/EU_2021-1228.pdf). Der damalige Abgleich verwendete die vollständigen JRC-Texte; ihre Verfügbarkeit für eine neue Sitzung separat sicherstellen; öffentliche Web-Textabfrage dieser großen PDFs scheiterte an der Größenbegrenzung. Die folgenden Schritte sind Modell-/Protokollklärung, keine implementierten Befehle.
 
 Die Karte kann selbst einen Dateihash und anschließend eine Signatur mit ihrem bereits vorhandenen impliziten privaten Schlüssel erzeugen. Ein Host muss dafür keinen privaten Schlüssel erfinden. Gen1 und Gen2 verwenden unterschiedliche Signaturmechanismen. Die Hash-/Signaturaufnahme gehört zum konkreten ausgewählten EF/DF; ein AID-Wechsel oder Reset löscht den temporären Hash. Originalbytes, echte Signatur, konkrete Anwendung und Sitzung müssen deshalb als gemeinsamer unveränderlicher Beleg gespeichert werden. Strukturelles Zertifikatlesen ist kein Ersatz dafür.
 
@@ -35,4 +35,4 @@ Das Gen2-BIN wurde unabhängig lokal als7F21 mit vollständigem kodierten7F4E-Bo
 
 Das V2-Primärformat ordnetVU_Configuration der ZugriffsbedingungSC5 zu: authentisierte und geschützte Kommunikation; normales ungeschütztes READ reicht nicht. Im Projekt steht kein belegter autorisierter VU-/Authentisierungs-/Secure-Messaging-Pfad mit den dazugehörigen legitimen Schlüsseln bereit. Die eigene Fahrerkarte oder ein öffentliches ERCA-Zertifikat liefert diese Berechtigung nicht. Deshalb weiterhin kein blindes0540-Lesen, keine vorgetäuschte VU-Identität oder erfundene Schlüssel. Ein zulässiger eigener Hardware-/Sicherheitsweg ist eine tatsächliche Voraussetzung für diesen Importbereich.
 
-Fahrzeugauswertung bleibt außerhalb dieser Importforschung. Spesen, Lohn/Zuschläge und Abrechnung entfallen vollständig. Keine erfundenen Straßenrouten, Messpunkte, Zeitabdeckung oder Vertrauen; spätere klar approximierte Verbindungen echter Karten-GNSS-Punkte sind zulässig. Kein Browser/Unteragenten/Bereinigung. Budget-/Stop-usage-Einstellungen vom Agenten unverändert; Tobi hat die Nutzung freigegeben, neuer Betrag nicht mitgeteilt.
+Dieser Fachtext behandelt die nachgelagerten Import-/Vertrauensgrenzen. Aktueller Produktumfang und Arbeitsregeln ausschließlich gemäß CURRENT_RULES.md; keine neue App- oder Hardwarefreigabe aus der Forschung.

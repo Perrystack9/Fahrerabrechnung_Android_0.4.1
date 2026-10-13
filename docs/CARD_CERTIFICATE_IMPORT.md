@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Zertifikatsdateien als unabhängige Kartenquellen
 
-Stand: 11.10.2026. Begrenzter Folgeschritt auf dem von Tobi allgemein bestätigten PR58-Stand: vollständige Zertifikats-EFs lesen, strukturell dekodieren, verschlüsselt zur exakten eigenen Karte und Übernahme speichern und in Fahrerkarte → Details → Zertifikate anzeigen. Keine kryptografische Echtheits- oder Vertrauensbehauptung, keine neuen Kartenschreib-/PSO-/Authentisierungsbefehle. Der endgültige CI-Kopf und die Prüfnachweise stehen in der PR-Beschreibung.
+Implementierte vollständige Zertifikats-Originalquellen mit strukturellem Decoder, verschlüsselter Speicherung und exakter Karten-/Sitzungswahl. Das Lesen allein ist keine kryptografische Echtheits- oder Vertrauensprüfung.
 
 ## Amtliches Format
 
@@ -40,10 +42,14 @@ Die vorhandenen Schema18-Tabellen card_metadata_imports und driver_import_metada
 
 Keine Datenbank-/Migrations-/Schemaexportänderung, keine historische Nachbefüllung oder spätere Ersatzquelle für eine alte Übernahme. Leere vollständige Dateien bleiben gespeicherte Quellen mit null dekodierten Einträgen. Fremde/unbestätigte Karten schreiben keine Quellen. Transaktion und Ergebnisbeleg bleiben atomar; deduplizierte Dateien teilen nur denselben exakten Ursprung derselben physischen Karte. Alte19-Quellen-Vorgänge behalten unveränderte Fingerprints und Status. Neue Gen2V2-Lesevorgänge können23 unterstützte Quellen enthalten; das ist weiterhin kein vollständiger Karten-/Signaturdownload.
 
-## Prüfung und Update
+## HISTORISCH - Prüfung und Update
 
 54 neue Testmethoden:14 Parser,10 begrenzte Dateileser/APDU, acht echte DriverCardReader-Wege,13 SQLCipher-/Pipelinefälle und neun Compose-/AppRoot-Wege. Keine alten Testmethoden entfernt. Darunter sämtliche138 möglichen Gen2-EF-Längen mit Null-/FF-Belegung, vier Antwortstückgrößen und drei EOF-Varianten (3312 Varianten),115 öffentliche JRC-Dateien zusätzlich in beiden Gen2-Versionen, unbekannte/fehlerhafte Kodierung, gemischte Aussteller-/Subjektgrößen, neue Karten, genaue Historie, Fremd-/unbestätigte Karten, Wiederöffnung, Rückrolle und Referenzmaskierung. Vollständige Android-CI einschließlich unverändertem KSP-Schemaexport18 ist am finalen Kopf erforderlich.
 
 Testversion40118 auf bestätigtem PR58/40117/Schema18, unveränderte feste Testsignatur und Paketkennung. Das CI-Updatepaar baut die bytegleiche PR58-Produktbasis aus Merge1b592d627d5d18db9fc909f5c8cf2c796fd8578b als40117 und den neuen Kopf als40118. Nutzer-ZIP später nur mit Update-APK, Anleitung, Herkunft und Prüfsumme. [Gebündelter Gerätetest](CARD_CERTIFICATE_DEVICE_TEST.md), nach dem beauftragten zweistündigen Arbeitsblock und vollständiger grüner CI; neue Importänderung bis zur späteren Gerätebestätigung ungemergt.
 
 Öffentliche Testressource: ausschließlich115 .cert-Mitglieder aus dem JRC-Archiv, keine privaten Beispielschlüssel gelesen oder extrahiert. Archiv-SHA256 b8ed453eb99f2a889b888c02b17eed33ee1e5c9c8dd0a6c182ced74a39b0ae5c; Hex-Ressource5632e31224be5da4d97fc45650e9d39be1b7c06aee98ce35799941a5b962933f. Lokale strukturelle-/Shell-/CI-Scope-Prüfungen sind keine Android- oder Hardwarebestätigung.
+
+## HISTORISCH - Entstehungsbezug
+
+Stand: 11.10.2026. Begrenzter Folgeschritt auf dem von Tobi allgemein bestätigten PR58-Stand: vollständige Zertifikats-EFs lesen, strukturell dekodieren, verschlüsselt zur exakten eigenen Karte und Übernahme speichern und in Fahrerkarte → Details → Zertifikate anzeigen. Keine kryptografische Echtheits- oder Vertrauensbehauptung, keine neuen Kartenschreib-/PSO-/Authentisierungsbefehle. Der endgültige CI-Kopf und die Prüfnachweise stehen in der PR-Beschreibung.

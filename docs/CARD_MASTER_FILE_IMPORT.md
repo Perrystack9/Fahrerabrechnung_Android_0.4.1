@@ -1,3 +1,5 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Karten- und Chipkennung als eigene Originalquellen
 
 `EF ICC` (`0002`,25Byte) und `EF IC` (`0005`,8Byte) gehören zum Karten-Hauptverzeichnis MF. Gen1, Gen2 und Gen2V2 werden unterstützt. Ausschließlich SELECT/READ; kein zusätzlicher Reset, kein Schreibbefehl, keine Änderung der Kartenbindung oder Profil-/Ersatzkartenregeln.
@@ -21,7 +23,7 @@ Wiederverwendet die beiden generischen Tabellen der Metadatenquellen: Schema18 u
 
 Alte technische Resultate ohne MF-Quellen behalten ihre Fingerprints, Status, Daten und Quellenabdeckung. Alte17-Quellen-Vorgänge erhalten keine neue MF-Quelle als Ersatz oder Nachbefüllung. Neue vollständige Vorgänge können19 Quellen enthalten. Der echte KSP-Export18 aus PR57 bleibt unverändert: SHA25670340ea11ae74941615f56e0297b5c711fb7d3acf44a63bc981daccccfb8ac3b. Releasezähler40117, stabile deviceTest-Kennung/Signatur; Updatebasis PR53/40112/Schema14.
 
-## Prüfung
+## HISTORISCH - Prüfung
 
 37 zusätzliche synthetische Tests:13 Parser,8 Leser,9 SQLCipher,7 Compose einschließlich zwei weiterer echter AppRoot-/Verlaufswege. Vor-AID-Reihenfolge wird durch einen Leser mit getrennten Verzeichnissen geprüft. Abgedeckt sind unter anderem Rohbytes, unsigned Serienwert, unbekannte BCD-/Typcodes, kurze Antworten, unabhängige Fehler, Abbruch, Fremd-/unbestätigte Karten, vollständiges Rückrollen, gleiche Nummer bei physischer Ersatzkarte, historische genaue Sitzung, verschlüsselte Wiederöffnung und Verbergen/Zurücksetzen.
 

@@ -1,69 +1,46 @@
-# FahrerTagebuch – aktuelle verbindliche Produktregeln
+# FahrerTagebuch - aktuelle verbindliche Regeln
 
-**Stand: 12.10.2026, nach Tobis Entscheidung um 20:53 Europe/Berlin.**
+Aktuelle Regeln ohne Chronologie. Einstieg: [WORK_START.md](../WORK_START.md). Dieser Text entscheidet über Produkt- und Arbeitsregeln; technische Implementierung und offene Arbeit stehen getrennt in Status und Übergabe. Historische Dateien begründen keine aktuellen Anforderungen.
 
-Zuerst [PRODUCT_DECISION_20261012.md](PRODUCT_DECISION_20261012.md) lesen. Sie ersetzt vollständig die bisherigen Handoff-Punkte 8 und9 sowie widersprechende Design-/GPS-/PDF-/Navigationsvorgaben. Dieses Dokument beschreibt aktuelle Regeln; [WORK_STATUS.md](../WORK_STATUS.md) beschreibt die Implementierung. Das [aktualisierte Issue #3](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/issues/3) ist ergänzender Kontext, kein Auftrag zur sofortigen Umsetzung aller Ziele.
+## Produkt
 
-## Produktumfang
+- Lokale Single-Driver-App auf Grundlage des bestehenden Fahrerkarte-Imports. Eigene Quellen, Tätigkeiten, Kalender/Tageschronik, belegte Fahrzeuge, GNSS und Importhistorie bleiben erhalten.
+- Vollständig gestrichen: Spesen/Reisekosten, Reise-/Abwesenheitsberechnung, Heimkehr/Übernachtung, Heimatstandort/Heimradius samt Standort- und Einrichtungslogik, Lohn/Gehalt, Arbeitgeberzuschläge, bezahlte oder lohnrelevante Arbeitszeit sowie gesamte Abrechnung. Keine spätere Umsetzungsphase daraus ableiten.
+- PDF-Abrechnungs-/Lohnexport entfällt. Neutraler Tätigkeits-/Fahrtenbericht ist nicht verbindlich geplant. Alte Entities, Schnittstellen, Mockups und Formulare erzeugen keinen Auftrag.
+- Oberfläche, Navigation, Einrichtung und Onboarding später grundsätzlich neu konzipieren. Zielrichtung: etwa vier Hauptbereiche Start, Kalender, Auswertung, Einstellungen; konkrete Struktur und Schrittzahl noch offen. Abrechnung ist kein Zielbereich. Jetzt kein großer UI-Umbau.
+- Getrennte spätere Komfort-/Backup-/Cloud-/Sync-Planungen, optionale Google-Anmeldung, Sprache und Heimatland bleiben außerhalb des aktuellen Auftrags. Heimatland als Profil-/Sprachangabe ist kein Heimatstandort; lokale Kernnutzung nicht unnötig blockieren.
 
-FahrerTagebuch bleibt zunächst eine lokale Single-Driver-App auf Basis des bestehenden Fahrerkarte-Imports. Eigene Kartenquellen, Tätigkeiten, Tageschronik, GNSS-Belege, Importhistorie und belegte Fahrzeugnutzungen bleiben erhalten und dürfen neutral ausgewertet werden.
+## Kartenidentität und unveränderliche Herkunft
 
-**Vollständig entfallen:** Spesen/Reisekosten, Reise-/Abwesenheitsberechnung, Heimkehr/Übernachtung, Heimatstandort/Heimradius samt Einrichtung/Standortlogik, Lohn/Gehalt, Arbeitgeberzuschläge, bezahlte oder lohnrelevante Arbeitszeit und sonstige Gehalts-/Abrechnungslogik. Diese Ziele sind nicht zurückgestellt.
+- Erste eigene Karte ausdrücklich bestätigen. Dauerhafte Identität ist das lokale Fahrerprofil: DriverProfile -> DriverCard(s) -> ImportSession(s), mit Gruppen-/Anwendungsbelegen.
+- Belastbar gleiche Inhaberidentität erlaubt Folge-/Ersatzkarten; unklare Fälle brauchen Bestätigung. Fremde Karten nicht dauerhaft mit eigenem Profil/Datenbestand vermischen.
+- Gen1 und Gen2 derselben physischen Karte sind eigene Anwendungsquellen; Gen2V2 ist kein dritter AID-Zweig. MF-Belege einmal am Parent. Beide Zeitsätze nicht addieren.
+- Alte Karten, Imports, Request-Fingerprints und getrenntes Altarchiv erhalten. Kein Backfill, keine vermutete Zuordnung und kein jüngerer Quellenersatz für ausgewählte historische Sitzungen, auch bei identischen Bytes.
+- Originalbytes und konkrete Karten-/Anwendungs-/Sitzungsbindung erhalten. Fehlend, unlesbar, nicht versucht, unbekannt und gültig leer unterscheiden; unvollständige Daten nicht als vollständig darstellen.
+- Sensible Nummern maskieren und nach Auswahlwechsel erneut verbergen. Keine sensiblen Rohdumps oder vollständigen APDUs in Logs/Fixtures. Room/SQLCipher und Keystore-Schutz erhalten; kein Klartext-Fallback oder destruktive Migration. Schemaexporte ausschließlich aus dem echten Compiler.
 
-PDF-Abrechnungs-/Lohnexport entfällt vollständig. Neutraler Tätigkeits-/Fahrtenbericht ist aktuell nicht verbindlich geplant. Vorbereitete Report-/Spesen-/Lohnschnittstellen und alte Mockups begründen keinen Umsetzungsauftrag.
+## Regulärer Import und Sicherheitsgrenzen
 
-## Fahrerprofil, Fahrerkarte und Herkunft
+Kompatiblen Leser und Karte im Vordergrund erkennen, zulässige eigene unterstützte Daten automatisch lesen und atomar speichern. Android-USB-Freigabe sowie erste/unklare Kartenbestätigung bleiben erforderlich. Fortschritt/Ergebnis verständlich zeigen; technische Test-/Speichern-Knöpfe sind keine Zielbedienung. Funktionierenden Reader, Parser, Persistenz, Migrationen und Tests erhalten.
 
-- Erste eigene Karte ausdrücklich bestätigen. Dauerhafte Fahreridentität ist das lokale Profil, nicht die Kartennummer.
-- DriverProfile → DriverCard(s) → ImportSession(s), ergänzt durch den bestätigten PR65-Gruppen-/Anwendungsbeleg.
-- Belastbar gleiche Inhaberidentität erlaubt Folge-/Ersatzkarten; unklare Fälle brauchen Bestätigung. Erkennbar fremde Karten nicht dauerhaft mit dem eigenen Profil/Datenbestand vermischen.
-- Alte Karten, Imports und getrenntes Altarchiv unverändert erhalten. Keine vermutete Zuordnung, Nachbefüllung oder Ergänzung historischer Imports aus jüngeren Sitzungen.
-- Gen1/Gen2 derselben physischen Karte bleiben eigenständige Anwendungsquellen. Gemeinsame MF-Belege einmal am Parent; Zeiten nicht addieren.
-- Sensible Nummern maskieren, bei Auswahlwechsel erneut verbergen. Keine sensiblen Rohdumps oder vollständigen APDUs in Logs/Test-Fixtures.
-- Room/SQLCipher und Keystore-Schutz erhalten; kein Klartext-Fallback und keine destruktive Migration.
+Signaturaufnahme, Originalquellenexport, Standarddownload und Vertrauenskette separat belegen. Ohne erforderliche Originalsignaturen/Standardvorgänge keinen vollständigen DDD-/Standarddownload behaupten. Automatischer Import bleibt lesend; Card_Download-Schreiben erst im getrennten geprüften Downloadpfad. `7F66`-Inhalte nur mit belegtem Primärformat dekodieren. Geschützte `0540` nur mit legitimen SC5-Voraussetzungen; keine erfundenen Schlüssel, Authentisierung, Signaturen oder Vertrauensbehauptungen.
 
-## Regulärer Import
+## Neutrale Darstellung
 
-Kompatiblen Leser und Karte im Vordergrund erkennen, unterstützte zulässige eigene Daten automatisch lesen und atomar speichern. Android-USB-Freigabe sowie erste/unklare Kartenbestätigung bleiben erforderlich. Technische Test-/Speichern-Knöpfe sind keine Zielbedienung des regulären Imports.
+- Fahren, andere Arbeit, Bereitschaft und Pause/Ruhe behalten ihre Quellbedeutung. Anzeige, Dauern und zeitliche Zusammenfassungen sind erlaubt; keine bezahlten oder abrechnungsrelevanten Kennzahlen daraus machen.
+- Tageszeitleiste mit Farbe/Symbol je Tätigkeit, Übersicht, Zoom, Abschnittsauswahl und exakten Zeiten bleibt fachliche Grundlage. Fehlende/unbekannte Zeiten und offene Fahrzeugenden nicht ergänzen. Kartenentnahme beweist keine Ruhe.
+- Ereignisse, Störungen, Sonderbedingungen, Grenz-/Ländereinträge und Marker nur aus belegten Quellen. Technische Meldungen nicht automatisch als Verstoß/Verschulden behandeln. Navigationsplätze später festlegen.
+- GNSS: echte Kartenpunkte mit Zeit, Position, Punktart und Quelle erhalten. Spätere Karte darf sie chronologisch zu einem klar approximierten groben Verlauf verbinden. Punkte und Linien unterscheidbar; keine tatsächlich gefahrene Straßenroute, erfundenen Zwischenmesspunkte oder gefahrenen Kilometer aus Linien. Lücken/Unbekanntwerte sichtbar lassen.
+- Keine Smartphone-Routenaufzeichnung/Hintergrundortung. Smartphone-Standort ist keine Voraussetzung für Karten-GNSS. Bestehender HomePointPicker und zugehörige Berechtigungen sind technischer Altbestand bis zum späteren gezielten Codeabgleich.
+- Fahrzeuge: nur belegte Identität, Kennzeichen, Staat, VIN, Nutzungszeiten und Tacho-Quellwerte; Hersteller/Modell/Antrieb/Baureihe nur belastbar zuordnen. Echtes rechtlich nutzbares Modellbild bei sicherem Modell, sonst Herstellerlogo oder neutrales Symbol. Keine KI-Modellbilder oder Laufzeit-Hotlinks; gleiche Identität konsistent darstellen.
 
-Fortschritt/Ergebnis verständlich anzeigen. Fehlende, fehlerhafte, nicht versuchte und gültig leere Quellen unterscheiden. Keine Vollständigkeit bei unvollständigen Daten behaupten. Exakte Sitzungs-/Anwendungswahl auch bei identischen Bytes. Den funktionierenden Import nicht neu aufbauen.
+## Git, CI und Merge
 
-Signaturaufnahme, Vertrauenskette, Originalquellenexport und Standarddownload separat prüfen. Ohne erforderliche Originalsignaturen und Standardvorgänge keinen vollständigen DDD-/Standarddownload behaupten. Automatischer Import bleibt lesend; Card_Download-Schreiben erst in einem separat belegten Downloadpfad.
+- Vor Änderungen tatsächlichen Branch/HEAD, Diff, aktuellen main, relevante offene PRs und CI prüfen. Vorhandene Arbeit sichern; kein Reset, Verwerfen, Löschen von Daten/Branches/Artefakten oder Neuaufbau bestätigter Arbeit ohne ausdrückliche Freigabe.
+- Für diesen Cleanup nur Dokumentation ändern; keine Produktfunktion oder Hardwarefreigabe erzeugen. Browser und Unteragenten nicht einsetzen. Budget-/Stop-usage-Einstellungen und bestehende Auslöser unverändert lassen; Actions-Nutzung ist freigegeben, aktuelle Budgethöhe nicht behaupten.
+- Leichte CI nur für bestehende explizit erlaubte Dokumentationspfade. Eingebettete App-Assets, Build/CI, Schemata, Skripte und gemischte Änderungen erfordern unverändert volle Android-CI. Keine Klassifikation oder Prüfgrenze für schnellere Ergebnisse lockern.
+- Volle CI: alle sieben vorgeschriebenen Gradle-Aufrufe, Unit/Lint/APK-/Signatur-/Updatepaar-/Schemaexportprüfung, vollständige SQLCipher-/Compose-Suiten auf API 36 und Abschlussjob; keine Filter/Quarantäne. Erfolgreiche normale CI ohne Artefaktuploads; Fehlerdiagnostik drei Tage. Details nur bei Bedarf in [CI_ARTIFACT_POLICY.md](CI_ARTIFACT_POLICY.md).
+- Relevante Hardware-/Import-/Parser-/Persistenz-/DB-/Schema-/Sicherheitsänderungen benötigen eigene passende CI und erforderliche Gerätebestätigung vor Merge. Gerätetest spätestens jeder dritte Produkt-PR, früher bei diesen Änderungen. Frühere konkrete Ausnahmen/Bündelungen nicht pauschal übertragen; reine Docs-Merges umgehen keine Produkt-Sperre.
+- Vor Merge exakten endgültigen Kopf, benötigte grüne Checks, Mergefähigkeit und Freigabegrenzen prüfen. Gerätebasis 40122 gilt nur für den bestätigten Stand, nicht für spätere Änderungen.
 
-## Tätigkeiten und neutrale Auswertung
-
-Fahren/Lenken, andere Arbeit, Bereitschaft und Pause/Ruhe behalten ihre Quellbedeutung. Anzeige, Dauern, zeitliche Zusammenfassungen und neutrale Auswertung bleiben erlaubt. Tätigkeitsstatistiken sind keine bezahlten, lohnrelevanten oder abrechnungsrelevanten Stundenzahlen.
-
-Tageszeitleiste mit Farbe und Symbol je Tätigkeit, Übersicht, Zoom, Abschnittsauswahl und exakten Zeitangaben bleibt fachliche Grundlage. Konkrete spätere Oberfläche neu konzipieren. Fehlende Zeit, unbekannte Zeiten und offene Fahrzeugenden nicht ergänzen; Kartenentnahme allein beweist keine Ruhe.
-
-Ereignisse, Störungen, Sonderbedingungen, Grenz-/Ländereinträge und weitere Marker nur aus belegten Quellen. Technische Ereignisse nicht automatisch als Verstoß/Verschulden darstellen. Bestehende Karten-/Kontrolldetails bleiben nutzbar; künftige Navigationsplätze sind offen.
-
-## GNSS und Standort
-
-GNSS aus der Fahrerkarte bleibt erhalten. Spätere Karte: echte Punkte mit Zeit, Position und Punktart plus grober chronologischer **approximierter Verlauf**. Echte Punkte und Verbindungslinien unterscheidbar; Linien niemals als tatsächlich gefahrene Straßenroute ausgeben.
-
-Keine erfundenen Messpunkte oder gefahrenen Kilometer aus Verbindungslinien. Lücken/Unbekanntwerte sichtbar lassen, exakte ausgewählte Quellen verwenden. Keine Smartphone-Routenaufzeichnung oder Hintergrundortung.
-
-Heimatstandort, Heimatpunktwahl, Heimradius und bisherige Smartphone-Standortausnahme für Zuhause entfallen als Produktanforderung. HomePointPicker/Berechtigungen bleiben technischer Altbestand bis zur späteren UI-/Einrichtungsumsetzung; jetzt kein Codeumbau. Smartphone-Standort ist keine Voraussetzung für gelesene Karten-GNSS-Punkte.
-
-## Fahrzeuge
-
-Belegte Identität, Kennzeichen, Staat, VIN, Nutzungszeiten und Tacho-Quellwerte bleiben nutzbar. Marke, Modell, Antrieb und Baureihe nur bei verlässlicher Zuordnung. Kein geratenes Modell oder erfundene Kilometer.
-
-Weiterhin gelten die Daten-/Assetregeln aus [VEHICLE_UI_SPEC.md](VEHICLE_UI_SPEC.md): echtes rechtlich nutzbares Modellbild bei sicherem Modell, Herstellerlogo bei sicherem Hersteller, sonst neutrales Symbol; keine KI-Modellbilder oder Laufzeit-Hotlinks. Frühere Layouts und Plätze in Kalender/Auswertung sind Referenzen, keine feste zukünftige Navigation.
-
-## Oberfläche, Navigation, Einrichtung, Onboarding
-
-Alle vier Bereiche später grundsätzlich auf dem schlankeren Konzept neu konzipieren. Hauptbereich Abrechnung gehört nicht mehr zum Zielprodukt: entfernen oder ersetzen. Ersatz, Tabanzahl, Labels, Reihenfolge und Schrittzahl sind noch offen.
-
-Keine künftigen Zuhause-/Spesen-/Gehalts-/Zuschlagsfelder. Vorhandenes Designsystem und bestätigte Importfunktionen bleiben Grundlagen; fünf Tabs und sieben/acht Schritte sind keine verbindlichen Ziele. Jetzt keine großflächige UI-Neuentwicklung. Profile und Importdaten bei späterer Umsetzung erhalten.
-
-## Fortsetzung und Prüfgrenzen
-
-Priorität: vollständiger zuverlässiger Kartenimport, Dateiabdeckung, echte Signaturen, Vertrauensverfahren und begrenzter Quellenexport anhand verifizierter Primärformate. Danach neutrale Auswertung und spätere UI-/GNSS-/Fahrzeugkonzeption. Keine spätere Spesen-/Lohn-/PDF-Abrechnungsphase.
-
-Bisherige separate Komfort-/Backup-/Cloud-/Sync-Planungen sowie optionale Google-Anmeldung, Sprache und Heimatland werden durch diese Entscheidung nicht gestrichen. Heimatland als Profil-/Sprachangabe ist kein Heimatstandort. Diese späteren Punkte bleiben außerhalb des aktuellen Auftrags; lokale Kernnutzung nicht unnötig blockieren.
-
-CI-, Merge-/Hardware-Regeln, kein Browser/Unteragenten und Erhalt vorhandener Git-/Datenstände bleiben bestehen. Budget-/Stop-usage-Einstellungen nicht verändern. 40122/Schema 19 bestätigt; Folgeänderungen brauchen eigene passende Prüfungen. Die bestehende CI-Boundary verlangt aktuell noch Home-Picker-Berechtigungen für den unveränderten Code; daraus keine neue Produktvorgabe ableiten.
-
-[Historischer Regelstand und damalige Checkpoints](history/CURRENT_RULES_BEFORE_PRODUCT_DECISION_20261012.md) bleiben erhalten, sind kein aktueller Auftrag.
+Die begrenzte Lese-, CI-Warte- und Sitzungsroutine aus WORK_START.md gilt dauerhaft. Aktuelle Kerntexte ersetzen frühere Checkpoints; Historie liegt in Git und gekennzeichneten Belegen.

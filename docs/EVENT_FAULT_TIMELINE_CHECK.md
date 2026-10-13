@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Ereignis-/Störungsmarker aus gespeicherten Übernahmen
 
-Dieser begrenzte UI-Schritt verwendet ausschließlich die bereits gespeicherten Quellen der ausgewählten eigenen ImportSession. Leser, APDU, Parser, Speicherung, Schema 10 und Migrationen bleiben unverändert. Der letzte bestätigte Hardware-/Update-Test ist PR #41 vom 03.10.2026, 08:06 Uhr; dafür ist keine Wiederholung erforderlich.
+Implementierte Markerprojektion ausschließlich aus den gespeicherten Quellen der ausgewählten eigenen Sitzung. Aktuelle Gerätebasis im technischen Status; dieser Projektionsschritt verändert keine Leser-/Parser-/Speicherlogik.
 
 ## Darstellung und Herkunft
 
@@ -11,11 +13,11 @@ Dieser begrenzte UI-Schritt verwendet ausschließlich die bereits gespeicherten 
 - Antippen öffnet den exakten Beleg. Bei mehreren Treffern erscheint eine Auswahl; die zusätzlich bedienbare Tagesliste erreicht auch dicht beieinanderliegende Punkte. Die bekannte Ereignisbezeichnung und vorhandenen Fahrzeug-/Zeitangaben stammen aus derselben Quelle wie die bereits getestete Übersicht.
 - Die unveränderliche physische DriverCard-ID der ausgewählten eigenen Sitzung ist Voraussetzung. Fehlende Bindung, andere Karten und das getrennte Altarchiv erzeugen keine Marker. Ältere Sitzungen erhalten keine Dateien aus neueren Übernahmen. Ohne Aktivitätsquelle werden keine neuen Kartentage erfunden; die Ereignis-/Störungsübersicht bleibt separat verfügbar.
 
-## Automatische Prüfung
+## HISTORISCH - Automatische Prüfung
 
 Acht neue Unit-Tests prüfen fehlende/offene/invertierte/gleiche Zeitpunkte, getrennte Quellbelege, Mitternacht, beide Sommerzeitwechsel, physische Kartenidentität und Zoomgrenzen. Sechs neue Compose-Tests prüfen Antippen, exakte Sekunden/Offset, Überlagerungen, Zoom, Tageswechsel, Archiv-/Kartenbindung und die echte Navigation zwischen drei unterschiedlich gespeicherten Imports. Die bisherigen 248 Tests bleiben Teil der vollständigen CI. Schemaexport und APK-/Signatur-/Versionsprüfungen laufen weiterhin im bestehenden Workflow.
 
-## Optionale Prüfung ohne Kartenleser
+## HISTORISCH - Optionale Prüfung ohne Kartenleser
 
 Die CI-ZIP aktualisiert die bereits bestandene **FahrerTagebuch Test** von **40106 auf 40107**, jeweils Schema 10, gleicher Paketname und gleicher Testschlüssel. Bei vorhandener App ausschließlich `02-FahrerTagebuch-Test-Update.apk` darüber installieren. Nicht deinstallieren oder Daten löschen; die Schema-10-Ausgangs-APK ist nur für eine neue getrennte Installation.
 
@@ -24,3 +26,7 @@ Die CI-ZIP aktualisiert die bereits bestandene **FahrerTagebuch Test** von **401
 3. Eine ältere Übernahme vor PR #41 bzw. das getrennte Altarchiv öffnen: keine aus späteren Übernahmen ergänzten Marker. Profil, Kartentage und Fahrzeughistorie bleiben verfügbar.
 
 Ein neuer USB-/Karten-/Migrationstest ist für diesen reinen Projektions-/UI-Schritt nicht erforderlich. Die vorhandene PR-41-Gerätefreigabe gilt weiter nur für die dokumentierte Kombination; neue Kartenquellen erhalten später ihren eigenen Hardwareprüfpunkt.
+
+## HISTORISCH - Entstehungsbezug
+
+Dieser begrenzte UI-Schritt verwendet ausschließlich die bereits gespeicherten Quellen der ausgewählten eigenen ImportSession. Leser, APDU, Parser, Speicherung, Schema 10 und Migrationen bleiben unverändert. Der letzte bestätigte Hardware-/Update-Test ist PR #41 vom 03.10.2026, 08:06 Uhr; dafür ist keine Wiederholung erforderlich.

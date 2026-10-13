@@ -1,3 +1,5 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Feste Kartenquellen als unabhängige Übernahme
 
 Gen1, Gen2 und Gen2V2: `Driving_Licence_Info` (`0521`,53Byte), `Current_Usage` (`0507`,19Byte), `Card_Download` (`050E`,4Byte). Alle Dateien werden ausschließlich mit SELECT/READ gelesen. Keine Aktualisierung von Card_Download; kein Karten-Schreibbefehl. Feste Längen brauchen keinen Ringzähler und bleiben unabhängig von Application_Identification-Kapazitäten und V2-Erweiterung.
@@ -24,7 +26,7 @@ Fehlend, Lesefehler, ungültig und gültig leer sind getrennte Status. Ein Fehle
 
 Migration17→18 verändert keine der36 bisherigen Tabellen und füllt keine alten Quellen/Quellstatus nach. Alte technische Resultate mit leerer Metadatenmap behalten Fingerprint und Abdeckung. Neue vollständige Resultate können17 unabhängige Quellen enthalten. Das ist weiterhin keine Behauptung vollständiger Fahrerkarte: Zertifikate, ICC-/IC-Information und VU_Configuration benötigen eigene geprüfte Implementierung.
 
-## Verifikation dieses Entwurfs
+## HISTORISCH - Verifikation dieses Entwurfs
 
 14 Parser-,8 Leser-,10 SQLCipher-,1 Room- und9 Compose-/Navigationstests hinzugefügt. Nur synthetische Karten. Unter anderem drei Generationen, unsigned Zeiten, komplette Dateien, rohe Codes und Textbytes, unabhängige Fehler, Abbruch, ausschließlich Lesebefehle, Wiederöffnung, Wiederholungen, Rückrollen, Migration, physische Kartenprovenienz, Fremdkarten sowie Verbergen/Zurücksetzen der Nummer und genaue ältere Sitzung.
 

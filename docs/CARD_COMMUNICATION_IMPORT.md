@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Bedingte Kommunikationsquellen unter MF
 
-Folgeentwurf auf dem unveränderten PR60-Produktkopf `85d0614235e4d9b5384d96d9ee124aab1f9fbc3a` (Tree `78155b21cb76f9c27231360bd78dad0aa5472a22`). Schema 18 bleibt unverändert. Die Quellen gehören jeweils zur ausgewählten eigenen physischen Fahrerkarte und ImportSession, nicht zum Smartphone oder zur aktuellen Verbindung.
+Implementierte bedingte MF-Kommunikationsquellen. Die Originaldateien gehören zur ausgewählten eigenen physischen Karte und zum konkreten Vorgang, nicht zum Smartphone oder einer aktuellen Verbindung; beim Gruppenimport zum gemeinsamen Parent.
 
 ## Primärformat und Grenze
 
@@ -36,7 +38,7 @@ Unter Fahrerkarte → Details → Kommunikationsangaben erscheinen ausschließli
 
 Der Vordergrund-Importkoordinator kopiert nun auch Zertifikats-, Originalidentitäts- und Kommunikationsmaps vor einer möglicherweise wartenden Kartenprüfung. Eine externe Mutation der ursprünglichen Maps verändert den geprüften Snapshot nicht. Ausdrückliche Erst-/Ersatzkartenbestätigung liest weiterhin frisch und übernimmt nur den bestätigten frischen Vorgang.
 
-## Prüfung und Freigabe
+## HISTORISCH - Prüfung und Freigabe
 
 38 zusätzliche synthetische Testmethoden gegenüber PR60: 12 Parser/Dateigrenzen/Fingerprints, sechs vollständige Reader-Integration, zwei Koordinator, elf reale SQLCipher-/Sitzungstests, fünf Compose-Details und zwei tatsächliche AppRoot-/Verlaufswege. Alle bestehenden Tests bleiben erhalten. Die Dateigrenzenmatrix prüft alle 122 ATR/INFO-Längen mit vier Antwortstückgrößen und drei EOF-Varianten (1464 Fälle).
 

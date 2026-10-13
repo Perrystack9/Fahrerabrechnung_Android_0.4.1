@@ -1,3 +1,5 @@
+> **HISTORISCH - nicht als aktuelle Anforderung verwenden. Einordnung: HISTORISCH.** Zeitgebundener Nachweis; ursprüngliche Aussagen und Testgrenzen bleiben erhalten. Aktueller Einstieg: [WORK_START.md](../WORK_START.md); verbindlich sind [CURRENT_RULES.md](CURRENT_RULES.md). Nicht pauschal lesen.
+
 # Dokumentationsabgleich – neue Produktentscheidung 12.10.2026
 
 ## Umfang und Grundlage

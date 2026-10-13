@@ -1,8 +1,8 @@
-Aktueller Stand11.10.2026: PR60/40120 hat CI38145473572 und Paketlauf38148088141 am unveränderten Kopf85d0614 bestanden; der Gerätetest ist ausdrücklich bestanden und PR59/60 sind über den bytegleichen Merge9e7670f abgeschlossen. [Geräteumfang und Nachweise](DEVICE_CONFIRMATION_40120.md). PR62 ergänzt zwei bedingte MF-Kommunikationsquellen, ist aber ausdrücklich noch nicht hardwarebestätigt. [Folgecheckpoint](CARD_IMPORT_FINALIZATION_HANDOFF.md).
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
-Fortsetzungsabgleich 11.10.2026: PR60/40120 ist an `85d0614235e4d9b5384d96d9ee124aab1f9fbc3a` vollständig CI-geprüft und als Testpaket ausgegeben, weiterhin ohne Gerätebestätigung. PR62 ergänzt zwei bedingte MF-Kommunikationsquellen; [aktueller Checkpoint und offene Importgrenzen](CARD_IMPORT_FINALIZATION_HANDOFF.md). Die älteren Prüfangaben unten beschreiben die Entstehung von PR60.
+# MF-Anwendungsverzeichnis DIR
 
-Der kumulative PR60 ergänzt nach Zertifikaten und originalen Kartenangaben eine weitere unabhängige Quelle: das vollständige MF-Anwendungsverzeichnis `DIR` einer erkannten Gen2-/Gen2V2-Fahrerkarte. Testversion40120, Schema18 und stabile Testkennung/-signatur; Updatebasis bleibt der bestätigte PR58-Stand40117. Keine neue Datenbanktabelle und keine Migration.
+Implementierte unabhängige MF-Quelle erkannter Gen2-/Gen2V2-Karten. Gemeinsame MF-Belege werden im aktuellen Gruppenimport am Parent geführt; genaue Herkunft bleibt erhalten.
 
 ## Amtliches Format und Grenze
 
@@ -20,7 +20,7 @@ Neue Gen2V2-Vorgänge können27 unterstützte Quellen enthalten. Frühere19-/23-
 
 `Fahrerkarte → gespeicherte Daten → Fahrerkarten-Details → Anwendungsverzeichnis` zeigt genau die ausgewählte Sitzung. Fehlend und vollständig leer bleiben unterscheidbar. Historische Auswahl, Archiv-/Quellenwechsel und erneutes Öffnen setzen den ausgewählten Stand passend. Das Verzeichnis liefert keine Aktivitätszeitspanne, Kilometer, Arbeits-/Ruhezeit oder kryptografische Vertrauensaussage.
 
-## Prüfung
+## HISTORISCH - Prüfung
 
 31 zusätzliche Methoden:5 Parser-,5 begrenzte APDU-Leser-,5 tatsächliche Fahrerkarte-Leser-,11 SQLCipher-/Room-/Pipeline- und5 Compose-/AppRoot-Tests. Alle20 Teilgrößen und drei erlaubten EOF-Antworten, jede einzeln veränderte Formatposition, alle kürzeren Dateien, ungültige Endantworten, Abbruch, unabhängige Fehler, alte19/23/26-Sitzungen, genaue Wiederholung, Deduplizierung, Fremd-/Ersatzkarten, Rollback, verschlüsselte Wiederöffnung, Fremdschlüssel, beschädigte Originalbytes und tatsächliche Navigation werden geprüft. Bisherige Testmethoden bleiben erhalten.
 

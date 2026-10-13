@@ -1,8 +1,8 @@
-> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # Beginn-/Ende-Orte: unabhängige Kartenquelle
 
-Stand 10.10.2026. Ausgangsbasis ist der unverändert gemergte, CI-geprüfte PR #51 (main `1c73cb4d2fa4f656e069362a3e159cee12b0d884`, Schema 12/Testversion 40110). Nutzerbestätigung: GNSS-Anzeige passt und bleibt nach Wiederöffnung vorhanden. Diese Rückmeldung bestätigt keine ungenannten Fehler- oder Fremdkartentests.
+Implementierte unabhängige Beginn-/Ende-Ortsquellen mit genauer eigener Karte/Anwendung/Sitzung. Getrennte Authentisierungsdaten bleiben eigenständige Belege.
 
 ## Primärquellen und Format
 
@@ -25,8 +25,12 @@ Schema 12→13 ergänzt ausschließlich `card_place_imports` und `driver_import_
 
 Die Detailansicht zeigt die exakt ausgewählte Ortsquelle und separat den aufgezeichneten Authentisierungsstatus. Land/Region zunächst als Kartenwerte, unbekannte Werte neutral. Keine Zuordnung der Authentisierungsdatei per Ringindex, keine Route, Arbeitszeit-, Heimkehr-, Kilometerdifferenz- oder Vertrauensentscheidung. Vorhandene GNSS-, Aktivitäts- und Fahrzeugdarstellung bleibt erhalten.
 
-## Verifikation und Gerätetest
+## HISTORISCH - Verifikation und Gerätetest
 
 Neue Parser-/Reader-Unit-Tests, echte SQLCipher-Tests für Wiederöffnung, Sitzungsgenauigkeit, Deduplizierung, Ersatzkarte, Teilfehler, leere Quelle, Fremdkartenschutz, atomaren Rollback, Upgrade ohne Backfill und beschädigte Links/Bytes; Room-Migrationstest und Compose-Tests für Quellenwechsel/Unbekanntwerte. Erster Lauf 38052207004 am Kopf 6a4ffb1: alle Gradle-Prüfungen, Lint, APKs und stabiles Updatepaar erfolgreich. Ausschließlich der noch nicht eingecheckte KSP-Export ließ den Schema-Guard scheitern; Emulator wurde deshalb übersprungen. Vollständige Android-CI des Folgekopfs und Gerätetest sind noch offen; aktuellen Nachweis im PR ergänzen.
 
 Testversion 40111 mit unverändertem Testpaket und öffentlichem Testzertifikat. CI-Updatepaar verwendet den bestätigten PR-51-Stand Schema 12/40110. Normale erfolgreiche CI lädt keine Artefakte hoch; die gezielte ZIP erst nach voller grüner CI des exakten Quellcommits. [Geräteanleitung](PLACES_IMPORT_DEVICE_TEST.md).
+
+## HISTORISCH - Entstehungsbezug
+
+Stand 10.10.2026. Ausgangsbasis ist der unverändert gemergte, CI-geprüfte PR #51 (main `1c73cb4d2fa4f656e069362a3e159cee12b0d884`, Schema 12/Testversion 40110). Nutzerbestätigung: GNSS-Anzeige passt und bleibt nach Wiederöffnung vorhanden. Diese Rückmeldung bestätigt keine ungenannten Fehler- oder Fremdkartentests.

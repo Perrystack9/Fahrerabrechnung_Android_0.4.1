@@ -1,31 +1,37 @@
-> **Produktentscheidung 12.10.2026 – aktueller Folgeumfang.** Reader-/Parser-/Persistenz-/Quellenregeln bleiben erhalten. Gestrichene Spesen-/Lohn-/Abrechnungs-/Heimat-/Heimkehr-/Übernachtungs-/PDF-Ziele sind keine Folgeaufgaben. Tätigkeiten neutral auswerten; spätere Karte darf echte GNSS-Punkte mit klar approximiertem Verlauf zeigen. Alte Checkpointabschnitte beschreiben ihre damaligen Stände. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+# Kartenimport - nächster überprüfbarer Schritt
 
-# Kartenimport nach PR65: vorbereitete nächste Prüfpunkte
+**DETAIL-AKTIV.** Einziger Fachtext im Startpfad für die nächste Importarbeit. PR #65 ist abgeschlossen; 40122/Schema 19 und der gemeinsame Import beider Anwendungen werden übernommen. Aktuelle Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
-Stand 12.10.2026 nach vollständig grüner CI-Versuch4 und geprüfter Paketausgabe. **PR65 bleibt am Produktkopf `62fc0d299f87b26109a98ff11e94c9202a27ae01`; eigene Hardwarebestätigung liegt vor; PR65 unverändert als21edb80 abgeschlossen.** Diese Arbeitsvorbereitung verändert weder App, Schema, Readerbefehle noch CI. [Verbindlicher Checkpoint](CARD_MULTI_APPLICATION_CHECKPOINT_40122.md).
+## Zuerst: Pflichtdateien-/Ausnahme-/Signaturmatrix
 
-Aktueller Checkpoint12.10.2026: PR65 nach grüner CI, geprüfter Paketausgabe und Tobis eigener Bestätigung unverändert gemergt. [Bestätigung und Mergebelege](DEVICE_CONFIRMATION_40122.md). Gen1-Wurzelformat plus ein veröffentlichtes Mitgliedstaat-Zertifikat sind jetzt tatsächlich mathematisch geprüft, sechs beschädigte Varianten abgewiesen. [Forschungsbeleg](CARD_GEN1_PUBLIC_CERTIFICATE_AUDIT.md). Nachgelagerte App-Vertrauens-/Downloadfunktionen bleiben eigene Implementierungen.
+Eine kompakte Matrix für **Gen1, Gen2 und Gen2V2** anhand Appendix 7 DDP035, Appendix 2 §3.5.13/3.5.14 und Appendix 11 einschließlich der anwendbaren Änderungen erarbeiten. Keine bloße Liste der bisher implementierten Quellen als vollständigen Downloadumfang ausgeben.
 
-## Zuerst PR65 abschließen
+| Spalte je Datei/Vorgang | Erforderliche Aussage |
+|---|---|
+| MF/DF, AID, Generation, EF | Gemeinsame MF-Belege und die beiden konkreten Child-Anwendungen eindeutig zuordnen |
+| Pflicht / bedingte Ausnahme | Primärstelle und Bedingung nennen; ungeprüfte Fälle ausdrücklich offen lassen |
+| Vorhandene Originalquelle | Tatsächlichen Reader-/Speicherpfad und genaue Sitzung referenzieren |
+| Originalsignatur / Hashverfahren | Benötigte Befehlsfolge, Bytebindung und belegte Hash-/Längenwahl benennen |
+| Fehlend / unlesbar / nicht versucht | Unterschiedliche Zustände erhalten; kein Backfill oder jüngerer Quellenersatz |
+| Standarddownload zusätzlich | LastCardDownload in beiden DFs und Teilfehler als getrennten bewusst ausgelösten Downloadpfad berücksichtigen |
 
-1. **Erledigt:** Startannotation als Actions-Budgetsperre geklärt; Tobi hat die Nutzung freigegeben. Im gezielten Retry4 wurden tatsächliche Runner zugewiesen. Agent änderte keine Budget-/Stop-usage-Einstellung; neuer Nutzerbetrag nicht mitgeteilt.
-2. **Erledigt:** bestehender Lauf38243540172 am unveränderten Kopf62fc0d2 vollständig grün. Erfolgreiche Grenz-/Build-Prüfungen erhalten, normale SQLCipher-/Compose-Suiten und Abschluss tatsächlich erfolgreich ausgeführt. Kein Testfilter oder Quarantäne. Bisheriger bestehender Dispose-Fehler brachte diesen Lauf nicht erneut zum Scheitern; keine ungeprüfte Lifecycle-Korrektur.
-3. **Erledigt:** geprüfte ZIP40122 aus exakt diesem Stand bereitgestellt; feste Testkennung, Signatur/Manifest/ARM64/Room-Identität, CRC und alle Prüfsummen bestanden. Konkrete SHA-/CI-Belege im [Auslieferungscheckpoint](PR65_DEVICE_DELIVERY_40122.md).
-4. **Bestätigt:** Tobi meldet40122 installiert, alte Daten erhalten, sichtbare Gen1-/Gen2-Zustände, passende Details und erfolgreiche Wiederöffnung ohne Leser. Keine zusätzlichen ungenannten Einsteck-/Deduplizierungs- oder Einzelmessfälle behauptet.
-5. **Erledigt:** PR65 am unveränderten bestätigten Kopf62fc0d2 gemergt als21edb80, Tree bytegleich. Folgeänderungen benötigen weiterhin ihren eigenen Prüf-/Hardwarestand.
+Abnahme: Jede Aussage hat eine verifizierte Primärstelle und den Abgleich zur tatsächlichen Implementierung; fehlende Inhalte und Verfahren sind sichtbar. Die Matrix selbst verändert keinen Reader, keine DB und keine Hardwarefreigabe. Erst daraus einen begrenzten nächsten Implementierungs-PR ableiten.
 
-## Nachgelagerte Arbeitspakete
+## Details erst bei Bedarf
 
-Die Primärquellen und bisher tatsächlich ausgeführten öffentlichen Zertifikatsprüfungen stehen in [CARD_IMPORT_SECURITY_RESEARCH.md](CARD_IMPORT_SECURITY_RESEARCH.md). Die folgende Matrix legt die nächste überprüfbare Ausgabe fest; sie behauptet keine neue Implementierung.
+- [Vorhandene Quellenabdeckung](CARD_SOURCE_COVERAGE.md): Ausgangsinventar, keine vollständige Pflichtdateienliste.
+- [Signatur-/Vertrauens- und Downloadgrenzen](CARD_IMPORT_SECURITY_RESEARCH.md): bisheriger Primärabgleich; benötigte Originaltexte erneut verfügbar machen und konkret prüfen.
+- [Gen1-Forschungsbeleg](CARD_GEN1_PUBLIC_CERTIFICATE_AUDIT.md): echte öffentliche Mathematik, keine App-Kartenverifikation.
 
-| Arbeitspaket | Nächster sinnvoller Schritt ohne Benutzerkarte | Prüfkriterium / Grenze |
-|---|---|---|
-| ATR/INFO `7F66` | Referenzierten ISO7816-4:2013 §12.7.1 im vollständigen Primärtext prüfen; danach Feld-/Längen-/Unbekanntwert-Matrix und synthetische Decoderfälle entwerfen | Ausgabe/Abschnitt belegt, begrenzte vollständige Kodierung; keine aus 11 Bytes oder T=1 geratenen Puffergrößen. Keine Transportänderung. Solange der Detailtext fehlt, nur vorhandene äußere Struktur und Originalbytes. |
-| Originalquellenexport | Pflichtdateien-/Ausnahme-Matrix je Gen1/Gen2/V2 gegen Appendix7 DDP035 abgleichen; gemeinsame MF-Belege und beide exakten Child-Sitzungen explizit zuordnen | Fehlende/unlesbare/nicht versuchte Dateien getrennt, keine jüngeren Quellen oder Nachbefüllung. Ohne echte Signaturen kein vollständiger Standarddownload/DDD. |
-| Signaturaufnahme | Gen1-/Gen2-Befehlsfolge aus Appendix2 §3.5.13/3.5.14 mit Reset-/AID-/EF-Wechsel, Fehler-/Abbruchpfad und Appendix11-Hash-/Längenregeln dokumentieren | Originalbytes, Signatur, ausgewählte Anwendung und konkrete Sitzung unveränderlich zusammenbinden. Keine generische PSO-HASH-Nachricht oder erfundene Signatur/Schlüssel. Echte Befehle benötigen später eigene CI und Gerätetest. |
-| Zertifikatsmathematik | Gen1: drei Wurzeldarstellungen identisch, echte veröffentlichte MSCA-Zertifikatssignatur und sechs negative Varianten geprüft; weitere Rollen-/Referenz-/Gültigkeitsfälle vorbereiten | [Tatsächlicher Forschungsbeleg](CARD_GEN1_PUBLIC_CERTIFICATE_AUDIT.md). Keine Selbstsignatur des144Byte-Rohschlüssels oder Benutzer-Kartenkette behaupten; Beispiele und produktive Wurzeln getrennt. |
-| ERCA/MSCA/Kartenvertrauen | Rollen-/Referenz-/Gültigkeits-/Rollover-Regeln und negative Fälle für falschen Aussteller, veränderten Body, falsche Signaturlänge und vermischte Kurven vorbereiten | Signatur-/Hashwahl vom tatsächlichen Aussteller, keine beliebige selbstsignierte Wurzel, keine Benutzerquelle als geprüft markieren. Pinning und vollständige Kette sind gesonderte Entscheidungen/Implementierungen. |
-| Standarddownload-Datum | Vorgeschriebene Aktualisierung von `LastCardDownload` in beiden DFs und Teilfehler dokumentieren | Normaler Import bleibt lesend. Schreiben erst im bewusst ausgelösten, separat geprüften Downloadpfad mit eigener Hardwarefreigabe. |
-| Geschützte `VU_Configuration 0540` | SC5-Voraussetzungen und fehlenden legitimen Authentisierungs-/Secure-Messaging-Weg dokumentiert lassen | Öffentliche Wurzeln oder Besitz einer Fahrerkarte geben keine VU-Berechtigung. Keine blinden Leseversuche, vorgetäuschte VU oder erfundenen Schlüssel. |
+## Nachgelagerte getrennte Pakete und Sperren
 
-Die ersten konkreten Folgeänderungen bleiben getrennt vom unveränderten PR65-Teststand. Dokumentations-/Formatvorbereitung ist möglich; reale Signaturaufnahme, neue Schreib-/Sicherheitsbefehle und neue Import-/Schemapfade benötigen ihren eigenen überprüften Kopf und erforderlichen Hardwarepunkt. Fahrzeug-, Kilometer- und weitere neutrale Timeline-Auswertung bleiben spätere Arbeiten. Spesen, Lohn/Zuschläge, Abrechnung, Heimatstandort, Heimkehr/Übernachtung und PDF-Abrechnung entfallen vollständig; sie sind nicht zurückgestellt. Kein Browser, keine Unteragenten oder Bereinigung; Budget-/Stop-usage-Einstellungen vom Agenten unverändert; Tobi hat die Nutzung freigegeben, neuer Betrag nicht mitgeteilt.
+| Paket | Voraussetzung / Grenze |
+|---|---|
+| Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
+| Echte Signaturaufnahme | Reset-/AID-/EF-Wechsel, Fehler/Abbruch und Appendix-11-Regeln belegen; Originalbytes, Signatur, Anwendung und Sitzung unveränderlich zusammenbinden; eigene CI/Geräteprüfung |
+| ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Ausstellerkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
+| Standarddownload-Datum | Normaler Import bleibt lesend; Schreiben erst in getrenntem geprüften Downloadpfad |
+| ATR/INFO `7F66` | Vollständiges ISO-7816-4:2013-Primärformat §12.7.1 fehlt; bis dahin äußere Struktur und Originalbytes, keine geratenen Puffergrößen oder Transportänderung |
+| Geschützte `0540` | Legitimer SC5-/Authentisierungs-/Secure-Messaging-Weg fehlt; keine blinden Leseversuche, Schlüssel oder VU-Identität erfinden |
+
+Relevante Produkt-/Reader-/Parser-/Persistenz-/Schema-/Sicherheitsänderungen benötigen den eigenen vollständigen Prüf- und erforderlichen Gerätestand. Keine neue Produktarbeit im Dokumentations-Cleanup.

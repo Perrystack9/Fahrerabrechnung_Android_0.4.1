@@ -1,3 +1,5 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Gen1: öffentliches Wurzelformat und echte Zertifikatsprüfung
 
 Forschungscheckpoint12.10.2026 nach dem bestätigten PR65/40122. Keine neue App-/Reader-/Vertrauensfunktion. Verwendet wurden ausschließlich veröffentlichte öffentliche ERCA-/Mitgliedstaatdaten, keine Benutzerkarte, privaten Schlüssel oder Kartenrohdumps.

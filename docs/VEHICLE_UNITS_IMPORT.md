@@ -1,3 +1,5 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Unabhängige Fahrtenschreiber-Nutzungen
 
 EF `VehicleUnits_Used` (`0523`) wird für Fahrerkarte Gen2/Gen2V2 unabhängig gelesen und verschlüsselt als vollständige Originaldatei exakt zur eigenen physischen Karte und Übernahme gespeichert. Gen1 versucht diese Datei nicht. Fehlende/ungültige Dateien und Leserfehler beeinträchtigen andere gültige Quellen nicht; Abbruch wird weitergereicht und der Leser geschlossen.
@@ -26,6 +28,8 @@ Diese Quelle enthält keinen Kilometerstand, VIN, Endzeit oder eine eindeutige G
 Additive Migration16→17 ergänzt ausschließlich `card_vehicle_units_imports` und `driver_import_vehicle_units_sources`. Die34 bisherigen Entitäten bleiben erhalten, kein Backfill. Fingerprint enthält eigene physische Karte, Generation, Kapazität und vollständige Bytes; neue Quelle und exakte Sitzungsverknüpfung gehören in dieselbe Gesamttransaktion. Gültige identische Quellen deduplizieren, neue Requests haben eigene Belege, Ersatzkarten behalten eigene Herkunft. Fremde/unbestätigte Karten bleiben temporär. Fingerprint-, Karten- und Sitzungsprüfungen beim Laden verhindern manipulierte Herkunft; der FK allein garantiert nicht die Karte der referenzierten Sitzung.
 
 Historische Requests ohne versuchte neue Quelle behalten Fingerprint und Abdeckung. Historische Auswahl zeigt ausschließlich die verknüpfte Quelle; kein Fallback zu späteren Dateien. Gültige leere Quelle und fehlende Quelle bleiben unterscheidbar. Fahrerkarte→Details→Fahrtenschreiber-Nutzungen zeigt Originalbeginn, Rohcodes und Software in20er-Portionen mit Reset bei Quellenwechsel. Auch eine gültige reine Fahrtenschreiber-Übernahme kann geöffnet werden.
+
+## HISTORISCH - Prüf-/Ausgabestand
 
 39 neue Testmethoden:13 Parser,11 Reader,9 SQLCipher,1 Room und5 Compose einschließlich echter AppRoot-Navigation. Lokal Projektgrenzen, Actionlint, Shellsyntax,10 CI-Skriptregressionen und SQLite-Migration mit34 erhaltenen Tabellen erfolgreich geprüft.
 

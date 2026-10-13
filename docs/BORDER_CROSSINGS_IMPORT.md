@@ -1,8 +1,8 @@
-> **Produktentscheidung 12.10.2026 – GNSS-Darstellung und neutraler Umfang.** Dieser Decoder-/Import-/Detailschritt erzeugt weiterhin keine Route. Das ist seine Implementierungsgrenze, kein Verbot der späteren Karte: echte Karten-GNSS-Punkte dürfen chronologisch mit klar approximierten Linien verbunden werden, ohne gefahrene Straßenroute/erfundene Messpunkte. Heimatstandort, Heimkehr/Übernachtung, Spesen, Lohn/Zuschläge und Abrechnung entfallen. Neutrale Tätigkeitsdauern/Auswertung bleiben erlaubt. Verbindlich ist die [neue Produktentscheidung](PRODUCT_DECISION_20261012.md); sie hat Vorrang vor früheren Fach-, Design- und Navigationsvorgaben.
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
 
 # Grenz-/Ländereinträge: unabhängige Gen2V2-Kartenquelle
 
-Stand 10.10.2026. Ausgangsbasis: der nach Tobis Gerätetest unverändert gemergte PR #52, main `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/Testversion 40111. Quellkopf `3a1c32d371d748cea0167b235dfe2470b5916583`, Tree `511f84f4c68b50b24f5016d68e5c78ae3f1074f6`, CI 38052970906 Versuch 1 und Paket 38054791654 erfolgreich. Die bestätigte Anzeige von Beginn-/Ende-Orten auch nach Kartenentnahme gilt PR52, nicht dieser Erweiterung.
+Implementierte unabhängige Grenz-/Länderquelle für Gen2V2-Fahrerkarten; Herkunft und unbekannte Werte bleiben erhalten.
 
 ## Primärspezifikation und begrenzter Umfang
 
@@ -30,8 +30,12 @@ Schema 13→14 ergänzt ausschließlich `card_border_crossing_imports` und `driv
 
 Die Detailansicht nutzt ausschließlich die ausgewählte eigene Sitzung. Positionszeit, Länderwerte, einzelne Position, HDOP, aufgezeichneter Status und Kilometerstand bleiben Quellwerte. In Portionen von 20 Einträgen nachladen; Quellenwechsel setzt die Portion zurück. Die unselektierte Vorschau darf den letzten eigenen Import laden; eine explizit ausgewählte Sitzung darf nicht durch spätere Daten ersetzt werden. Keine Timeline-Marker, Route, Kilometerdifferenz, Arbeits-/Ruhe-/Heimkehr-, Reise-/Spesen- oder Vertrauensentscheidung. Kein Smartphone-Standort und kein Card_Download-Schreiben.
 
-## Prüfung und notwendiger Gerätetest
+## HISTORISCH - Prüfung und notwendiger Gerätetest
 
 16 vorbereitete Parser-Tests weitergeführt, sechs Reader-Tests, sieben echte SQLCipher-Quellen-/Rollback-/Upgrade-Tests, ein Room-Migrationstest und vier Compose-Tests ergänzt. Vollständige CI einschließlich SQLCipher/Room/Compose am finalen Kopf und echter KSP-Export 14.json sind vor Ausgabe nachzuweisen. Kein handgeschriebener Schemaexport. Aktueller Nachweis im Draft-PR und WORK_HANDOFF.
 
 Testversion 40112, unverändertes Paket `de.fahrerabrechnung.app.devicetest` und festes öffentliches Testzertifikat. CI prüft das Schema-13/40111→Schema-14/40112-Paar; ausgegebene ZIP enthält ausschließlich das Update sowie Anleitung, Buildherkunft und Prüfsummen. [Gerätetest](BORDER_CROSSINGS_DEVICE_TEST.md) vor Merge erforderlich. Keine erfolgreiche Hardwareprüfung dieser neuen Quelle behaupten.
+
+## HISTORISCH - Entstehungsbezug
+
+Stand 10.10.2026. Ausgangsbasis: der nach Tobis Gerätetest unverändert gemergte PR #52, main `4d5b101eda225e6b2437f184bff3dc6f25b544ff`, Schema 13/Testversion 40111. Quellkopf `3a1c32d371d748cea0167b235dfe2470b5916583`, Tree `511f84f4c68b50b24f5016d68e5c78ae3f1074f6`, CI 38052970906 Versuch 1 und Paket 38054791654 erfolgreich. Die bestätigte Anzeige von Beginn-/Ende-Orten auch nach Kartenentnahme gilt PR52, nicht dieser Erweiterung.

@@ -1,6 +1,8 @@
+> **DETAIL-AKTIV - nur bei konkreter Facharbeit lesen.** Aktueller Umfang: [CURRENT_RULES.md](CURRENT_RULES.md); aktueller Versions-/Geräte-/PR-Stand: [WORK_STATUS.md](../WORK_STATUS.md). Format- und Teilschrittgrenzen unten sind keine feste künftige Navigation.
+
 # Ereignis- und Störungsquellen – begrenzter Importschritt PR #41
 
-Ausgangsbasis ist der am 02.10.2026 bestätigte PR-39-Produktstand, dokumentiert durch PR #40. Der begrenzte Folgeschritt erweitert den vorhandenen automatischen Vordergrund-Import um zwei unabhängige vollständige Dateien und ihre sitzungsgenaue read-only Übersicht. Kein neuer Haupttab, keine automatische Verstoßbewertung, keine Tageszusammenführung oder Arbeitszeit-/Spesenberechnung. Ereignis-/Störungsmarker auf der Tageszeitleiste bleiben ein gesonderter Schritt.
+Implementierte unabhängige Ereignis-/Störungsquellen mit genauer eigener Sitzung. Die neutrale Detailübersicht bewertet weder Verstöße noch Verschulden. Die getrennte Markerprojektion ist in [EVENT_FAULT_TIMELINE_CHECK.md](EVENT_FAULT_TIMELINE_CHECK.md) dokumentiert.
 
 ## Verbindliche technische Quellen
 
@@ -40,5 +42,7 @@ Bei Zeitüberschneidung bezeichnet Beginn die Entnahme im vorherigen Fahrzeug un
 Schema 10 ergänzt ausschließlich `card_event_fault_imports` und `driver_import_event_fault_sources`. Rohdatei-ID enthält physische DriverCard, Dateiart, Generation, Gruppenkapazität und vollständige Bytes. Deduplizierung erfolgt pro physischer Karte/Dateiart; Folge-/Ersatzkarten bleiben getrennte DriverCard(s) desselben Profils. Die Sitzung verweist exakt auf die eigenen Quellen, ohne neuesten Stand aus anderen Sitzungen zu ergänzen. SQLCipher und die vorhandene Transaktion für Quellen, Normalisierung, Sitzung und Ergebnis bleiben maßgeblich. Die Migration 9→10 ist additiv ohne Backfill oder destruktive Migration.
 
 Eine vollständig gelesene Datei ohne Meldungen ist weiterhin eine gespeicherte Quelle mit null dekodierten Meldungen. Neue Lesungen können fünf Dateiergebnisse enthalten. Ältere Zwei-/Drei-Datei-Imports behalten ihren damaligen Umfang und ihren Request-Fingerprint. Nicht versuchte Dateien werden nicht nachträglich als Fehler ergänzt. Fremde/unbestätigte Karten schreiben keine Ereignis-/Störungsquelle; unzugeordnete Archive bleiben getrennt. Eine beschädigte Rohquelle darf die Importübersicht nicht unbenutzbar machen; nur das Öffnen ihres betroffenen Vorgangs meldet den Fehler.
+
+## HISTORISCH - damaliger Folge-/Geräteplan
 
 Keine zusätzlichen Produkt-/Fachregeln. Vollständiger Kartenimport, kanonischer Tagesbestand, permanente Fahrzeugzuordnung, GNSS-/Grenzdateien und Timeline-Marker bleiben offen. Der nächste Gerätetest prüft das Update 40105→40106 sowie die beiden neuen echten EFs, erst nach vollständig grüner CI. PR #41 bleibt bis zur Nutzerbestätigung ungemergt.
