@@ -186,7 +186,7 @@ class CardReadBatchInstrumentedTest {
         val signature = saved.eventFaultSignatures.getValue(CardEventFaultKind.EVENTS)
         assertEquals(CardSignatureReason.UNSUPPORTED_FORMAT, signature.reason); assertNull(signature.bytes)
         assertArrayEquals(input.events!!.bytes, signature.original!!.bytes)
-        db.close(); open(); assertArrayEquals(input.events.bytes, imports.get(saved.id)!!.eventFaultSignatures.getValue(CardEventFaultKind.EVENTS).original!!.bytes)
+        db.close(); open(); assertArrayEquals(input.events!!.bytes, imports.get(saved.id)!!.eventFaultSignatures.getValue(CardEventFaultKind.EVENTS).original!!.bytes)
     }
     @Test fun foreignSessionAndReceiptTamperAreRejectedWithoutChangingGoodImports() = runBlocking {
         val saved = pipeline.processApplications(eventBatch(), "event-tamper", true)
@@ -206,6 +206,13 @@ class CardReadBatchInstrumentedTest {
             } }
             assertEquals(2, imports.get(g2)!!.eventFaultSignatures.size)
         }
+        val rawId = checkNotNull(row.originalSourceId)
+        val corrupted = checkNotNull(db.cardMetadataDao().get(rawId)).bytes.copyOf().also { it[0] = 1 }
+        rejected { db.withTransaction {
+            db.openHelper.writableDatabase.execSQL("UPDATE card_metadata_imports SET bytes = ? WHERE id = ?", arrayOf(corrupted, rawId))
+            imports.get(g2)
+        } }
+        assertEquals(2, imports.get(g2)!!.eventFaultSignatures.size)
         val another = pipeline.processApplications(eventBatch(9), "event-tamper-other")
         val foreign = db.cardEventFaultSignatureDao().receipts(another.primaryRun.sessionId!!).first()
         rejected { db.withTransaction {
@@ -241,12 +248,27 @@ class CardReadBatchInstrumentedTest {
         assertEquals(0, count("card_event_fault_signature_receipts")); assertEquals(oldProfile, imports.profile())
         assertTrue(imports.get(old.primaryRun.sessionId!!)!!.eventFaultSignatures.isEmpty())
     }
+    @Test fun firstEventGroupFailureAlsoRollsBackNewOwnCardBinding() = runBlocking {
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_first_event_g2 BEFORE INSERT ON card_event_fault_signature_receipts
+            WHEN NEW.application = 'GEN2' BEGIN SELECT RAISE(ABORT, 'synthetic first group'); END""")
+        rejected { pipeline.processApplications(eventBatch(), "first-event-rollback", true) }
+        assertNull(imports.profile())
+        for (table in listOf("profiles", "driver_cards", "card_read_batches", "card_application_attempts", "card_import_runs",
+            "import_sessions", "driver_import_sources", "card_metadata_imports", "driver_import_metadata_sources",
+            "card_core_signature_receipts", "card_identity_signature_receipts", "card_event_fault_signature_receipts"))
+            assertEquals(table, 0, count(table))
+    }
+
     @Test fun encryptedTwentyOneToTwentyTwoPreservesExactExistingRequestsSourcesAndSignatures() = runBlocking {
         val old = pipeline.processApplications(identityBatch(), "before-event-upgrade", true)
         val runs = old.applications.map { db.cardImportRunDao().run(it.run!!.id) }
         val profile = imports.profile()
-        val sources = old.applications.associate { it.run!!.sessionId!! to db.cardMetadataDao().sources(it.run.sessionId!!) }
-        val receipts = old.applications.associate { it.run!!.sessionId!! to db.cardIdentitySignatureDao().receipts(it.run.sessionId!!).map { row -> row.fingerprint } }
+        val sources = old.applications.associate { attempt ->
+            val id = checkNotNull(attempt.run).sessionId!!; id to db.cardMetadataDao().sources(id)
+        }
+        val receipts = old.applications.associate { attempt ->
+            val id = checkNotNull(attempt.run).sessionId!!; id to db.cardIdentitySignatureDao().receipts(id).map { row -> row.fingerprint }
+        }
         db.openHelper.writableDatabase.apply {
             execSQL("DROP TABLE card_event_fault_signature_receipts"); execSQL("DELETE FROM room_master_table"); version = 21
         }
