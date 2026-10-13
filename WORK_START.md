@@ -24,11 +24,11 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Exakte Historie/Fingerprints, Normalisierung, gemeinsame MF-Belege und atomare SQLCipher-Speicherung erhalten. Additive 19→20, keine nachträglichen Signaturen für alte Imports. Keine vollständige Kartenabdeckung, mathematische Signaturprüfung, produktive Vertrauenskette oder DDD-/Standarddownload behaupten. Neue relevante Produktänderungen brauchen eigene CI/Gerätebestätigung.
 
-Zusätzliche Produkt-Main-CI [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412) für Merge 3298b70 war beim Abschluss noch laufend. Laufende CI/offene PRs immer aktuell abfragen; vergangene grüne Läufe geben neue Änderungen nicht frei.
+Zusätzliche Produkt-Main-CI [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412) für Merge 3298b70 ist vollständig erfolgreich; Docs-Main-CI 38395123764 für main nach PR #74 ebenfalls erfolgreich. Laufende CI/offene PRs immer aktuell abfragen; vergangene grüne Läufe geben neue Änderungen nicht frei.
 
 ## Exakt nächster Schritt
 
-**40124 ist abgeschlossen; weder Signaturaufnahme neu implementieren noch altes Gerätegate wiederholen.** Aktuellen main/PR/CI einschließlich zusätzlicher Main-Prüfungen live prüfen. Danach als eigenen begrenzten **Plan-Meilenstein den Pflichtdateiumfang für weitere EF-Signaturen** anhand des Import-Folgeplans und der Primärmatrix festlegen. Noch keine weitere Reader-/DB-/UI-Funktion, Trust-/DDD-/Schreib-/UI-Folgephase beginnen. Nach Sicherung dieses Plans endet dessen Meilenstein; Folgeimplementierung bleibt separat.
+**40124 ist abgeschlossen; der nächste begrenzte Plan ist fertig.** Aktuellen main/PR/CI live prüfen; danach den [Identifikations-Signaturplan](docs/CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) öffnen und als eigenen Produkt-Meilenstein **40125 / Schema 21** umsetzen: 0501/0520 in beiden Anwendungen und 0525 nur auf V2, neue vollständige Leseaufnahme nach HASH, Bootstrap-Konsistenz und additive 20→21. Zuerst Modelle/Befehls-/Konsistenztests, danach atomare Speicherung/Migration/kleine Abnahmeanzeige. Eigene volle CI und [neue Geräteabnahme](docs/DEVICE_TEST_40125.md) vor Merge. Keine alte Gerätebestätigung übertragen; keine Trust-/DDD-/Schreib-/UI-Folgephase beginnen. Dieser Dokumentations-Meilenstein endet nach Sicherung; Umsetzung bleibt die nächste getrennte Arbeit.
 
 ## Sitzungsroutine
 

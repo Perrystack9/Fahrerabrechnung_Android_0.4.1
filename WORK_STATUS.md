@@ -21,7 +21,7 @@
 | Originalgrößen | GEN1 13780/6202 Bytes; GEN2V2 13780/9602 Bytes |
 | Aufgenommene Signaturen | GEN1 Tätigkeiten/Fahrzeuge jeweils 128 Bytes; GEN2V2 jeweils 64 Bytes; alle vier ungeprüft |
 | Produktmerge | `3298b707525a4f33162c835ce31deaf181d2e772`, identischer vollständiger Tree zum geprüften Produktkopf |
-| Zusätzliche Produkt-Main-CI | [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412), beim Abschluss noch laufend; live prüfen |
+| Zusätzliche Produkt-Main-CI | [38394108412](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38394108412), vollständig erfolgreich einschließlich API36 und Abschlussgate; am Einstieg live geprüft |
 
 Alle sieben Gradle-Schritte, Unit/Lint/APK-/Signatur-/Updatepaar-/Schemaexportprüfung, komplette SQLCipher-/Compose-Suiten auf API 36 und Abschlussjob bestanden. Eigene verschlüsselte 19→20- und 18→20-Migrationsprüfungen, Gruppenrollback, exakte Historie, negative Signatur-/Readerfälle und Inhaltsvergleiche ohne Objektidentitätsfehler erhalten. Keine Assertions abgeschwächt, Tests gefiltert/quarantänisiert oder Workflow-/Upload-/Budgetregeln geändert. Normale erfolgreiche CI ohne Artefaktupload; Paket separat gezielt erzeugt.
 
@@ -33,6 +33,8 @@ Die vorherige 40123-/Schema-19-Basis aus PR #70 bleibt erhalten; ihr eigener dam
 
 ## Exakt nächste Arbeit und offene Grenzen
 
-Am nächsten Einstieg zusätzliche Produkt-Main-CI und aktuellen Dokumentationsstand live prüfen. Danach als eigenen Plan-Meilenstein den Pflichtdateiumfang für **weitere EF-Signaturen** anhand der [Import-Folgeplanung](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und Primärmatrix festlegen. Noch keine neue Reader-/DB-/UI-Implementierung in diesem Abschluss.
+Zusätzliche volle Produkt-Main-CI 38394108412 und Docs-Main-CI 38395123764 am Einstieg erfolgreich geprüft. Der nächste begrenzte [Identifikations-Signaturplan](docs/CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist ausgearbeitet: 0501/0520 in beiden Anwendungen, 0525 bedingt auf V2, neue post-HASH-READs mit bytegenauem Bootstrap-Vergleich, eigene sitzungseigene Receipts und additive 20→21. [40125-Gerätecheckliste](docs/DEVICE_TEST_40125.md) vorbereitet, nicht durchgeführt. Planbasis main 71eac71; Primärmatrix um aktuellen 40124-Signaturstand berichtigt. Keine App-/DB-/Schema-/Workflowänderung in diesem Docs-Meilenstein.
+
+**Nächste Arbeit:** aktuellen main/PR/CI live prüfen, Plan gezielt öffnen und **40125 / Schema 21** als eigenen Produkt-Meilenstein umsetzen; Modelle/Befehls-/Konsistenztests zuerst, dann Aufnahme/atomare Speicherung/Migration/kleine Anzeige. Eigene vollständige CI, exaktes Paket und erforderliche neue Gerätebestätigung vor Merge. Die App bleibt bis zur Umsetzung 40124 / Schema 20.
 
 Offen bleiben mathematische Signaturprüfung, produktive ERCA/MSCA/Card_Sign-Vertrauenskette, vollständige Kartenabdeckung, Originalquellenexport und DDD-/Standarddownload. `7F66` braucht ISO-Primärformat, `0540` legitimen SC5-Weg. Automatischer Import bleibt ohne LastCardDownload-Schreiben. Neue Oberfläche/Einrichtung/Onboarding/GNSS-Karte später; keine Abrechnungs-/Heimatstandortphase. [Aktuelle Übergabe](docs/WORK_HANDOFF.md).

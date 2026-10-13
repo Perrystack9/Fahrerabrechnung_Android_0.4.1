@@ -18,15 +18,17 @@ Der [begrenzte Plan](CARD_CORE_SIGNATURE_CAPTURE_PLAN.md) ist mit **PR #73 / 401
 
 SELECT→HASH(P2=00)→vollständiges READ→defensive Dateigrenze→SIGN, Policy aus frisch gelesenem C101/Card_Sign, eigene verschlüsselte Sitzung/FKs, additive 19→20 und kleine Statusanzeige. Originale bleiben bei lokalen Signaturfehlern erhalten; Transportverlust verwirft die laufende Gruppe. Alte Imports bleiben ohne neue Signaturen. Room-20-Schema aus echtem Compilerexport; eigene 19→20-Prüfung erhalten. GEN1 beide Signaturen 128 Bytes, GEN2V2 beide 64 Bytes; Aufnahme bleibt ungeprüft.
 
-## Exakt nächster eigener Plan-Meilenstein
+## Nächster begrenzter Plan fertig: Identifikationssignaturen
 
-Zunächst aktuelle zusätzliche Main-CI und PRs live prüfen; dann den **Pflichtdateiumfang für weitere EF-Signaturen** anhand der Primärmatrix planen. Tatsächliche Originalquellen, Befehlssequenz, konkrete Sitzungsbindung, Fehler-/Abbruchfälle, Tests und neues Gerätegate festlegen. Der Plan erweitert noch keinen Reader, keine DB und keine UI. Nach separater Sicherung Sitzung beenden; Umsetzung ist ein eigener folgender Produkt-Meilenstein. Keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen.
+Der [konkrete Identifikationsplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) legt den eigenen Folge-Produkt-PR **40125 / additive Migration 20→21** fest: 0501/0520 in GEN1 und GEN2(V2), 0525 auf V2 wenn vorhanden. Vorablesung und neue post-HASH-READ-Aufnahme strikt trennen, bytegenauen Bootstrap-Vergleich und Gruppenabbruch bei widersprüchlichen neuen Identitätsbytes verlangen. Neue eigene Child-Sitzungsbelege neben unveränderten Core-Receipts, keine Altquellen-/Fingerprint-Ergänzung. Kleine Statusanzeige in bestehenden Kartenangaben, vollständige negative/SQLCipher-/Migrations-/Compose-Prüfungen und [neues Gerätegate](DEVICE_TEST_40125.md).
+
+Planbasis main 71eac71 / bestätigtes 40124. Produkt-Main-CI 38394108412 und Docs-Main-CI 38395123764 am Einstieg grün. Der Plan-Meilenstein ändert ausschließlich Dokumentation und endet nach Sicherung; die Umsetzung startet getrennt mit aktuellen main/PR/CI-Prüfungen und gezieltem Öffnen des Plans. Noch keine 40125-APKs, neue Schemaexporte oder Hardwarefreigabe. Keine Trust-/DDD-/Schreib-/UI-Folgephase gleichzeitig beginnen.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Weitere EF-Signaturen | 0504/0505-Aufnahme ist selbst CI-/gerätebestätigt; jetzt zusätzlichen tatsächlichen Pflichtdateiumfang mit gleicher Byte-/Sitzungsbindung planen |
+| Weitere EF-Signaturen | 0504/0505 ist CI-/gerätebestätigt; 0501/0520/0525 ist separat geplant, weitere verbleibende EFs danach anhand eigener Originalpfade begrenzen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
 | Standarddownload-Datum | Normaler Import bleibt lesend; zwei DF-Schreibversuche nur im getrennten bewusst ausgelösten geprüften Fehler-/Hardwarepfad |
