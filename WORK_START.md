@@ -20,15 +20,15 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 ## Nachweislich fertig und noch gesperrt
 
-**40122 / Room-Schema 19:** automatischer Vordergrund-Import, eigene Kartenbindung, getrennte Gen1-/Gen2-Anwendungen, gemeinsame MF-Belege und atomare SQLCipher-Speicherung; exakte Quellen-/Historienwahl. PR #65 vollständig geprüft und im ausdrücklich bestätigten Geräteumfang abgeschlossen. PR #67 ist gemergt und verankert den schlankeren Produktumfang.
+**40123 / Room-Schema 19:** automatischer eigener Mehr-Anwendungs-Import einschließlich vollständiger unveränderlicher 0504-/0505-Originale. PR #70 gemergt (`e783ad364b1692d8633c5e4b8846112adb256be6`), Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031` mit voller CI und eigener Gerätebestätigung vom 13.10.2026, 09:04 Europe/Berlin. GEN1 13780/6202 Bytes, GEN2V2 13780/9602 Bytes; Kernfälle bestätigt, optionale Wiederholungs-/Abbruchfälle nicht separat bestätigt. Exakte Historie, Normalisierung, gemeinsame MF-Belege und atomare SQLCipher-Speicherung erhalten. [Geräteumfang](docs/DEVICE_CONFIRMATION_40123.md) nur bei konkretem Bedarf öffnen.
 
 Keine vollständige Kartenabdeckung, echte Downloadsignaturen, produktive Vertrauenskette oder DDD-/Standarddownload behaupten. Neue relevante Produktänderungen benötigen ihre eigene CI und erforderliche Gerätebestätigung. Laufende CI und offene PRs immer aktuell abfragen; frühere grüne Läufe geben spätere Änderungen nicht frei.
 
-Basis des Snapshot-PRs: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
+Basis nach Produktmerge PR #70: `e783ad364b1692d8633c5e4b8846112adb256be6`. Das ist ein Ausgangsbeleg, kein dauerhaft aktueller HEAD; maßgeblich bleibt der live geprüfte main.
 
 ## Exakt nächster Schritt
 
-Den **Implementierungs-PR für vollständige 0504-/0505-Originalsnapshots** im Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013` abschließen: exakten endgültigen Kopf und vollständige Android-CI live prüfen, danach 40123 mit dem bestehenden gezielten Geräte-Workflow bauen und die eigene Geräteabnahme einholen. Byteaufnahme, leere Originale und getrennte Roh-/Parserzustände sind implementiert; **noch kein Produktmerge oder Gerätefreigabe**. Details und nächster Arbeitszustand im [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md). Keine Signatur-/Schreib-/Vertrauensbefehle oder UI-Neukonzeption in diesem Paket.
+Aktuellen main und dessen CI prüfen; dann den **eigenständigen begrenzten Signaturaufnahme-PR planen**. Die vollständige Bytebasis ist akzeptiert. Primärmatrix und [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) geben Hash-/Längen-/Befehlsgrenzen vor; eigene neue CI-/Geräte-/Abbruch-/Historienprüfung festlegen. Keine nachträglichen Signaturen an Altquellen, kein gleichzeitiger Vertrauens-/Standardexport-/Schreib-/UI-Umbau. Den abgeschlossenen Snapshot-Meilenstein in dieser Sitzung nur sichern, keine größere Folgeimplementierung beginnen.
 
 ## Sitzungsroutine
 

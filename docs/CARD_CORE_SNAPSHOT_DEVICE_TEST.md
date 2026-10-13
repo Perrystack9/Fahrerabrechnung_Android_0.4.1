@@ -1,6 +1,17 @@
 # Geräteabnahme: vollständige Originaldateien 0504/0505
 
-**40123 / Schema 19, noch nicht am Gerät bestätigt.** Nur ein aus dem exakten endgültigen Produktkopf nach vollständiger grüner Android-CI gebautes Paket verwenden. Bestehendes `device-test.yml` mit diesem `source_sha` und `include_baseline=false` auslösen; stabile Testsignatur und Paket `de.fahrerabrechnung.app.devicetest` beibehalten. 40122 als Update installieren, nicht deinstallieren oder App-Daten löschen. CI-/Budget-/Artefaktregeln bleiben unverändert.
+**40123 / Schema 19, Kernumfang am 13.10.2026 um 09:04 Europe/Berlin bestätigt.** [Konkreter Abnahmebeleg](DEVICE_CONFIRMATION_40123.md). Dieses Dokument beschreibt die durchgeführte Kernprüfliste und optionale Zusatzfälle. Nur ein aus dem exakten endgültigen Produktkopf nach vollständiger grüner Android-CI gebautes Paket verwenden. Bestehendes `device-test.yml` mit diesem `source_sha` und `include_baseline=false` auslösen; stabile Testsignatur und Paket `de.fahrerabrechnung.app.devicetest` beibehalten. 40122 als Update installieren, nicht deinstallieren oder App-Daten löschen. CI-/Budget-/Artefaktregeln bleiben unverändert.
+
+## Verifizierte Paketparameter
+
+[Volle grüne CI, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2) für Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031` bestätigt. Der normale CI-Lauf hat keine Artefakte hochgeladen. Für den bestehenden [gezielten Geräte-Workflow](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/workflows/device-test.yml) auf Branch `main`:
+
+```text
+source_sha: 659f31c510752e5a06bf5f45bf2c93f4aff37031
+include_baseline: false
+```
+
+[Paketlauf 38358288875](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38358288875) von Tobi ausgelöst und erfolgreich abgeschlossen; der Artefaktname bindet genau diesen Produktkopf. Nutzer meldete APK installiert und die Kernprüfungen problemfrei. Optionale Wiederholungs-/Abbruchfälle sind nicht separat bestätigt. Keine neue Paket-Auslösung nötig, solange dieser unveränderte Stand verwendet wird.
 
 ## Konkreter Umfang
 

@@ -6,23 +6,17 @@
 
 Die [Pflichtdateien-/Ausnahme-/Signaturmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) ist anhand Appendix 2, 7 und 11 einschließlich der relevanten Änderungen erarbeitet: 5 MF-, 14 G1- und 25 G2-/V2-EF-Zeilen, tatsächliche Quellenpfade, bedingte Ausnahmen, Befehlsfolge, Card_Sign-Hash-/Längenwahl, offene Speicher-/Zugriffs-/Vertrauensgrenzen. Kein Reader-/DB-/Hardwarestand dadurch verändert. Weitere Fachtexte nur bei konkretem Bedarf.
 
-## Jetzt: Snapshot-PR 40123 prüfen und am Gerät abnehmen
+## Abgeschlossen: vollständige 0504-/0505-Originale
 
-Im Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013` sind **vollständige unabhängige EF-Originale für Driver_Activity_Data 0504 und Vehicles_Used 0505** implementiert. Grundlage ist main nach PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`. Die frühere Matrix beschreibt den Ausgangsbefund 40122; sie ist kein neuer Produktnachweis.
+**PR #70 / 40123 / Schema 19 gemergt und im eigenen Geräteumfang bestätigt.** Produktkopf `659f31c510752e5a06bf5f45bf2c93f4aff37031`, [volle CI Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2), [gezieltes Gerätepaket](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38358288875), Gerätebestätigung 13.10.2026 09:04 Europe/Berlin. Produktmerge `e783ad364b1692d8633c5e4b8846112adb256be6` besitzt denselben Tree. [Genauer Gerätebeleg](DEVICE_CONFIRMATION_40123.md): GEN1 13780/6202 und GEN2V2 13780/9602 Bytes, Kernprüfungen problemfrei; optionale Zusatzfälle nicht separat bestätigt.
 
-| Ausgangslücke 40122 | Implementierter Kandidat 40123 |
-|---|---|
-| Nur Pointerwerte und Ring-/Recordbytes | `CardCoreSnapshot` erhält READ-BINARY-Originale einschließlich Pointer und unbenutzter Bytes, mit defensiven Kopien |
-| Leere Fahrzeugdatei ohne Original | Eigener Rohbeleg STORED; fachlicher Bestand EMPTY; kein erfundener Record |
-| Unbenutzter Aktivitätsring nicht abgesichert | Belegtes Defaultformat: beide Pointer null und gesamter Ring null (Appendix 2 TCS150/154, Konsolidierung S. 281/284); fachlich EMPTY, Rohbeleg gespeichert |
-| Rohaufnahme und Parse-/Lesefehler vermischt | Eigene Original-Dateiergebnisse plus getrennte fachliche Ergebnisse; NOT_ATTEMPTED bei fehlender Kapazität, MISSING bei EF-Abwesenheit, READ_FAILED mit tatsächlicher Fehlerart, INVALID bei Parserfehler trotz vollständigem Original |
-| Gefahr nachträglicher Quellenzuordnung | Exakte Quellreferenz an neuer Child-Sitzung, getrennte Generation; MF bleibt Parent. Kein Backfill, kein neuerer Ersatz für historische Quellen |
+Rohsnapshots einschließlich Pointer/unbenutzter Bytes vor Parser, auch bei EMPTY/INVALID-Auswertung; nicht versucht/EF abwesend/tatsächlicher Lesefehler getrennt. Nullring mit Nullpointern ist belegte unbenutzte 0504, unbekannter unbenutzter Fahrzeugpointer bleibt INVALID mit Original. Exakte Karte/Anwendung/neue Child-Sitzung; MF am Parent. Keine Migration, Rekonstruktion, Backfill oder jüngerer Ersatz für alte Quellen. Nichtleere Projektionen, Normalisierung und Request-Fingerprints erhalten. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle oder Navigation in diesem Paket.
 
-Bestehende SQLCipher-/Schema-19-Tabellen reichen; keine Migration oder selbst geschriebenen Schemaexporte. Nichtleere Projektionen, Normalisierung, alte Requests/Fingerprints und Altarchiv bleiben erhalten. Geänderte unbenutzte Bytes schaffen einen neuen Originalbeleg, nicht neue normalisierte Tätigkeiten. Transportabbruch/Entfernen/Timeout im regulären Mehranwendungsimport liefert keine speicherbare Teilgruppe. Normale neue Importe können weiterhin partiell sein, weil dieses Paket nur zwei EFs verbessert.
+## Jetzt: separaten Signaturaufnahme-PR planen
 
-**Abnahme noch offen:** vollständige unveränderte Android-CI für endgültigen Kopf, anschließend [eigene Geräteabnahme 40123](CARD_CORE_SNAPSHOT_DEVICE_TEST.md). Lokal nur Projektgrenzen/Guard-/Diff-Prüfung möglich; Gradle-Distribution wegen eingeschränktem Netzwerk unerreichbar. CI/PR live prüfen. Bestehenden gezielten Geräte-Workflow erst nach vollständigem CI-Nachweis benutzen; erfolgreiche Normal-CI-Uploads bleiben aus. Gerätebasis 40122 gilt nicht für 40123; bis zur eigenen Bestätigung kein Produktmerge.
+Nach live geprüfter Main-CI den begrenzten Plan für **echte Signaturaufnahme** festlegen. Nur dazu die Primärmatrix öffnen: DDP038, TCS118-131 und Appendix11; P2=00, implizites Card_Sign-Hashverfahren und echte Länge. Signatur muss zu tatsächlich neu gemeinsam gelesenen Originalbytes, EF, Karte, Anwendung und Sitzung gehören. Keine Signatur nachträglich an eine historische oder rekonstruierte Quelle hängen.
 
-Neue automatisierte Prüfungen decken genaue Originalbytes, unbenutzte/ungültige/fehlende/abgebrochene Fälle, getrennte G1-/G2V2-Sitzungen, FK/Korruption, atomare Rollbacks, Reopen sowie historische Auswahl ab. Keine neuen Hash-/Signatur-/Schreib-/Vertrauensbefehle, Standardexporte oder UI-/Onboarding-Neukonzeption. Weitere EF-Zustände separat behandeln.
+Vor Implementierung vollständige Byte-/Abbruch-/Negativ-/Transaktions-/Historienprüfungen und eigene passende Geräteabnahme festlegen. Keine Signatur-/Vertrauens-/DDD-Freigabe aus 40123 ableiten. ERCA/MSCA-Vertrauen, Originalexport, Standarddownload-Datum und UI bleiben getrennte Pakete.
 
 ## Danach weiterhin getrennte Pakete
 

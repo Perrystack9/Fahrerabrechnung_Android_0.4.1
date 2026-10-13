@@ -1,33 +1,24 @@
 # FahrerTagebuch - aktuelle Übergabe
 
-Einstieg über [WORK_START.md](../WORK_START.md) und aktuellen Git/GitHub-Stand; keine alten Handoffs oder Chats rekonstruieren.
+Einstieg über [WORK_START.md](../WORK_START.md), aktuellen Git/GitHub-Stand und die fünf Startdateien. Keine alten Chats/Handoffs rekonstruieren.
 
-## Aktueller Meilenstein
+## Abgeschlossener Meilenstein
 
-**13.10.2026: vollständige 0504-/0505-Originalaufnahme als begrenzter Produktkandidat 40123 implementiert.** Basis: main nach gemergtem PR #69, `5b1b9669af8614ec502d027a4c71d94ab81496ad`; beim Start keine offenen PRs. Draft-[PR #70](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/70), Branch `feat/card-ef-snapshots-20261013`. Endgültigen Kopf, PR und CI live prüfen.
+**40123 / Schema 19: vollständige 0504-/0505-Originalsnapshots CI- und gerätegeprüft; PR #70 gemergt.** Produktmerge `e783ad364b1692d8633c5e4b8846112adb256be6`, identischer Tree `328b6b344c9376cfda0d8ab77d896b53bf944014` zum geprüften Kopf `659f31c510752e5a06bf5f45bf2c93f4aff37031`. Die Kernstatus-/Gerätenachweise werden mit einem reinen Dokumentations-PR auf main verankert; finale PR-/CI-Belege live prüfen.
 
-Rohdateien einschließlich Pointer/unbenutzter Bytes werden vor dem fachlichen Parser eingefroren. Bestehende verschlüsselte Schema-19-Tabellen mit neuen Original-Quellarten/Fingerprints; genaue Karten-/EF-/Generations-/Child-Sitzungsbindung. Keine Migration, Altquellenrekonstruktion oder Backfill. Leere und ungültige Auswertungen erhalten vollständige Rohaufnahme. Fehlende Kapazität/nicht versucht, EF abwesend und tatsächlicher Readerfehler bleiben getrennt; Transportabbruch verwirft die Mehranwendungsgruppe.
+[Volle CI 38335263243, Versuch 2](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38335263243/attempts/2) erfolgreich, alle sieben Gradle-Schritte und komplette API-36-SQLCipher-/Compose-Suiten. [Gerätepaket 38358288875](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38358288875) erfolgreich, gleicher Produktkopf. Tobi bestätigt 13.10.2026 09:04 Europe/Berlin die angefragten Kernprüfungen problemfrei. Screenshots: GEN1 13780/6202 Bytes, GEN2V2 13780/9602 Bytes. [Konkreter Geräteumfang](DEVICE_CONFIRMATION_40123.md); optionale Wiederholungs-/Abbruchfälle nicht separat bestätigt.
 
-Unbenutzte Aktivitätsdatei: nur Nullpointer plus vollständig nullgefüllter Ring (Primärtabellen TCS150/154, Konsolidierung S. 281/284). Keine Tageskette oder Ruhe erfinden. Normalisierte nichtleere Tätigkeiten/Fahrzeuge bleiben erhalten. Alte Requests behalten ihre Abdeckung/Fingerprints; alte Auswahlen erhalten keine neueren Originale. Kleine Vorschau-/Importanzeigen für Originalgrößen und Herkunft, keine neue Navigation.
-
-## Prüfung
-
-- Lokal bestanden: Projektgrenzen, alle zehn CI-/Schema-Guard-Tests, Diff-Prüfung.
-- Lokaler Gradle-Download blockiert (Netzwerk eingeschränkt). Keine lokale Android-/APK-Freigabe behaupten.
-- Unit-Fälle: exakte Pointer/Bytes, defensive Kopien, strenge Leer-Erkennung, unabhängige Fingerprints, kurze Chunks, fehlende Kapazität/EF/abgebrochener Leseversuch.
-- SQLCipher-Fälle: Reopen, raw-only EMPTY/INVALID, Request-/Historienerhalt, Byteänderungen, FK-/Korruptionsabwehr, atomarer Einzel-/Mehr-Child-Rollback und getrennte G1/G2V2-Originale bei MF am Parent.
-- Compose: ausgewählte Originalgrößen/Generation, Wechsel zu historisch fehlender Quelle, raw-only Anzeige ohne erfundene fachliche Daten.
-- Vollständige unveränderte Android-CI, endgültiger Kopf und tatsächliche Befunde im PR abfragen. **Noch keine eigene Geräteabnahme, kein Produktmerge.**
+Implementiert: Rohaufnahme vor Parser mit originalen Pointer-/unbenutzten Bytes, unabhängige EMPTY/INVALID-/Nicht-versucht-/Abwesenheits-/Lesezustände, exakte Karten-/Generations-/Child-Sitzungsbindung, MF am Parent, defensive Freeze-Funktion in beiden Importpfaden. Schema19 unverändert, keine Migration/Altquellenrekonstruktion/Backfill. Normalisierung, Requests und historische Auswahl erhalten. Keine neuen Signatur-/Schreib-/Vertrauensbefehle oder Navigation.
 
 ## Exakt nächste Arbeit
 
-1. Offenen Snapshot-PR und dessen endgültigen Kopf live prüfen. Fehlgeschlagene CI gezielt anhand erster konkreter Ursache reparieren; keine Budgetänderung, Filter/Quarantäne oder Retryserie. Bei externer Blockade Ursache und Stand sichern.
-2. Nach voller grüner CI gezielten bestehenden Workflow `device-test.yml` für den exakten Produktkopf mit `include_baseline=false` auslösen und 40123 bereitstellen. Normaler CI-Lauf erzeugt keine erfolgreichen Artefaktuploads; Uploadregeln unverändert lassen. Falls kein Workflow-Dispatch-Zugriff vorhanden ist, diese Grenze offen benennen, keinen Browser-/Budget-/CI-Umbau daraus machen.
-3. [Geräteabnahme 40123](CARD_CORE_SNAPSHOT_DEVICE_TEST.md): Update/Altbestand, neue G1-/G2-Originalgrößen, exakte historische Auswahl und Wiederöffnung ohne Leser; weitere tatsächlich ausgeführte Fälle getrennt bestätigen.
-4. Erst bei exaktem grünem Kopf, erforderlicher Gerätebestätigung und geprüfter Mergefähigkeit Produktmerge erwägen. **Gerätebasis 40122 gilt nicht für 40123.** Danach Status/Übergabe auf bestätigten Meilenstein ersetzen und getrennt den Signatur-PR planen.
+1. Aktuellen main, relevante PRs und CI live prüfen. Automatische Main-CI nach PR70: [38360671532](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38360671532), bei dieser Übergabe noch laufend; nicht als grün behaupten. Konkrete Fehler gegebenenfalls zuerst beheben; keine Retryserie oder Budgetänderung.
+2. **Eigenständigen begrenzten Signaturaufnahme-PR planen**, auf den akzeptierten Originalen. Nur hierfür die vorhandene [Primärmatrix](CARD_DOWNLOAD_REQUIREMENTS_MATRIX.md) öffnen: DDP038/TCS118-131/Appendix11, P2=00, implizites Hashverfahren aus Card_Sign und echte Signaturlänge prüfen. Vollständige neue Byte-/Abbruch-/Negativ-/Transaktions-/Historien- und Geräteabnahme vorher festlegen.
+3. Signaturen nur an tatsächlich gemeinsam neu aufgenommene EF-Originale/Anwendung/Sitzung binden. Keine nachträgliche Signatur an ältere Originale, keine rekonstruierte Quelle und keine Benutzer-Verifikation aus öffentlicher Forschung ableiten.
+4. Erst im getrennten Folgepaket implementieren. Eigene volle CI und erforderliche Gerätebestätigung; 40123 erlaubt keine spätere produktive Signatur-/Vertrauens-/DDD-Freigabe.
 
-## Weitere Sperren
+## Andere Grenzen
 
-Echte Dateisignaturen erst nach akzeptierter vollständiger Bytebasis; keine Signaturen rückwirkend an Altquellen hängen. Produktive Vertrauenskette, Standardexport und Download-Datum-Schreibpfad getrennte spätere Pakete. Automatischer Import bleibt lesend. `7F66`-Inhaltsdecoder ohne ISO-Primärformat und geschützte `0540` ohne legitimen SC5-Weg weiterhin gesperrt.
+ERCA/MSCA/Card_Sign-Vertrauen, Standardexport und bewusst ausgelöster Download-Datum-Schreibpfad separat. Automatischer Import bleibt lesend. `7F66`-Inhaltsdecoder ohne ISO-Primärformat und `0540` ohne legitimen SC5-Weg weiterhin gesperrt. UI/Einrichtung/GNSS erst später; keine Spesen-/Lohn-/Heimkehr-/Heimatstandort-/Abrechnungsphase.
 
-Spätere Produktbereiche nur nach CURRENT_RULES.md: neutrale Auswertung, UI/Einrichtung/GNSS. Keine Spesen-, Lohn-, Heimkehr-, Heimatstandort- oder PDF-Abrechnungsphase. Nach dem PR-/CI-Meilenstein Arbeit sichern und Sitzung abschließen; keine größeren Folgepakete im selben Zug beginnen.
+Nach diesem Meilenstein Arbeit sichern und Sitzung abschließen. Kein größeres Folgepaket in dieser Sitzung beginnen; aktuellen Kernstatus ersetzen, keine Chronik anhängen.
