@@ -74,6 +74,9 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.MF_DIRECTORY -> Text("Anwendungsverzeichnis übernommen")
                         CardImportFileKind.MF_ATR_INFO -> Text("Pufferinformation übernommen")
                         CardImportFileKind.MF_EXTENDED_LENGTH -> Text("Protokollunterstützung übernommen")
+                        CardImportFileKind.APPLICATION_SIGNATURE -> Text("Kartensignatur der Kartenanwendung aufgenommen · ungeprüft")
+                        CardImportFileKind.IDENTIFICATION_SIGNATURE -> Text("Kartensignatur der Kartenangaben aufgenommen · ungeprüft")
+                        CardImportFileKind.APPLICATION_V2_SIGNATURE -> Text("Kartensignatur der Kartenanwendung V2 aufgenommen · ungeprüft")
                         CardImportFileKind.ACTIVITY_SIGNATURE -> Text("Kartensignatur der Tätigkeiten aufgenommen · ungeprüft")
                         CardImportFileKind.VEHICLES_SIGNATURE -> Text("Kartensignatur der Fahrzeuge aufgenommen · ungeprüft")
                         CardImportFileKind.ACTIVITY_ORIGINAL -> Text("Originaldatei der Tätigkeiten gespeichert")
@@ -148,6 +151,7 @@ private fun CardImportPhase.description(failure: ReaderFailure?) = when (this) {
         ReaderFailure.PERMISSION -> "Der USB-Zugriff wurde nicht freigegeben. Du kannst die Freigabe erneut anfordern."
         ReaderFailure.CARD_ABSENT, ReaderFailure.CARD_REMOVED -> "Die Fahrerkarte fehlt oder wurde beim Lesen entfernt. Lege sie erneut ein."
         ReaderFailure.DISCONNECTED, ReaderFailure.NO_READER -> "Der Kartenleser wurde getrennt. Schließe ihn erneut an."
+        ReaderFailure.INCONSISTENT_DATA -> "Die Kartendaten haben sich beim Lesen widersprochen. Es wurde nichts übernommen. Bitte starte den Import erneut."
         ReaderFailure.UNSUPPORTED_READER -> "Dieser Kartenleser wird derzeit nicht unterstützt."
         else -> "Die Karte konnte nicht gelesen oder die Daten konnten nicht gespeichert werden. Vorhandene Daten bleiben erhalten."
     }

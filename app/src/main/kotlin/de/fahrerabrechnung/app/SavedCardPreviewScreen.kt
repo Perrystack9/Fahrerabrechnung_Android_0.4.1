@@ -95,7 +95,7 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
     }
 }
 
-private fun CardSignatureReason?.signatureMessage(): String = when (this) {
+internal fun CardSignatureReason?.signatureMessage(): String = when (this) {
     CardSignatureReason.CAPACITY_UNAVAILABLE -> "Dateigröße unbekannt"
     CardSignatureReason.EF_ABSENT -> "Datei nicht vorhanden"
     CardSignatureReason.SIGNING_CERTIFICATE_UNAVAILABLE -> "passendes Signaturzertifikat fehlt"
@@ -107,5 +107,6 @@ private fun CardSignatureReason?.signatureMessage(): String = when (this) {
     CardSignatureReason.BLANK_SIGNATURE -> "leere Signaturantwort"
     CardSignatureReason.CARD_STATUS -> "Karte meldet einen Fehler"
     CardSignatureReason.READER_FAILURE -> "Leserfehler"
+    CardSignatureReason.UNSUPPORTED_FORMAT -> "Dateiformat nicht unterstützt"
     null -> "kein Beleg"
 }

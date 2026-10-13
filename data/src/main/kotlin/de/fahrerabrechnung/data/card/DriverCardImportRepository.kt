@@ -35,6 +35,7 @@ data class SavedDriverImport(
     val application: CardApplication? = null,
     val coreSnapshots: Map<CardCoreEf, SavedCardCoreSnapshot> = emptyMap(),
     val coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap(),
+    val identitySignatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap(),
 )
 
 /** Single-driver binding plus explicitly saved partial imports of the supported sources. */
@@ -65,6 +66,7 @@ class DriverCardImportRepository @Inject constructor(
     private val communication = CardCommunicationStore(database.cardMetadataDao())
     private val coreSnapshots = CardCoreSnapshotStore(database.cardMetadataDao())
     private val coreSignatures = CardCoreSignatureStore(database.cardCoreSignatureDao(), database.cardMetadataDao())
+    private val identitySignatures = CardIdentitySignatureStore(database.cardIdentitySignatureDao(), database.cardMetadataDao())
 
     suspend fun profile(): ProfileEntity? = dao.localProfile()
 
@@ -81,6 +83,7 @@ class DriverCardImportRepository @Inject constructor(
     suspend fun save(result: CardReadResult, requestId: String, selection: CardImportSelection): SavedDriverImport {
         require(requestId.isNotBlank() && requestId.length <= 128)
         validateCoreSignatures(result)
+        validateIdentitySignatures(result)
         require(result.recognition == CardRecognition.DRIVER && result.card != null &&
             result.card.generation == result.generation)
         val card = result.card
@@ -188,6 +191,8 @@ class DriverCardImportRepository @Inject constructor(
         } else emptyList()
         val signatures = if (selection == CardImportSelection.ALL_AVAILABLE)
             result.coreSignatures.mapValues { it.value.freeze() }.toMap() else emptyMap()
+        val identityReceipts = if (selection == CardImportSelection.ALL_AVAILABLE)
+            result.identitySignatures.mapValues { it.value.freeze() }.toMap() else emptyMap()
         val extraFiles = listOfNotNull(events, faults)
         require(activity != null || vehicle != null || control != null || extraFiles.isNotEmpty() || conditions != null || positions != null || authentication != null || placeFile != null || placeAuth != null || borders != null || loads != null || types != null || units != null || metadataFiles.isNotEmpty() || certificateFiles.isNotEmpty() || identityFiles.isNotEmpty() || directory != null || communicationFiles.isNotEmpty() || originals.isNotEmpty())
         return database.withTransaction {
@@ -228,6 +233,7 @@ class DriverCardImportRepository @Inject constructor(
                         communicationFiles.associate { it.kind.storageKind to CardCommunicationStore.fingerprint(cardId, it) } +
                         originals.associate { it.kind.storageKind to CardCoreSnapshotStore.fingerprint(cardId, it) })
                 coreSignatures.verify(cardId, requestId, signatures)
+                identitySignatures.verify(cardId, requestId, identityReceipts)
                 return@withTransaction decode(existing, profile.id)
             }
             val newActivity = activity != null && database.cardActivityImportDao().getById(activity.id) == null
@@ -291,6 +297,7 @@ class DriverCardImportRepository @Inject constructor(
             for (file in originals) if (coreSnapshots.save(cardId, requestId, file, now)) storedOriginals++
             check(storedOriginals == newOriginals)
             for (signature in signatures.values) coreSignatures.save(cardId, requestId, signature)
+            for (signature in identityReceipts.values) identitySignatures.save(cardId, requestId, signature)
             decode(sources, profile.id)
         }
     }
@@ -390,7 +397,8 @@ class DriverCardImportRepository @Inject constructor(
             gnss.positions(sources.driverCardId, session.id), gnss.authentication(sources.driverCardId, session.id),
             places.places(sources.driverCardId, session.id), places.authentication(sources.driverCardId, session.id), borderCrossings.load(sources.driverCardId, session.id), loadUnload.load(sources.driverCardId, session.id), loadType.load(sources.driverCardId, session.id), vehicleUnits.load(sources.driverCardId, session.id), metadata.load(sources.driverCardId, session.id), certificates.load(sources.driverCardId, session.id), identitySources.load(sources.driverCardId, session.id), directories.load(sources.driverCardId, session.id), communication.load(sources.driverCardId, session.id),
             coreSnapshots = coreSnapshots.load(sources.driverCardId, session.id),
-            coreSignatures = coreSignatures.load(sources.driverCardId, session.id))
+            coreSignatures = coreSignatures.load(sources.driverCardId, session.id),
+            identitySignatures = identitySignatures.load(sources.driverCardId, session.id))
         return withBatchMaster(saved)
     }
 
@@ -400,6 +408,8 @@ class DriverCardImportRepository @Inject constructor(
         val attempt = batches.attemptForSession(saved.id) ?: return saved
         check(saved.coreSnapshots.values.all { it.snapshot.generation.name == attempt.generation })
         check(saved.coreSignatures.values.all { it.generation.name == attempt.generation &&
+            CardApplication.valueOf(attempt.application).supports(it.generation) })
+        check(saved.identitySignatures.values.all { it.generation.name == attempt.generation &&
             CardApplication.valueOf(attempt.application).supports(it.generation) })
         val parent = checkNotNull(batches.batch(attempt.batchId))
         check(parent.driverCardId == saved.driverCardId && attempt.driverCardId == saved.driverCardId)

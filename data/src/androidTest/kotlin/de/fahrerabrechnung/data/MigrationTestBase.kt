@@ -18,6 +18,20 @@ class MigrationTestBase {
         AppDatabase::class.java,
     )
 
+    @Test fun migration_20_21_addsOnlyEmptyIdentityReceiptsAndKeepsSchema20() {
+        val name = "identity-signature-migration-test"
+        helper.createDatabase(name, 20).apply {
+            execSQL("INSERT INTO profiles (id, name, createdAtEpochMillis, updatedAtEpochMillis) VALUES ('p', 'Schema20 profile', 1, 1)")
+            close()
+        }
+        helper.runMigrationsAndValidate(name, 21, true, DatabaseMigrations.MIGRATION_20_21).use { db ->
+            for (table in listOf("card_identity_signature_receipts", "card_core_signature_receipts"))
+                db.query("SELECT COUNT(*) FROM $table").use { it.moveToFirst(); assertEquals(0, it.getInt(0)) }
+            db.query("SELECT name FROM profiles WHERE id = 'p'").use { it.moveToFirst(); assertEquals("Schema20 profile", it.getString(0)) }
+            db.query("PRAGMA foreign_key_list(card_identity_signature_receipts)").use { assertEquals(10, it.count) }
+        }
+    }
+
     @Test fun migration_19_20_addsEmptySessionBoundReceiptsWithoutBackfill() {
         val name = "core-signature-migration-test"
         helper.createDatabase(name, 19).apply {

@@ -192,17 +192,18 @@ class CardImportPipelineInstrumentedTest {
         assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
     }
 
-    @Test fun encryptedMigrationNineteenToTwentyKeepsAllOldSourcesUnsigned() = runBlocking {
+    @Test fun encryptedMigrationNineteenToTwentyOneKeepsAllOldSourcesUnsigned() = runBlocking {
         imports.bind(card(), true)
         val old = pipeline.process(coreRead(), "signature-upgrade-old")
         val profile = imports.profile(); val request = db.cardImportRunDao().run(old.id)
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_identity_signature_receipts")
             execSQL("DROP TABLE card_core_signature_receipts")
             execSQL("DROP INDEX index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId")
             execSQL("DELETE FROM room_master_table"); version = 19
         }
         db.close(); open()
-        assertEquals(20, db.openHelper.readableDatabase.version)
+        assertEquals(21, db.openHelper.readableDatabase.version)
         assertEquals(profile, imports.profile()); assertEquals(request, db.cardImportRunDao().run(old.id))
         assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
         assertEquals(2, imports.get(old.id)!!.coreSnapshots.size)

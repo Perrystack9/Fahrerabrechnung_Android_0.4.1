@@ -59,7 +59,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val directory: CardDirectoryFile? = null, val directoryReadFailed: Boolean = false,
                           val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap(),
                           val coreReads: Map<CardCoreEf, CardCoreRead> = emptyMap(),
-                          val coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap())
+                          val coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap(),
+                          val identitySignatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -375,6 +376,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
 
     private suspend fun readSelected(session: ApduSession, application: ByteArray, recognized: CardRecognition,
         generation: CardGeneration, master: MasterCapture, abortTransport: Boolean): CardReadResult {
+        val application = application.copyOf()
         // Each DF supplies its own capacities. A missing V2 extension never erases legacy files.
         val applicationV2 = if (generation == CardGeneration.GEN2V2) try {
             readFile(session, DriverCardFiles.APPLICATION_V2, 10)
@@ -382,14 +384,41 @@ class DriverCardReader(private val transport: CardReaderTransport) {
         return try {
             val identityBytes = readFile(session, DriverCardFiles.IDENTIFICATION, 143)
             val identity = DriverCardDecoder.identity(identityBytes, generation)
+            val discoverySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                val captured = when (kind) {
+                    CardIdentitySourceKind.APPLICATION -> application
+                    CardIdentitySourceKind.IDENTIFICATION -> identityBytes
+                    CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
+                }
+                val file = try { captured?.let {
+                    CardIdentitySourceReader.freezeComplete(session, kind, generation, it)
+                        .also { frozen -> CardIdentitySourceParser.validate(frozen, identity) }
+                } } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
+                CardIdentitySourceRead(file, readFailed = file == null)
+            }
             val certificates = CardCertificateKind.entries.filter { it.supports(generation) }.associateWith { kind ->
                 val file = try { CardCertificateReader.read(session, kind, generation) }
                 catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
                 CardCertificateRead(file, readFailed = file == null)
             }
-            // C101 is frozen before any core hash. Each EF owns a fresh uninterrupted sequence.
+            // C101 is frozen before any identity or core hash. Each EF owns a fresh uninterrupted sequence.
             val signingCertificate = certificates[if (generation == CardGeneration.GEN1)
                 CardCertificateKind.CARD else CardCertificateKind.SIGNING]?.file
+            val identityCaptures = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
+                val discovery = when (kind) {
+                    CardIdentitySourceKind.APPLICATION -> application
+                    CardIdentitySourceKind.IDENTIFICATION -> identityBytes
+                    CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
+                }
+                CardIdentitySignatureReader.read(session, kind, identity, discovery, signingCertificate) {
+                    fileFailure(it, abortTransport = true)
+                }
+            }
+            val identitySources = identityCaptures.mapValues { (kind, capture) ->
+                val file = capture.original ?: discoverySources[kind]?.file
+                CardIdentitySourceRead(file, readFailed = file == null)
+            }
+            val identitySignatures = identityCaptures.mapValues { it.value.signature }
             val captures = CardCoreEf.entries.associateWith { kind ->
                 val length = try {
                     when (kind) {
@@ -479,18 +508,6 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 catch (_: ParseError) { null }
                 CardMetadataRead(file, readFailed = file == null)
             }
-            val identitySources = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith { kind ->
-                val captured = when (kind) {
-                    CardIdentitySourceKind.APPLICATION -> application
-                    CardIdentitySourceKind.IDENTIFICATION -> identityBytes
-                    CardIdentitySourceKind.APPLICATION_V2 -> applicationV2
-                }
-                val file = try { captured?.let {
-                    CardIdentitySourceReader.freezeComplete(session, kind, generation, it)
-                        .also { frozen -> CardIdentitySourceParser.validate(frozen, identity) }
-                } } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
-                CardIdentitySourceRead(file, readFailed = file == null)
-            }
             val supportsDirectory = generation in setOf(CardGeneration.GEN2, CardGeneration.GEN2V2)
             val directory = if (supportsDirectory) try { master.directory?.let {
                 CardDirectoryFile(generation, it).also { frozen -> CardDirectoryParser.parse(frozen) }
@@ -518,7 +535,8 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 vehicleUnits = vehicleUnits, vehicleUnitsReadFailed = supportsVehicleUnits && vehicleUnits == null,
                 metadata = metadata, certificates = certificates, identitySources = identitySources,
                 directory = directory, directoryReadFailed = supportsDirectory && directory == null,
-                communication = communication, coreReads = coreReads, coreSignatures = coreSignatures)
+                communication = communication, coreReads = coreReads, coreSignatures = coreSignatures,
+                identitySignatures = identitySignatures)
         } catch (_: ParseError) {
             CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
         }
