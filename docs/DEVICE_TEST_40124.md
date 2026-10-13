@@ -1,6 +1,6 @@
 # Eigene Geräteabnahme 40124 - Kernsignaturen
 
-**ABNAHME OFFEN.** Produkt-PR [#73](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/73), neue EF0504-/EF0505-Signaturaufnahme und additive Schema 19→20-Migration. Keine 40123-Bestätigung auf diesen Stand übertragen. Endgültigen vollen CI-Lauf und dessen exakten 40-stelligen Produktkopf zuerst live prüfen.
+**ABNAHME BESTÄTIGT**, Tobi am 13.10.2026 13:57 Europe/Berlin; [genauer Beleg](DEVICE_CONFIRMATION_40124.md). Produkt-PR #73 gemergt, getesteter Kopf `a2e22d882bb707fe1a446c3a24f78387caa892b0`, eigene volle CI 38381962283 und exaktes Paket 38388192092 erfolgreich. Diese Checkliste dokumentiert den eigenen 40124-Umfang; keine Freigabe für spätere geänderte Produktstände. Neue EF0504-/EF0505-Signaturaufnahme und additive Schema 19→20-Migration wurden eigenständig geprüft.
 
 ## Paket und Installation
 
