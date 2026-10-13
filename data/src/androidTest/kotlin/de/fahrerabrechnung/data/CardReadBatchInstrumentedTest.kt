@@ -113,6 +113,150 @@ class CardReadBatchInstrumentedTest {
         CardApplicationAttempt.read(CardApplication.GEN2, signedIdentityRead(CardGeneration.GEN2V2))),
         listOf(CardMasterFileCapture(0x0005, ByteArray(8), false)))
 
+    private fun eventRead(generation: CardGeneration, salt: Int = 7, unsupported: Boolean = false): CardReadResult {
+        val input = signedIdentityRead(generation)
+        val app = input.identitySources.getValue(CardIdentitySourceKind.APPLICATION).file!!.bytes.also { it[3] = 12; it[4] = 24 }
+        val sources = input.identitySources + (CardIdentitySourceKind.APPLICATION to CardIdentitySourceRead(
+            CardIdentitySourceFile(CardIdentitySourceKind.APPLICATION, generation, app)))
+        val policy = if (generation == CardGeneration.GEN1) CardSignaturePolicy.RSA_SHA1 else CardSignaturePolicy.NIST_P256
+        val certificate = input.certificates[CardCertificateKind.SIGNING]?.file
+        val identities = input.identitySignatures + (CardIdentitySourceKind.APPLICATION to CardIdentitySignature(
+            CardIdentitySourceKind.APPLICATION, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy, CardSignaturePhase.SIGN,
+            statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = policy.length,
+            original = sources.getValue(CardIdentitySourceKind.APPLICATION).file, certificate = certificate, bytes = ByteArray(policy.length) { 7 }))
+        val originals = CardEventFaultKind.entries.associateWith { kind ->
+            val count = if (kind == CardEventFaultKind.EVENTS) 12 else 24
+            CardEventFaultFile(kind, generation, count, ByteArray(CardEventFaultParser.fileLength(kind, generation, count)).also {
+                if (unsupported && kind == CardEventFaultKind.EVENTS) { it[0] = 1; it[10] = 99; it[11] = 65 }
+            })
+        }
+        return input.copy(identitySources = sources, identitySignatures = identities,
+            events = originals.getValue(CardEventFaultKind.EVENTS), faults = originals.getValue(CardEventFaultKind.FAULTS),
+            eventFaultSignatures = originals.mapValues { (kind, file) ->
+                if (unsupported && kind == CardEventFaultKind.EVENTS) CardEventFaultSignature(kind, generation,
+                    CardSignatureStatus.NOT_ATTEMPTED, policy, CardSignaturePhase.BOUNDARY, CardSignatureReason.UNSUPPORTED_FORMAT,
+                    statusWord = 0x6700, hashStatusWord = 0x9000, original = file, certificate = certificate)
+                else CardEventFaultSignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy, CardSignaturePhase.SIGN,
+                    statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = policy.length,
+                    original = file, certificate = certificate, bytes = ByteArray(policy.length) { salt.toByte() })
+            })
+    }
+    private fun eventBatch(salt: Int = 7) = CardApplicationReadBatch(listOf(
+        CardApplicationAttempt.read(CardApplication.GEN1, eventRead(CardGeneration.GEN1, salt)),
+        CardApplicationAttempt.read(CardApplication.GEN2, eventRead(CardGeneration.GEN2V2, salt))), emptyList())
+
+    @Test fun eventReceiptsBindFreshRawAndCertificatesToExactChildrenAndReopen() = runBlocking {
+        val old = pipeline.processApplications(identityBatch(), "before-event-signatures", true)
+        val saved = pipeline.processApplications(eventBatch(), "events-signed")
+        assertEquals(4, count("card_event_fault_signature_receipts"))
+        for (attempt in saved.applications) {
+            val child = imports.get(attempt.run!!.sessionId!!)!!
+            assertTrue(child.events!!.records.isEmpty()); assertTrue(child.faults!!.records.isEmpty())
+            assertEquals(2, child.coreSignatures.size)
+            assertEquals(if (child.application == CardApplication.GEN1) 2 else 3, child.identitySignatures.size)
+            for (receipt in db.cardEventFaultSignatureDao().receipts(child.id)) {
+                val signature = child.eventFaultSignatures.values.single { it.kind.originalStorageKind == receipt.kind }
+                assertArrayEquals(signature.original!!.bytes, db.cardMetadataDao().get(receipt.originalSourceId!!)!!.bytes)
+                assertTrue(db.cardMetadataDao().sources(child.id).any { it.sourceId == receipt.originalSourceId && it.kind == receipt.kind })
+                assertEquals(child.driverCardId, receipt.driverCardId); assertEquals(child.application!!.name, receipt.application)
+                assertEquals(if (child.application == CardApplication.GEN1) 128 else 64, signature.actualLength)
+            }
+        }
+        db.close(); open()
+        for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.eventFaultSignatures.isEmpty())
+        assertBatchContent(saved, pipeline.processApplications(eventBatch(), "events-signed"))
+        val next = pipeline.processApplications(eventBatch(9), "events-signed-again")
+        assertEquals(8, count("card_event_fault_signature_receipts"))
+        for (attempt in next.applications) {
+            val nextRows = db.cardEventFaultSignatureDao().receipts(attempt.run!!.sessionId!!)
+            val previousSession = saved.applications.single { it.application == attempt.application }.run!!.sessionId!!
+            val previousRows = db.cardEventFaultSignatureDao().receipts(previousSession)
+            assertEquals(previousRows.associate { it.kind to it.originalSourceId }, nextRows.associate { it.kind to it.originalSourceId })
+            assertTrue(nextRows.none { row -> previousRows.any { it.fingerprint == row.fingerprint } })
+        }
+        for (attempt in next.applications) assertEquals(9, imports.get(attempt.run!!.sessionId!!)!!.eventFaultSignatures.values.first().bytes!![0].toInt())
+    }
+    @Test fun unsupportedCompleteEventsRetainRawWithInvalidProjectionAndNoPositiveSignature() = runBlocking {
+        val input = eventRead(CardGeneration.GEN1, unsupported = true)
+        imports.bind(input.card!!, true)
+        val run = pipeline.process(input, "event-invalid-projection")
+        assertEquals(CardImportFileStatus.INVALID, run.files.single { it.kind == CardImportFileKind.EVENTS }.status)
+        val saved = imports.get(run.sessionId!!)!!
+        assertNull(saved.events); assertTrue(saved.faults!!.records.isEmpty())
+        val signature = saved.eventFaultSignatures.getValue(CardEventFaultKind.EVENTS)
+        assertEquals(CardSignatureReason.UNSUPPORTED_FORMAT, signature.reason); assertNull(signature.bytes)
+        assertArrayEquals(input.events!!.bytes, signature.original!!.bytes)
+        db.close(); open(); assertArrayEquals(input.events.bytes, imports.get(saved.id)!!.eventFaultSignatures.getValue(CardEventFaultKind.EVENTS).original!!.bytes)
+    }
+    @Test fun foreignSessionAndReceiptTamperAreRejectedWithoutChangingGoodImports() = runBlocking {
+        val saved = pipeline.processApplications(eventBatch(), "event-tamper", true)
+        val g1 = saved.applications.first().run!!.sessionId!!; val g2 = saved.applications.last().run!!.sessionId!!
+        val row = db.cardEventFaultSignatureDao().receipts(g2).first()
+        rejected { db.cardEventFaultSignatureDao().insert(row.copy(sessionId = g1, kind = "FOREIGN_ORIGINAL")) }
+        for (update in listOf("bytes = zeroblob(64)", "status = 'NOT_ATTEMPTED'", "fingerprint = 'damaged'",
+            "application = 'GEN1'", "generation = 'GEN1'", "driverCardId = 'foreign'", "originalSourceId = NULL")) {
+            rejected { db.withTransaction {
+                db.openHelper.writableDatabase.execSQL("UPDATE card_event_fault_signature_receipts SET $update WHERE sessionId = ?", arrayOf(g2))
+                imports.get(g2)
+            } }
+            assertEquals(2, imports.get(g2)!!.eventFaultSignatures.size)
+        }
+        val another = pipeline.processApplications(eventBatch(9), "event-tamper-other")
+        val foreign = db.cardEventFaultSignatureDao().receipts(another.primaryRun.sessionId!!).first()
+        rejected { db.withTransaction {
+            db.openHelper.writableDatabase.execSQL("UPDATE card_event_fault_signature_receipts SET certificateSourceId = ? WHERE sessionId = ? AND kind = ?",
+                arrayOf(foreign.originalSourceId, g2, row.kind))
+            imports.get(g2)
+        } }
+    }
+    @Test fun newReceiptsCannotBeAttachedToOldRequestOrBatchEvenForIdenticalRawBytes() = runBlocking {
+        val input = eventRead(CardGeneration.GEN1)
+        val unsigned = input.copy(eventFaultSignatures = emptyMap())
+        imports.bind(input.card!!, true)
+        val old = pipeline.process(unsigned, "event-old-request")
+        rejected { pipeline.process(input, "event-old-request") }
+        assertTrue(imports.get(old.sessionId!!)!!.eventFaultSignatures.isEmpty())
+        val legacy = CardApplicationReadBatch(listOf(CardApplicationAttempt.read(CardApplication.GEN1, unsigned),
+            CardApplicationAttempt.absent(CardApplication.GEN2)), emptyList())
+        pipeline.processApplications(legacy, "event-old-batch")
+        val signed = CardApplicationReadBatch(listOf(CardApplicationAttempt.read(CardApplication.GEN1, input),
+            CardApplicationAttempt.absent(CardApplication.GEN2)), emptyList())
+        rejected { pipeline.processApplications(signed, "event-old-batch") }
+        assertEquals(0, count("card_event_fault_signature_receipts"))
+    }
+    @Test fun secondChildEventReceiptFailureRollsBackEntireNewGroupAndKeepsPriorImports() = runBlocking {
+        val old = pipeline.processApplications(identityBatch(), "before-event-rollback", true)
+        val oldProfile = imports.profile()
+        val counts = listOf("card_read_batches", "card_import_runs", "import_sessions", "card_metadata_imports",
+            "driver_import_metadata_sources", "card_core_signature_receipts", "card_identity_signature_receipts").associateWith { count(it) }
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_event_g2 BEFORE INSERT ON card_event_fault_signature_receipts
+            WHEN NEW.application = 'GEN2' BEGIN SELECT RAISE(ABORT, 'synthetic second child'); END""")
+        rejected { pipeline.processApplications(eventBatch(), "event-rollback") }
+        for ((table, before) in counts) assertEquals(table, before, count(table))
+        assertEquals(0, count("card_event_fault_signature_receipts")); assertEquals(oldProfile, imports.profile())
+        assertTrue(imports.get(old.primaryRun.sessionId!!)!!.eventFaultSignatures.isEmpty())
+    }
+    @Test fun encryptedTwentyOneToTwentyTwoPreservesExactExistingRequestsSourcesAndSignatures() = runBlocking {
+        val old = pipeline.processApplications(identityBatch(), "before-event-upgrade", true)
+        val runs = old.applications.map { db.cardImportRunDao().run(it.run!!.id) }
+        val profile = imports.profile()
+        val sources = old.applications.associate { it.run!!.sessionId!! to db.cardMetadataDao().sources(it.run.sessionId!!) }
+        val receipts = old.applications.associate { it.run!!.sessionId!! to db.cardIdentitySignatureDao().receipts(it.run.sessionId!!).map { row -> row.fingerprint } }
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_event_fault_signature_receipts"); execSQL("DELETE FROM room_master_table"); version = 21
+        }
+        db.close(); open()
+        assertEquals(22, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
+        assertEquals(runs, old.applications.map { db.cardImportRunDao().run(it.run!!.id) })
+        assertEquals(0, count("card_event_fault_signature_receipts"))
+        assertBatchContent(old, pipeline.processApplications(identityBatch(), "before-event-upgrade"))
+        for ((id, original) in sources) { assertEquals(original, db.cardMetadataDao().sources(id)); assertTrue(imports.get(id)!!.eventFaultSignatures.isEmpty()) }
+        for ((id, original) in receipts) assertEquals(original, db.cardIdentitySignatureDao().receipts(id).map { it.fingerprint })
+        pipeline.processApplications(eventBatch(), "after-event-upgrade")
+        db.close(); open(); assertEquals(4, count("card_event_fault_signature_receipts"))
+        for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.eventFaultSignatures.isEmpty())
+    }
+
     @Test fun fiveIdentityReceiptsKeepExactChildSourcesAcrossDeduplicationHistoryAndReopen() = runBlocking {
         val old = pipeline.processApplications(batch(), "identity-old", true)
         val first = pipeline.processApplications(identityBatch(), "identity-first")
@@ -231,10 +375,11 @@ class CardReadBatchInstrumentedTest {
         val core = old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint }
         db.openHelper.writableDatabase.apply {
             execSQL("DROP TABLE card_identity_signature_receipts")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 20
         }
         db.close(); open()
-        assertEquals(21, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
+        assertEquals(22, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
         assertBatchContent(old, pipeline.processApplications(input, "before-identity-upgrade"))
         assertEquals(core, old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint })
         for ((id, rawIds) in sources) {
@@ -481,11 +626,12 @@ class CardReadBatchInstrumentedTest {
             execSQL("DROP INDEX index_card_import_runs_id_driverCardId")
             execSQL("DROP INDEX index_driver_import_sources_sessionId_driverCardId")
             execSQL("DROP INDEX index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table")
             version = 18
         }
         db.close(); open()
-        assertEquals(21, db.openHelper.writableDatabase.version)
+        assertEquals(22, db.openHelper.writableDatabase.version)
         assertEquals(old, pipeline.process(oldRead, "before-upgrade"))
         assertArrayEquals(bytes, imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes)
         assertEquals(0, count("card_read_batches")); assertEquals(0, count("card_application_attempts"))

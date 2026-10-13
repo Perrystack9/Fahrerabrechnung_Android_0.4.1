@@ -247,6 +247,7 @@ class NormalizedCardActivityInstrumentedTest {
             execSQL("DROP TABLE driver_activity_day_sources")
             execSQL("DROP TABLE driver_activity_changes")
             execSQL("DROP TABLE driver_activity_days")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table")
             version = 5
         }

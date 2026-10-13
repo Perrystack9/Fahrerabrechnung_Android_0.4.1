@@ -27,6 +27,7 @@ internal class CardCommunicationStore(private val dao: CardMetadataDao) {
         val result = mutableMapOf<CardCommunicationKind, SavedCardCommunication>()
         for (source in dao.sources(sessionId)) {
             if (source.kind in CardCoreEf.entries.map { it.storageKind }) continue
+            if (source.kind in CardEventFaultKind.entries.map { it.originalStorageKind }) continue
             if (source.kind == CardDirectoryStore.STORAGE_KIND || source.kind in CardMetadataKind.entries.map { it.name } ||
                 source.kind in CardCertificateKind.entries.map { it.storageKind } ||
                 source.kind in CardIdentitySourceKind.entries.map { it.storageKind }) continue

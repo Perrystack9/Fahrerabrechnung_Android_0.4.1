@@ -60,7 +60,8 @@ data class CardReadResult(val recognition: CardRecognition, val generation: Card
                           val communication: Map<CardCommunicationKind, CardCommunicationRead> = emptyMap(),
                           val coreReads: Map<CardCoreEf, CardCoreRead> = emptyMap(),
                           val coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap(),
-                          val identitySignatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap())
+                          val identitySignatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap(),
+                          val eventFaultSignatures: Map<CardEventFaultKind, CardEventFaultSignature> = emptyMap())
 
 data class CardFile(val id: Int, val name: String, val generation: CardGeneration,
                     val required: Boolean, val expectedLength: Int, val parser: String)
@@ -442,13 +443,16 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 CardControlFile(generation, readFile(session, DriverCardFiles.CONTROL_ACTIVITY,
                     CardControlParser.FILE_LENGTH)).also { CardControlParser.parse(it) }
             } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
-            suspend fun eventFault(kind: CardEventFaultKind): CardEventFaultFile? = try {
-                val count = DriverCardDecoder.eventFaultCount(application, generation, kind)
-                CardEventFaultFile(kind, generation, count, readFile(session, kind.fileId,
-                    CardEventFaultParser.fileLength(kind, generation, count))).also { CardEventFaultParser.parse(it) }
-            } catch (_: ParseError) { null } catch (error: ReaderException) { fileFailure(error, abortTransport) }
-            val events = eventFault(CardEventFaultKind.EVENTS)
-            val faults = eventFault(CardEventFaultKind.FAULTS)
+            val eventCaptures = CardEventFaultKind.entries.associateWith { kind ->
+                val count = try { DriverCardDecoder.eventFaultCount(application, generation, kind) }
+                    catch (_: ParseError) { null }
+                CardEventFaultSignatureReader.read(session, kind, generation, count, signingCertificate) {
+                    fileFailure(it, abortTransport = true)
+                }
+            }
+            val events = eventCaptures.getValue(CardEventFaultKind.EVENTS).original
+            val faults = eventCaptures.getValue(CardEventFaultKind.FAULTS).original
+            val eventFaultSignatures = eventCaptures.mapValues { it.value.signature }
             val specificConditions = try {
                 val count = DriverCardDecoder.specificConditionCount(application, generation)
                 CardSpecificConditionFile(generation, count, readFile(session, DriverCardFiles.SPECIFIC_CONDITIONS,
@@ -537,7 +541,7 @@ class DriverCardReader(private val transport: CardReaderTransport) {
                 metadata = metadata, certificates = certificates, identitySources = identitySources,
                 directory = directory, directoryReadFailed = supportsDirectory && directory == null,
                 communication = communication, coreReads = coreReads, coreSignatures = coreSignatures,
-                identitySignatures = identitySignatures)
+                identitySignatures = identitySignatures, eventFaultSignatures = eventFaultSignatures)
         } catch (_: ParseError) {
             CardReadResult(CardRecognition.INCONSISTENT, CardGeneration.UNKNOWN)
         }

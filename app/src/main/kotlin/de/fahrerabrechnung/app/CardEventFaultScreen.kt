@@ -13,7 +13,8 @@ import java.time.format.DateTimeFormatter
 
 /** Recorded technical facts from the exact selected session; no violation or duration calculation. */
 @Composable
-internal fun CardEventFaultScreen(padding: PaddingValues, events: SavedCardEventFault?, faults: SavedCardEventFault?) {
+internal fun CardEventFaultScreen(padding: PaddingValues, events: SavedCardEventFault?, faults: SavedCardEventFault?,
+    signatures: Map<CardEventFaultKind, CardEventFaultSignature> = emptyMap()) {
     val zone = remember { ZoneId.systemDefault() }
     val format = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss") }
     var visibleEvents by remember(events?.id) { mutableIntStateOf(20) }
@@ -23,6 +24,16 @@ internal fun CardEventFaultScreen(padding: PaddingValues, events: SavedCardEvent
         Text("Aufzeichnungen des Fahrtenschreibers aus der ausgewählten Übernahme.")
         for ((label, source, visible) in listOf(Triple("Ereignisse", events, visibleEvents), Triple("Störungen", faults, visibleFaults))) {
             Text(label, style = MaterialTheme.typography.titleMedium)
+            val kind = if (label == "Ereignisse") CardEventFaultKind.EVENTS else CardEventFaultKind.FAULTS
+            val signature = signatures[kind]
+            val originalSize = signature?.original?.bytes?.size ?: source?.file?.bytes?.size
+            originalSize?.let { Text("$label · Original: $it Bytes") }
+            Text(when (signature?.status) {
+                CardSignatureStatus.CAPTURED_UNVERIFIED -> "$label · Kartensignatur: ${signature.actualLength} Bytes · aufgenommen · ungeprüft"
+                CardSignatureStatus.FAILED -> "$label · Aufnahme fehlgeschlagen · ${signature.reason.signatureMessage()}"
+                CardSignatureStatus.NOT_ATTEMPTED -> "$label · nicht versucht · ${signature.reason.signatureMessage()}"
+                null -> "$label · Signatur in diesem Import nicht aufgenommen"
+            }, style = MaterialTheme.typography.bodySmall)
             if (source == null) Text("Für diese Übernahme sind keine gespeicherten ${if (label == "Ereignisse") "Ereignisdaten" else "Störungsdaten"} verfügbar.")
             else if (source.records.isEmpty()) Text("In dieser Kartendatei sind keine ${label} aufgezeichnet.")
             else {
