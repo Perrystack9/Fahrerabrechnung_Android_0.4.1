@@ -28,7 +28,7 @@ Zusätzliche Produkt-Main-CI [38394108412](https://github.com/Perrystack9/Fahrer
 
 ## Exakt nächster Schritt
 
-**40124 ist abgeschlossen; der nächste begrenzte Plan ist fertig.** Aktuellen main/PR/CI live prüfen; danach den [Identifikations-Signaturplan](docs/CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) öffnen und als eigenen Produkt-Meilenstein **40125 / Schema 21** umsetzen: 0501/0520 in beiden Anwendungen und 0525 nur auf V2, neue vollständige Leseaufnahme nach HASH, Bootstrap-Konsistenz und additive 20→21. Zuerst Modelle/Befehls-/Konsistenztests, danach atomare Speicherung/Migration/kleine Abnahmeanzeige. Eigene volle CI und [neue Geräteabnahme](docs/DEVICE_TEST_40125.md) vor Merge. Keine alte Gerätebestätigung übertragen; keine Trust-/DDD-/Schreib-/UI-Folgephase beginnen. Dieser Dokumentations-Meilenstein endet nach Sicherung; Umsetzung bleibt die nächste getrennte Arbeit.
+**40125 / Schema 21 ist als eigener Produktkandidat in Draft-PR #76 umgesetzt.** Aktuellen main/PR-Kopf und vollständige CI live prüfen; [Status](WORK_STATUS.md) und [Übergabe](docs/WORK_HANDOFF.md) nennen die konkrete Umsetzung und offene Gates. Den bestehenden Reader-/Persistenz-/Teststand erhalten, nicht neu umsetzen. Nach grünen endgültigen Checks exaktes Gerätepaket mit vollem `source_sha` und `include_baseline=false` starten und [40125-Geräteabnahme](docs/DEVICE_TEST_40125.md) durchführen. API/CLI-Dispatch fehlt im aktuellen Work-Zugang; Tobi startet den Paketlauf, anschließend dessen Ergebnisse prüfen. **Kein Merge vor neuer ausdrücklicher Gerätebestätigung.** Keine alte Freigabe übertragen und keine Trust-/DDD-/Schreib-/UI-Folgephase beginnen.
 
 ## Sitzungsroutine
 

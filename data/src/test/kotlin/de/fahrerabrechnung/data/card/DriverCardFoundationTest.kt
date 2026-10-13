@@ -1185,7 +1185,8 @@ class DriverCardFoundationTest {
             assertNotNull(result.activity); assertNotNull(result.vehicles)
             assertNull(result.vehicleUnits); assertTrue(result.vehicleUnitsReadFailed)
             assertFalse(DriverCardFiles.VEHICLE_UNITS in fake.readFiles)
-            assertEquals(listOf(15 to 2, 15 to 1, 15 to 1), fake.applicationTailReads)
+            // Discovery tail, unsigned discovery boundary, then the independent fresh capture boundary.
+            assertEquals(listOf(15 to 2, 15 to 1, 15 to 1, 15 to 1), fake.applicationTailReads)
             assertTrue(fake.closed)
         }
     }

@@ -20,7 +20,9 @@ internal fun CardIdentitySourceKind.identitySourceTitle(): String = when (this) 
 
 /** Always the selected original source. The normalized profile is no substitute for a missing EF. */
 @Composable
-internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardIdentitySourceKind, SavedCardIdentitySource>, receiptId: String? = null) {
+internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardIdentitySourceKind, SavedCardIdentitySource>, receiptId: String? = null,
+    signatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap(),
+    generation: CardGeneration? = sources.values.firstOrNull()?.file?.generation ?: signatures.values.firstOrNull()?.generation) {
     var kind by remember { mutableStateOf(CardIdentitySourceKind.IDENTIFICATION) }
     val source = sources[kind]
     var showNumber by remember(kind, source?.id, receiptId) { mutableStateOf(false) }
@@ -35,6 +37,15 @@ internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardI
             Text("${option.identitySourceTitle()} öffnen")
         }
         Text(kind.identitySourceTitle(), style = MaterialTheme.typography.titleMedium)
+        val signature = signatures[kind]
+        if (kind == CardIdentitySourceKind.APPLICATION_V2 && generation != null && generation != CardGeneration.GEN2V2)
+            Text("Für diese Kartenanwendung nicht vorgesehen.")
+        else Text(when (signature?.status) {
+            CardSignatureStatus.CAPTURED_UNVERIFIED -> "Kartensignatur: ${signature?.actualLength} Bytes · aufgenommen · ungeprüft"
+            CardSignatureStatus.FAILED -> "Kartensignatur: fehlgeschlagen · ${signature?.reason.signatureMessage()}"
+            CardSignatureStatus.NOT_ATTEMPTED -> "Kartensignatur: nicht aufgenommen · ${signature?.reason.signatureMessage()}"
+            null -> "Signatur in diesem Import nicht aufgenommen"
+        })
         if (source == null) Text("Für diese Übernahme sind diese Originalangaben nicht gespeichert.")
         else SectionCard {
             Text("Dateigröße: ${source.file.bytes.size} Bytes")

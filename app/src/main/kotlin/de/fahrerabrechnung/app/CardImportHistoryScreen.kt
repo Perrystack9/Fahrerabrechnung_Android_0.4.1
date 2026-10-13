@@ -162,6 +162,9 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.MF_DIRECTORY -> "Anwendungsverzeichnis"
         CardImportFileKind.MF_ATR_INFO -> "Pufferinformation"
         CardImportFileKind.MF_EXTENDED_LENGTH -> "Protokollunterstützung"
+        CardImportFileKind.APPLICATION_SIGNATURE -> "Kartensignatur der Kartenanwendung"
+        CardImportFileKind.IDENTIFICATION_SIGNATURE -> "Kartensignatur der Kartenangaben"
+        CardImportFileKind.APPLICATION_V2_SIGNATURE -> "Kartensignatur der Kartenanwendung V2"
         CardImportFileKind.ACTIVITY_SIGNATURE -> "Kartensignatur der Tätigkeiten"
         CardImportFileKind.VEHICLES_SIGNATURE -> "Kartensignatur der Fahrzeuge"
         CardImportFileKind.ACTIVITY_ORIGINAL -> "Originaldatei der Tätigkeiten"
@@ -171,7 +174,8 @@ private fun CardImportFileResult.description(): String {
         CardImportFileKind.SPECIFIC_CONDITIONS -> "Fähre/Zug und Out of Scope"
     }
     return when (status) {
-        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.ACTIVITY_SIGNATURE, CardImportFileKind.VEHICLES_SIGNATURE))
+        CardImportFileStatus.STORED -> if (kind in setOf(CardImportFileKind.ACTIVITY_SIGNATURE, CardImportFileKind.VEHICLES_SIGNATURE,
+            CardImportFileKind.APPLICATION_SIGNATURE, CardImportFileKind.IDENTIFICATION_SIGNATURE, CardImportFileKind.APPLICATION_V2_SIGNATURE))
             "$label: aufgenommen · ungeprüft" else if (kind in setOf(CardImportFileKind.ACTIVITY_ORIGINAL, CardImportFileKind.VEHICLES_ORIGINAL))
             "$label: vollständig gespeichert" else if (kind in setOf(CardImportFileKind.CARD_CERTIFICATE, CardImportFileKind.CARD_SIGNING_CERTIFICATE,
             CardImportFileKind.CA_CERTIFICATE, CardImportFileKind.LINK_CERTIFICATE,

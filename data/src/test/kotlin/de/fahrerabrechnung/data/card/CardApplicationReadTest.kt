@@ -19,15 +19,18 @@ private class DualApplicationTransport(
     val selectionErrors: Map<CardApplication, Exception> = emptyMap(),
     val malformedApplication: CardApplication? = null,
     val oversizedIdentity: CardApplication? = null,
+    val signing: Boolean = false,
+    val freshBytes: Map<Pair<CardApplication, Int>, ByteArray> = emptyMap(),
 ) : CardReaderTransport {
     var opens = 0; var powers = 0; var offs = 0; var closes = 0
     val commands = mutableListOf<ByteArray>()
     val reads = mutableListOf<Triple<CardApplication?, Int, Int>>()
     var selected: CardApplication? = null
     private var file = 0
+    private var hashed: Pair<CardApplication, Int>? = null
     override suspend fun availability() = SourceAvailability.AVAILABLE
     override suspend fun open(): ReaderState { opens++; return ReaderState.CardPresent }
-    override suspend fun powerOn(): ByteArray { powers++; selected = null; file = 0; return byteArrayOf(0x3B, 0) }
+    override suspend fun powerOn(): ByteArray { powers++; selected = null; file = 0; hashed = null; return byteArrayOf(0x3B, 0) }
     override suspend fun powerOff() { offs++ }
     override fun close() { closes++ }
     override suspend fun exchange(apdu: ByteArray): ByteArray {
@@ -35,19 +38,25 @@ private class DualApplicationTransport(
         val ins = apdu[1].toInt() and 255
         if (ins == 0xA4 && apdu[2].toInt() == 4) {
             val application = CardApplication.entries.single { it.aid.contentEquals(apdu.copyOfRange(5, apdu.size)) }
-            selected = null; file = 0
+            selected = null; file = 0; hashed = null
             selectionErrors[application]?.let { throw it }
             if (application !in generations) return status(0x6A82)
             selected = application
             return status(0x9000)
         }
         if (ins == 0xA4) {
+            hashed = null
             file = (apdu[5].toInt() and 255) shl 8 or (apdu[6].toInt() and 255)
             if (selected?.let { it to file in missing } == true) return status(0x6A82)
             if (bytes() == null) return status(0x6A82)
             return status(0x9000)
         }
-        if (ins == 0x2A) return status(0x6D00) // synthetic legacy reader: signatures unsupported
+        if (ins == 0x2A) {
+            if (!signing) return status(0x6D00)
+            if (apdu[2].toInt() and 255 == 0x90) { hashed = selected!! to file; return status(0x9000) }
+            val le = apdu.last().toInt() and 255
+            return ByteArray(le) { 7 } + status(0x9000)
+        }
         check(ins == 0xB0)
         selected?.let { errors[it to file]?.let { error -> throw error } }
         val offset = (apdu[2].toInt() and 255) shl 8 or (apdu[3].toInt() and 255)
@@ -70,6 +79,7 @@ private class DualApplicationTransport(
         val generation = generations.getValue(application)
         val gen1 = application == CardApplication.GEN1
         val capacity = if (gen1) 1 else 2
+        freshBytes[application to file]?.takeIf { hashed == application to file }?.let { return it.copyOf() }
         return when (file) {
             DriverCardFiles.APPLICATION -> ByteArray(if (gen1) 10 else 17).also {
                 it[0] = if (application == malformedApplication) 2 else 1
@@ -93,8 +103,10 @@ private class DualApplicationTransport(
             else -> CardMetadataKind.entries.firstOrNull { it.fileId == file && !it.inMasterFile }?.let {
                 ByteArray(it.fileLength)
             } ?: CardCertificateKind.entries.firstOrNull { it.fileId == file && it.supports(generation) }?.let {
-                // Full blank certificates remain real independent sources, with no trust assertion.
-                ByteArray(if (gen1) 194 else 204) { if (gen1) 0 else -1 }
+                // Synthetic Card_Sign subject; issuer length is deliberately independent.
+                if (signing && it == CardCertificateKind.SIGNING)
+                    CertificateFixtures.certificate(CertificateFixtures.fields("2A8648CE3D030107", 65, 17), 96)
+                else ByteArray(if (gen1) 194 else 204) { if (gen1) 0 else -1 }
             }
         }
     }
@@ -110,6 +122,98 @@ private fun dualIdentity(number: String = "TESTCARD12345678", surname: String = 
     }.toByteArray()
 
 class CardApplicationReaderTest {
+    @Test fun newFiveIdentityCapturesAndExistingFourCoreCapturesKeepEachSequenceUninterrupted() = runBlocking {
+        val fake = DualApplicationTransport(signing = true)
+        val batch = DriverCardReader(fake).readApplications()
+        assertEquals(CardApplicationIdentityAgreement.AGREED, batch.identityAgreement)
+        assertEquals(5, batch.applications.sumOf { it.result!!.identitySignatures.size })
+        assertEquals(4, batch.applications.sumOf { it.result!!.coreSignatures.size })
+        for (attempt in batch.applications) {
+            val result = attempt.result!!
+            for ((kind, signature) in result.identitySignatures) {
+                assertEquals(CardSignatureStatus.CAPTURED_UNVERIFIED, signature.status)
+                assertArrayEquals(result.identitySources.getValue(kind).file!!.bytes, signature.original!!.bytes)
+                assertEquals(if (attempt.application == CardApplication.GEN1) 128 else 64, signature.actualLength)
+            }
+        }
+        val hashes = fake.commands.indices.filter { fake.commands[it].contentEquals(CardCommands.performHashOfFile().encode()) }
+        assertEquals(9, hashes.size)
+        for (hash in hashes) {
+            val select = fake.commands[hash - 1]
+            assertEquals(0xA4, select[1].toInt() and 255)
+            val sign = (hash + 1 until fake.commands.size).first { fake.commands[it][1].toInt() and 255 == 0x2A }
+            assertEquals(0x9E, fake.commands[sign][2].toInt() and 255)
+            assertTrue(fake.commands.subList(hash + 1, sign).all { it[1].toInt() and 255 == 0xB0 })
+            assertEquals(0, fake.commands[hash + 1][2].toInt()); assertEquals(0, fake.commands[hash + 1][3].toInt())
+            assertEquals(1, fake.commands[sign - 1].last().toInt())
+        }
+        assertEquals(1, fake.powers); assertEquals(1, fake.offs)
+    }
+    @Test fun contradictorySecondApplicationCannotReturnTheSuccessfulFirstChildInEitherApi() = runBlocking {
+        for (single in listOf(false, true)) for ((file, bytes) in listOf(
+            DriverCardFiles.IDENTIFICATION to dualIdentity(surname = "CHANGED"),
+            DriverCardFiles.APPLICATION to byteArrayOf(1, 1, 1, 1, 1, 0, 17, 0, 2, 0, 1, 0, 1, 0, 1, 0, 1),
+            DriverCardFiles.APPLICATION_V2 to byteArrayOf(0, 8, 0, 2, 0, 1, 0, 1, 0, 0))) {
+            val fake = DualApplicationTransport(signing = true, freshBytes = mapOf((CardApplication.GEN2 to file) to bytes))
+            try {
+                if (single) DriverCardReader(fake).read() else DriverCardReader(fake).readApplications()
+                fail("A contradictory insertion must not produce any result or confirmable partial group")
+            } catch (error: ReaderException) { assertEquals(ReaderFailure.INCONSISTENT_DATA, error.failure) }
+            if (!single) assertTrue(fake.commands.any { it.contentEquals(CardCommands.computeDigitalSignature(128).encode()) })
+            assertEquals(1, fake.offs); assertEquals(1, fake.closes)
+        }
+    }
+    @Test fun lossInEveryNewSequencePhaseAbortsBothApisAndRecoveryStartsANewPoweredCapture() = runBlocking {
+        for (single in listOf(false, true)) for (phase in CardSignaturePhase.entries) {
+            val delegate = DualApplicationTransport(signing = true)
+            var file = 0; var active = false; var failOnce = true; var secondHashed = false
+            val transport = object : CardReaderTransport by delegate {
+                override suspend fun exchange(apdu: ByteArray): ByteArray {
+                    val ins = apdu[1].toInt() and 255
+                    if (ins == 0xA4 && apdu[2].toInt() == 2) {
+                        file = (apdu[5].toInt() and 255) * 256 + (apdu[6].toInt() and 255)
+                        active = false
+                    }
+                    if (delegate.selected == CardApplication.GEN2 && ins == 0x2A && apdu[2].toInt() and 255 == 0x90) secondHashed = true
+                    val target = delegate.selected == CardApplication.GEN2 && file == DriverCardFiles.IDENTIFICATION
+                    if (target && ins == 0x2A && apdu[2].toInt() and 255 == 0x90) active = true
+                    val current = when {
+                        target && ins == 0xA4 -> CardSignaturePhase.SELECT
+                        target && active && ins == 0x2A && apdu[2].toInt() and 255 == 0x90 -> CardSignaturePhase.HASH
+                        target && active && ins == 0x2A -> CardSignaturePhase.SIGN
+                        target && active && ins == 0xB0 && apdu[3].toInt() and 255 == 143 -> CardSignaturePhase.BOUNDARY
+                        target && active && ins == 0xB0 -> CardSignaturePhase.READ
+                        else -> null
+                    }
+                    // SELECT failure is limited to the new second selection, after discovery/certificates.
+                    val freshSelect = current != CardSignaturePhase.SELECT || secondHashed
+                    if (failOnce && current == phase && freshSelect) { failOnce = false; throw ReaderException(ReaderFailure.CARD_REMOVED) }
+                    return delegate.exchange(apdu)
+                }
+            }
+            val reader = DriverCardReader(transport)
+            try { if (single) reader.read() else reader.readApplications(); fail("Expected removal at $phase, single=$single") }
+            catch (error: ReaderException) { assertEquals(ReaderFailure.CARD_REMOVED, error.failure) }
+            assertFalse("Failure injection at $phase, single=$single", failOnce)
+            assertEquals(1, delegate.offs); assertEquals(1, delegate.closes)
+            val recovered = if (single) reader.read().identitySignatures.values.toList()
+                else reader.readApplications().applications.flatMap { it.result!!.identitySignatures.values }
+            assertEquals(if (single) 3 else 5, recovered.size)
+            assertTrue(recovered.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+            assertEquals(2, delegate.powers); assertEquals(2, delegate.offs)
+        }
+    }
+    @Test fun nonV2ApplicationNeverAttemptsV2SignatureOrInventsItsSource() = runBlocking {
+        val fake = DualApplicationTransport(generations = mapOf(CardApplication.GEN1 to CardGeneration.GEN1,
+            CardApplication.GEN2 to CardGeneration.GEN2), signing = true)
+        val batch = DriverCardReader(fake).readApplications()
+        for (attempt in batch.applications) {
+            assertEquals(2, attempt.result!!.identitySignatures.size)
+            assertFalse(CardIdentitySourceKind.APPLICATION_V2 in attempt.result!!.identitySources)
+        }
+        assertFalse(fake.reads.any { it.second == DriverCardFiles.APPLICATION_V2 })
+    }
+
     @Test fun poweredSessionsCannotInterleaveSelectionsOrResetAnotherCapture() = runBlocking {
         val delegate = DualApplicationTransport()
         val entered = CompletableDeferred<Unit>()

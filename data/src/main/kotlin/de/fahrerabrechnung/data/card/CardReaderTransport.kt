@@ -20,7 +20,7 @@ sealed class ReaderState {
     data object CardPresent : ReaderState()
     data object Disconnected : ReaderState()
 }
-enum class ReaderFailure { NO_READER, PERMISSION, CARD_ABSENT, CARD_REMOVED, DISCONNECTED, TIMEOUT, IO, MALFORMED_RESPONSE, UNSUPPORTED_READER }
+enum class ReaderFailure { NO_READER, PERMISSION, CARD_ABSENT, CARD_REMOVED, DISCONNECTED, TIMEOUT, IO, MALFORMED_RESPONSE, UNSUPPORTED_READER, INCONSISTENT_DATA }
 class ReaderException(val failure: ReaderFailure, cause: Throwable? = null) : Exception(failure.name, cause)
 
 class NoOpCardReaderTransport @javax.inject.Inject constructor() : CardReaderTransport {

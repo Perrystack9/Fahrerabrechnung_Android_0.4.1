@@ -4,6 +4,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `card_identity_signature_receipts` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `kind` TEXT NOT NULL, `generation` TEXT NOT NULL, `application` TEXT NOT NULL, `originalSourceId` TEXT, `certificateKind` TEXT, `certificateSourceId` TEXT, `status` TEXT NOT NULL, `policy` TEXT, `phase` TEXT, `reason` TEXT, `statusWord` INTEGER, `hashStatusWord` INTEGER, `signStatusWord` INTEGER, `failure` TEXT, `actualLength` INTEGER, `bytes` BLOB, `fingerprint` TEXT NOT NULL, PRIMARY KEY(`sessionId`, `kind`), FOREIGN KEY(`sessionId`, `driverCardId`) REFERENCES `driver_import_sources`(`sessionId`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`, `driverCardId`, `kind`, `originalSourceId`) REFERENCES `driver_import_metadata_sources`(`sessionId`, `driverCardId`, `kind`, `sourceId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`, `driverCardId`, `certificateKind`, `certificateSourceId`) REFERENCES `driver_import_metadata_sources`(`sessionId`, `driverCardId`, `kind`, `sourceId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_identity_signature_receipts_sessionId_driverCardId` ON `card_identity_signature_receipts` (`sessionId`, `driverCardId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_identity_signature_receipts_sessionId_driverCardId_kind_originalSourceId` ON `card_identity_signature_receipts` (`sessionId`, `driverCardId`, `kind`, `originalSourceId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_card_identity_signature_receipts_sessionId_driverCardId_certificateKind_certificateSourceId` ON `card_identity_signature_receipts` (`sessionId`, `driverCardId`, `certificateKind`, `certificateSourceId`)")
+        }
+    }
+
     val MIGRATION_19_20 = object : Migration(19, 20) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId` ON `driver_import_metadata_sources` (`sessionId`, `driverCardId`, `kind`, `sourceId`)")

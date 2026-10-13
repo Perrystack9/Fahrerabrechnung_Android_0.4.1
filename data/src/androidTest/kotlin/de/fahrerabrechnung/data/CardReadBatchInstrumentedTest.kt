@@ -1,6 +1,7 @@
 package de.fahrerabrechnung.data
 
 import android.content.Context
+import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.fahrerabrechnung.data.card.*
@@ -88,6 +89,166 @@ class CardReadBatchInstrumentedTest {
                     statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = policy.length,
                     original = source.snapshot, certificate = certificate, bytes = ByteArray(policy.length) { 7 })
             })
+    }
+
+    private fun signedIdentityRead(generation: CardGeneration): CardReadResult {
+        val input = signedRead(generation)
+        val sources = input.identitySources.toMutableMap()
+        if (generation == CardGeneration.GEN2V2) {
+            sources[CardIdentitySourceKind.APPLICATION] = CardIdentitySourceRead(CardIdentitySourceFile(
+                CardIdentitySourceKind.APPLICATION, generation, sources.getValue(CardIdentitySourceKind.APPLICATION).file!!.bytes + byteArrayOf(0, 0)))
+            sources[CardIdentitySourceKind.APPLICATION_V2] = CardIdentitySourceRead(CardIdentitySourceFile(
+                CardIdentitySourceKind.APPLICATION_V2, generation, byteArrayOf(0, 8, 0, 0, 0, 0, 0, 0, 0, 0)))
+        }
+        val policy = if (generation == CardGeneration.GEN1) CardSignaturePolicy.RSA_SHA1 else CardSignaturePolicy.NIST_P256
+        val certificate = input.certificates[CardCertificateKind.SIGNING]?.file
+        return input.copy(identitySources = sources, identitySignatures = sources.mapValues { (kind, source) ->
+            CardIdentitySignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy, CardSignaturePhase.SIGN,
+                statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = policy.length,
+                original = source.file, certificate = certificate, bytes = ByteArray(policy.length) { 9 })
+        })
+    }
+    private fun identityBatch() = CardApplicationReadBatch(listOf(
+        CardApplicationAttempt.read(CardApplication.GEN1, signedIdentityRead(CardGeneration.GEN1)),
+        CardApplicationAttempt.read(CardApplication.GEN2, signedIdentityRead(CardGeneration.GEN2V2))),
+        listOf(CardMasterFileCapture(0x0005, ByteArray(8), false)))
+
+    @Test fun fiveIdentityReceiptsKeepExactChildSourcesAcrossDeduplicationHistoryAndReopen() = runBlocking {
+        val old = pipeline.processApplications(batch(), "identity-old", true)
+        val first = pipeline.processApplications(identityBatch(), "identity-first")
+        val next = pipeline.processApplications(identityBatch(), "identity-next")
+        assertEquals(10, count("card_identity_signature_receipts")); assertEquals(8, count("card_core_signature_receipts"))
+        for (attempt in first.applications) {
+            val child = imports.get(attempt.run!!.sessionId!!)!!
+            val second = imports.get(next.applications.single { it.application == attempt.application }.run!!.sessionId!!)!!
+            assertEquals(if (attempt.application == CardApplication.GEN1) 2 else 3, child.identitySignatures.size)
+            assertEquals(2, child.coreSignatures.size)
+            val refs = db.cardMetadataDao().sources(child.id)
+            for (row in db.cardIdentitySignatureDao().receipts(child.id)) {
+                assertEquals(child.driverCardId, row.driverCardId); assertEquals(attempt.application.name, row.application)
+                assertTrue(refs.any { it.kind == row.kind && it.sourceId == row.originalSourceId && it.driverCardId == row.driverCardId })
+                if (row.certificateSourceId != null) assertTrue(refs.any { it.kind == row.certificateKind &&
+                    it.sourceId == row.certificateSourceId && it.driverCardId == row.driverCardId })
+                val kind = CardIdentitySourceKind.entries.single { "IDENTITY_SOURCE_${it.name}" == row.kind }
+                assertEquals(child.identitySources.getValue(kind).id, second.identitySources.getValue(kind).id)
+                assertArrayEquals(child.identitySources.getValue(kind).file.bytes, child.identitySignatures.getValue(kind).original!!.bytes)
+            }
+            assertTrue(child.identitySignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        }
+        rejected { pipeline.processApplications(identityBatch(), "identity-old") }
+        assertBatchContent(first, pipeline.processApplications(identityBatch(), "identity-first"))
+        db.close(); open()
+        for (attempt in first.applications) assertFalse(imports.get(attempt.run!!.sessionId!!)!!.identitySignatures.isEmpty())
+        for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.identitySignatures.isEmpty())
+        assertEquals(10, count("card_identity_signature_receipts"))
+    }
+    @Test fun identitySignaturesAloneCannotChangeAnyExistingSingleOrBatchRequest() = runBlocking {
+        val signed = signedIdentityRead(CardGeneration.GEN1)
+        val unsigned = signed.copy(identitySignatures = emptyMap())
+        imports.bind(unsigned.card!!, true)
+        val old = pipeline.process(unsigned, "identity-single-old")
+        val request = db.cardImportRunDao().run(old.id)
+        rejected { pipeline.process(signed, old.id) }
+        rejected { imports.save(signed, old.id, CardImportSelection.ALL_AVAILABLE) }
+        assertEquals(request, db.cardImportRunDao().run(old.id))
+        assertTrue(imports.get(old.id)!!.identitySignatures.isEmpty())
+        assertEquals(old, pipeline.process(unsigned.copy(identitySignatures = emptyMap()), old.id))
+        val signedBatch = identityBatch()
+        val oldBatch = CardApplicationReadBatch(signedBatch.applications.map {
+            CardApplicationAttempt.read(it.application, it.result!!.copy(identitySignatures = emptyMap()))
+        }, signedBatch.masterFiles)
+        val saved = pipeline.processApplications(oldBatch, "identity-batch-old")
+        rejected { pipeline.processApplications(signedBatch, saved.id) }
+        assertBatchContent(saved, pipeline.processApplications(oldBatch, saved.id))
+        assertEquals(0, count("card_identity_signature_receipts"))
+        assertEquals(3, count("import_sessions"))
+    }
+    @Test fun secondIdentityReceiptFailureRollsBackNewBindingParentBothChildrenAndAllKindsOfReceipt() = runBlocking {
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_identity_g2 BEFORE INSERT ON card_identity_signature_receipts
+            WHEN NEW.generation = 'GEN2V2' BEGIN SELECT RAISE(ABORT, 'synthetic identity second-child failure'); END""")
+        rejected { pipeline.processApplications(identityBatch(), "identity-rollback-new", true) }
+        for (table in listOf("profiles", "driver_cards", "card_read_batches", "card_application_attempts", "card_import_runs",
+            "import_sessions", "driver_import_sources", "card_metadata_imports", "driver_import_metadata_sources",
+            "card_core_signature_receipts", "card_identity_signature_receipts")) assertEquals(table, 0, count(table))
+    }
+    @Test fun failedSecondIdentityReceiptLeavesPreviousSuccessfulImportsByteForByteIntact() = runBlocking {
+        val previous = pipeline.processApplications(identityBatch(), "identity-previous", true)
+        val rows = previous.applications.flatMap { db.cardIdentitySignatureDao().receipts(it.run!!.sessionId!!) }
+        val fingerprints = rows.map { it.fingerprint }
+        val profile = imports.profile()
+        db.openHelper.writableDatabase.execSQL("""CREATE TRIGGER reject_later_identity BEFORE INSERT ON card_identity_signature_receipts
+            WHEN NEW.generation = 'GEN2V2' BEGIN SELECT RAISE(ABORT, 'synthetic later receipt failure'); END""")
+        rejected { pipeline.processApplications(identityBatch(), "identity-rollback-later") }
+        assertEquals(profile, imports.profile()); assertEquals(1, count("card_read_batches"))
+        assertEquals(2, count("import_sessions")); assertEquals(5, count("card_identity_signature_receipts"))
+        assertEquals(4, count("card_core_signature_receipts"))
+        assertBatchContent(previous, pipeline.applicationBatch(previous.id))
+        assertEquals(fingerprints, previous.applications.flatMap { db.cardIdentitySignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint })
+    }
+    @Test fun failedFreshIdentityReadKeepsOnlyIndependentUnsignedSourceAndNullReceiptReference() = runBlocking {
+        val input = signedIdentityRead(CardGeneration.GEN1)
+        val kind = CardIdentitySourceKind.IDENTIFICATION
+        val failed = input.copy(identitySignatures = mapOf(kind to CardIdentitySignature(kind, input.generation,
+            CardSignatureStatus.FAILED, CardSignaturePolicy.RSA_SHA1, CardSignaturePhase.READ,
+            CardSignatureReason.INCOMPLETE_READ, statusWord = 0x6700, hashStatusWord = 0x9000)))
+        val batch = CardApplicationReadBatch(listOf(CardApplicationAttempt.read(CardApplication.GEN1, failed),
+            CardApplicationAttempt.absent(CardApplication.GEN2)), emptyList())
+        val saved = pipeline.processApplications(batch, "identity-null-original", true)
+        val child = imports.get(saved.applications.first().run!!.sessionId!!)!!
+        assertNotNull(child.identitySources[kind]); assertNull(child.identitySignatures.getValue(kind).original)
+        assertNull(db.cardIdentitySignatureDao().receipts(child.id).single().originalSourceId)
+        db.close(); open()
+        assertNull(imports.get(child.id)!!.identitySignatures.getValue(kind).original)
+    }
+    @Test fun identityReceiptForeignSessionAndEveryTamperAreRejected() = runBlocking {
+        val saved = pipeline.processApplications(identityBatch(), "identity-tamper", true)
+        val g1 = saved.applications.first().run!!.sessionId!!
+        val g2 = saved.applications.last().run!!.sessionId!!
+        val row = db.cardIdentitySignatureDao().receipts(g2).first()
+        // This G2 original/certificate tuple does not exist in the G1 child.
+        rejected { db.cardIdentitySignatureDao().insert(row.copy(sessionId = g1, kind = "IDENTITY_SOURCE_APPLICATION_V2")) }
+        for (update in listOf("bytes = zeroblob(64)", "status = 'NOT_ATTEMPTED'", "fingerprint = 'damaged'",
+            "application = 'GEN1'", "generation = 'GEN1'", "driverCardId = 'foreign'")) {
+            rejected {
+                db.withTransaction {
+                    db.openHelper.writableDatabase.execSQL("UPDATE card_identity_signature_receipts SET $update WHERE sessionId = ?", arrayOf(g2))
+                    imports.get(g2)
+                }
+            }
+            assertEquals(3, imports.get(g2)!!.identitySignatures.size)
+        }
+    }
+    @Test fun encryptedTwentyToTwentyOneRetainsAllLegacyIdentityCoreAndRequestBytesWithoutBackfill() = runBlocking {
+        val input = CardApplicationReadBatch(listOf(
+            CardApplicationAttempt.read(CardApplication.GEN1, signedRead(CardGeneration.GEN1)),
+            CardApplicationAttempt.read(CardApplication.GEN2, signedRead(CardGeneration.GEN2V2))), emptyList())
+        val old = pipeline.processApplications(input, "before-identity-upgrade", true)
+        val profile = imports.profile()
+        val sources = old.applications.associate { attempt ->
+            val id = attempt.run!!.sessionId!!
+            id to db.cardMetadataDao().sources(id).map { it.sourceId }
+        }
+        val core = old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint }
+        db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE card_identity_signature_receipts")
+            execSQL("DELETE FROM room_master_table"); version = 20
+        }
+        db.close(); open()
+        assertEquals(21, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
+        assertBatchContent(old, pipeline.processApplications(input, "before-identity-upgrade"))
+        assertEquals(core, old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint })
+        for ((id, rawIds) in sources) {
+            assertEquals(rawIds, db.cardMetadataDao().sources(id).map { it.sourceId })
+            val child = imports.get(id)!!
+            assertTrue(child.identitySignatures.isEmpty()); assertEquals(2, child.coreSignatures.size)
+            assertEquals(15.takeIf { child.application == CardApplication.GEN2 } ?: 10,
+                child.identitySources.getValue(CardIdentitySourceKind.APPLICATION).file.bytes.size)
+        }
+        assertEquals(0, count("card_identity_signature_receipts"))
+        pipeline.processApplications(identityBatch(), "after-identity-upgrade")
+        db.close(); open()
+        assertEquals(5, count("card_identity_signature_receipts"))
+        for (attempt in old.applications) assertTrue(imports.get(attempt.run!!.sessionId!!)!!.identitySignatures.isEmpty())
     }
 
     @Test fun signaturesBindOnlyToFreshGen1AndGen2V2ChildrenAndSurviveReopen() = runBlocking {
@@ -315,7 +476,7 @@ class CardReadBatchInstrumentedTest {
         val bytes = imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes
         // Remove only the new, empty additive relations to recreate the real encrypted v18 schema.
         db.openHelper.writableDatabase.apply {
-            for (table in listOf("card_core_signature_receipts", "card_batch_master_files", "card_application_attempts", "card_master_sources", "card_read_batches"))
+            for (table in listOf("card_identity_signature_receipts", "card_core_signature_receipts", "card_batch_master_files", "card_application_attempts", "card_master_sources", "card_read_batches"))
                 execSQL("DROP TABLE $table")
             execSQL("DROP INDEX index_card_import_runs_id_driverCardId")
             execSQL("DROP INDEX index_driver_import_sources_sessionId_driverCardId")
@@ -324,7 +485,7 @@ class CardReadBatchInstrumentedTest {
             version = 18
         }
         db.close(); open()
-        assertEquals(20, db.openHelper.writableDatabase.version)
+        assertEquals(21, db.openHelper.writableDatabase.version)
         assertEquals(old, pipeline.process(oldRead, "before-upgrade"))
         assertArrayEquals(bytes, imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes)
         assertEquals(0, count("card_read_batches")); assertEquals(0, count("card_application_attempts"))
