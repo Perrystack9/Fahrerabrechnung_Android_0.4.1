@@ -20,7 +20,8 @@
 | Gerätepaket | [38414059875](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38414059875), gleicher Quellkopf; Infrastruktur `07db91f33957a45598cae6e4772787d1aa7ddbf4`, `include_baseline=false` |
 | Gerätebestätigung | Tobi, 13.10.2026 17:32 Europe/Berlin: „Wurde getestet, und funktioniert 1a“ |
 | Produktmerge | `ae00f9699fe7ef7ab3082d9a1164b8cca185561d`, identischer vollständiger Produktbaum |
-| Zusätzlicher Produkt-Main-Lauf | [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063), aktuellen Status live prüfen |
+| Zusätzlicher Produkt-Main-Lauf | [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063), vollständig erfolgreich für Produktmerge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d` |
+| Abnahmedokumentation | PR #77, Merge `1007ee37ab693f5b89277b76daa91b2f5836cf53`; [Dokumentations-Main-CI 38424648944](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38424648944) erfolgreich mit unverändertem Dokumentationsrouting |
 
 Alle sieben Gradle-Schritte, Unit/Lint/APK-/Signatur-/Updatepaar-/Compiler-Schemaabgleich, ungekürzte SQLCipher-/Compose-Suiten API36 und Abschlussgate bestanden. Reader-/Format-/Policy-/Grenz-/Konsistenz-/Transport-/Freeze-, Herkunfts-/Tamper-/Dedup-/Rollback-/Request-/Historien- und UI-Abnahmeprüfungen erhalten. Eigenständige vollständige 19→20-Abnahme plus echte verschlüsselte 18-/19-/20→21-Pfade bestehen. Keine Filter/Quarantäne oder Workflow-/Upload-/Budgetänderung; normale erfolgreiche CI ohne Artefakte. Lokaler Gradle-Download blockiert, Android-Nachweis aus echter CI.
 
@@ -30,6 +31,6 @@ Die neue Geräte-Rückmeldung ist eine positive Gesamtabnahme zum bereitgestellt
 
 ## Nächster Einstieg und offene Grenzen
 
-Dieser Produkt-Meilenstein ist gesichert. Aktuellen main/PR/CI live prüfen, dann nur einen ausdrücklich ausgewählten Folgeumfang planen. Im ursprünglichen Checkout `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` liegt eine lokale angefangene Änderung an `feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt`; sie wurde erhalten und nicht in den bestätigten Produktmerge aufgenommen. Dokumentationsabschluss im isolierten Worktree. Vor weiterer Integration vorhandene Arbeit prüfen und sichern.
+Dieser Produkt-Meilenstein ist gesichert; Sitzung am 13.10.2026 abgeschlossen. Vor diesem abschließenden reinen Dokumentationsschritt waren main `1007ee37ab693f5b89277b76daa91b2f5836cf53`, beide Main-Läufe erfolgreich und keine PRs offen; diese Angaben wurden live geprüft. Aktuellen main/PR/CI beim nächsten Einstieg erneut prüfen, dann nur einen ausdrücklich ausgewählten Folgeumfang planen. Im ursprünglichen Checkout `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` liegt eine lokale angefangene Änderung an `feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt`; sie wurde erhalten und nicht in den bestätigten Produktmerge aufgenommen. Dokumentationsabschluss im isolierten Worktree. Vor weiterer Integration vorhandene Arbeit prüfen und sichern.
 
 Offen bleiben weitere EF-Signaturen, mathematische Prüfung/Trust, volle Kartenabdeckung, Export/DDD/Standarddownload und Schreibpfad. Keine automatische Folgephase; `7F66`/`0540`, Browser-/Unteragentenverbot und Produktgrenzen unverändert. [Übergabe](docs/WORK_HANDOFF.md).

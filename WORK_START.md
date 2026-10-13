@@ -26,7 +26,7 @@ Neue 0501/0520 in beiden Anwendungen und 0525 nur V2 neben erhaltenen vier Core-
 
 ## Exakt nächster Schritt
 
-Dieser Produkt-Meilenstein ist abgeschlossen. Aktuellen main/PR/CI live prüfen; zusätzliche Produkt-Main-CI 38423233063 und Dokumentationschecks anhand aktueller Ergebnisse bewerten. Umsetzung nicht wiederholen. Im ursprünglichen Checkout liegt eine lokale angefangene Änderung an `SettingsScreen.kt`, die erhalten und nicht übernommen wurde; vorhandene Arbeit vor weiterer Integration prüfen/sichern. [Übergabe](docs/WORK_HANDOFF.md) nennt Checkout und Grenzen. Nur einen ausdrücklich ausgewählten Folgeauftrag planen; keine automatische weitere EF-/Trust-/DDD-/Schreib-/UI-Phase beginnen. **Übergabe vorbereiten und Sitzung abschließen.**
+Dieser Produkt-Meilenstein und die Sitzung sind abgeschlossen. Produkt-Main-CI 38423233063 und Dokumentations-Main-CI 38424648944 wurden vollständig erfolgreich abgeschlossen und am 13.10.2026 erneut live geprüft. Dokumentationsbasis ist PR #77 / `1007ee37ab693f5b89277b76daa91b2f5836cf53`; der anschließende Sitzungsabschluss ändert nur die drei Start-/Status-/Übergabetexte. Beim nächsten Einstieg aktuellen main/PR/CI live prüfen; Umsetzung nicht wiederholen. Im ursprünglichen Checkout liegt eine lokale angefangene Änderung an `SettingsScreen.kt`, die erhalten und nicht übernommen wurde; vorhandene Arbeit vor weiterer Integration prüfen/sichern. [Übergabe](docs/WORK_HANDOFF.md) nennt Checkout und Grenzen. Nur einen ausdrücklich ausgewählten Folgeauftrag planen; keine automatische weitere EF-/Trust-/DDD-/Schreib-/UI-Phase beginnen.
 
 ## Sitzungsroutine
 

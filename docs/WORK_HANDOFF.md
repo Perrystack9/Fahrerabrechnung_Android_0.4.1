@@ -2,6 +2,8 @@
 
 Einstieg: WORK_START und dessen fünf Startdateien. Branch/HEAD, Arbeitsbaum, aktuellen GitHub-main, offene PRs und relevante CI live prüfen.
 
+**Sitzung abgeschlossen am 13.10.2026.** Geprüfte Basis vor dem abschließenden Dokumentationsschritt: main `1007ee37ab693f5b89277b76daa91b2f5836cf53` aus PR #77, keine offenen PRs. Produkt-Main-CI [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063) vollständig erfolgreich; Dokumentations-Main-CI [38424648944](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38424648944) erfolgreich. Ergebnisse live erneut geprüft; keine laufende Prüfung aus dieser Produktabnahme übrig. Der anschließende Abschluss ändert nur WORK_START, WORK_STATUS und diese Übergabe.
+
 ## Abgeschlossener Produkt-Meilenstein
 
 **40125 / Schema 21 übernommen, eigene neue Gerätebestätigung erhalten.** [PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76), Merge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d`, vollständiger Produktbaum `36e014af6cbffa9add766bdd917c6d94313f87ec` identisch zum geprüften Kopf `20d34a0fc7ce370fb4c1d22002905a500574ee06`. Umsetzung nicht wiederholen.
@@ -16,9 +18,9 @@ Neu übernommen: 0501/0520 beide Anwendungen, 0525 nur V2; frische post-HASH-REA
 
 ## Exakt nächster Einstieg
 
-1. Aktuellen main und offene PRs/Checks prüfen. Zusätzlicher Produkt-Main-Lauf [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063) gehört zum identischen Produktmerge; seinen aktuellen Status und die reine Dokumentations-CI live abfragen, keine alten Pending-/Grün-Angaben übernehmen.
+1. Aktuellen main und offene PRs/Checks live prüfen. Die vollständige Produkt-Main-CI und die Dokumentations-CI sind bereits erfolgreich abgeschlossen; Umsetzung, Paketbau und Geräteabnahme nicht wiederholen. Für den bestätigten Produktumfang bleibt Merge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d` mit Produktbaum `36e014af6cbffa9add766bdd917c6d94313f87ec` die feste Basis.
 2. Vorhandene lokale Arbeit erhalten: ursprünglicher Checkout `/workspace/scratch/4546aa92dbbb/FahrerTagebuch`, Branch `verified/40125-pr76-select-fixture-final`, angefangene uncommitted Änderung an `feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt`. Beim Einstieg war der Text unvollständig. Nicht verwerfen, automatisch integrieren oder den geprüften Stand daraus neu bauen. Abnahmedokumentation wurde im isolierten Worktree `FahrerTagebuch-40125-acceptance` erstellt. Tatsächliche lokale Zustände erneut prüfen.
-3. Nach Sicherung dieses Meilensteins Sitzung abschließen. Nächsten begrenzten Auftrag ausdrücklich auswählen/planen; kein bereits freigegebener Folge-Produktumfang aus offenen Optionen ableiten.
+3. Nächsten begrenzten Auftrag ausdrücklich auswählen/planen; kein bereits freigegebener Folge-Produktumfang aus offenen Optionen ableiten. Für den neuen Chat genügt: „FahrerTagebuch am aktuellen Stand fortsetzen. Zuerst WORK_START.md und den begrenzten Startpfad lesen. 40125 ist gerätebestätigt, gemergt und vollständig CI-grün; lokale Settings-Arbeit erhalten. Danach den nächsten ausdrücklich gewählten Auftrag planen.“
 
 ## Grenzen
 
