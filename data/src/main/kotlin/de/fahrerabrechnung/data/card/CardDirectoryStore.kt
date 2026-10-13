@@ -27,6 +27,7 @@ internal class CardDirectoryStore(private val dao: CardMetadataDao) {
         var result: SavedCardDirectory? = null
         for (source in dao.sources(sessionId)) {
             if (source.kind in CardCoreEf.entries.map { it.storageKind }) continue
+            if (source.kind in CardEventFaultKind.entries.map { it.originalStorageKind }) continue
             if (source.kind in CardCommunicationKind.entries.map { it.storageKind } ||
                 source.kind in CardMetadataKind.entries.map { it.name } ||
                 source.kind in CardCertificateKind.entries.map { it.storageKind } ||

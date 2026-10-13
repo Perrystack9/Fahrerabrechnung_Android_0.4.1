@@ -255,6 +255,7 @@ class EncryptedDatabaseInstrumentedTest {
             execSQL("DROP TABLE driver_card_identities")
             execSQL("DROP TABLE local_driver_profile")
             execSQL("DROP TABLE card_source_pairs")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table")
             version = 3
         }

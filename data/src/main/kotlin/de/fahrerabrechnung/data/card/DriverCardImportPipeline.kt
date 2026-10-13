@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 enum class CardImportRunStatus { IN_PROGRESS, SAVED, PARTIAL, FAILED, INTERRUPTED }
-enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY, MF_ATR_INFO, MF_EXTENDED_LENGTH, ACTIVITY_ORIGINAL, VEHICLES_ORIGINAL, ACTIVITY_SIGNATURE, VEHICLES_SIGNATURE, APPLICATION_SIGNATURE, IDENTIFICATION_SIGNATURE, APPLICATION_V2_SIGNATURE }
+enum class CardImportFileKind { ACTIVITIES, VEHICLES, CONTROLS, EVENTS, FAULTS, SPECIFIC_CONDITIONS, GNSS_POSITIONS, GNSS_AUTHENTICATION, WORK_PERIOD_PLACES, WORK_PERIOD_PLACES_AUTHENTICATION, BORDER_CROSSINGS, LOAD_UNLOAD_OPERATIONS, LOAD_TYPE_ENTRIES, VEHICLE_UNITS_USED, DRIVING_LICENCE_INFO, CURRENT_USAGE, LAST_CARD_DOWNLOAD, ICC_IDENTIFICATION, IC_IDENTIFICATION, CARD_CERTIFICATE, CARD_SIGNING_CERTIFICATE, CA_CERTIFICATE, LINK_CERTIFICATE, APPLICATION_IDENTIFICATION, DRIVER_IDENTIFICATION, APPLICATION_IDENTIFICATION_V2, MF_DIRECTORY, MF_ATR_INFO, MF_EXTENDED_LENGTH, ACTIVITY_ORIGINAL, VEHICLES_ORIGINAL, ACTIVITY_SIGNATURE, VEHICLES_SIGNATURE, APPLICATION_SIGNATURE, IDENTIFICATION_SIGNATURE, APPLICATION_V2_SIGNATURE, EVENTS_SIGNATURE, FAULTS_SIGNATURE }
 
 internal fun CardCommunicationKind.importFileKind(): CardImportFileKind = when (this) {
     CardCommunicationKind.ATR_INFO -> CardImportFileKind.MF_ATR_INFO
@@ -291,6 +291,7 @@ class DriverCardImportPipeline @Inject constructor(
         val read = result.copy(coreReads = core,
             coreSignatures = result.coreSignatures.mapValues { it.value.freeze() }.toMap(),
             identitySignatures = result.identitySignatures.mapValues { it.value.freeze() }.toMap(),
+        eventFaultSignatures = result.eventFaultSignatures.mapValues { it.value.freeze() }.toMap(),
             activityReadFailed = core[CardCoreEf.ACTIVITY]?.let { it.status == CardCoreReadStatus.READ_FAILED } ?: result.activityReadFailed,
             vehicleReadFailed = core[CardCoreEf.VEHICLES]?.let { it.status == CardCoreReadStatus.READ_FAILED } ?: result.vehicleReadFailed,
             activity = rawActivity?.let { CardActivityFile(it.oldestDayOffset, it.newestDayOffset, it.dailyRecords.copyOf()) },
@@ -314,6 +315,7 @@ class DriverCardImportPipeline @Inject constructor(
             communication = result.communication.mapValues { (_, value) -> value.copy(file = value.file?.let { CardCommunicationFile(it.kind, it.generation, it.bytes) }) })
         validateCoreSignatures(read)
         validateIdentitySignatures(read)
+        validateEventFaultSignatures(read)
         // Preserve historical result/fingerprint semantics when no full original was captured.
         val activityRaw = core[CardCoreEf.ACTIVITY]
         val vehicleRaw = core[CardCoreEf.VEHICLES]
@@ -353,7 +355,16 @@ class DriverCardImportPipeline @Inject constructor(
                     if (record == null) 0 else 1, record?.timeUtc?.epochSecond, record?.timeUtc?.epochSecond, null)
             } else null
         fun eventFault(file: CardEventFaultFile?, failed: Boolean, kind: CardImportFileKind,
-                       expected: CardEventFaultKind): CardImportFileResult? = if (file != null || failed)
+                       expected: CardEventFaultKind): CardImportFileResult? {
+            val receipt = read.eventFaultSignatures[expected]
+            if (file == null && receipt != null) return CardImportFileResult(kind,
+                when (receipt.reason) {
+                    CardSignatureReason.EF_ABSENT -> CardImportFileStatus.MISSING
+                    CardSignatureReason.CAPACITY_UNAVAILABLE -> CardImportFileStatus.NOT_ATTEMPTED
+                    CardSignatureReason.UNSUPPORTED_FORMAT -> CardImportFileStatus.INVALID
+                    else -> CardImportFileStatus.READ_FAILED
+                }, 0, null, null, receipt.reason?.name)
+            return if (file != null || failed)
             inspect(kind, file != null, failed) {
                 val complete = checkNotNull(file)
                 require(complete.generation == read.generation && complete.kind == expected)
@@ -362,6 +373,7 @@ class DriverCardImportPipeline @Inject constructor(
                     if (records.any { it.beginUtc == null }) null else records.minOfOrNull { checkNotNull(it.beginUtc).epochSecond },
                     if (records.any { it.endUtc == null }) null else records.maxOfOrNull { checkNotNull(it.endUtc).epochSecond }, null)
             } else null
+        }
         val conditions = if (read.specificConditions != null || read.specificConditionReadFailed)
             inspect(CardImportFileKind.SPECIFIC_CONDITIONS, read.specificConditions != null, read.specificConditionReadFailed) {
                 val file = checkNotNull(read.specificConditions)
@@ -490,7 +502,7 @@ class DriverCardImportPipeline @Inject constructor(
             } else null
         return Plan(read, listOfNotNull(activity, vehicle, control,
             eventFault(read.events, read.eventReadFailed, CardImportFileKind.EVENTS, CardEventFaultKind.EVENTS),
-            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory) + communication + CardCoreEf.entries.mapNotNull { core[it]?.result() } + CardCoreEf.entries.mapNotNull { read.coreSignatures[it]?.result() } + CardIdentitySourceKind.entries.mapNotNull { read.identitySignatures[it]?.result() })
+            eventFault(read.faults, read.faultReadFailed, CardImportFileKind.FAULTS, CardEventFaultKind.FAULTS), conditions, positions, authentication, places, placeAuth, borders, loads, types, units) + metadata + certificates + identitySources + listOfNotNull(directory) + communication + CardCoreEf.entries.mapNotNull { core[it]?.result() } + CardCoreEf.entries.mapNotNull { read.coreSignatures[it]?.result() } + CardIdentitySourceKind.entries.mapNotNull { read.identitySignatures[it]?.result() } + CardEventFaultKind.entries.mapNotNull { read.eventFaultSignatures[it]?.result() })
     }
 
     private inline fun inspect(kind: CardImportFileKind, present: Boolean, failed: Boolean,
@@ -682,6 +694,10 @@ class DriverCardImportPipeline @Inject constructor(
             for (kind in CardIdentitySourceKind.entries) read.identitySignatures[kind]?.let {
                 text("CARD_IDENTITY_SIGNATURE_V1_${kind.name}")
                 text(CardIdentitySignatureStore.requestFingerprint(cardId, it))
+            }
+            for (kind in CardEventFaultKind.entries) read.eventFaultSignatures[kind]?.let {
+                text("CARD_EVENT_FAULT_SIGNATURE_V1_${kind.name}")
+                text(CardEventFaultSignatureStore.requestFingerprint(cardId, it))
             }
             return digest.digest().joinToString("") { "%02x".format(it) }
         }

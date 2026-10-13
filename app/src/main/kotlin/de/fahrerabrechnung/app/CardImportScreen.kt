@@ -76,6 +76,8 @@ internal fun CardImportScreen(padding: PaddingValues, state: CardImportUiState,
                         CardImportFileKind.MF_EXTENDED_LENGTH -> Text("Protokollunterstützung übernommen")
                         CardImportFileKind.APPLICATION_SIGNATURE -> Text("Kartensignatur der Kartenanwendung aufgenommen · ungeprüft")
                         CardImportFileKind.IDENTIFICATION_SIGNATURE -> Text("Kartensignatur der Kartenangaben aufgenommen · ungeprüft")
+                        CardImportFileKind.EVENTS_SIGNATURE -> Text("Kartensignatur der Ereignisse aufgenommen · ungeprüft")
+                        CardImportFileKind.FAULTS_SIGNATURE -> Text("Kartensignatur der Störungen aufgenommen · ungeprüft")
                         CardImportFileKind.APPLICATION_V2_SIGNATURE -> Text("Kartensignatur der Kartenanwendung V2 aufgenommen · ungeprüft")
                         CardImportFileKind.ACTIVITY_SIGNATURE -> Text("Kartensignatur der Tätigkeiten aufgenommen · ungeprüft")
                         CardImportFileKind.VEHICLES_SIGNATURE -> Text("Kartensignatur der Fahrzeuge aufgenommen · ungeprüft")

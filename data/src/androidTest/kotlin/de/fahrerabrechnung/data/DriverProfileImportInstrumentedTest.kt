@@ -289,6 +289,7 @@ class DriverProfileImportInstrumentedTest {
             execSQL("DROP TABLE driver_import_sources")
             execSQL("DROP TABLE driver_card_identities")
             execSQL("DROP TABLE local_driver_profile")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table")
             version = 4
         }

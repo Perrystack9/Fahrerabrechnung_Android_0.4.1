@@ -24,9 +24,11 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. README, Dokumente
 
 Neue 0501/0520 in beiden Anwendungen und 0525 nur V2 neben erhaltenen vier Core-Belegen: frische vollständige post-HASH-READs, strikte Dateigrenze, Bootstrap-Konsistenz mit Gruppenabbruch, eigene Child-Receipts und additive 20→21. Alte Originale/Fingerprints/Imports und 19→20-Abnahme erhalten; kein Backfill oder jüngerer Ersatz. Kleine maskierte Detailanzeige, weiterhin ungeprüft. Kein Trust/DDD/Schreib-/UI-Folgeumfang dadurch freigegeben.
 
-## Exakt nächster Schritt
+## Aktiver nächster Schritt
 
-Dieser Produkt-Meilenstein und die Sitzung sind abgeschlossen. Produkt-Main-CI 38423233063 und Dokumentations-Main-CI 38424648944 wurden vollständig erfolgreich abgeschlossen und am 13.10.2026 erneut live geprüft. Dokumentationsbasis ist PR #77 / `1007ee37ab693f5b89277b76daa91b2f5836cf53`; der anschließende Sitzungsabschluss ändert nur die drei Start-/Status-/Übergabetexte. Beim nächsten Einstieg aktuellen main/PR/CI live prüfen; Umsetzung nicht wiederholen. Im ursprünglichen Checkout liegt eine lokale angefangene Änderung an `SettingsScreen.kt`, die erhalten und nicht übernommen wurde; vorhandene Arbeit vor weiterer Integration prüfen/sichern. [Übergabe](docs/WORK_HANDOFF.md) nennt Checkout und Grenzen. Nur einen ausdrücklich ausgewählten Folgeauftrag planen; keine automatische weitere EF-/Trust-/DDD-/Schreib-/UI-Phase beginnen.
+Tobi hat am 13.10.2026 die begrenzte 0502/0503-Folgeaufnahme freigegeben. [Plan](docs/CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md); Draft [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79), 40126 / Schema 22. Neue eigene Rohquellen und Child-Receipts, strikte EOF-, Herkunfts-, Gruppen-, Historien-, SQLCipher- und Compose-Prüfungen. Noch nicht gerätebestätigt oder gemergt. Room 22 ausschließlich aus echtem Compilerexport; vollständige CI des endgültigen Kopfes und eigenes exaktes Gerätepaket erforderlich. Keine Trust-, DDD-, Schreib- oder UI-Folgephase.
+
+Bestätigte Produktbasis 40125 bleibt unverändert. Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` erhalten; zusätzliche Sicherung in `/workspace/scratch/4c3cf966d792/session-backups`. Neuer isolierter Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`, lokaler Branch `work/40126-event-fault-remote`, Remote `feat/event-fault-card-signatures-40126`. Aktuellen main/PR/CI live prüfen und abgeschlossene 40125-Arbeit nicht wiederholen.
 
 ## Sitzungsroutine
 

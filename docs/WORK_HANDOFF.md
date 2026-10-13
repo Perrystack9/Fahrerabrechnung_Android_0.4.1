@@ -2,7 +2,7 @@
 
 Einstieg: WORK_START und dessen fünf Startdateien. Branch/HEAD, Arbeitsbaum, aktuellen GitHub-main, offene PRs und relevante CI live prüfen.
 
-**Sitzung abgeschlossen am 13.10.2026.** Geprüfte Basis vor dem abschließenden Dokumentationsschritt: main `1007ee37ab693f5b89277b76daa91b2f5836cf53` aus PR #77, keine offenen PRs. Produkt-Main-CI [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063) vollständig erfolgreich; Dokumentations-Main-CI [38424648944](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38424648944) erfolgreich. Ergebnisse live erneut geprüft; keine laufende Prüfung aus dieser Produktabnahme übrig. Der anschließende Abschluss ändert nur WORK_START, WORK_STATUS und diese Übergabe.
+**Vorherige 40125-Sitzung abgeschlossen; neuer 0502/0503-Auftrag aktiv.** Geprüfte Basis vor dem abschließenden Dokumentationsschritt: main `1007ee37ab693f5b89277b76daa91b2f5836cf53` aus PR #77, keine offenen PRs. Produkt-Main-CI [38423233063](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38423233063) vollständig erfolgreich; Dokumentations-Main-CI [38424648944](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38424648944) erfolgreich. Ergebnisse live erneut geprüft; keine laufende Prüfung aus dieser Produktabnahme übrig. Der anschließende Abschluss ändert nur WORK_START, WORK_STATUS und diese Übergabe.
 
 ## Abgeschlossener Produkt-Meilenstein
 
@@ -16,11 +16,15 @@ Tobi bestätigt am 13.10.2026 17:32 Europe/Berlin: „Wurde getestet, und funkti
 
 Neu übernommen: 0501/0520 beide Anwendungen, 0525 nur V2; frische post-HASH-READs, strikte 6700/6B00-Grenze, C101-Policy/Le und nicht tolerierter Gruppenabbruch bei Bootstrap-Widerspruch. Separate Child-Receipts mit genauen Original-/Zertifikats-FKs; null Original-FK nach fehlgeschlagenem neuen READ und unabhängiger unsigned Fallback. Keine nachträglichen Signaturen/Quellenersatz; leere neue Map lässt alte Fingerprints exakt. Core-Belege unverändert, additive 20→21, kleine maskierte Quellenanzeige. 15-Byte-G2-Kompatibilität erhalten, V2-15 unsigned. Room21 echt, SHA256 `8cd199f6012938fda80f8f8f265b49224b7fd8c127d2ad913b7926784eafa8c9`; Exporte 1–20 unverändert, alle 43 bisherigen Tabellen gleich.
 
-## Exakt nächster Einstieg
+## Aktiver Auftrag 40126
 
-1. Aktuellen main und offene PRs/Checks live prüfen. Die vollständige Produkt-Main-CI und die Dokumentations-CI sind bereits erfolgreich abgeschlossen; Umsetzung, Paketbau und Geräteabnahme nicht wiederholen. Für den bestätigten Produktumfang bleibt Merge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d` mit Produktbaum `36e014af6cbffa9add766bdd917c6d94313f87ec` die feste Basis.
-2. Vorhandene lokale Arbeit erhalten: ursprünglicher Checkout `/workspace/scratch/4546aa92dbbb/FahrerTagebuch`, Branch `verified/40125-pr76-select-fixture-final`, angefangene uncommitted Änderung an `feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt`. Beim Einstieg war der Text unvollständig. Nicht verwerfen, automatisch integrieren oder den geprüften Stand daraus neu bauen. Abnahmedokumentation wurde im isolierten Worktree `FahrerTagebuch-40125-acceptance` erstellt. Tatsächliche lokale Zustände erneut prüfen.
-3. Nächsten begrenzten Auftrag ausdrücklich auswählen/planen; kein bereits freigegebener Folge-Produktumfang aus offenen Optionen ableiten. Für den neuen Chat genügt: „FahrerTagebuch am aktuellen Stand fortsetzen. Zuerst WORK_START.md und den begrenzten Startpfad lesen. 40125 ist gerätebestätigt, gemergt und vollständig CI-grün; lokale Settings-Arbeit erhalten. Danach den nächsten ausdrücklich gewählten Auftrag planen.“
+Tobi hat am 13.10.2026 die vorgeschlagene 0502/0503-Signaturaufnahme freigegeben. Neuer [Plan](CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md), Draft [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79), 40126 / Schema 22. Produktbasis 40125 oben bleibt übernommen; dieser neue Umfang noch nicht gerätebestätigt und nicht gemergt. Die CI des tatsächlichen endgültigen PR-Kopfes live prüfen; keine Checkpoint-Chronik.
+
+Separate Roh-Metadatenquellen und Signaturreceipts, neue Reader-/Herkunfts-/Rollback-/Historien-/Migrations-/Compose-Tests. Room 22 aus dem echten ersten CI-Compilerexport übernommen, SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`; alte Exporte 1–21 und alle 44 bisherigen Tabellen unverändert. Vor Merge volle CI, exaktes Paket und eigene neue positive Gerätebestätigung. [Checkliste 40126](DEVICE_TEST_40126.md) über den bestehenden Paketpfad eingebettet. Keine CI-, Budget- oder Workflowänderung.
+
+Neuer Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`, lokaler Branch `work/40126-event-fault-remote`, Remote-Branch `feat/event-fault-card-signatures-40126`. Git-Push aus dieser Umgebung ohne Schreibcredential; Veröffentlichung über verbundenen GitHub-Connector, danach identischen Tree fetch/sicher prüfen. Lokaler erster Implementierungscommit bleibt in `preserve/40126-local-tree-before-remote` erhalten. Keine Resets oder Rewrites.
+
+Alte unvollständige Settings-Arbeit im ursprünglichen Checkout unverändert; zusätzlich Datei und Patch mit SHA256 in `/workspace/scratch/4c3cf966d792/session-backups`. Nicht integrieren oder verwerfen. Keine abgeschlossene 40125-Umsetzung, Paket- oder Geräteabnahme erneut durchführen. Diesen Abschnitt nach eigenen tatsächlichen CI-/Geräteergebnissen ersetzen.
 
 ## Grenzen
 

@@ -1,5 +1,7 @@
 # FahrerTagebuch - aktueller technischer Zustand
 
+**Aktiver Auftrag 40126 / Schema 22: 0502/0503, Draft PR #79; noch keine neue Gerätefreigabe oder Übernahme.** Bestätigte Basis 40125 unten erhalten.
+
 **40125 / Room-Schema 21 übernommen und im tatsächlich getesteten eigenen Umfang bestätigt.** [PR #76](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/76), Merge `ae00f9699fe7ef7ab3082d9a1164b8cca185561d`, identischer vollständiger Produktbaum `36e014af6cbffa9add766bdd917c6d94313f87ec` zum CI-/Gerätekopf `20d34a0fc7ce370fb4c1d22002905a500574ee06`. Aktuellen main, offene PRs und CI live prüfen. Regeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
 ## Implementiert und erhalten
@@ -29,8 +31,12 @@ Room21 ausschließlich aus Compiler: SHA256 `8cd199f6012938fda80f8f8f265b49224b7
 
 Die neue Geräte-Rückmeldung ist eine positive Gesamtabnahme zum bereitgestellten Paket; einzelne Schritte/Messwerte/Screenshots und Hardwaremodellnamen wurden diesmal nicht separat genannt. Keine 40124-Messwerte oder pauschale Hardware-/Kurvenabdeckung auf 40125 übertragen. Die bestätigte Basis 40124 aus PR #73 bleibt erhalten; [damaliger Gerätebeleg](docs/DEVICE_CONFIRMATION_40124.md).
 
-## Nächster Einstieg und offene Grenzen
+## Aktiver Folgeauftrag und offene Grenzen
 
-Dieser Produkt-Meilenstein ist gesichert; Sitzung am 13.10.2026 abgeschlossen. Vor diesem abschließenden reinen Dokumentationsschritt waren main `1007ee37ab693f5b89277b76daa91b2f5836cf53`, beide Main-Läufe erfolgreich und keine PRs offen; diese Angaben wurden live geprüft. Aktuellen main/PR/CI beim nächsten Einstieg erneut prüfen, dann nur einen ausdrücklich ausgewählten Folgeumfang planen. Im ursprünglichen Checkout `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` liegt eine lokale angefangene Änderung an `feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt`; sie wurde erhalten und nicht in den bestätigten Produktmerge aufgenommen. Dokumentationsabschluss im isolierten Worktree. Vor weiterer Integration vorhandene Arbeit prüfen und sichern.
+Tobi hat die begrenzte 0502/0503-Aufnahme am 13.10.2026 freigegeben. [Plan](docs/CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md), Draft [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79), 40126 / Schema 22. Separate neue Raw-Metadatenkinds und Receipt-Tabelle; alte Core-/Identitätskinds, Digests, Requests ohne neue Map, Originale und Quellen unverändert. Vollständige Rohbytes auch bei EMPTY/INVALID; keine erfundenen Projektionen. Zusätzlich strikte EOF, echte Policy/Länge, exakte Child-/Original-/Zertifikats-FKs, additive 21→22 und neue Reader-/SQLCipher-/Historien-/Rollback-/Compose-Tests.
 
-Offen bleiben weitere EF-Signaturen, mathematische Prüfung/Trust, volle Kartenabdeckung, Export/DDD/Standarddownload und Schreibpfad. Keine automatische Folgephase; `7F66`/`0540`, Browser-/Unteragentenverbot und Produktgrenzen unverändert. [Übergabe](docs/WORK_HANDOFF.md).
+Implementierung zur vollständigen CI-Prüfung bereitgestellt. Room 22 stammt ausschließlich aus dem echten Compilerexport des ersten CI-Laufs 38442079970; SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`. Alle 44 bisherigen Tabellen entsprechen Schema 21 exakt; Exporte 1–21 unverändert. Erfolgreiche vollständige CI und neue Gerätefreigabe erst nach eigenen Nachweisen behaupten. Eigene 19→20- und 20→21-Abnahmen erhalten; historische Zielstand-Upgrades gehen jetzt bis 22 und entfernen zusätzlich die neue leere Tabelle aus ihren Ausgangsdatenbanken. Die Timeout-Erwartung für die neue Ereignis-/Störungssignatursequenz prüft den stärkeren Gruppenabbruch; lokale IO-Fehler behalten ihre bisherigen vollständigen anderen Quellen.
+
+Lokaler Gradle-Download weiterhin blockiert. Browser/Unteragenten ausgeschlossen. CI-, Upload-, Budget- und Workflowregeln unverändert. Neue [Checkliste 40126](docs/DEVICE_TEST_40126.md) im bestehenden Paketpfad eingebettet. Produktmerge erst nach eigenem vollständig grünen endgültigen Kopf und neuer positiver Geräteabnahme.
+
+Ursprüngliche Settings-Änderung erhalten und separat gesichert; neuer isolierter Checkout in aktueller [Übergabe](docs/WORK_HANDOFF.md). Weitere EFs, mathematische Prüfung/Trust, Export/DDD/Standarddownload, Schreibpfad, 7F66/0540 und Oberflächenneugestaltung bleiben getrennt.

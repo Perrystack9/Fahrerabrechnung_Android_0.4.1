@@ -415,8 +415,8 @@ class DriverCardFoundationTest {
         }
     }
 
-    @Test fun unavailableTruncatedInvalidAndTimedOutNewFilesNeverDiscardOtherCompleteFiles() = runBlocking {
-        for (generation in supportedGenerations) for (kind in CardEventFaultKind.entries) for (failure in 0..3) {
+    @Test fun localEventFaultFailuresKeepOtherFilesWhileSignedReadTimeoutsAbort() = runBlocking {
+        for (generation in supportedGenerations) for (kind in CardEventFaultKind.entries) for (failure in 0..4) {
             val length = CardEventFaultParser.fileLength(kind, generation, if (kind == CardEventFaultKind.EVENTS) 12 else 24)
             val raw = when (failure) {
                 1 -> ByteArray(length - 1)
@@ -427,8 +427,13 @@ class DriverCardFoundationTest {
                 missingFiles = if (failure == 0) setOf(kind.fileId) else emptySet(),
                 eventBytes = raw.takeIf { kind == CardEventFaultKind.EVENTS },
                 faultBytes = raw.takeIf { kind == CardEventFaultKind.FAULTS },
-                eventFailure = if (kind == CardEventFaultKind.EVENTS && failure == 3) ReaderException(ReaderFailure.TIMEOUT) else null,
-                faultFailure = if (kind == CardEventFaultKind.FAULTS && failure == 3) ReaderException(ReaderFailure.TIMEOUT) else null)
+                eventFailure = if (kind == CardEventFaultKind.EVENTS && failure >= 3) ReaderException(if (failure == 3) ReaderFailure.TIMEOUT else ReaderFailure.IO) else null,
+                faultFailure = if (kind == CardEventFaultKind.FAULTS && failure >= 3) ReaderException(if (failure == 3) ReaderFailure.TIMEOUT else ReaderFailure.IO) else null)
+            if (failure == 3) {
+                try { DriverCardReader(fake).read(); throw AssertionError("Signed-group timeout must abort") }
+                catch (error: ReaderException) { assertEquals(ReaderFailure.TIMEOUT, error.failure); assertTrue(fake.closed) }
+                continue
+            }
             val result = DriverCardReader(fake).read()
             assertNotNull(result.activity); assertNotNull(result.vehicles); assertNotNull(result.controls)
             if (kind == CardEventFaultKind.EVENTS) {
@@ -437,6 +442,11 @@ class DriverCardFoundationTest {
             } else {
                 assertNull(result.faults); assertTrue(result.faultReadFailed)
                 assertNotNull(result.events); assertFalse(result.eventReadFailed)
+            }
+            if (failure == 2) {
+                val receipt = result.eventFaultSignatures.getValue(kind)
+                assertEquals(CardSignatureReason.UNSUPPORTED_FORMAT, receipt.reason)
+                assertArrayEquals(raw, receipt.original!!.bytes); assertNull(receipt.bytes)
             }
             assertTrue(fake.closed)
         }

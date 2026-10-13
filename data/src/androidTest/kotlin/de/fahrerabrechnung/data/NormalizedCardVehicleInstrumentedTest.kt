@@ -281,6 +281,7 @@ class NormalizedCardVehicleInstrumentedTest {
             execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE driver_vehicle_use_sources")
             execSQL("DROP TABLE driver_vehicle_uses")
+            execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table")
             version = 6
         }

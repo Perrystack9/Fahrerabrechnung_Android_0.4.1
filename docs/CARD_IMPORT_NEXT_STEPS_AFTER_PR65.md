@@ -24,7 +24,7 @@ Der [Identifikationsplan](CARD_IDENTITY_SIGNATURE_CAPTURE_PLAN.md) ist in [PR #7
 
 Neu: frische 0501-/0520-/V2-0525-Captures, bytegenauer Bootstrap-Vergleich mit nicht toleriertem Gruppenabbruch, getrennte Child-Receipts, unabhängiger unsigned Fallback und kleine Anzeige. Alte Core-Belege/Originale/Fingerprints und historische 15-Byte-Quellen erhalten. Neue vollständige Reader-/SQLCipher-/Migrations-/Historien-/Compose-Prüfungen; eigenständige 19→20-Abnahme bleibt bestehen. Room21 echt, alte Exporte unverändert; keine CI-Abschwächung oder Workflowänderung.
 
-**Nächster Einstieg:** aktuellen main/PR/CI und vorhandene lokale Settings-Arbeit gemäß Status/Übergabe prüfen. Meilenstein gesichert, Sitzung abschließen. Die folgenden Optionen sind getrennte spätere Pakete, kein bereits erteilter Implementierungsauftrag. Keine Trust-/DDD-/Schreib-/UI-Folgephase automatisch beginnen.
+**Aktiver nächster Auftrag:** Tobi hat 0502/0503 am 13.10.2026 freigegeben. [Begrenzter Plan](CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md), Draft [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79), 40126 / Schema 22; Implementierung in eigener CI, kein neuer bestätigter Produktmerge. Aktuellen PR-Kopf und CI live prüfen, echter Room-Export, eigenes Paket und neue Geräteabnahme erforderlich. Andere Optionen unten bleiben getrennte, nicht automatisch freigegebene Pakete.
 
 ## Danach weiterhin getrennte Pakete
 
