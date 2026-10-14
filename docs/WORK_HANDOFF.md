@@ -10,7 +10,7 @@ Zuerst WORK_START und dessen fünf Startdateien; aktuellen GitHub-main, Produkt-
 
 Alle früheren Profil-/Karten-/Anwendungs-/Parent-/Child-/Original-/Receipt-Fingerprint-Ablehnungen erhalten. Konsistenter Read-Snapshot, Rechnen außerhalb der Transaktion auf Default-Dispatcher. Keine DB-Schreiboperation/Cache/Backfill/neue Migration. Originaler CAPTURED_UNVERIFIED und alle Fingerprintformate unverändert. UI kleine getrennte Aufnahme-/Mathematik-/Vertrauenszeilen; Auswahl/Archiv/late-result geschützt. Andere EFs unverifiziert.
 
-BC-Lightweight1.86 exakt gepinnt, ohne Providerwechsel. [Artefaktdigests, unabhängige Python/OpenSSL-Vektoren und Abnahmegrenzen](CARD_CORE_SIGNATURE_MATH_EVIDENCE.md). Zehn isolierte lokale JVM-Kryptotests grün; lokaler vollständiger Android-Toolchain-Nachweis fehlt. Eigene vollständige echte Android-CI sowie neues exaktes Paket und Gerätegate am endgültigen Kopf erforderlich. Aktuellen Produkt-PR und dessen CI/Paketstatus live prüfen.
+BC-Lightweight1.86 exakt gepinnt, ohne Providerwechsel. [Artefaktdigests, unabhängige Python/OpenSSL-Vektoren und Abnahmegrenzen](CARD_CORE_SIGNATURE_MATH_EVIDENCE.md). Elf isolierte lokale JVM-Kryptotests grün; lokaler vollständiger Android-Toolchain-Nachweis fehlt. Eigene vollständige echte Android-CI sowie neues exaktes Paket und Gerätegate am endgültigen Kopf erforderlich. Aktuellen Produkt-PR und dessen CI/Paketstatus live prüfen.
 
 Keine Änderung an Workflows/Upload/Budget, Tests/Migrationsprüfungen/Compilerexporten/Keystore/SQLCipher. Vollständige sieben Gradle-Aufrufe und ungekürzte API36-SQLCipher-/Compose-Suiten samt Abschlussgate. Room22 unverändert: Schema-SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`. VersionCode40127.
 

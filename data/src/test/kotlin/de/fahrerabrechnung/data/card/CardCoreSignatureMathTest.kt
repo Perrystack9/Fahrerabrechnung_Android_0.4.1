@@ -59,7 +59,7 @@ class CardCoreSignatureMathTest {
 
     @Test fun publishedVectorArchiveAndEveryEntryMatchTheirRecordedDigests() {
         val archive = checkNotNull(javaClass.getResourceAsStream("/core-math/vectors.zip")).use { it.readBytes() }
-        assertEquals("ae367b8114245abd0a649b2725180423c811b01761a4e7a3c00b09591c594fda", coreMathDigest(archive))
+        assertEquals("ea71e929665bfa5f34ec12d9a70534bdfc4761e62a204ffd37ff776158d93326", coreMathDigest(archive))
         val manifest = bytes("manifest.json").toString(Charsets.UTF_8)
         for ((name, raw) in files.filterKeys { it != "manifest.json" })
             assertTrue("Digest for $name", manifest.contains("\"$name\": \"${coreMathDigest(raw)}\""))
@@ -88,6 +88,14 @@ class CardCoreSignatureMathTest {
                 assertStatus(CardSignatureMathStatus.INVALID, input(name, kind, generation, raw = changed))
             }
             if (name != "rsa") assertStatus(CardSignatureMathStatus.INVALID, input(name, kind, generation, suffix = "-double"))
+        }
+    }
+
+    @Test fun independentlySignedCompleteBytesRemainValidEvenWithImpossibleSemanticPointers() {
+        for (kind in CardCoreEf.entries) {
+            val label = if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"
+            assertStatus(CardSignatureMathStatus.VALID, input("nist256", kind, raw = bytes("semantic-$label.raw"),
+                cert = bytes("semantic.cert"), sig = bytes("semantic-$label.sig")))
         }
     }
 

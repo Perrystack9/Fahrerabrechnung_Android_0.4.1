@@ -95,18 +95,20 @@ class CardImportPipelineInstrumentedTest {
         buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
     }
 
-    private fun mathematicalRead(generation: CardGeneration, badSignature: Boolean = false): CardReadResult {
+    private fun mathematicalRead(generation: CardGeneration, badSignature: Boolean = false, semanticInvalid: Boolean = false): CardReadResult {
+        require(!semanticInvalid || generation == CardGeneration.GEN2V2)
         val vectors = mathVectors()
-        val name = if (generation == CardGeneration.GEN1) "rsa" else "nist256"
+        val name = if (generation == CardGeneration.GEN1) "rsa" else if (semanticInvalid) "semantic" else "nist256"
         val sources = CardCoreEf.entries.associateWith { kind -> CardCoreSnapshot(kind, generation,
             vectors.getValue("$name-${if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"}.raw")) }
         val certificate = CardCertificateFile(if (generation == CardGeneration.GEN1) CardCertificateKind.CARD else CardCertificateKind.SIGNING,
-            generation, vectors.getValue(if (generation == CardGeneration.GEN1) "test-card.bin" else "nist256.cert"))
+            generation, vectors.getValue(if (generation == CardGeneration.GEN1) "test-card.bin" else "$name.cert"))
         val certificates = mutableMapOf(certificate.kind to CardCertificateRead(certificate))
         if (generation == CardGeneration.GEN1) certificates[CardCertificateKind.CA] = CardCertificateRead(
             CardCertificateFile(CardCertificateKind.CA, generation, vectors.getValue("test-ca.bin")))
         return CardReadResult(CardRecognition.DRIVER, generation, card().copy(generation = generation),
-            sources.getValue(CardCoreEf.ACTIVITY).activity(), sources.getValue(CardCoreEf.VEHICLES).vehicles(),
+            if (semanticInvalid) read().activity else sources.getValue(CardCoreEf.ACTIVITY).activity(),
+            if (semanticInvalid) read().vehicles else sources.getValue(CardCoreEf.VEHICLES).vehicles(),
             certificates = certificates, coreReads = sources.mapValues { (kind, raw) -> CardCoreRead(kind, CardCoreReadStatus.COMPLETE, raw) },
             coreSignatures = sources.mapValues { (kind, raw) ->
                 val sig = vectors.getValue("$name-${if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"}.sig").copyOf()
@@ -140,12 +142,15 @@ class CardImportPipelineInstrumentedTest {
         val goodInput = mathematicalRead(CardGeneration.GEN2V2)
         val good = pipeline.process(goodInput, "math-good")
         val bad = pipeline.process(mathematicalRead(CardGeneration.GEN2V2, true), "math-bad")
+        val semantic = pipeline.process(mathematicalRead(CardGeneration.GEN2V2, semanticInvalid = true), "math-semantic-invalid")
         val before = databaseRows()
         val valid = imports.verifySavedCoreSignatures(good.id)
         assertEquals(2, valid.size)
         assertTrue(valid.values.all { it.status == CardSignatureMathStatus.VALID && it.certificateTrust == CardCertificateTrustStatus.NOT_EVALUATED })
         assertTrue(imports.verifySavedCoreSignatures(bad.id).values.all { it.status == CardSignatureMathStatus.INVALID && it.source.sessionId == bad.id })
         assertTrue(imports.verifySavedCoreSignatures(unsigned.id).values.all { it.reason == CardSignatureMathReason.NO_SIGNATURE })
+        assertNull(imports.get(semantic.id)!!.activity); assertNull(imports.get(semantic.id)!!.vehicles)
+        assertTrue(imports.verifySavedCoreSignatures(semantic.id).values.all { it.status == CardSignatureMathStatus.VALID })
         assertTrue(imports.verifySavedCoreSignatures("not-own-session").isEmpty())
         assertEquals(valid, imports.verifySavedCoreSignatures(good.id))
         assertEquals(before, databaseRows())

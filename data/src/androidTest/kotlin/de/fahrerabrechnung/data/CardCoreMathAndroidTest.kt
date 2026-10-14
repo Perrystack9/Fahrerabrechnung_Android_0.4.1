@@ -18,7 +18,7 @@ class CardCoreMathAndroidTest {
     @Test fun rsaRecoveryAndAllSixEcDomainsWorkOnAndroidWithStrictPlainFraming() {
         val providers = Security.getProviders().map { it.name }
         val archive = InstrumentationRegistry.getInstrumentation().context.assets.open("core-math/vectors.zip").use { it.readBytes() }
-        assertEquals("ae367b8114245abd0a649b2725180423c811b01761a4e7a3c00b09591c594fda",
+        assertEquals("ea71e929665bfa5f34ec12d9a70534bdfc4761e62a204ffd37ff776158d93326",
             MessageDigest.getInstance("SHA-256").digest(archive).joinToString("") { "%02x".format(it) })
         val files = ZipInputStream(ByteArrayInputStream(archive)).use { zip ->
             buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
