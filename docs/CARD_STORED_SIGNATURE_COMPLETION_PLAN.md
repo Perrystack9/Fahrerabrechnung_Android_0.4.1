@@ -2,6 +2,8 @@
 
 **Plan beauftragt14.10.2026 10:48 und vollständig zur Umsetzung freigegeben14.10.2026 11:20 Europe/Berlin.** Tobi bestätigt PR #84 und A1–A8. Ziel: alle bereits gespeicherten Dateisignaturen abdecken und danach diesen mathematischen Teil abschließen; anschließend Oberfläche und Funktionen für Version 1.0 planen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
+**Abgeschlossen nach A1–A8:** neue eigene positive Geräteabnahme14.10.2026 13:47 Europe/Berlin, „Funktioniert alles wie es soll 👍“. [PR #85](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/85) übernommen; endgültige volle CI und exaktes Paket erfolgreich. [Technische Nachweise](CARD_STORED_SIGNATURE_MATH_EVIDENCE.md), [Gerätebeleg und tatsächliche Grenzen](DEVICE_CONFIRMATION_40128.md). Die nachstehenden Kriterien bleiben unverändert; keine weitere mathematische Implementierungsphase ableiten.
+
 ## Bestätigte Basis und Umfang
 
 Main `cba811635a934c72c357aad23fe1c4e47a82b824`, 40127 / Room22. PR #82 und Dokumentationsabschluss #83 übernommen; endgültige volle Produkt-CI38515830418, Gerätepaket38530132281 und eigene Geräteabnahme14.10.2026 10:12 bestätigt. Zusätzlicher Produkt-Main-Lauf38533736352 jetzt vollständig erfolgreich, alle vier Jobs; Docs-main38534984439 ebenfalls grün. Keine offenen PRs beim Planstart. [Genauer 40127-Beleg](DEVICE_CONFIRMATION_40127.md).
