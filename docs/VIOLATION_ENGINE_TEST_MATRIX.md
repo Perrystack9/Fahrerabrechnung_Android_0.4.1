@@ -2,7 +2,7 @@
 
 **Geplante Tests, 14.10.2026. Noch keine Engine implementiert, keine der neuen fachlichen Testgruppen ausgeführt.** Bestehende 40128-CI und Geräteabnahme sind davon getrennt.
 
-Bezüge: [Plan](VIOLATION_ENGINE_V1_PLAN.md), [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md), [80 Entscheidungen](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md).
+Bezüge: [Plan](VIOLATION_ENGINE_V1_PLAN.md), [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md), [historische80 Entscheidungen](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md), vorrangige [E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md) und [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md). **116 LG-Fälle (98+18),43 DT-Fälle (31+12),80 PD-Zuordnungen und12 Ergänzungszuordnungen;20 Abnahmekriterien im Plan (16+4).** Ursprüngliche IDs bleiben erhalten; ihre widersprechenden Erwartungen sind ausdrücklich aktualisiert, keine erfolgreiche Durchführung behauptet.
 
 ## 1. Reproduzierbarer Testvertrag
 
@@ -12,7 +12,7 @@ Als Standardursprung dient **Montag 07.09.2026 00:00 UTC**. Standardkontext: reg
 
 Kurze Testnotation: `D(h:mm)` Fahren, `W(h:mm)` andere Arbeit, `A(h:mm)` Bereitschaft, `R(h:mm)` aufgezeichnete Ruhe/Pause, `?(h:mm)` unbekannt. `DL(h:mm)` bezeichnet eine Tageslenksequenz mit normgerechten 45-min-Pausen nach höchstens jeweils 4:30 Fahrt. Jeder Kurzfall wird vor Implementierung als feste vollständige Eingabe ausgeschrieben; keine Aktivität darf zum Bestehen des Tests hinzuerfunden werden.
 
-Einzelregeltests betrachten gezielt die benannte Regel; daraus folgt keine Aussage „alle anderen Regeln bestanden“. Zusätzlich gibt es vollständige Goldenfälle mit sämtlichen erwarteten Regelbefunden, Verpflichtungen, Budgets, Hinweisen und Quellen. Positive Tests prüfen gerade auch Abwesenheit falscher Verstöße, nicht bloß positive Zählerwerte.
+Einzelregeltests betrachten gezielt die benannte Regel; daraus folgt keine Aussage „alle anderen Regeln bestanden“. Zusätzlich gibt es vollständige Goldenfälle mit sämtlichen erwarteten Regelbefunden, Verpflichtungen, Budgets, Hinweisen und Quellen. Nach E07 ist bei Zahlenüberschreitung rechtliche Einordnung getrennt zu erwarten: passende1-/2-h-Fälle bleiben Übersicht/PDF mit offener Bewertung, ohne bestätigten Rechtswidrigkeits-Schweregrad oder automatische Schuld. Ein kurzer LG-Eintrag „Überschuss/Verletzung“ erlaubt keine abweichende definitive UI-Beschriftung. Positive Tests prüfen gerade auch Abwesenheit falscher Verstöße, nicht bloß positive Zählerwerte.
 
 Für jede Grenzprüfung: `Grenze -1 Aufzeichnungseinheit`, `Grenze`, `Grenze +1 Aufzeichnungseinheit`; für EF-0504-minutengenaue Daten bedeutet das eine Minute. Sekundengrenzen werden nur für tatsächlich sekundengenaue Quellen/Fenstergrenzen separat geprüft.
 
@@ -30,16 +30,16 @@ Für jede Grenzprüfung: `Grenze -1 Aufzeichnungseinheit`, `Grenze`, `Grenze +1 
 | LG06 | S03/S05 | Linienlänge 49,999/50/50,001 km; dieselbe kurze Teilfahrt | ≤50 ausgenommen; gefahrene Teilstrecke ersetzt Linienlänge nicht. |
 | LG07 | S04 | EU/CH/EEA-Reise versus Gesamtfahrt EU–AETR-Drittstaat | Reise-Rechtsordnung korrekt; im ausgeschlossenen AETR-Fall keine EU-Budgetfreigabe. |
 | LG08 | S05/S09 | EF-0522-OOS-Marker, sonst EU-Güterprofil; Geltungsbereich unbekannt /belegt | Marker allein schaltet nicht alle Regeln aus; kommerzielle ausgenommene Fahrt wird nicht Ruhe. |
-| LG09 | S06 | Nationales Katalogobjekt nur Art. 7 ausgenommen, sonst dieselben Fahrten | Nur Pause ausgenommen; tägliche/wochentliche Lenk- und Ruheprüfungen bleiben aktiv. |
-| LG10 | S07 | Belegte strengere Art.-11-Regel, vollständig Inland /Grenzreise | Strengere Regel nur bei ihrem richtigen sachlichen/territorialen Umfang. |
-| LG11 | S08 | Amtliche befristete Ausnahme `[t0,t1)`, Fahrt genau vor/bei/nach t1 | Ausnahme endet exakt; keine Übertragung auf folgende Zeit. Herkunft des Regelobjekts erhalten. |
+| LG09 | S06 | Konkreter belegter Art.-13-Ausnahmeumfang nur Art.7; kein aktiver Spezialkatalog | Keine pauschale Abschaltung anderer Regeln. Betroffene Pause entweder belegbar ausgenommen oder als unsupported begrenzt; keine ungeprüfte nationale Vollauswertung behaupten. |
+| LG10 | S07 | Konkreter Beleg strengerer Art.-11-Regel, Inland/Grenzreise, aktive Unterstützung vorhanden/fehlend | Richtigen Artikel-/Gebiets-/Zeitumfang respektieren. Ohne verlässliche Unterstützung konkret eingeschränkte Prüfung, keine Behauptung nationaler Vollständigkeit. |
+| LG11 | S08 | Konkrete amtliche Ausnahme `[t0,t1)`, belegte Aktivität genau vor/bei/nach t1 | Ausnahme nur in Geltung verwenden oder betroffene Prüfung begrenzen; nach Ende nicht weiter als Rechtfertigung. Keine Vollkatalog-Implementierung nötig. |
 | LG12 | S08 | Verfügungsdatum fehlt /Liste enthält Ende vor Beginn | Ausnahmeobjekt nicht als gültig anwenden; betroffene Bewertung ausdrücklich unklar, kein stiller Standardbefund. |
 | LG13 | S09/S10 | Belegte kommerzielle OOS-Fahrt /Dienstanreise ohne Sondervoraussetzungen | Andere Arbeit, keine tägliche Ruhe und keine normale Pause. Original-Kartenaktivität bleibt unverändert. |
 | LG14 | S10 | Dienstanreise auf Zug mit gesetzlich belegtem Schlafplatz /unbekannt | Anrechnung nur bei nachgewiesener Sondervoraussetzung; unbekannt kein Beweis für Pause/Ruhe. |
-| LG15 | S11 | Zweiter Fahrer fehlt 0:59 /1:01 in erster Stunde beziehungsweise später | Erste-Stunde-Sonderregel korrekt; späteres Fehlen kann Mehrfahrerqualifikation verhindern. |
+| LG15 | S11 | Kartenchronik Solo0:59/Crew ab0:59 versus Solo1:01/Crew ab1:01; später konkret Solo/unklar | Gesetzliche erste Stunde und folgende zeitliche Qualifikation beachten. Keine tatsächliche Zweitfahrer-Anwesenheitsabfrage; Karte als Quelle nutzen, unbekannte Perioden nicht durch ein Bit heilen. |
 | LG16 | S12 | Identische Quellen bei Anzeige UTC/Berlin/New York, Kalender/Schicht | Befund-IDs, Werte, Rechtswochen und Pflichten identisch; nur Darstellung ändert sich. |
 
-Jede Art.-3-Gruppe a–i/aa/ha und jede Art.-13-Gruppe a–r erhält zusätzlich einen passenden positiven, negativen und unklaren Kontexteinsatz. Für jeden tatsächlich unterstützten Länderkatalogeintrag gibt es einen Primärquellen-/Geltungs-/Artikelumfangstest. Diese parametrierten Fälle sind verpflichtend und durch LG01–LG16 nicht ersetzt.
+**E09 ersetzt die frühere Pflicht zu aktiven Positiv-/Negativtests sämtlicher Spezialkatalogeinträge.** Verpflichtend bleiben vollständige Grenz-/Kontexttests tatsächlich unterstützter regulärer Einsatzregeln sowie Scope-Guard-Fälle für belegte Nichtanwendbarkeit, konkrete unklare Sonderausnahme, partiellen Artikelumfang und fehlende Unterstützung. Keine seltene Art.-3-/13-/14-Variante allein als aktive Implementierungsforderung. Die frühere Formulierung ist in Git und Änderungsübersicht erhalten.
 
 ### 2.2 Lenkzeit und Pausen
 
@@ -65,7 +65,7 @@ Jede Art.-3-Gruppe a–i/aa/ha und jede Art.-13-Gruppe a–r erhält zusätzlich
 | LG34 | B01/B05 | D(2:30),W(1:00),D(2:01); Variante Bereitschaft | Arbeits-/Bereitschaftszeit verlängert kalenderlichen Rahmen, setzt Fahrzähler nicht zurück. |
 | LG35 | B03 | Gelegenheitsbus am 21./22.05.2024, 30+15 beziehungsweise 20+25 | Neue flexiblere Zweiteilung erst ab Wirksamkeit; vorher Standardregel. |
 | LG36 | B03 | Gelegenheitsbus 15+15 versus 15+30, gleiche Fahrzeit | Summe weiterhin ≥45; 15+15 genügt nicht. |
-| LG37 | B04 | Crew/Beifahrer 45 min Bereitschaft mit belegtem Nicht-Unterstützen /ohne Beleg | Nur besondere Pausenanrechnung bei tragfähigen Voraussetzungen; keine automatische Tagesruhe. |
+| LG37 | B04/S11 | Zeitbezogene eigene Karte: Crew,45 min geeignete Beifahrer-Bereitschaft; Varianten belegte andere Arbeit oder unbekannte Folge | Grundsätzlich besondere Pause anhand eigener Aufzeichnung ohne Routinebestätigung/Zweitkarte verwenden. Konkrete Arbeit/Unklarheit nicht als erfüllte Pause behaupten; Nicht-Unterstützung als Rechtsvoraussetzung erläutern, keine Tagesruhe im bewegten Fahrzeug. |
 | LG38 | B01/B02 | D(4:31) vor abschließend ausreichender Pause | Bereits entstandene 1-min-Verletzung nicht rückwirkend heilen. |
 | LG39 | D01/B01/H02 | Überlappende tägliche Lenkzeit- und Pausenverletzung | Beide Rechtsverstöße erhalten, gemeinsamer Sachverhalt gruppiert; keine Duplikate pro Import. |
 
@@ -82,7 +82,7 @@ Jede Art.-3-Gruppe a–i/aa/ha und jede Art.-13-Gruppe a–r erhält zusätzlich
 | LG46 | R01/R04 | Unzureichende Ruhe läuft über 24-h-Grenze und erreicht anschließend 9/11 h | Ursprüngliche Fehlmenge erhalten; folgenden Anker nach Q07 am tatsächlichen ausreichenden Ruheende setzen. |
 | LG47 | R04 | Mehrere Tage nur R(6:00), dazwischen Arbeit/Fahrt | Sukzessive Referenzfenster; kein grenzenlos kumulierter fiktiver Rechtstag und keine dauerhafte Entwarnung. |
 | LG48 | R05 | Qualifizierte Crew, R(9:00) endet bei t0+30 h /+1 min | Genau 30 h rechtzeitig; danach passender Fehlbestand im Fenster. |
-| LG49 | S11/R05 | Identischer Zeitverlauf, Crewqualifikation fehlt nach erster Stunde | 30-h-Regel nicht automatisch anwenden; Kontexthinweis oder Standardfall nur bei eindeutiger Soloqualifikation. |
+| LG49 | S11/R05 | Eigene Karte vollständig Crew nach erster Stunde; Variante danach Solo/Quellenlücke | Vollständige korrekte Crewchronik genügt ohne Zusatznachweis für30-h-Regel. Solo/unklar zeitbezogen behandeln; ein früheres Crewbit nicht über Lücke übertragen. |
 | LG50 | R06 | Gelegenheitsdienst 6×24 h, Tagesfahrt 7:00, Ruheende bei +25 h, erste Nutzung | Neue zeitbezogene Ausnahme bei vollständigen Voraussetzungen zulässig. |
 | LG51 | R06 | Gleich, Tagesfahrt 7:01 /Tour nur 5×24 h /zweite Nutzung bei 6 Tagen | Ausnahme nicht nachgewiesen beziehungsweise unzulässig; entsprechendes Standardfenster prüfen. |
 | LG52 | R06 | Tour 8×24 h, erste/zwei/drei Nutzungen | Zwei zulässig, dritte nicht; Tourwechsel setzt nur rechtlich tourbezogenen Zähler zurück. |
@@ -130,20 +130,45 @@ Jede Art.-3-Gruppe a–i/aa/ha und jede Art.-13-Gruppe a–r erhält zusätzlich
 | LG84 | F03 | Reduzierte tägliche 9-h-Ruhe, Unterbrechung 0:10 | Nicht durch Art. 9 automatisch reparieren. |
 | LG85 | F03 | Reduzierte Wochenruhe ≥24 h, zulässige Unterbrechungen, vor/nach 20.08.2020 | Erleichterung nur im richtigen Rechtsstand. |
 | LG86 | F04 | Regelmäßige Wochenruhe, planmäßige Reise 7:59 /8:00 h, Schlafkabine verfügbar | 8-h-Voraussetzung strikt; nicht aus Summe aufgezeichneter Ruhe schätzen. |
-| LG87 | F01/F04 | Marker und Zeitwerte vorhanden, Schlafplatz-/Fahrplanangabe fehlt | Keine bewiesene Ausnahme und keine automatische Unterkunfts-Verstoßprüfung. |
+| LG87 | F01/F04 | EF0522 und Zeitwerte vorhanden; entscheidender Schlafplatz/Fahrplan fehlt, erneuter gleicher Import | Keine gesicherte Anrechnung/Rechtswidrigkeit erfinden; gezielte optionale Frage nur für konkrete Bewertung. Unveränderte vorhandene Antwort wiederverwenden, kein Import-Standarddialog oder allgemeine Unterkunftsprüfung. |
 | LG88 | F02/R03 | 3+9-Ruhe mit Fährunterbrechung in gesetzlich passenden Teilblöcken | Split- und Unterbrechungsregeln gemeinsam, nicht beliebige 12-h-Summe akzeptieren. |
-| LG89 | X01/X02 | Numerische Grenzüberschreitung ohne belegte Ausnahmesituation | Keine automatische Artikel-12-Rechtfertigung; Kandidatenerkennung/Einordnung nach geklärtem P02. |
-| LG90 | X02/X03 | Mögliches +1 h/+2 h Heimkehrereignis, normale /regelmäßige Wochenruhe danach | Nur möglicher Art.-12-Prüfhinweis, kein automatisch legales Restbudget von 11/12 h. |
+| LG89 | X01/X02 | Numerisch belegte Tages-/Wochenlenküberschreitung≤1 h ohne belegte Ausnahmesituation, Tatdatum2026 | Rechnerischer Befund bleibt Liste/PDF, exakter Zusatzhinweis und offene rechtliche Bewertung. Keine automatische Anerkennung, Rechtswidrigkeitsklasse oder tatsächliche Schuld. E07/P02 beschlossen. |
+| LG90 | X02/X03 | Überschuss1:00/1:30/2:00 über zulässiger Normalgrenze, tatsächlicher Heimkehrzweck unbekannt | Zahlenbefund plus passende1-/2-h-Erläuterung bleibt Übersicht; nicht als abschließend rechtswidrig/automatisch legal. Kein Zusatzbudget11/12 h und keine tatsächliche Heimkehrprüfung. |
 | LG91 | X03 | +2-h-Konstellation, vorher 29/30/45 min geeignete Pause | 30-min-Sondervoraussetzung und normale 45-min-Artikel-7-Pflicht separat. 45 min nicht noch einmal durch weitere 30 min verdoppeln. |
 | LG92 | X06 | Spezielle Heimkehrverlängerung bei überschrittenen 90 h oder 6×24 h | Diese spezielle Ausnahme hebt Grenzen nicht auf; allgemeiner Abs. 1 wird nicht mit pauschalem +2 h gleichgesetzt. |
 | LG93 | X04 | Kein in der App eingetragener Begründungstext | Kein erzwungenes Formular und kein App-Begründungsverstoß; gesetzlicher externer Nachweishinweis korrekt. |
-| LG94 | X05 | Mögliche Art.-12-Nutzung ohne bestätigten Tatsachennachweis | Allenfalls mögliche Ausgleichspflicht; keine feste schuldbegründende automatische Ausnahmebehauptung. |
+| LG94 | X05 | Mögliche Art.-12-Nutzung ohne geprüfte außergewöhnliche Tatsachen | Nur bedingten gesetzlichen Ausgleich erklären; weder feste noch offene tatsächlich entstandene Artikel-12-Schuld im Ledger erzeugen. Keine Nutzeranerkennungsfunktion. |
 | LG95 | H01 | Jede Klassifizierungsgrenze der aktuellen/historischen Schweregradtabellen | Exakte Inklusivität, Rechtsversion und richtige Tabellenfamilie; unpassende Kategorie auslassen, keine Bußgeldzahl. |
 | LG96 | H01 | MSI-Tagesfall mit/ohne qualifizierende besondere Voraussetzung der jeweils geltenden Tabelle | Historische und heutige Tabellenbedingungen nicht vermischen; Fachgoldenfall erforderlich. |
-| LG97 | S08/H01 | Amtliche temporäre 60-h-Wochengrenze, Fahrt 57 h | Kein Standard-56-h-Verstoß und keine Standard-Schweregradzuordnung. |
+| LG97 | S08/H01 | Konkreter amtlicher Hinweis temporär60-h-Wochengrenze; Fahrt57 h, Unterstützung ungeklärt | Kein unbedingter56-h-Rechtsverstoß oder Standard-Schweregrad. Betroffene Prüfung klar begrenzen oder belegte verfügbare Ausnahme korrekt verwenden; kein vollständiger aktiver Notfallkatalog gefordert. |
 | LG98 | R06/H01 | Bus-25-h-Ausnahme mit rechtzeitiger Ruhe | Keine Klassifizierung als unzureichende 24-h-Ruhe aus altem Standardalgorithmus. |
 
-### 2.6 Datenqualität, Stichtag, Zeitdarstellung und Historie
+### 2.6 Zusätzliche fachliche Fälle aus E02–E11
+
+Die18 Ergänzungsfälle erweitern die98 ursprünglichen Fälle, ohne sie zu ersetzen. Jede Variante wird als vollständiger unabhängiger Goldenvektor ausgeschrieben.
+
+| Test-ID | Regel | Feste Eingabe / Varianten | Erwartung |
+|---|---|---|---|
+| LG99 | S13/R01 | Identische9-/11-h-Tätigkeit mit p=1/c=1 bekannter manueller Ruhe gegenüber p=1/c=0 unbekannter Entnahmefolge | Bekannter aufgezeichneter Nachtrag normal anrechnen und Herkunft behalten. Unbekannt nicht als Ruhe, kein sicherer abhängiger Budgetwert/Entwarnung; kein Crewbeweis aus manuellem c-Bit. |
+| LG100 | S11/R05/B04 | Vollständige p=0/c=1-Chronik mit passender9 h in30 h und geeigneter45-min-Beifahrerphase; Variante nur p=1/c=1 | Korrekte Crewaufzeichnung ohne Zweitkarte/Bestätigung nutzen; p=1/c=1 dagegen manueller Nachtrag, keine30-h- oder Beifahrer-Pauschalanrechnung. |
+| LG101 | W14/R01/D01 | Belegtes früheres Wochenruheende, rechtzeitige R(23:00), danach neuer Fahrblock |23 h geeignete Tagesruhe, neuer Tageslenk-/Tagesruheanker; kein neuer Wochenruheanker/144-h-Reset, Reduzierungszähler zwischen Wochenruhen nicht auf null, keine22-h-Schuld. |
+| LG102 | W14/W02/W01 |144-h-Wochenfrist verstrichen; danach weitere Tagesruhen/Importstände, aber keine≥24-h-Wochenruhe | Eine fortbestehende W02-Episode mit aktualisierter belegter Dauer/ID, keine identische Tagesduplizierung. Rechtlich eigenständige abgeschlossene Wochenpaarpflicht separat; Grenzen der Feststellbarkeit bei Lücken beachten. |
+| LG103 | W14/W04 | Vergleich zusammenhängender Ruhe23:59/24:00/44:59/45:00 im passenden Pflichtzusammenhang | Unter24 keine Wochenruhe/Reduzierungsschuld;24 bis<45 mögliche reduzierte Pflicht mit exakt45 minus Dauer;45 regelmäßig. Zusätzliche Rast nur nach rechtlich gewählter Pflichtzuordnung. |
+| LG104 | W03/W04/W09 | Ruhe startet Sonntag23:00 und endet Montag/ Dienstag; zwei legale Wochenzuordnungen mit unterschiedlicher Ausgleichsfrist | Eine Woche wählen, vollständige Folgefenster/Pflichten gemeinsam prüfen; Frist von gewählter Ursprungswoche ableiten und Auswahl erklären, nicht doppelt buchen. |
+| LG105 | W04/W05/W09 | Zwei Schulden14 h und21 h, Fristen verschieden; R(32:00) versus R(46:00) mit11-h-Grundruhe |32 h bietet nur21 Zusatzstunden, nicht beide35 h.46 h kann beide getrennt zusammenhängend ohne doppelte Minute erfüllen, soweit alle Fenster/Anbindungen passen. Exaktes Fristende/+1 min je Schuld separat. |
+| LG106 | W07/W08 | Internationale reduzierte24+25; Paket21+20+45 vor144-h-Grenze versus45+21+20 | Beide Schulden vor folgendem regulären Grundblock; erstes Paket bei Beginn+103 h/45-h-Beginn+144 h rechtzeitig, falsche Platzierung nicht. Reihenfolge zwischen Schulden nur nach bestätigtem rechtlichem Zuordnungsbefund. |
+| LG107 | W07/W09 | Sechs feste Wochen mit zwei Grenzruhezuordnungen: ein Vierwochenfenster erfüllt, benachbartes nur eine regelmäßige Ruhe | Jedes rollierende Vierwochenfenster und tatsächliche vier Ruhen prüfen; keine Auswahl nur eines günstigen Fensters, kein Verstoß solange zulässige Alternative/Fristerfüllung noch offen. |
+| LG108 | W07 | Arbeitgeberland/ Wohnsitzland bekannt, Ruhebeginnland fehlt; erneut gleicher Import, später geänderte entscheidende Angabe | Nur konkrete fehlende Länderfrage; unveränderte Antwort nicht wiederholen. Änderung zeitgebunden neu bewerten/auditieren, keine automatische Heimatstandortprüfung. |
+| LG109 | F01–F04 | Zwei Unterbrechungen30+30 min, Netto-Ruhe10:59/11:00 bzw.23:59/24:00 bzw.44:59/45:00; dritte Unterbrechung |60 min selbst zulässig, Unterbrechungen keine Ruhe. Unterschiedliche Grunddauer und regelmäßige Wochenreise≥8 h/Schlafkabine beachten; dritte Unterbrechung nicht reparieren. |
+| LG110 | F01/F04 | Reguläre Wochenruhe mit passend langen Zeiten/EF0522, Kabine oder Fahrplan unbekannt /gezielt belegt | Ohne entscheidende Bedingung keine gesicherte Ausnahme oder gesicherte Verletzung erfinden. Bei belegter Bedingung normal neu bewerten; keine Frage zu allgemeinem Lkw/Hotel/Zuhause. |
+| LG111 | X02/X03/D01–D03 | Normalgrenze9 oder10 h je Verlängerungszähler beziehungsweise56 h/Woche; Überschuss0/1/60/61/120/121 min |0 kein Befund; positive passende1-/2-h-Fälle numerisch sichtbar/offen. Normalverlängerung zuerst;121 kein Kandidat allein für spezielle≤2 h, kein pauschaler Ausschluss Art.12 Abs.1. |
+| LG112 | X06/D01/D03/D04 | Derselbe Zeitraum überschreitet Tages- und Wochenlimit je1:30 h und Doppelwochenlimit | Rechtlich getrennte numerische Befunde, gemeinsame Darstellung ohne doppelte Schuld. Spezieller Art.-12-Hinweis rechtfertigt90-h-Grenze nicht; keine unqualifizierte Summe gesicherter Verstöße. |
+| LG113 | X03/X04/X05 | Passender2-h-Zahlenfall, Pause29/30/45 min, kein App-Grundtext, tatsächliche Voraussetzungen nicht geprüft | Zahlenbefund bleibt sichtbar mit offener Bewertung;30-min- und normale45-min-Pflicht korrekt erklären, keine Anerkennung/Begründungspflicht/automatische Schuld. PDF identisch in Aussage. |
+| LG114 | W06/W09 | Zusätzliche24–<45-h-Ruhe zwischen bereits erfüllten Wochenpflichten, mindestens zwei alternative Zuordnungen | Nicht jede Rast neue Reduzierung/Schuld. Nur tatsächlich angerechnete Pflichtreduzierungen erzeugen Ledger; globale Lösung mit Quelle und Alternativen erklären. |
+| LG115 | W02/W04 | Tatsächlich verspätete Pflicht, spätere ausreichende Ruhe; Variante später importierte damalige rechtzeitige Quelle | Später tatsächlich genommene Ruhe heilt alte Fristverletzung nicht; später belegte damalige Erfüllung darf alte Bewertung mit Audit korrigieren. Keine Unterdrückung unabhängiger Verletzung. |
+| LG116 | B03/R06/W10–W13 | Passender Gelegenheitsdienst vor/nach22.05.2024:30+15,25-h-Nutzung,12-Tage-Pfad und minimale Kontextkennung | Historische Voraussetzungen vollständig, keine Rückwirkung. PASSENGERS allein kein Nachweis; keine vollständige Reiseverwaltung/Zweitfahrerabfrage als Voraussetzung. Regeln auch außerhalb Lkw-Beta fachlich testen. |
+
+### 2.7 Datenqualität, Stichtag, Zeitdarstellung und Historie
 
 | Test-ID | Eingabe / Ablauf | Erwartung |
 |---|---|---|
@@ -178,6 +203,18 @@ Jede Art.-3-Gruppe a–i/aa/ha und jede Art.-13-Gruppe a–r erhält zusätzlich
 | DT29 | EF0504 mit p=1/c=1, bekannte manuell am Kontrollgerät aufgezeichnete Arbeit/Ruhe | Tätigkeit als aufgezeichnete manuelle Quelle berücksichtigen; niemals c=1 als Crewbeweis werten. Kein App-Nachtrag und keine Änderung der Originalbytes. |
 | DT30 | EF0504 mit p=1/c=0, Aktivitätsbits 00/01/10/11 nach Entnahme | Punktbedeutung nach Appendix beachten; Folgeabschnitt unbekannt, unabhängig vom zufälligen ausgewählten Aktivitätscode keine fortgesetzte Ruhe/Fahrt erfinden. |
 | DT31 | Gleich datierter früherer unbekannter Abschnitt und spätere bekannte Kontrollgeräte-Nachtragsquelle | Abgeleitete Neubewertung mit exakten beiden Quellbezügen und Audit; historische erste Sitzung bleibt unverändert, keine falsche Crew-/Ruheanrechnung. |
+| DT32 | Bekannte manuelle Tätigkeit im Zeitstrahl/Detail, Kalender-/Schichtwechsel und Zoom | Exakt „Manueller Nachtrag am EG-Kontrollgerät“, klein/unaufdringlich oberhalb Segment/beim Detail. Quelle nicht Warnung/Verstoß; unbekannte Folge erhält keinen falschen Nachtragsbadge. Barrierefreiheitsbeschreibung Deutsch. |
+| DT33 | Alle Kombinationen p/c=0/0,0/1,1/0,1/1, Slot-/Aktivitätsvarianten und Entnahmepunkt | Semantik und Grenzen richtig, keine Rohfeldänderung/Fingerprint-Neuberechnung. G1/G2/V2-Vektoren mit gepinnter Appendix-Fassung; p=1/c=1 niemals Crew. |
+| DT34 | Automatischer Import mit vollständiger eigener Crewchronik, keine zweite Karte/Nutzerbestätigung | Prüfung/30-h- und Beifahrerregeln ohne neuen Pflichtdialog; offene unbekannte Folge konkret begrenzt, ohne globalen Routine-Zweitnachweis. |
+| DT35 | Dieselbe Fähr-/Zugreise erneut importiert, entscheidende Antwort vorhanden; andere neue Reise ohne Antwort | Gleicher gültiger Zusammenhang keine erneute Frage. Neue konkret betroffene Bewertung kann nur fehlende entscheidende Angabe gezielt fragen; kein universeller Importdialog/Schlafplatzdefault. |
+| DT36 | Länder-/Buskontext wiederholt unverändert /geändert für konkreten Gültigkeitszeitraum | Antworten wiederverwenden, nur tatsächlich neue Unklarheit fragen. Revision/Audit erhalten; keine pauschale Rückwirkung auf alte Einsätze. |
+| DT37 | Fortbestehende Wochenruheepisode über mehrere Tage, Filter/Schichtwechsel und Mehrfachimport | Eine fachliche ID mit exaktem alten Wochenanker, kein Ereignis je Displaytag/Import. Eigenständige andere Regelereignisse nicht verschlucken. |
+| DT38 | Mehrere Schulden, Zuordnung erfüllt eine, Neustart/Reimport/neuer Kontext | Erfüllte aus offener Übersicht, historische Herkunft/Frist/Erfüllungsquelle erhalten; andere Schuld offen. Kein Löschen/Verwechseln/doppelte Zusatzruhe; Neubewertung auditierbar. |
+| DT39 | R von25.10.2026 00:30 bis09:30 UTC (Berlin02:30 CEST bis10:30 CET); Frühjahrsvariante29.03.2026 gleiche UTC-Zeiten | Reale Dauer jeweils9 h, nicht lokale8/10 h; Anzeige korrekter Offset/DST-Marker. Keine eigene DST-Dauerformel, identische Rechtswerte bei UTC/Berlin/New York. |
+| DT40 |1:30-h-Artikel-12-Kandidat in Start/Liste/Detail/Zeitstrahl/PDF mit langem Seitenumbruch | Exakter Überschuss und offen/nicht geprüft gut sichtbar. Kein bestätigter Verstoßgrad, keine pauschale Rechtswidrigkeitsanzahl/Entwarnung; Hinweis bleibt Einzelbefund, PDF vollständiger Text. Kein Statusfilter. |
+| DT41 | Konkrete belegte ausgenommene/unsupported/unklare Sonderkonstellation mit OOS; anderer regulierter Zeitraum vollständig | Betroffene Scope-Grenze erklären, keine unberechtigten Befunde/Budgets/Entwarnung. Anderer ausreichend belegter Zeitraum bleibt prüfbar; keine aktive Vollkatalog-/Dialogpflicht. |
+| DT42 | Anzeigezone/DST/Schichtansicht ändern bei offenen Pflichten und E07-Befunden | Input-/Regelrevision, IDs, Mengen, Rechtsfenster und Audit identisch; nur Darstellung anders, kein neuer juristischer Lauf/Neu-Status. |
+| DT43 | Vollständiger Folgeimport belegt damalige manuelle Ruhe; Variante Quellenkonflikt zur alten Fahrt | Atomare Neubewertung mit alten/neuen exakten Belegen. Nur kompatibler damaliger Nachtrag schließt Lücke; Konflikt sichtbar, Originale/Receipt/Request-/Quellenfingerprint unverändert. |
 
 ## 3. Alle 80 Produktentscheidungen mit prüfbarer Abnahme
 
@@ -188,11 +225,11 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 1 | PD01 | Einsatzprofil mit gültigem Zeitraum, Abweichung und Ausnahme erfassbar; Kontext eindeutig vom Original getrennt. |
 | 2 | PD02 | Genau nach atomar erfolgreichem eigenen Import neuer Prüflauf; fehlgeschlagene Gruppe erzeugt keinen Datenlauf. |
 | 3 | PD03 | Entscheidende Datenlücke in Hauptübersicht sichtbar, auch bei leerer Verstoßliste. |
-| 4 | PD04 | Artikel-12-Hinweis ohne automatische Rechtfertigung oder Pflichttext; P02 freigegeben. |
+| 4 | PD04 | Durch E07 präzisiert: normale rechnerische Überschreitung bleibt Liste/PDF mit Hinweis/offener Rechtsbewertung; keine automatische Rechtfertigung/Pflichttext. P02 geschlossen. |
 | 5 | PD05 | Jedes Restbudget mit belegtem Stichtag; Anzeige nicht als Live-Fahrerassistenz. |
 | 6 | PD06 | Offene Perioden bis belegter Grenze geprüft, DT07/DT08 keine Zukunftsfortschreibung. |
-| 7 | PD07 | Keine App-Tätigkeits-/Ruhe-Nachtragsfunktion; Originale bleiben nach Kontextedit bytegleich. |
-| 8 | PD08 | Relevante Crew-/Sondereinsatzkontexte optional und mit unbekannten Voraussetzungen sichtbar. |
+| 7 | PD07 | Keine App-Tätigkeits-/Ruhe-Nachtragsfunktion; Originale bytegleich. E02: vorhandene bekannte Kontrollgeräte-Nachträge normal rechnen und dezent kennzeichnen. |
+| 8 | PD08 | E03 nutzt zeitlich korrekte eigene Crewaufzeichnung ohne Routinebestätigung/Zweitkarte; konkrete unbekannte Sondervoraussetzung getrennt sichtbar. |
 | 9 | PD09 | Offene Ausgleichspflichten vor Fälligkeit mit Menge, Ursprung und genauer Frist. |
 | 10 | PD10 | Detail enthält Zeitraum, Rechenweg, Rechtsregel, Quellen und passende Überschreitungsgröße. |
 | 11 | PD11 | Zulässige täglichen Reduzierungen zwischen Wochenruhen verbraucht/verfügbar korrekt auf Start. |
@@ -204,23 +241,23 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 17 | PD17 | Reduzierungsdetails mit Fehlbetrag, Frist und zugrunde liegender Ruhe. |
 | 18 | PD18 | Automatische Ausgleichszuordnung mit Belegen; keine Mehrfachanrechnung, LG66–LG73. |
 | 19 | PD19 | Gezielt nur fehlende entscheidende internationale Voraussetzungen fragen; keine Adresse/Heimradius. |
-| 20 | PD20 | Keine Hotel-/Lkw-/Zuhause-Wochenruhebewertung; P01 grenzt Fähr-Schlafplatzkontext ab. |
+| 20 | PD20 | Keine allgemeine Hotel-/Lkw-/Zuhause-Wochenruhebewertung; E04/P01 entschieden: nur konkret relevante gesetzliche Fähr-Schlafplatzvoraussetzung gezielt. |
 | 21 | PD21 | Pausensplits im Standard-/Busfall automatisch; Hauptansicht zeigt nur Ergebnis. |
 | 22 | PD22 | Restfahrt bis Pause nur Detail; nicht Start. |
 | 23 | PD23 | Zulässige Tagesverlängerungen verbraucht/verfügbar auf Start; LG17–LG22. |
 | 24 | PD24 | Woche und Doppelwoche getrennt, keine einzige irreführende Restzahl; LG23–LG26. |
-| 25 | PD25 | Mehrfahrer-Sonderregeln nur mit Qualifikation; Begründung/Voraussetzungen im Detail. |
+| 25 | PD25 | 30-h-/Beifahrer-Sonderregeln aus korrekt aufgezeichneter Crewchronik ohne Routine-Nachweisdialog, Voraussetzungen/konkrete Lücken im Detail erklärt. |
 | 26 | PD26 | Kompakte Startzusammenfassung mit Zugang zur ganzen Liste. |
 | 27 | PD27 | Kalendertag-/Schichttagwechsel verschiebt Markergruppierung, nicht Zeitpunkt/Ergebnis. |
 | 28 | PD28 | Typgruppen mit einzeln aufklappbaren Ereignissen und Berechnungen. |
 | 29 | PD29 | Warnung optisch zurückhaltender und sprachlich deutlich vom Verstoß getrennt. |
 | 30 | PD30 | Standardliste 28 Tage; Archive zugänglich und DT11 voller Berechnungshorizont. |
-| 31 | PD31 | Erstmals nach Import erkannter eindeutiger Befund „Neu“, keine Neu-Markierung für bloß geänderten Wert. |
+| 31 | PD31 | Erstmalig importierter zahlenmäßig gesicherter Befund „Neu“, auch E07 mit klar offener Bewertung; keine neue Markierung für bloß geänderten Wert oder reinen Lückenhinweis. |
 | 32 | PD32 | Frühere Neubewertung nur Audit; aktuelle Übersicht ohne zusätzlichen prominenten Änderungsbanner. |
 | 33 | PD33 | Konfliktsegment sichtbar und erläutert, DT03. |
 | 34 | PD34 | Sachverhaltsgruppe erhält alle unterschiedlichen Rechtsverstöße, LG39. |
 | 35 | PD35 | Aufklappbare technische Belege; sensible Nummern zunächst maskiert und nach Auswahlwechsel erneut verborgen. |
-| 36 | PD36 | Nur rechtlich sichere Zusatzklasse; unpassende/fehlende Tabelle keine erfundene Klasse. |
+| 36 | PD36 | Nur rechtlich sichere Zusatzklasse; E07-Fall mit offener Bewertung kein bestätigter rechtlicher Verstoßgrad, fehlende Tabelle keine Ersatzklasse. |
 | 37 | PD37 | Genau Zeitraum- und Artfilter, kein Statusfilter. |
 | 38 | PD38 | Lesen einzelner Verstoßdetails löscht dessen „Neu“, nicht unbeachtete Nachbarbefunde. |
 | 39 | PD39 | Detailnavigation auf exakte Quell-/Zeitspanne, nicht bloß pauschales Tagesdatum. |
@@ -238,15 +275,15 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 51 | PD51 | Nicht sicher berechenbares Budget verborgen; Hinweis auf fehlende Daten sichtbar. |
 | 52 | PD52 | Neueste Ereignisse zuerst, stabile Tie-Breaker für gleiche Zeiten. |
 | 53 | PD53 | Typgruppen nach jüngstem tatsächlichem Ereignis, nicht Importzeit sortiert. |
-| 54 | PD54 | Rechtlicher Grad mit deutschem Begriff und Symbol, keine verpflichtende zusätzliche Farbe. |
+| 54 | PD54 | Gesicherter rechtlicher Grad mit deutschem Begriff/Symbol; für offenes E07-Ereignis keine als Rechtswidrigkeit behauptete Gradkennzeichnung. |
 | 55 | PD55 | Konkreter Artikel/Absatz/Fassung; externer Link ist keine Produktpflicht. |
 | 56 | PD56 | Gesamte betroffene Zeitspanne hervorgehoben einschließlich relevanter Untersegmente. |
 | 57 | PD57 | Neue Befunde im App-Ergebnis, keine neue Push-/Hintergrundalarmberechtigung. |
-| 58 | PD58 | Positive Kurzmeldung nur bei ausreichender regelbezogener Abdeckung, keine Entwarnung bei DT06/DT23. |
+| 58 | PD58 | Positive Kurzmeldung nur bei ausreichender Abdeckung und ohne relevante offene Bewertung/Lücke; E07-Zahlenbefund nie durch Entwarnung verdecken. |
 | 59 | PD59 | Lokaler Verstoß-PDF in 1.0, eigene Berichtsart ohne DDD/Abrechnung/Spesen. |
 | 60 | PD60 | Freie Zeitraumwahl, 28-Tage-Default, keine Pflicht-Schnellbuttons. |
-| 61 | PD61 | Fähre erklärt verwendete Regel, vorhandene EF 0522 wiederverwendet, fehlende Voraussetzungen sichtbar. |
-| 62 | PD62 | Art.-12-Hinweis direkt an betroffener Zeitspanne; nicht versteckter globaler Standardtext. |
+| 61 | PD61 | E04: vorhandene EF0522 wiederverwenden, Ruhe netto/Unterbrechungen/Voraussetzungen erklären; gezielte Frage nur bei konkreter Lücke, Antwort wiederverwenden. |
+| 62 | PD62 | E07 ersetzt ausschließlich ausgelagerten Hinweis: direkt am Zahlenbefund in Übersicht/PDF/Chronik klar offene Ausnahmebewertung, keine tatsächliche Schuld/Heimkehrprüfung. |
 | 63 | PD63 | OOS-Originalmarker plus getrennte rechtliche Einordnung direkt Chronik, LG08. |
 | 64 | PD64 | GEN1/GEN2-V1 ohne EF 0530 nutzen Profil; entscheidende Unklarheit gezielt, keine ständig neue Frage. |
 | 65 | PD65 | Neue Personenquelle löst einmal passende Linien-/Gelegenheitsfrage aus; fehlende Linienlänge zusätzlich nur wenn relevant. |
@@ -258,7 +295,7 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 71 | PD71 | PDF erfordert neue Zeitraumwahl bei jedem Aufruf, alte Historienwahl nicht still übernehmen. |
 | 72 | PD72 | Fahrername standardmäßig aus; nur nach bewusster Aktivierung im Bericht. |
 | 73 | PD73 | Datenlücken, Prüfbarkeitsgrenzen und Stichtag auf erster PDF-Seite. |
-| 74 | PD74 | Jeder Befund vollständig mit Zeitraum, Berechnung, Mengen und Rechtsgrundlage; kein Abschneiden über Seitenwechsel. |
+| 74 | PD74 | Jeder Befund vollständig mit Zeit/Berechnung/Überschuss/Rechtsgrundlage; E07 bleibt Einzelbefund mit sichtbarer offener Bewertung, auch über Seitenwechsel. |
 | 75 | PD75 | Lokales Speichern über bewusste Android-Dateiwahl und optionales Teilen mit temporärem Leserecht; kein automatischer Upload. |
 | 76 | PD76 | Offlineberechnung aus versioniertem mitgeliefertem Regelpaket; Gesetzesänderung nur reguläres Update. |
 | 77 | PD77 | Diagnosen optional, Vorschau und ausdrückliche Zustimmung; Ablehnung lässt Fehlerbericht ohne Anhang zu. |
@@ -266,7 +303,24 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 79 | PD79 | Lokale Beta-Diagnoseansicht maskiert, keine Roh-APDUs oder sensiblen vollständigen Quellenbytes. |
 | 80 | PD80 | Alle neuen 1.0-Texte, Fehler, Berichte und Barrierefreiheitsbeschreibungen Deutsch; keine ungeprüften englischen Fallbacks. |
 
-Zusatzgrundsätze A–H erhalten eigene Sammelabnahmen: A→LG17–LG98; B→PD04/29/37/58/62; C→LG01–LG16; D→DT01–DT08/DT14/DT20/DT23; E→DT09/DT10/PD27/39/40/56/67/70; F→PD07/08/47/68; G→LG07/PD20/59 und Legal-Matrix Abschnitt 8; H→PD41–PD45 und alle Gates des Plans.
+Zusatzgrundsätze A–H erhalten eigene Sammelabnahmen: A→LG17–LG116; B→PD04/29/37/58/62 **mit vorrangigem E07**; C→LG01–LG16; D→DT01–DT08/DT14/DT20/DT23; E→DT09/DT10/PD27/39/40/56/67/70; F→PD07/08/47/68; G→LG07/PD20/59 und Legal-Matrix Abschnitt 8; H→PD41–PD45 und alle Gates des Plans.
+
+### 3.1 Vollständige Zuordnung der verbindlichen Ergänzungen
+
+| Ergänzung | Geplanter Nachweis / betroffene Abnahme |
+|---|---|
+| E01 | Änderungsübersicht mit allen alten/neuen Planstellen, A01; historischer80er-Quelltext erhalten. |
+| E02 | S13, LG99/LG100, DT29–DT33/DT43, PD07/14/35; A04/A17. |
+| E03 | S11/B04/R05, LG15/LG37/LG48/LG49/LG100, DT33/DT34; A18. |
+| E04 | F01–F05, LG81–LG88/LG109/LG110, DT35, PD20/61; A03/A07/A14. |
+| E05 | W07/W08, LG70–LG74/LG106–LG108, DT36/DT38; A09. |
+| E06 | W01–W09/W14, LG62–LG69/LG101–LG107/LG114/LG115, DT37/DT38/DT43; A09/A19. |
+| E07 | X01–X06/H01, LG89–LG94/LG111–LG113, DT40, PD04/31/36/54/58/62/74; A10/A12/A13/A20. |
+| E08 | B03/R06/W10–W13, LG35/LG36/LG50–LG53/LG76–LG80/LG98/LG116, DT23/DT36; A03/A07. |
+| E09 | S01–S10, LG01–LG14/LG97, DT41, Anwendbarkeits-/Supportmanifest; A03/A10/A14. |
+| E10 | S12, LG16/LG22/LG26, DT09/DT10/DT39/DT42, PD40/70; A08. |
+| E11 | Alle116 LG/43 DT/80 PD und A01–A20; unveränderte technische Gates und unabhängige Prüfung/Beta. |
+| E12 | Ausschließlich dokumentierter Draft-PR, unveränderte Code-/Schema-/Parser-/Hardware-/APK-Basis; ausdrückliche spätere Implementierungs- und Releasefreigabe. |
 
 ## 4. Technische Prüfungen und Hardware
 
@@ -279,8 +333,8 @@ Alle bestehenden Tests bleiben aktiv. Neue Tests werden den vorhandenen Gradle-/
 | Unabhängiger Vergleich | Fachkundig berechnete Fälle und dokumentierter Vergleich mit anerkannter Referenzauswertung, wo verfügbar; Referenzsoftware ist kein Ersatz für Gesetzes-/Fachprüfung. |
 | Reader-/Parser-Regressionssuite | Unveränderte 0504-/0522-/0530-Dekodierung, GEN1/GEN2/GEN2V2, Bootstrap-/FK-/Gruppen-/EOF-/Cancellationregeln; keine neuen Kartenschreibbefehle. |
 | SQLCipher/Room | Echte additive Migration von Schema 22 auf ersten benötigten Compilerstand, Historie/Originale/Fingerprints identisch, fremde Profilzugriffe abgelehnt, keine Teilresultate, Ausgleich/Audit/Readstate/Reopen/Replay. |
-| Compose | Läufe/Neuberechnung/Quellenwechsel/Details/Markierung/Zeitzone/Schicht/Maskierung, Datenlücken und keine falsche Entwarnung; alte Ergebnisanzeige während Recompute ausgeschlossen. |
-| PDF | Feste Berichtsfälle rendern und visuell/inhaltlich prüfen: leere ausreichende Daten, große Verstoßliste, gemischte Rechtsstände, lange Quellen-/Regeltexte, DST, Datenlücken; erste Seite korrekt, alle Einzelbefunde enthalten. |
+| Compose | Läufe/Neuberechnung/Quellenwechsel/Details/manuelle Nachtragskennzeichnung/aufgezeichnete Crew ohne Pflichtdialog/E07-Anzeige/Markierung/Zeitzone/Schicht/Maskierung, Datenlücken und keine falsche Entwarnung; alte Ergebnisanzeige während Recompute ausgeschlossen. |
+| PDF | Feste Berichtsfälle rendern und visuell/inhaltlich prüfen: leere ausreichende Daten, große Verstoßliste, gemischte Rechtsstände, E07-Kandidaten mit offener Bewertung und sicheren Summen, lange Quellen-/Regeltexte, DST, Datenlücken; erste Seite korrekt, alle Einzelbefunde enthalten. |
 | Sicherheit/Diagnose | Zustimmung und Vorschau, minimierte technische Daten, keine echten Kartennummern/APDUs/private Schlüssel in Logs/Fixtures/Fehlerreport ohne Erfordernis. |
 | Geräteupdate | Exakter freigegebener Produktkopf, grüne vollständige CI, stabiles signiertes Updatepaar, Update über 40128 ohne Deinstallation/Datenlöschung, neue eigene Bestätigung für betreffenden Baum. |
 
@@ -290,4 +344,4 @@ Keine dieser geplanten Hardwarefällen bestätigt bislang Busbetrieb, fehlende K
 
 ## 5. Durchführung und Ergebnisprotokoll
 
-Jeder Testnachweis enthält Eingabehash, fachlichen Erwartungshash, Regelpaket-/Engineversion, endgültigen Git-SHA, Toolchain, Prüfer und echtes Resultat. Nicht gelaufene Fälle bleiben „geplant“ im internen Nachweis, werden nie in eine erfolgreiche Gesamtzahl eingerechnet. Entscheidungen dürfen nicht über Teständerung passend gemacht werden. Jeder fachliche Fehler blockiert den betroffenen Meilenstein; falsche Verstoßmeldung, falsche Entwarnung oder Quellenverlust blockieren den Release.
+Jeder Testnachweis enthält Eingabehash, fachlichen Erwartungshash, Regelpaket-/Engineversion, endgültigen Git-SHA, Toolchain, Prüfer und echtes Resultat. Nicht gelaufene Fälle bleiben „geplant“ im internen Nachweis, werden nie in eine erfolgreiche Gesamtzahl eingerechnet. Entscheidungen dürfen nicht über Teständerung passend gemacht werden. Jeder fachliche Fehler blockiert den betroffenen Meilenstein; falsche Verstoßmeldung/Entwarnung/Budgets, falsche Ruhe-/Ausgleichszuordnung, Herkunftsverlust/-verwechslung oder fehlende E07-Zahlen-/Rechtstrennung blockieren den Release.

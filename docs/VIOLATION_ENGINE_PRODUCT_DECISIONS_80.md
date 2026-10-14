@@ -192,3 +192,21 @@ Die 80 Entscheidungen bilden eine verbindliche Produktgrundlage, ersetzen aber n
 ## Quellenvermerk zur Übernahme
 
 Maßgeblich ist Tobis vollständige Nachricht in dieser Work-Sitzung vom 14.10.2026, übergeben zusammen mit der Markdown-Anlage. Die Entscheidungen 1–80 und Grundsätze A–H wurden inhaltlich unverändert übernommen; nur Leerzeilen und Überschriftenformat vereinheitlicht. Die beigefügte Anlage bleibt unverändert erhalten, SHA256 `83cdc61ca31cc8271b40122d67ee1a64fa63a9111cbe95b5e72f0b91c67989fe`. Sie enthält eine frühere Formulierung derselben Entscheidungen; bei Formulierungsunterschieden entscheidet die vollständig ausgeschriebene neue Nachricht. Kein Rückgriff auf den separaten Beratungschat.
+
+## Nachträgliche verbindliche Ergänzungen und Vorrang
+
+**Die Entscheidungen 1–80 und A–H oberhalb bleiben als historische Quelle unverändert.** Tobis späterer Abschlussauftrag vom 14.10.2026 ist in [E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md) dokumentiert und hat bei Produktwidersprüchen Vorrang. Gesetze bleiben maßgeblich. Dies ist keine Implementierungs- oder Releasefreigabe.
+
+| Frühere Grundlage | Aktuelle Ergänzung / ausdrücklich überholter Teil |
+|---|---|
+| 7, 14, 35, F | E02 ergänzt die dezente Beschriftung „Manueller Nachtrag am EG-Kontrollgerät“. Das Verbot eigener App-Nachträge bleibt; bekannte Kontrollgeräte-Nachträge sind vorhandene Aufzeichnungen. |
+| 8, 25, D | E03: korrekt zeitbezogen aufgezeichnetem Mehrfahrerbetrieb vertrauen, keine routinemäßige Anwesenheitsbestätigung oder Pflicht zur zweiten Karte. Kartenstatus/c-Bit gemeinsam auswerten. |
+| 20, 61 | E04 bestätigt gezielte, zwischengespeicherte Angaben zu entscheidenden Art.-9-Voraussetzungen; keine allgemeine Unterkunftsbewertung. P01 erledigt. |
+| 9, 17–19, A | E05/E06 präzisieren internationale Doppelreduzierung, globale alternative Wochenzuordnung, einzelne Ausgleichspflichten und die 23-Stunden-Ruhe. |
+| 4, 62, B | **E07 ersetzt die ausschließliche Auslagerung möglicher Artikel-12-Zahlenfälle aus der Verstoßübersicht.** Rechnerische Lenküberschreitungen bleiben in Übersicht/PDF, mit klarer offener rechtlicher Bewertung. Keine automatische Rechtfertigung, Rechtswidrigkeitsbestätigung, Anerkennung oder Schuld. P02 erledigt. B bleibt für Datenlücken/sonstige Prüfhindernisse und das Verbot künstlicher Statusfilter maßgeblich. |
+| 1, 19, 63–65, C, G | E08/E09 bestätigen Bus-Sonderregeln und begrenzen aktive Spezialausnahme-Funktionen. Gesetzlicher Geltungsbereich bleibt; nicht unterstützte/unzuverlässig eingeordnete Fälle erhalten keine unberechtigten Befunde oder Entwarnungen. |
+| 27, 40, 70, E | E10: reale Dauern ausschließlich aus eindeutigen UTC-Intervallen; Anzeigezone unabhängig, DST sichtbar, gesetzliche Kalenderdefinitionen gesondert. |
+| 41–45, H | E11 erweitert die Mindesttests/Gates und erhält unabhängige Fachprüfung, Beta und sämtliche technischen Abnahmen. |
+| Nächster Arbeitsauftrag / Freigabegrenze | E01/E12: bestehenden Draft-PR #88 nur als Planung aktualisieren; keine Produktcode-, Schema-, Parser-, Hardware- oder APK-Änderung. |
+
+Die [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md) ordnet jede Ergänzung den tatsächlichen Plan-/Regel-/Test-/Abnahmestellen zu. Unveränderte Punkte sind weiterhin verbindlich. Es werden keine zusätzlichen „Entscheidungen 81–…“ aus eigener Interpretation erfunden.
