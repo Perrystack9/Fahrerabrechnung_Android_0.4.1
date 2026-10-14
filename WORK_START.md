@@ -28,9 +28,11 @@ Bestätigte Aufnahme-Meilensteine 40124/40125/40126 samt Core-, Identifikations-
 
 ## Nächste Arbeit
 
-Der [freigegebene 40127-Plan A1–A10](docs/CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md) ist abgeschlossen; [technische Belege](docs/CARD_CORE_SIGNATURE_MATH_EVIDENCE.md). **Kein weiterer Produktmeilenstein freigegeben.** Nächsten begrenzten Umfang separat festlegen; abgeschlossene Signaturaufnahme/Mathematik nicht erneut implementieren. Der Import-Folgeplan trennt die weiterhin offenen Pakete und ihre Voraussetzungen.
+Der [freigegebene 40127-Plan A1–A10](docs/CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md) ist abgeschlossen; [technische Belege](docs/CARD_CORE_SIGNATURE_MATH_EVIDENCE.md). Auch der zusätzliche Produkt-Main-Lauf 38533736352 ist jetzt vollständig grün, alle vier Jobs.
 
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`, Abschlussbranch `docs/close-40127-session-20261014`. Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und zusätzliche Sicherung `/workspace/scratch/4c3cf966d792/session-backups` erhalten; alte Produkt-/Docs-/Sicherungsbranches nicht löschen. Aktuellen main, offene PRs und CI live prüfen.
+**Neuer Planungsauftrag, 14.10.2026 10:48 Europe/Berlin:** mathematische Prüfung aller bereits gespeicherten Kartensignaturen durch Erweiterung um 0501/0520/0502/0503 und bedingte V2-0525 abschließen. [Kurzer technischer Plan mit A1–A8](docs/CARD_STORED_SIGNATURE_COMPLETION_PLAN.md). **Implementierung erst nach Tobis Freigabe.** 40127-Kernprüfung wiederverwenden, bestehende Aufnahme/Herkunft/Room22 und sämtliche Gates erhalten. Nach positiver Abnahme diesen mathematischen Umfang schließen und anschließend Benutzeroberfläche/Funktionen für1.0 planen; konkrete UI-Implementierung daraus nicht vorwegnehmen.
+
+Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`, Planbranch `docs/stored-signature-completion-plan-20261014`. Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und zusätzliche Sicherung `/workspace/scratch/4c3cf966d792/session-backups` erhalten; alte Produkt-/Docs-/Sicherungsbranches nicht löschen. Aktuellen main, offene PRs und CI live prüfen.
 
 ## Sitzungsroutine
 
