@@ -3,11 +3,13 @@ package de.fahrerabrechnung.data
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import de.fahrerabrechnung.data.card.*
 import de.fahrerabrechnung.data.db.*
 import de.fahrerabrechnung.data.security.EncryptedDatabaseFactory
 import java.nio.ByteBuffer
 import java.security.SecureRandom
+import java.util.zip.ZipInputStream
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -86,6 +88,103 @@ class CardImportPipelineInstrumentedTest {
                     hashStatusWord = 0x9000, signStatusWord = 0x9000, actualLength = 64,
                     original = source.snapshot, certificate = certificate, bytes = ByteArray(64) { (salt + it).toByte() })
             })
+    }
+
+    private fun mathVectors(): Map<String, ByteArray> = ZipInputStream(InstrumentationRegistry.getInstrumentation()
+        .context.assets.open("core-math/vectors.zip")).use { zip ->
+        buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
+    }
+
+    private fun mathematicalRead(generation: CardGeneration, badSignature: Boolean = false): CardReadResult {
+        val vectors = mathVectors()
+        val name = if (generation == CardGeneration.GEN1) "rsa" else "nist256"
+        val sources = CardCoreEf.entries.associateWith { kind -> CardCoreSnapshot(kind, generation,
+            vectors.getValue("$name-${if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"}.raw")) }
+        val certificate = CardCertificateFile(if (generation == CardGeneration.GEN1) CardCertificateKind.CARD else CardCertificateKind.SIGNING,
+            generation, vectors.getValue(if (generation == CardGeneration.GEN1) "test-card.bin" else "nist256.cert"))
+        val certificates = mutableMapOf(certificate.kind to CardCertificateRead(certificate))
+        if (generation == CardGeneration.GEN1) certificates[CardCertificateKind.CA] = CardCertificateRead(
+            CardCertificateFile(CardCertificateKind.CA, generation, vectors.getValue("test-ca.bin")))
+        return CardReadResult(CardRecognition.DRIVER, generation, card().copy(generation = generation),
+            sources.getValue(CardCoreEf.ACTIVITY).activity(), sources.getValue(CardCoreEf.VEHICLES).vehicles(),
+            certificates = certificates, coreReads = sources.mapValues { (kind, raw) -> CardCoreRead(kind, CardCoreReadStatus.COMPLETE, raw) },
+            coreSignatures = sources.mapValues { (kind, raw) ->
+                val sig = vectors.getValue("$name-${if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"}.sig").copyOf()
+                if (badSignature) sig[sig.lastIndex] = (sig.last().toInt() xor 1).toByte()
+                CardCoreSignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED,
+                    if (generation == CardGeneration.GEN1) CardSignaturePolicy.RSA_SHA1 else CardSignaturePolicy.NIST_P256,
+                    CardSignaturePhase.SIGN, statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000,
+                    actualLength = sig.size, original = raw, certificate = certificate, bytes = sig)
+            })
+    }
+
+    /** All actual SQLCipher rows, including originals, receipts, fingerprints and normalized data. */
+    private fun databaseRows(): Map<String, List<List<String>>> {
+        val tables = db.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+        }
+        return tables.associateWith { table -> db.openHelper.readableDatabase.query("SELECT * FROM \"${table.replace("\"", "\"\"")}\"").use { cursor ->
+            buildList { while (cursor.moveToNext()) add((0 until cursor.columnCount).map { index ->
+                when (cursor.getType(index)) {
+                    android.database.Cursor.FIELD_TYPE_NULL -> "null"
+                    android.database.Cursor.FIELD_TYPE_BLOB -> "blob:" + cursor.getBlob(index).joinToString("") { "%02x".format(it) }
+                    else -> "${cursor.getType(index)}:${cursor.getString(index)}"
+                }
+            }) }.sortedBy { it.toString() }
+        } }
+    }
+
+    @Test fun mathematicalProjectionIsReadOnlyOfflineAndExactAcrossReplayAndEncryptedReopen() = runBlocking {
+        imports.bind(card(), true)
+        val unsigned = pipeline.process(coreRead(), "math-unsigned")
+        val goodInput = mathematicalRead(CardGeneration.GEN2V2)
+        val good = pipeline.process(goodInput, "math-good")
+        val bad = pipeline.process(mathematicalRead(CardGeneration.GEN2V2, true), "math-bad")
+        val before = databaseRows()
+        val valid = imports.verifySavedCoreSignatures(good.id)
+        assertEquals(2, valid.size)
+        assertTrue(valid.values.all { it.status == CardSignatureMathStatus.VALID && it.certificateTrust == CardCertificateTrustStatus.NOT_EVALUATED })
+        assertTrue(imports.verifySavedCoreSignatures(bad.id).values.all { it.status == CardSignatureMathStatus.INVALID && it.source.sessionId == bad.id })
+        assertTrue(imports.verifySavedCoreSignatures(unsigned.id).values.all { it.reason == CardSignatureMathReason.NO_SIGNATURE })
+        assertTrue(imports.verifySavedCoreSignatures("not-own-session").isEmpty())
+        assertEquals(valid, imports.verifySavedCoreSignatures(good.id))
+        assertEquals(before, databaseRows())
+        assertEquals(good, pipeline.process(goodInput, good.id))
+        assertEquals(before, databaseRows())
+        db.close(); open()
+        assertEquals(valid, imports.verifySavedCoreSignatures(good.id))
+        assertEquals(before, databaseRows())
+        assertTrue(imports.get(good.id)!!.coreSignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        for (kind in CardCoreEf.entries) {
+            val a = valid.getValue(kind).source; val b = imports.verifySavedCoreSignatures(bad.id).getValue(kind).source
+            assertEquals(a.originalSourceId, b.originalSourceId)
+            assertNotEquals(a.receiptFingerprint, b.receiptFingerprint); assertNotEquals(a.sessionId, b.sessionId)
+            assertNotEquals(a.signatureDigest, b.signatureDigest)
+        }
+    }
+
+    @Test fun gen1MissingPublicRecoveryReferenceIsNotCheckableAndNeverBorrowedFromGen2() = runBlocking {
+        imports.bind(card(), true)
+        val gen1 = pipeline.process(mathematicalRead(CardGeneration.GEN1), "math-gen1")
+        val gen2 = pipeline.process(mathematicalRead(CardGeneration.GEN2), "math-gen2")
+        val before = databaseRows()
+        assertTrue(imports.verifySavedCoreSignatures(gen1.id).values.all {
+            it.reason == CardSignatureMathReason.UNKNOWN_GEN1_RECOVERY_KEY && it.source.generation == CardGeneration.GEN1 &&
+                it.source.issuerSourceId != null && it.source.application == CardApplication.GEN1
+        })
+        assertTrue(imports.verifySavedCoreSignatures(gen2.id).values.all {
+            it.status == CardSignatureMathStatus.VALID && it.source.generation == CardGeneration.GEN2 && it.source.issuerSourceId == null
+        })
+        assertEquals(before, databaseRows())
+    }
+
+    @Test fun corruptSavedReceiptIsRejectedRatherThanConvertedToUnsignedMathFallback() = runBlocking {
+        imports.bind(card(), true)
+        val old = pipeline.process(coreRead(), "math-corrupt-old")
+        val source = pipeline.process(mathematicalRead(CardGeneration.GEN2V2), "math-corrupt")
+        db.openHelper.writableDatabase.execSQL("UPDATE card_core_signature_receipts SET fingerprint = 'wrong' WHERE sessionId = ?", arrayOf(source.id))
+        rejected<Exception> { imports.verifySavedCoreSignatures(source.id) }
+        assertTrue(imports.verifySavedCoreSignatures(old.id).values.all { it.reason == CardSignatureMathReason.NO_SIGNATURE })
     }
 
     @Test fun newSignaturesSurviveReopenWithoutBackfillingUnsignedHistoryOrChangingReplay() = runBlocking {

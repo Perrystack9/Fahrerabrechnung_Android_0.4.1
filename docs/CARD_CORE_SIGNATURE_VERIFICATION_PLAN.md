@@ -1,6 +1,6 @@
 # 0504/0505 — mathematische Prüfung gespeicherter Kartensignaturen
 
-**Plan zur Freigabe, 13.10.2026. Keine Implementierung freigegeben oder begonnen.** Tobi beauftragt zunächst einen konkreten technischen Plan für Gen1 und Gen2/Gen2V2. Bestätigte Produktbasis: main `7bbc66ed37dc1129a1e5286319e73e0860a2f474`, 40126 / Room22; Produktmerge #79 und Abschluss #80, aktuelle CI grün. [Regeln](CURRENT_RULES.md), [Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und bestätigte Quellen-/Gerätebelege bleiben erhalten.
+**Freigegeben am 14.10.2026, 06:13 Europe/Berlin; Umsetzung 40127 auf Produktbranch.** Tobi beauftragt zunächst einen konkreten technischen Plan für Gen1 und Gen2/Gen2V2. Bestätigte Produktbasis: main `7bbc66ed37dc1129a1e5286319e73e0860a2f474`, 40126 / Room22; Produktmerge #79 und Abschluss #80, aktuelle CI grün. [Regeln](CURRENT_RULES.md), [Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und bestätigte Quellen-/Gerätebelege bleiben erhalten.
 
 ## Ziel und eng begrenzter Umfang
 
@@ -73,7 +73,7 @@ Dateihash genau einmal bilden und der geprüften ECDSA-Primitive als Digest gebe
 
 ## Kryptobibliothek und geplante Eingriffspunkte
 
-Vorschlag: explizit gepinnte Bouncy-Castle-Lightweight-API, bevorzugt `org.bouncycastle:bcprov-jdk15to18:1.86` (aktueller [Herstellerdownload](https://www.bouncycastle.org/download/bouncy-castle-java/)); Java8-kompatible Distribution. Noch **keine** Dependency hinzugefügt. Release-/Artefakt-/API-/Android-Kompatibilität nach Freigabe vor produktiver Verwendung prüfen; kein ungepinnter Versionsbereich und kein stiller Versionswechsel.
+Vorschlag: explizit gepinnte Bouncy-Castle-Lightweight-API, bevorzugt `org.bouncycastle:bcprov-jdk15to18:1.86` (aktueller [Herstellerdownload](https://www.bouncycastle.org/download/bouncy-castle-java/)); Java8-kompatible Distribution. Dependency exakt hinzugefügt; Originalartefakt und Maven-SHA512 geprüft. JVM-Vektoren erfolgreich, Android-Kompatibilität durch die unveränderte volle CI nachweisen; kein ungepinnter Versionsbereich und kein stiller Versionswechsel.
 
 Bibliotheks-EC-Domänen/ECDSASigner/RSA-Primitiv verwenden; keine eigene EC-Arithmetik oder aus anderen App-Dateien zusammengesuchte Schlüssel. RSA-Rahmenprüfung wird eng gegen die Tachograph-Spezifikation aufgebaut. Kein globales Security.addProvider/removeProvider, kein Ersatz von Androids BC/Keystore/TLS-Providern und keine Änderung an SQLCipher. JVM- und echte Android-API36-Tests müssen insbesondere Brainpool und P521 absichern.
 
@@ -88,7 +88,7 @@ Bibliotheks-EC-Domänen/ECDSASigner/RSA-Primitiv verwenden; keine eigene EC-Arit
 | data/build.gradle.kts, gradle/libs.versions.toml | Genau gepinnte Kryptobibliothek, keine Workflow-/SDK-/DB-Absenkung |
 | Unit-, SQLCipher-/Repository- und Compose-Tests | Neue unabhängige Kryptovektoren und Provenienz-/UI-Abnahme neben allen bisherigen Prüfungen |
 
-Dateinamen sind konkrete vorgesehene Aufteilung; kleine Zusammenlegungen bei Implementierung sind zulässig, Sicherheitsverträge nicht. Änderungen dieses Plan-PR ausschließlich in Markdown. Kein Schemaexport aus Handarbeit.
+Dateinamen sind konkrete vorgesehene Aufteilung; kleine Zusammenlegungen bei Implementierung sind zulässig, Sicherheitsverträge nicht. Plan-PR #81 war ausschließlich Markdown und wurde vor der getrennten freigegebenen Produktimplementierung übernommen. Kein Schemaexport aus Handarbeit.
 
 ## Getrennte Ergebnisse und verständliche Anzeige
 
@@ -128,6 +128,6 @@ Daneben immer eigene Aussage **„Zertifikatsvertrauen nicht geprüft“**, unab
 
 Positive Geräteabnahme gilt für die tatsächlich getestete Karte/Leser/Telefon-Kombination; synthetische vollständige Kurvenabdeckung ersetzt keine reale allgemeine Hardwareabnahme. Negative Datenmanipulation nur an synthetischen Testkopien, niemals an Tobis gespeichertem Originalbestand.
 
-## Noch erforderliche Freigabe
+## Freigabe und verbleibende Produktgates
 
-Freigabe betrifft genau diesen begrenzten Produktumfang einschließlich Gen1-Schlüsselrückgewinnung, gepinnter lokaler Kryptobibliothek, exakter Read-Projektion und kleiner Core-Statusanzeige. Produkt 40126/Schema22 bleibt bis dahin unverändert; keine Implementierung/Dependency/Testfixture/Reader-/DB-/App-Änderung aus diesem Planauftrag ableiten.
+Tobis Freigabe vom 14.10.2026 betrifft genau den oben begrenzten Umfang. Plan-PR #81 ist übernommen; Produktbasis main `8cadcdc0ff1ad8e18496bf2c07fd54bcd5a61da0`, 40126/Room22. Umsetzung 40127 bleibt bis eigener vollständiger endgültiger CI und neuer positiver Geräteabnahme auf einem separaten Draft-PR. [Krypto- und Quellenbelege](CARD_CORE_SIGNATURE_MATH_EVIDENCE.md), [neue Gerätetestpunkte](DEVICE_TEST_40127.md). Keine weitere EF-/Trust-/DDD-/Schreibfreigabe.

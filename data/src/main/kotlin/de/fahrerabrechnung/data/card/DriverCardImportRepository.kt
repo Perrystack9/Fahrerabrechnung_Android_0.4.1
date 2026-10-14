@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.time.Clock
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.ensureActive
 
 enum class CardImportSelection { ACTIVITY, VEHICLES, PAIR, ALL_AVAILABLE }
 
@@ -332,6 +333,23 @@ class DriverCardImportRepository @Inject constructor(
         if (dao.session(id, profile.id) == null || dao.card(sources.driverCardId)?.profileId != profile.id)
             return@withTransaction null
         decode(sources, profile.id)
+    }
+
+    /** Offline derived calculation: the immutable receipt/request/source rows are never updated. */
+    suspend fun verifySavedCoreSignatures(id: String): Map<CardCoreEf, CardCoreSignatureVerification> {
+        val inputs = database.withTransaction {
+            val saved = get(id) ?: return@withTransaction emptyList<SavedCoreVerificationInput>()
+            coreSignatures.verificationInputs(saved)
+        }
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val verifier = CardCoreSignatureVerifier()
+            inputs.associate { input ->
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                val result = verifier.verify(input)
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                input.source.kind to result
+            }.toMap()
+        }
     }
 
     private suspend fun primaryImports(rows: List<DriverImportSourcesEntity>) = rows.filter { row ->

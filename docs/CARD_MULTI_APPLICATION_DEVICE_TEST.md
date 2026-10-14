@@ -1,18 +1,15 @@
-# Aktuelle Gerätepaket-Anleitung 40126
+# Eigene Geräteabnahme 40127 / Room22
 
-Dieses Dokument wird vom bestehenden Paketworkflow als ANLEITUNG.md eingebettet. [Vollständige aktuelle Checkliste](DEVICE_TEST_40126.md) für 40126/Schema 22. Vorherige Abnahmen sind in ihren DEVICE_CONFIRMATION-Dokumenten erhalten.
+Nur das exakte Paket des vollständig CI-grünen endgültigen Produktkopfes verwenden. Update über40126, keine Deinstallation und keine App-Datenlöschung. Feste Testkennung und Signatur bleiben gleich. Diese Anleitung ergänzen wir immer verständlich direkt im Chat. Frühere Geräteabnahmen bleiben erhalten; sie bestätigen die neue Mathematik nicht.
 
+1. `02-FahrerTagebuch-Test-Update.apk` installieren und Version40127 prüfen. Profil, Kartenbindung und bisherige Übernahmen müssen vorhanden bleiben.
+2. **Zuerst ohne Leser** eine bereits mit40124–40126 gespeicherte signierte Übernahme öffnen. „Gespeicherte Kartendaten“ zeigt unter „Kartensignaturen“ Tätigkeiten und Fahrzeuge. Keinen neuen Import dafür anlegen.
+3. Gen1 und Gen2/Gen2V2 derselben Übernahme jeweils getrennt auswählen, soweit angeboten. Für jede Anwendung Tätigkeiten und Fahrzeuge einzeln notieren: „mathematisch gültig“, „mathematisch ungültig“ oder „nicht prüfbar“ samt angezeigtem Grund. Auch Originalgröße/Signaturlänge dürfen unverändert bleiben. „Zertifikatsvertrauen: nicht geprüft“ muss bei beiden Dateien immer stehen.
+4. Unerwartet „mathematisch ungültig“ bitte mit sichtbarer Anwendung, Datei und Bildschirm melden; es wird vor Merge aufgeklärt. „Nicht prüfbar“ bei wirklich fehlendem Original/Zertifikat/Gen1-Einstieg ist zulässig. Keine Daten löschen, reparieren oder ältere Übernahme durch einen frischen Import ersetzen.
+5. Falls vorhanden eine ältere Übernahme **ohne** Core-Signaturen öffnen: keine Signatur/„nicht prüfbar“, niemals das gültige Ergebnis der neueren Übernahme. Auch vorhandenes Altarchiv öffnen; dort kein übertragenes Kartenurteil.
+6. Mehrfach zügig zwischen Anwendungen und alter/neuer Übernahme wechseln. Prüfung darf kurz „wird geprüft“ zeigen; das fertige Urteil muss zur aktuellen Auswahl gehören. Sensible Nummern werden nach Wechsel wieder verborgen. App schließen und ohne Leser neu öffnen: dieselbe alte Übernahme zeigt dasselbe sachliche Ergebnis.
+7. Tätigkeiten, Fahrzeuge, Ereignisse/Störungen und Identifikationsansichten kurz prüfen. Ereignis-/Störungs-/Identifikationssignaturen bleiben wie bisher aufgenommen · ungeprüft; sie werden in diesem Schritt nicht mathematisch verifiziert.
+8. Bisherige eigene Karte/Leser regulär neu importieren. Beide angebotenen Anwendungen ansehen; danach die frühere Übernahme wieder öffnen. Frühere Originale, Belege und Prüfung dürfen dadurch nicht ersetzt werden.
+9. Bei einem zusätzlichen Import Karte während des Lesens entnehmen: keine teilweise neue gespeicherte Gruppe. Nach erneutem Einlegen normaler Import erfolgreich; schon gespeicherte Übernahmen bleiben erhalten.
 
-Eigene neue Abnahme für den exakten vollständig CI-grünen 40126-Kopf. Schema 22; bestehende Testkennung und Signatur unverändert. Update über vorhandenes 40125; keine Deinstallation oder Löschung der App-Daten. Vorherige Gerätebestätigungen bleiben auf ihren Umfang begrenzt.
-
-1. `02-FahrerTagebuch-Test-Update.apk` installieren; Version 40126 prüfen. Alte Übernahmen, Profil und Kartenbindung müssen erhalten sein.
-2. Alte40125-Übernahme öffnen. Beide Anwendungen, Originale, vier Core- und fünf Identifikationsbelege wie bisher. Ereignisse/Störungen zeigen keine nachträglich aufgenommenen Signaturen.
-3. Eigene bekannte Karte mit dem bisherigen Leser neu importieren. Beide angebotenen Anwendungen getrennt öffnen. Unter Ereignisse und Störungen jeweils Originalgröße und Status festhalten: aufgenommen · ungeprüft und tatsächliche Signaturlänge, oder tatsächlichen nachvollziehbaren Fehl-/Nicht-versucht-Grund. Auf üblicher G1+G2V2-Karte vier neue mögliche Belege, zusätzlich zu den neun bestehenden.
-4. Tatsächliche Werte je Anwendung notieren: GEN1/GEN2(V2), Events 0502-Originalbytes/Signaturlänge, Faults 0503-Originalbytes/Signaturlänge. Leere fachliche Listen sind zulässig und behalten vollständige Originalbytes. G1-Signaturen 128 Bytes; G2/V2-Länge folgt realem C101, keine pauschale 64-Byte-Annahme.
-5. Vorhandene Ereignis-/Störungseinträge, Tätigkeiten, Fahrzeuge, Identität und Core-/Identifikationssignaturen auf unveränderte Darstellung prüfen. Technische Meldungen werden weiterhin nicht als Verstöße bewertet.
-6. Zwischen Anwendungen, alter/neuer Übernahme und vorhandenem Altarchiv wechseln: keine übernommenen Signaturen/Größen aus der vorherigen Auswahl; sensible Nummern nach Quellenwechsel wieder verborgen.
-7. Leser entfernen, App schließen/neu öffnen und exakt denselben Import erneut öffnen. Quellen und Signaturstatus ohne Leser erhalten.
-8. Erneut regulär importieren und beide vorherigen Übernahmen wieder öffnen. Keine nachträgliche Änderung älterer Belege.
-9. Bei einem zusätzlichen Test Karte während des Imports entnehmen: kein teilweise gespeicherter neuer Gruppenvorgang; nach erneutem Einlegen frischer normaler Import erfolgreich. Früher bestätigte Abnahmen nicht dafür ersetzen.
-
-Bitte installierte Version, reale Größen/Längen, durchgeführte Punkte und Auffälligkeiten zurückmelden. Keine private Kartennummer oder Rohdaten erforderlich. Bestätigung gilt nur für tatsächlich getestete Karte/Leser; keine mathematische Signatur-/Trust-/vollständige Download-Freigabe. PR bleibt bis neuer positiver Gerätebestätigung offen.
+Rückmeldung: installierte Version, Ergebnis/Grund je Anwendung für Tätigkeiten und Fahrzeuge, durchgeführte Punkte und Auffälligkeiten. Keine vollständige Kartennummer/privaten Rohdaten nötig. Die Abnahme gilt für die tatsächlich getestete Kombination. Produkt-PR bleibt bis neuer positiver Abnahme offen; Mathematik bedeutet weiterhin keine Zertifikatsvertrauens- oder DDD-/Schreibfreigabe.
