@@ -1,0 +1,17 @@
+# Eigene Geräteabnahme 40128 / Room22
+
+Nur das exakte Paket des vollständig CI-grünen endgültigen Produktkopfes verwenden. Update über40127; keine Deinstallation und keine App-Datenlöschung. Anleitung immer verständlich direkt im Chat, diese Datei/ZIP ergänzt sie. Neue positive eigene Rückmeldung vor Produktmerge erforderlich.
+
+1. Update-APK installieren;40128 prüfen. Profil, Kartenbindung und sämtliche bisherigen Übernahmen bleiben vorhanden.
+2. **Zuerst ohne Leser:** eine bereits signiert gespeicherte Übernahme aus40125/40126/40127 im Importverlauf öffnen. Dafür keinen frischen Import anlegen. Unter Kartendaten Tätigkeiten/Fahrzeuge prüfen; beide weiterhin mathematisch gültig oder sachlich begründet nicht prüfbar.
+3. Je angebotener Anwendung GEN1 und GEN2/GEN2V2 getrennt: „Fahrerkarten-Details“ → „Kartenangaben“. „Kartenanwendung“0501 und „Karteninhaber und Gültigkeit“0520 öffnen; aufGEN2V2 zusätzlich „Kartenanwendung V2“0525, soweit vorhanden. Ergebnis/Grund für jede Datei notieren. GEN1/reineGEN2:0525 „nicht vorgesehen“, kein erfundener Defekt.
+4. In denselben Details „Ereignisse und Störungen“ öffnen. Beide gespeicherten0502/0503-Signaturen einzeln prüfen. Auch eine gültig leere Störungsliste kann eine mathematisch gültige Signatur haben: sämtliche gespeicherten Originalbytes werden geprüft.
+5. Bei allen Dateien stehen Aufnahme, mathematische Prüfung und **„Zertifikatsvertrauen: nicht geprüft“** getrennt. Originalgrößen, Signaturlängen und Kartenangaben bleiben gleich. Unerwartet „mathematisch ungültig“ mit Anwendung/Datei/Screenshot melden; vor Merge aufklären. Wirklich fehlende Signatur/Original/Zertifikate/Gen1-Einstieg kann „nicht prüfbar“ mit Grund bedeuten. Alte Übernahme nicht durch frischen Import ersetzen/reparieren.
+6. Alte Übernahme ohne Signaturen und vorhandenes Altarchiv soweit vorhanden öffnen; keine übertragenen gültigen Ergebnisse. Mehrfach zügig zwischen alten/neuen Übernahmen, GEN1/GEN2V2 und den drei Identifikationsdateien wechseln. Endergebnis gehört zur aktuellen Auswahl; sensible Nummern werden erneut verborgen. Kurzes „wird geprüft“ ist zulässig.
+7. App vollständig schließen und ohne Leser wieder öffnen; dieselbe gespeicherte Übernahme zeigt dieselben Ergebnisse. Tätigkeiten/Fahrzeuge/Identität/Ereignisse/Störungen und übrige bestehende Ansichten funktionieren weiter.
+8. Eigene Karte mit bisherigem Leser regulär neu importieren, beide angebotenen Anwendungen und alle vorhandenen Dateisignaturen prüfen. Frühere Übernahme anschließend erneut öffnen; alte Daten/Originale/Belege und Ergebnisse bleiben erhalten.
+9. Zusätzlichen Import durch Kartenentnahme während des Lesens unterbrechen: keine teilweise gespeicherte neue Gruppe. Nach erneutem Einlegen funktioniert normaler Import; alte Übernahmen bleiben erhalten.
+
+Rückmeldung: installierte Version40128, Mathematik-Ergebnis/Grund je angebotener Anwendung und Datei sowie erledigte Punkte/Auffälligkeiten. Keine vollständigen Kartennummern oder privaten Rohdaten erforderlich. Die Abnahme gilt ausschließlich für den exakten Produktbaum und die tatsächlich getestete Kombination; kein zusätzliches Hardware-/Kurven-/GEN2-ohne-V2-Protokoll daraus ableiten.
+
+Nach neuer positiver Abnahme und Produktmerge ist die mathematische Prüfung sämtlicher derzeit gespeicherter Kartendateisignaturen abgeschlossen. Zertifikatsvertrauen bleibt getrennt ungeprüft. Anschließend Benutzeroberfläche/Funktionen für1.0 planen.

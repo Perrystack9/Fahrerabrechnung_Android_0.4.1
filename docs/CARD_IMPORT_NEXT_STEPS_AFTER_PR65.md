@@ -38,13 +38,13 @@ Reine abgeleitete Leseprojektion aus exakten historischen Originalen/Child-Recei
 
 ## Aktueller Planungsauftrag: gespeicherte Dateisignaturen vollständig prüfen
 
-Tobi14.10.2026 10:48 Europe/Berlin: mathematische Verifikation aller bereits gespeicherten Kartensignaturen abschließen. [Kurzer Plan A1–A8](CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), **Implementierung erst nach Freigabe**. Vorhandene0501/0520/0502/0503-Receipts für GEN1/GEN2/GEN2V2 und0525 nurV2 anbinden;40127-Engine/0504/0505 und eigene Herkunft wiederverwenden, Room22/Aufnahme/Fingerprints/alle Gates erhalten. Keine neue Signaturaufnahme. Nach neuer eigener positiver Abnahme diesen mathematischen Umfang schließen; anschließend Benutzeroberfläche und vereinbarte Funktionen für1.0 planen.
+Tobi14.10.2026 10:48 Europe/Berlin: mathematische Verifikation aller bereits gespeicherten Kartensignaturen abschließen. [Kurzer Plan A1–A8](CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), **vollständige Umsetzung nach A1–A8 freigegeben14.10.2026 11:20 Europe/Berlin**. Vorhandene0501/0520/0502/0503-Receipts für GEN1/GEN2/GEN2V2 und0525 nurV2 anbinden;40127-Engine/0504/0505 und eigene Herkunft wiederverwenden, Room22/Aufnahme/Fingerprints/alle Gates erhalten. Keine neue Signaturaufnahme. Nach neuer eigener positiver Abnahme diesen mathematischen Umfang schließen; anschließend Benutzeroberfläche und vereinbarte Funktionen für1.0 planen.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Mathematische Prüfung vorhandener Identity-/Event-/Fault-Receipts | Aktueller Abschlussplan oben; Umsetzung wartet auf Freigabe. Andere nicht gespeicherte EF-Signaturen erweitern diesen Auftrag nicht. |
+| Mathematische Prüfung vorhandener Identity-/Event-/Fault-Receipts | Freigegebener Abschlussplan oben; Umsetzung40128 auf getrenntem Produktbranch, eigene endgültige volle CI und neue Geräteabnahme vor Merge. Andere nicht gespeicherte EF-Signaturen erweitern diesen Auftrag nicht. |
 | Weitere EF-Signaturen | 0504/0505, der begrenzte 40125-Identifikationsumfang und 0502/0503 sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs anhand der vorhandenen Matrix und eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |

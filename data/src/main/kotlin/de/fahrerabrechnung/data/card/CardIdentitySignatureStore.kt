@@ -35,6 +35,25 @@ internal class CardIdentitySignatureStore(private val dao: CardIdentitySignature
         }
     }
 
+    /** Reuse all historical decode/fingerprint checks; never borrow an unsigned source for a receipt. */
+    suspend fun verificationInputs(saved: SavedDriverImport): List<SavedSignatureVerificationInput> {
+        val signatures = load(saved.driverCardId, saved.id)
+        val rows = dao.receipts(saved.id).associateBy { it.kind }
+        val generation = saved.identitySources[CardIdentitySourceKind.APPLICATION]?.file?.generation
+            ?: saved.identitySources[CardIdentitySourceKind.IDENTIFICATION]?.file?.generation
+            ?: signatures.values.firstOrNull()?.generation
+        return CardIdentitySourceKind.entries.filter {
+            it != CardIdentitySourceKind.APPLICATION_V2 || generation == CardGeneration.GEN2V2
+        }.map { kind ->
+            val row = rows[kind.storageKind]
+            val original = saved.identitySources[kind]
+            check(row == null || row.originalSourceId == null || row.originalSourceId == original?.id)
+            signatureSnapshot(sources, saved, kind.signedEf(), signatures[kind]?.mathReceipt(), row?.fingerprint,
+                if (row == null) original?.id else row.originalSourceId, row?.certificateSourceId,
+                original?.file?.bytes)
+        }
+    }
+
     private suspend fun decode(row: CardIdentitySignatureEntity): CardIdentitySignature {
         val kind = CardIdentitySourceKind.entries.single { it.storageKind == row.kind }
         val generation = CardGeneration.valueOf(row.generation)
