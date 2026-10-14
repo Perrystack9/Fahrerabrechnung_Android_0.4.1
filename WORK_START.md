@@ -16,7 +16,7 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale M
 - Spesen/Reisekosten, Heimkehr/Übernachtung, Heimatstandort samt Einrichtung, Lohn/Arbeitgeberzuschläge, lohnrelevante Arbeitszeit und Abrechnung sind vollständig gestrichen.
 - PDF-Abrechnungs-/Lohnexport entfällt; neutraler Tätigkeits-/Fahrtenbericht ist nicht verbindlich geplant.
 - GNSS bleibt: echte Punkte und später gekennzeichneter grober chronologischer Verlauf; keine behauptete gefahrene Straßenroute oder Kilometer aus Verbindungslinien.
-- Oberfläche, Navigation und Onboarding als nächster Produktschwerpunkt für 1.0 neu konzipieren. Zielrichtung etwa vier Bereiche **Start, Kalender, Auswertung, Einstellungen**; konkrete Struktur und Umsetzung separat planen.
+- Priorität für1.0: vollständige zeitbezogene Verstoß-Engine nach Verordnung (EG) Nr.561/2006; danach Kalender, Auswertungen und neue Oberfläche/Navigation/Onboarding. Zielrichtung etwa vier Bereiche **Start, Kalender, Auswertung, Einstellungen** bleibt offen; konkrete Anforderungen/Umsetzung separat planen.
 
 ## Nachweislich fertig und offene Grenzen
 
@@ -26,13 +26,19 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale M
 
 Keine DB-Schreiboperation, Migration, Cache, Backfill, neue Signaturaufnahme oder jüngerer Quellenersatz. Alte Aufnahmestatus/Fingerprints, Room22 und sämtliche Sicherheits-/CI-/Migrations-/Geräteprüfungen erhalten. Bestätigte Vorgänger 40124–40127 nicht erneut bearbeiten. [Abgeschlossener Plan](docs/CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), [technische Nachweise](docs/CARD_STORED_SIGNATURE_MATH_EVIDENCE.md).
 
-Zusätzlicher voller Produkt-Main-Lauf [38559255131](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38559255131) für Produktmerge beim Abschluss noch laufend; kein Erfolgsclaim daraus. Aktuellen Lauf und getrennten Dokumentationsabschluss beim nächsten Start live prüfen. Finale Produkt-PR-CI und eigene Geräteabnahme sind erfolgreich; der Produktmerge besitzt den identischen vollständigen Baum.
+Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38559255131), Versuch1, für Produktmerge `c4057b3810d1ad0f5ef8e27cf69b260acd9c8405` jetzt vollständig erfolgreich; alle vier Jobs einschließlich ungekürzter API36-SQLCipher-/Compose-Instrumentierung und Abschlussgate. Am14.10.2026 nach Übergabeauftrag live bestätigt. Keine offenen40128-Prüfungen; Produktmerge besitzt exakt den endgültigen CI-/Gerätebaum.
 
-## Nächste Arbeit
+## Nächste Arbeit und Übergabe
 
-**Benutzeroberfläche und vereinbarte Funktionen für Version 1.0 planen.** Bestehenden tatsächlich bestätigten Import-/Datenstand übernehmen und konkrete Navigation, Ansichten und Bedienabläufe mit Tobi abstimmen. Noch keine bestimmte UI- oder Funktionsimplementierung daraus ableiten. Keine automatische weitere Kryptografie-, Vertrauenskette-, DDD-/Export-, Signaturaufnahme- oder Kartenschreibphase.
+**Neue Produktpriorität, Tobi14.10.2026 14:06 Europe/Berlin:** zuerst eine vollständige zeitbezogene Verstoß-Engine nach der Verordnung (EG) Nr.561/2006; anschließend Kalender, Auswertungen und neue Benutzeroberfläche für Version1.0. Die Engine wurde in einem separaten Beratungschat mit80 Produktentscheidungen konzipiert. **Diese80 Entscheidungen werden von Tobi der neuen Work-Sitzung gesondert übergeben; sie sind hier noch nicht als vollständige verbindliche Anforderungen vorhanden.** Keine fehlenden Entscheidungen erfinden oder aus alten Chats/Teilinformationen rekonstruieren. Noch keine Engine-Implementierung beginnen.
 
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; Abschlussbranch `docs/stored-signature-math-40128-closure`. Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherung `/workspace/scratch/4c3cf966d792/session-backups` erhalten; alte Produkt-/Docs-/Sicherungsbranches nicht löschen.
+Die neue Sitzung liest zunächst den bestätigten Repository-Stand und übernimmt die80 Entscheidungen nach ihrer Übergabe vollständig. Danach Anforderungen mit vorhandenem Daten-/Codeumfang und geltenden Projektregeln abgleichen, tatsächliche Lücken/Widersprüche benennen und einen konkreten technischen Umsetzungsplan mit Abnahmekriterien vorlegen. **Bis zur gesonderten Umsetzungsfreigabe keine Engine implementieren.** Bestehende Import-/Datenbasis und sämtliche Gates erhalten.
+
+Die mathematische Signaturprüfung ist mit40128 vorerst beendet; keine automatische Trust-/DDD-/Export-/Signaturaufnahme-/Kartenschreibphase. **„Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten**, auch nach erneutem Einlesen.
+
+Dokumentationsabschluss [PR #86](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/86) übernommen, Merge `b61ed8aedbab53847c5361f05b61ef280dded613`; Docs-PR-CI38559979155 und Docs-main-CI38560196780 erfolgreich. Bei der Übergabeprüfung keine offenen PRs; aktuelle Übergabeänderungen auf eigenem Docs-Branch. Aktuellen main und späteren Übergabe-PR/-Merge weiterhin live prüfen.
+
+Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; Übergabebranch `docs/work-handoff-v1-violation-engine-20261014`. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
 
 ## Sitzungsroutine
 
