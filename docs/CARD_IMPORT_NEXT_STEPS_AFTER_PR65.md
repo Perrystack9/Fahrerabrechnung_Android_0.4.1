@@ -36,11 +36,15 @@ Der [freigegebene Plan A1–A10](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md) ist m
 
 Reine abgeleitete Leseprojektion aus exakten historischen Originalen/Child-Receipts. Gen1-RSA-Recovery und getrennte strikte PKCS1/SHA1-Dateiprüfung; sechs feste Gen2/V2-ECDSA-Domänen. Quellen-/Snapshot-/Cancellation-/Auswahl-/Archivschutz, alle alten Fingerprints/Aufnahmezustände, DB-Zeilen/Room22 und bisherigen Sicherheits-/CI-/Migrations-/Geräteprüfungen erhalten. Andere EF-Signaturen unverifiziert, Vertrauen stets NOT_EVALUATED. Keine automatische weitere Produktfreigabe.
 
+## Aktueller Planungsauftrag: gespeicherte Dateisignaturen vollständig prüfen
+
+Tobi14.10.2026 10:48 Europe/Berlin: mathematische Verifikation aller bereits gespeicherten Kartensignaturen abschließen. [Kurzer Plan A1–A8](CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), **Implementierung erst nach Freigabe**. Vorhandene0501/0520/0502/0503-Receipts für GEN1/GEN2/GEN2V2 und0525 nurV2 anbinden;40127-Engine/0504/0505 und eigene Herkunft wiederverwenden, Room22/Aufnahme/Fingerprints/alle Gates erhalten. Keine neue Signaturaufnahme. Nach neuer eigener positiver Abnahme diesen mathematischen Umfang schließen; anschließend Benutzeroberfläche und vereinbarte Funktionen für1.0 planen.
+
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Weitere mathematische EF-Verifikation | Nur0504/0505 in40127 abgeschlossen; Identifikations-/Ereignis-/Störungs- oder andere EFs benötigen getrennten Auftrag, exakte eigene Originale/Receipts und neue passende Abnahme |
+| Mathematische Prüfung vorhandener Identity-/Event-/Fault-Receipts | Aktueller Abschlussplan oben; Umsetzung wartet auf Freigabe. Andere nicht gespeicherte EF-Signaturen erweitern diesen Auftrag nicht. |
 | Weitere EF-Signaturen | 0504/0505, der begrenzte 40125-Identifikationsumfang und 0502/0503 sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs anhand der vorhandenen Matrix und eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
