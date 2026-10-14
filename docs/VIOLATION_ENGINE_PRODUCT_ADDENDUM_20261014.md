@@ -130,3 +130,54 @@ Vorlegen: konsistente Gesamtplanung, gesetzliche Matrix im beschlossenen Umfang,
 Vorhandene Implementierungen, Sicherheitsregeln, Signaturprüfung, SQLCipher/Keystore, Kartenoriginale und Herkunft bleiben erhalten. Technische Prüf-/Abnahmevorgaben nicht abschwächen. **Keine Produktcode-, Datenbankschema-, Parser-, Hardware- oder APK-Änderung. PR #88 bleibt reiner Planungsentwurf.**
 
 Dieser Auftrag genehmigt ausschließlich Aktualisierung und Fertigstellung der Planung. Am Abschluss Änderungen und verbliebene Freigabepunkte zusammenfassen und den vollständigen Plan zur Prüfung vorlegen. **Erst Tobis gesonderte ausdrückliche Zustimmung erlaubt die Implementierung; Releasefreigabe ist nochmals getrennt.**
+
+
+## Abschließende Produktquelle P03–P05 und Finalisierungsauftrag
+
+**Quelle:** Tobis Nachricht „FahrerTagebuch 1.0 – Abschließende Produktentscheidungen P03–P05 und Finalisierung des Planungs-PR #88“,14.10.2026,19:12 Europe/Berlin. Die80 Entscheidungen/A–H und E01–E12 sind bestätigt. Die folgenden Festlegungen schließen die letzten Produktpräzisierungen; widersprechende ältere Vorschläge sind überholt. Sie ändern keine gesetzlichen Grenzwerte und genehmigen keine zusätzlichen Produktfunktionen.
+
+## P03 – Abschließend beschlossen: keine festen Frühwarnschwellen
+
+Die vorgeschlagenen festen24-Stunden-Schwellen vor der nächsten Wochenruhe und2-Stunden-Schwellen vor dem letzten täglichen Ruhebeginn sind gestrichen. **Nur diese festen Auslöseschwellen entfallen, nicht die beschlossenen Frühwarnfunktionen.**
+
+Verbindlich bleiben: bevorstehende relevante Ruhezeitfristen anzeigen, offene Ausgleichspflichten mit ihren gesetzlichen Fristen anzeigen, bevorstehende Frist und festgestellte Überschreitung klar unterscheiden, ausschließlich am letzten belegten Fahrerkartenstand rechnen und keine Echtzeitüberwachung/künstlichen Live-Countdowns voraussetzen. Darstellung alltagstauglich/zurückhaltend. Keine neuen starren Stunden- oder Prozentgrenzen ohne gesonderten Produktbeschluss. Die konkrete technische Darstellung kann in der späteren UI-Arbeit innerhalb dieser Vorgaben ausgearbeitet werden.
+
+**P03 produktseitig geschlossen.** PD12/15/16 und die gesetzlichen Zeitgrenzen bleiben; alte feste Warnvorschläge sind in der Änderungsübersicht als überholt dokumentiert.
+
+## P04 – Abschließend beschlossen: lokale Beta-Fehlerberichte
+
+Verbindlicher Ablauf:
+
+1. Einfaches Fehlerformular in der App.
+2. Problembeschreibung durch den Nutzer.
+3. Relevante technische Versions-/Diagnoseinformationen.
+4. Vorschau der enthaltenen Daten vor möglicher Weitergabe.
+5. Ausdrücklich freiwillige Zustimmung zu optionalen Diagnosedaten; ohne Zustimmung keine Einbeziehung.
+6. Bericht bewusst lokal als Datei speichern.
+7. Bericht bewusst über das Android-Teilen-Menü weitergeben.
+
+Kein eigenes Backend, keine Pflichtregistrierung, keine automatische Übermittlung an Entwickler/Dritte, keine ungefragte personenbezogene Datenweitergabe. **Keine vollständigen Fahrerkarten-Rohdaten oder APDU-Protokolle im Bericht, auch nicht nach Zustimmung.** Sensible Inhalte minimieren/maskieren nach bestehenden Regeln. Fehlerformular, Vorschau und lokales Speichern funktionieren offline; Teilen startet nur auf bewusste Nutzeraktion den Android-Dialog. Der tatsächliche Versand eines vom Nutzer gewählten Drittprogramms ist keine automatische App-Übermittlung oder zugesicherte Offline-Zustellung.
+
+**P04 produktseitig geschlossen.** PD44/77/79 und deren Datenschutz-/Diagnoseanforderungen bleiben. Berichtsdateiformat und Layout sind spätere technische Ausarbeitung, keine neue Produktfrage oder Backendfreigabe.
+
+## P05 – Abschließend beschlossen: belegte Schichtdarstellung
+
+Im Schichttagmodus nur einen zuverlässig aus vorhandenen Tätigkeits-/Ruhedaten bestimmbaren Schichtbeginn verwenden. Ist er nicht eindeutig belegbar, lautet der sichtbare Hinweis exakt:
+
+> Schichtzuordnung unklar
+
+Kein erfundener Schichtbeginn, keine ergänzten unbekannten Tätigkeiten oder künstlichen Schichtgrenzen. Vorhandene Tätigkeiten bleiben vollständig in der Kalenderansicht mit tatsächlichen unveränderten Zeitstempeln/Dauern sichtbar. Gesetzliche Lenk-/Ruheberechnung unabhängig von Darstellung.
+
+Ein späterer vollständiger Kartenimport darf die Schichtdarstellung mit den dann tatsächlich belegten Informationen automatisch neu bestimmen. **Reine Darstellungsänderung erzeugt keinen künstlichen Rechtsverstoß, keine neue Ausgleichspflicht und keinen gesetzlichen Zählerreset.** Tatsächlich neue Tätigkeits-/Kontextbelege können dagegen die ohnehin beschlossene gesetzliche Neubewertung auslösen; deren Ursache muss die geänderte Datenbasis sein, nicht der Displayanker.
+
+**P05 produktseitig geschlossen.** PD14/27/39/40/56 und GrundsatzE bleiben; rechtliche und Darstellungsschichtanker sind getrennt.
+
+## Finalisierungsauftrag und getrennte Freigaben
+
+PR #88 enthält nun alle80 Entscheidungen/A–H, E01–E12 und geschlossenen P01–P05, konsistente Architektur/Regel-/Testmatrix, eindeutig zugeordnete Abnahmekriterien und M0–M7-Voraussetzungen/Gates. Historische Vorschläge bleiben nachweisbar; kein stilles Umschreiben. Passende produktfachliche und technische Fälle für P03–P05 ergänzen. Die gesetzliche Matrix nur bei tatsächlichem Konsistenzbedarf ändern; keine neue gesetzliche Grenze.
+
+**L01–L09 bleiben ausdrücklich offen und sind keine Produktentscheidungen.** Dokumentieren: Nachweis vor jeweiligem Paket, noch zu verifizierende Quellen, fachlich zu bestätigende Rechenregeln, unabhängige Referenzfälle und spätere Gesamt-/Releasevoraussetzungen. Ohne tatsächlichen Beleg keine abgeschlossene Prüfung behaupten. Unabhängige qualifizierte Fachprüfung und Beta ungefähr5–10Berufskraftfahrer bleiben verpflichtend.
+
+Dieser Auftrag erlaubt nur Planung/Dokumentationsprüfung und Aktualisierung des Draft-PR. Keine Androidcode-, Parser-, Schema-/Migrations-, Sicherheits-/Krypto-, Hardware-, APK-/Versions- oder CI-/Sicherheitsvorgabenänderung. Bestehende Arbeit/Originale/Herkunft und technische Gates erhalten.
+
+**Freigabefolge:** jetzt finalen Plan/echte Dokumentationschecks vorlegen; erst Tobis ausdrückliche Freigabe erlaubt die anschließende M0-Facharbeit. M0 erarbeitet die abschließende fachliche Spezifikation/Nachweise. **Programmierung ab M1 braucht danach eine weitere gesonderte ausdrückliche Umsetzungsfreigabe.** Releasefreigabe nochmals getrennt. PR bleibt bis zu Tobis Entscheidung Planungsentwurf.

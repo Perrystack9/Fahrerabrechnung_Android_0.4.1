@@ -1,18 +1,18 @@
 # FahrerTagebuch 1.0 – Plan für die zeitbezogene Verstoß-Engine
 
-**Stand: 14.10.2026. ENTWURF ZUR PRÜFUNG. Keine Umsetzungsfreigabe, keine Engine implementiert.**
+**Stand: 14.10.2026, finale Produktplanung zur Prüfung. P01–P05 geschlossen. PR #88 bleibt ENTWURF. Noch keine M0-Freigabe, Programmierungs- oder Releasefreigabe; keine Engine implementiert.**
 
 Die technischen und fachlichen Arbeitspakete, Datenverträge, Regelmatrix, Teststrategie und Abnahmekriterien sind hier zusammengeführt. Gesetzliche Einzelheiten mit noch ausstehender Primärquellen- oder unabhängiger Fachprüfung sind ausdrücklich als Freigabepunkte ausgewiesen. Die Planung darf nicht als bereits geprüfte vollständige Rechtsberechnung ausgegeben werden.
 
 ## 1. Verbindliche Grundlage und Lesereihenfolge
 
 1. [Historische80 Entscheidungen und A–H](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md), unverändert erhalten.
-2. [Verbindliche Ergänzungen E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md): bei Produktwidersprüchen vorrangig; [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md) mit sämtlichen betroffenen Planstellen.
+2. [Verbindliche Ergänzungen E01–E12 und abschließende P03–P05](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md): bei Produktwidersprüchen vorrangig; [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md) mit sämtlichen betroffenen Planstellen.
 3. Dieses Dokument: Architektur, Datenbedarf, Umsetzungspakete und Freigaben.
 4. [Gesetzliche Regelmatrix](VIOLATION_ENGINE_LEGAL_MATRIX.md):58 Regelzeilen, historischer Rechtsstand, Anwendbarkeitsgrenzen, Zeitsonderregeln, Schweregrade und Quellen.
-5. [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md):116 fachliche Mindestfälle und43 Daten-/Technikfälle (ursprünglich98/31 plus18/12), PD01–PD80 und ergänzende E01–E12-Zuordnung;20 Abnahmekriterien (ursprünglich16 plus4).
+5. [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md):116 gesetzliche/fachliche Mindestfälle,7 zusätzliche produktfachliche Fälle PF01–PF07 und51 Daten-/Technikfälle (43+8), PD01–PD80 sowie vollständige E01–E12-/P01–P05-Zuordnung;23 Abnahmekriterien (20+3), allen M0–M7-Paketen zugeordnet.
 
-Die vollständig übergebenen Nachrichten sind die Quelle; der spätere Abschlussauftrag präzisiert beziehungsweise ersetzt nur seine ausdrücklich betroffenen älteren Formulierungen. Gesetze haben Vorrang vor Produktentscheidungen. **PR #88 bleibt Entwurf; Planaktualisierung ist keine Implementierungs- oder Releasefreigabe.**
+Die vollständig übergebenen Nachrichten sind die Quelle; der spätere Abschlussauftrag präzisiert beziehungsweise ersetzt nur seine ausdrücklich betroffenen älteren Formulierungen. Gesetze haben Vorrang vor Produktentscheidungen. **PR #88 bleibt Entwurf. Dieser Finalisierungsauftrag ist keine Freigabe der anschließenden M0-Facharbeit. Erst gesonderte Zustimmung startet M0; nach dessen fachlicher Spezifikation benötigt Programmierung ab M1 eine weitere ausdrückliche Umsetzungsfreigabe. Releasefreigabe bleibt getrennt.**
 
 **Version1.0:** vollständige anwendbare zeitbezogene561/2006-Berechnung für regulären professionellen Güterverkehr und unterstützten Linien-/Gelegenheitsbusverkehr, einschließlich Verlängerungen, Reduzierungen, Anrechnung, Ausgleich und bestätigten Sonderregeln. E09 begrenzt aktive Spezialbetriebskataloge; nachgewiesen nicht anwendbare oder unzuverlässig einzuordnende Einsätze erhalten keine unberechtigten EU-Befunde, Budgets oder Entwarnungen. Anwendbare nationale/temporäre Abweichungen werden nicht durch die Produktgrenze aufgehoben, sondern bei konkreter Betroffenheit berücksichtigt oder als Prüfgrenze ausgewiesen.
 
@@ -234,13 +234,13 @@ Audit enthält:
 
 ## 10. Ansichten und chronologische Zuordnung
 
-Geplanter Startumfang: kompakte Verstoßübersicht, deutliche Datenlücken-/Prüfhinweise, verbrauchte/verbleibende Tagesverlängerungen und Reduzierungen, Wochen- und Doppelwochenbudgets getrennt sowie Wochenruhefrist erst bei freigegebener Relevanzschwelle. Restfahrt bis Art.-7-Pause bleibt im Detail. E07-Einträge in der Zusammenfassung ausdrücklich als rechnerische Überschreitungen mit offener Bewertung kennzeichnen, nicht in eine unqualifizierte Zahl „gesicherter Rechtsverstöße“ hineinrechnen.
+Geplanter Startumfang: kompakte Verstoßübersicht, deutliche Datenlücken-/Prüfhinweise, verbrauchte/verbleibende Tagesverlängerungen und Reduzierungen, Wochen- und Doppelwochenbudgets getrennt sowie bevorstehende relevante Wochenruhefristen in alltagstauglicher zurückhaltender Darstellung. **P03 streicht nur die vorgeschlagenen festen24-/2-h-Auslöseschwellen.** Beschlossene tägliche Frühwarnung, relevante Wochenruhehinweise und offene Ausgleiche mit gesetzlichen Fristen bleiben. Keine neuen starren Stunden-/Prozentgrenzen ohne Produktbeschluss; konkrete technische Darstellung in M5 innerhalb dieser Vorgaben. Restfahrt bis Art.-7-Pause bleibt im Detail. E07-Einträge in der Zusammenfassung ausdrücklich als rechnerische Überschreitungen mit offener Bewertung kennzeichnen, nicht in eine unqualifizierte Zahl „gesicherter Rechtsverstöße“ hineinrechnen.
 
 Verstoßhistorie: jüngste28Tage als Anzeigevorgabe, freie Zeitraumwahl und Artfilter, neueste Ereignisse zuerst. Typgruppen nach jüngstem Einzelereignis; zusammenhängende Sachverhalte dürfen mehrere rechtlich eigenständige Befunde enthalten. Kein Statusfilter und keine zusätzlichen verpflichtenden Schnellbuttons.
 
 Details enthalten fachliche Berechnung und konkreten Gesetzesverweis, angewendete Tatzeitfassung, exakte Intervalle, Sonderregel-Voraussetzungen sowie aufklappbare technische Quellen. Maskierung nach jedem Auswahlwechsel erneut setzen. Zertifikatsvertrauen bleibt ungeprüft; mathematische Belege aus40128 nur wiederverwenden. Bekannte Kontrollgeräte-Nachträge erhalten die kleine E02-Beschriftung am tatsächlichen Segment/in dessen Detail; normale Tätigkeitsfarbe bleibt, keine alarmierende Verstoßdarstellung.
 
-Kalendertag-/Schichttagmodus gruppiert dieselben Instant-basierten Daten anders. Im Schichtmodus Datum des tatsächlichen Schichtbeginns; eine ungeklärte Lücke wird nicht still zur neuen Schichtgrenze. **Produktpräzisierung P05:** reine Darstellungsgrenze bei fehlendem klaren Schichtanker bestimmen; gesetzliche Ruhe-/Lenkanker bleiben davon getrennt. Mitternacht und Sommer-/Winterzeit mit tatsächlichem UTC-Offset markieren. Detailnavigation hebt Grenzpunkt plus gesamten betroffenen Quellenzeitraum hervor.
+Kalendertag-/Schichttagmodus gruppiert dieselben Instant-basierten Daten anders. Im Schichtmodus Datum des tatsächlichen Schichtbeginns; eine ungeklärte Lücke wird nicht still zur neuen Schichtgrenze. **P05 beschlossen:** Nur zuverlässig aus Tätigkeits-/Ruhedaten bestimmten Schichtbeginn nutzen. Sonst exakt **„Schichtzuordnung unklar“** anzeigen; keine fehlende Tätigkeit, erfundener Beginn oder künstliche Schichtgrenze. Vorhandene Tätigkeiten bleiben vollständig in der Kalenderansicht mit tatsächlichen Zeiten/Dauern sichtbar. Später vollständig belegte Daten dürfen die Anzeige automatisch korrigieren. Reine Displayänderung erzeugt keinen Rechtsverstoß, keine Ausgleichspflicht, keinen gesetzlichen Zählerreset und keine künstliche „Neu“-Markierung; reale neue Rechtsdaten werden separat nach dem bestehenden Auditvertrag bewertet. Mitternacht und Sommer-/Winterzeit mit tatsächlichem UTC-Offset markieren. Detailnavigation hebt Grenzpunkt plus gesamten betroffenen Quellenzeitraum hervor.
 
 Keine positive Gesamtmeldung bei unvollständig geprüftem ausgewähltem Zeitraum oder relevanten offenen Hinweisen. Bei ausreichender Abdeckung kurze sachliche positive Meldung; keine Behauptung einer allgemeinen amtlichen Freigabe.
 
@@ -262,7 +262,9 @@ Vorhandene installierte Regelabdeckung und neuere mögliche Ausnahmen werden nic
 
 Geschlossene Beta etwa5–10Lkw-Fahrer; Busregeln trotzdem vollständig fachlich und technisch abnehmen, ohne Bus-Hardwarebeta zu behaupten. Lokale technische Diagnoseansicht: aktuelle Regel-/Inputrevision, Stichtag, ausgeführte Regelgruppen, technische Fehlercodes und maskierte Quellenreferenzen. Fachliche Testabdeckungsberichte bleiben interne Entwicklungsnachweise und sind nicht als allgemeines Produktgütesiegel sichtbar.
 
-Fehlerformular in der App: Beschreibung und notwendige technische Versionsangaben; Diagnosen nur optional, datensparsam, mit Vorschau und ausdrücklicher Testerzustimmung. Kein automatischer Rohkarten-/Standortupload, keine vollständigen APDUs. **P04:** Zustell-/Exportweg vor Umsetzung auswählen; neues Backend/Konto/Service wird nicht vorausgesetzt. Alle1.0-Texte auf Deutsch.
+**P04 beschlossen:** einfaches lokales App-Fehlerformular mit Problembeschreibung und relevanten technischen Versionsinformationen. Optionale Diagnosedaten erst nach Vorschau und ausdrücklicher freiwilliger Zustimmung aufnehmen. Die Vorschau zeigt den tatsächlich vorgesehenen Datei-/Teileninhalt, einschließlich maskierter notwendiger Grunddaten; Ablehnung optionaler Diagnosen lässt einen Bericht ohne diese Anhänge zu.
+
+Lokales Speichern als Datei und bewusstes Android-Teilen sind getrennte Nutzeraktionen. Formular, Vorschau und Speichern sind offline nutzbar. Teilen öffnet bewusst den Systemdialog mit Content-URI/begrenztem Leserecht; die App sendet nichts automatisch und verspricht keinen Offlineversand durch fremde Zielprogramme. Kein Backend, keine Registrierung, kein automatischer Empfänger/Upload oder späterer verdeckter Versand nach Internet-Rückkehr. Keine vollständigen Fahrerkarten-Rohdaten/APDU-Protokolle im Bericht, auch nicht bei Zustimmung. Technische Informationen aus einer minimierten freigegebenen Feldliste statt beliebigen Rohlogs/Exceptiontexten; bestehende Maskierung/Sicherheit erhalten. Datei- und Layoutformat werden in M6 technisch ausgearbeitet. Alle1.0-Texte auf Deutsch.
 
 Unabhängige rechtliche Fachprüfung benötigt eine tatsächlich qualifizierte externe Person/Organisation und dokumentierte Ergebnisse. Modell-Selbstaudit oder Betafahrer ersetzt diese Prüfung nicht. Kontaktaufnahme/Datensendung ist in diesem Plan nicht autorisiert.
 
@@ -272,18 +274,30 @@ Die Reihenfolge hält die Engine als nächsten Produktschwerpunkt fest. Kalender
 
 | Paket | Abhängigkeit und konkreter Umfang | Prüfgate vor Folgepaket / Merge |
 |---|---|---|
-| M0 – Fachliche Spezifikation schließen | Vor Rechenkern: amtliche Fassungen/Fundstellen/Wirksamkeit pinnen, L01–L09 für jeweilige Regelgruppe schließen, unabhängige Goldenfälle; P03–P05 vor betroffener UI/Fehlerberichtsarbeit entscheiden. E02–E10/P01/P02 nicht erneut zur Produktwahl stellen. | Noch ausschließlich Dokumentation/Fachprüfung. Tobi muss den konkreten Plan ausdrücklich zur Implementierung freigeben. Release-Fachgesamtprüfung bleibt nochmals M7. |
-| M1 – Eingang und Herkunft | Nach freigegebenem M0-Datenvertrag: lesende0504-Semantik, beide Quellen, Stichtage, Scope-Guard, Duplikate/Konflikte, gezielter Kontext mit Antwortwiederverwendung, getrennte abgeleitete Persistenz. | A01–A06 sowie Eingangs-/Herkunftsanteile A17/A18; passende DT-Quellenfälle. LG99/LG100 zunächst als freigegebene Vektoren, tatsächlicher Rechtsnachweis in M2/M3, UI-Anteil A17 in M5. Eigene volle CI; Import-/Persistenz-/Migrationsänderung braucht eigene Geräteabnahme vor Merge. |
+| M0 – Fachliche Spezifikation schließen | Erst nach Tobis ausdrücklicher M0-Freigabe: amtliche Fassungen/Fundstellen/Wirksamkeit pinnen, L01–L09 mit konkreten Quellen-/Auslegungsnachweisen bearbeiten, vollständige unabhängige Referenzvektoren ausarbeiten. Alle Produktpunkte bereits geschlossen. | Ausschließlich Fach-/Dokumentationsarbeit; keine Programmierung/Schema-/Parser-/Hardwareänderung. M0-Ergebnis mit nachvollziehbaren Belegen/Restblockern vorlegen; gesonderte Freigabe für M1/Programmierung erforderlich. |
+| M1 – Eingang und Herkunft | Erst nach M0-Ergebnis und gesonderter ausdrücklicher Programmierungsfreigabe, mit geschlossenem M1-Datenvertrag: lesende0504-Semantik, beide Quellen, Stichtage, Scope-Guard, Duplikate/Konflikte, gezielter Kontext mit Antwortwiederverwendung, getrennte abgeleitete Persistenz. | A01–A06 sowie Eingangs-/Herkunftsanteile A17/A18; passende DT-Quellenfälle. LG99/LG100 zunächst als freigegebene Vektoren, tatsächlicher Rechtsnachweis in M2/M3, UI-Anteil A17 in M5. Eigene volle CI; Import-/Persistenz-/Migrationsänderung braucht eigene Geräteabnahme vor Merge. |
 | M2 – Lenkzeit und Pausen | Nach M1 + M0 zu S/D/B: D01–D06/B01–B05, gesetzliche Woche, aufgezeichnete Crew-/Beifahrerpause, historische Buspausen; E07-Normalgrenzwerte. | A03/A07/A08 und Pausenanteil A18; LG17–LG39 sowie Normalgrenzen-/Zahlenteile LG111–LG113, deren E07-Anzeigen erst M5/M6. Keine Teilengine als1.0 freigeben. |
 | M3 – Tägliche Ruhe und Sonderfälle | Nach M1/M2 + M0 zu R/F: R01–R07/F01–F05, Crew30 h, Bus25 h, Fährnettoruhe, offene Fenster und23-h-Tagesanker. | A03/A07/A08 und vollständiger Ruheanteil A18, Tagesankeranteil A19; LG40–LG57/LG81–LG88/LG99/LG100/LG109/LG110, Tagesanteil LG101–LG103. Wochenanteile danach M4. |
 | M4 – Wochenruhe und Ledger | Nach M1–M3 + M0 zu W: W01–W14, gemeinsame Alternativzuordnung, mehrere Schulden/Einmaligkeit, internationale rollierende Vierwochen- und Bus-Zwölftageregel, stabile Episoden. | A07/A09/A19; LG58–LG80/LG101–LG108/LG114–LG116, DT37/DT38, unabhängige Frist-/Solvergoldenfälle. |
-| M5 – Ergebnis, Audit und Ansichten | Nach M2–M4 + L06/L07: sichere Budgets, Rechts-/Zahlenbefunde inklusive E07, rechtlich passende Schweregrade, atomare Neubewertung/Neu, Datenqualität, manuelle E02-Kennzeichnung und Navigation. P03/P05 entschieden. | A10–A12/A17–A20 im UI-/Ergebnisumfang; PD/E-Zuordnung, Compose und entsprechende DT32–DT43-Anteile. PDF-Anteil A20/DT40 erst M6. Passende Gerätebestätigung, spätestens jeder dritte Produkt-PR. |
-| M6 – PDF und Beta-Werkzeuge | Nach bestätigten M5-Ergebnisverträgen und P04: lokale Berichte inklusive offener Artikel-12-Bewertung, Zeitraum/Name/Abdeckung, bewusste sichere Weitergabe, Diagnose/Fehlerformular. | A13/A14/A20; gerenderte/inhaltliche PDF-Fälle und echte Gerätefälle. |
-| M7 – Gesamtprüfung und Releaseentscheidung | Nach allen Paketen: komplette Golden-/Regression-/Offline-/Performancefälle, unabhängige rechtliche Gesamtprüfung, geschlossene Beta5–10Berufskraftfahrer, Abschlussdokumentation. | Sämtliche A01–A20 und unveränderte technische/CI-/Gerätegates. Fehlerblocker geschlossen. Eigene Releasefreigabe durch Tobi. |
+| M5 – Ergebnis, Audit und Ansichten | Nach M2–M4 + L06/L07: sichere Budgets, Rechts-/Zahlenbefunde inklusive E07, rechtlich passende Schweregrade, atomare Neubewertung/Neu, Datenqualität, manuelle E02-Kennzeichnung und Navigation. P03/P05 beschlossen: Warnfunktionen ohne feste Auslöseschwellen, belegte Schicht oder „Schichtzuordnung unklar“. | A10–A12/A17–A21/A23 im UI-/Ergebnisumfang; PD/E/P-Zuordnung, Compose und entsprechende DT32–DT45-/DT50-/DT51-Anteile. PDF-Anteil A20/DT40 erst M6. Passende Gerätebestätigung, spätestens jeder dritte Produkt-PR. |
+| M6 – PDF und Beta-Werkzeuge | Nach bestätigten M5-Ergebnisverträgen, P04 geschlossen: lokale Berichte inklusive offener Artikel-12-Bewertung, Zeitraum/Name/Abdeckung, bewusste sichere Weitergabe, Diagnose/Fehlerformular. | A13/A14/A20/A22; PF03/PF04/DT46–DT49 und PDF-Anteil DT40. PDF gerendert/inhaltsgeprüft, Offline-Fehlerbericht/Vorschau/Zustimmung/Speichern/Teilen, echte Gerätefälle. |
+| M7 – Gesamtprüfung und Releaseentscheidung | Nach allen Paketen: komplette Golden-/Regression-/Offline-/Performancefälle, unabhängige rechtliche Gesamtprüfung, geschlossene Beta5–10Berufskraftfahrer, Abschlussdokumentation. | Sämtliche A01–A23 und unveränderte technische/CI-/Gerätegates. Fehlerblocker geschlossen. Eigene Releasefreigabe durch Tobi. |
 
-Ein paketübergreifendes A-Kriterium erhält hier ausdrücklich **Teilnachweise**: M1 Eingang/Herkunft, M2/M3 Rechtsberechnung, M4 Wochen-/Ledgerregeln, M5 UI/Audit, M6 PDF. Kein späterer UI-/PDF-Nachweis ist Vorbedingung für die davorliegende Quellenimplementierung. A01–A20 müssen vor M7 insgesamt erfüllt sein; technische CI-/Gerätegates jedes betreffenden Produkt-PRs gelten vollständig. Diese Staffelung schwächt kein Kriterium ab.
+Ein paketübergreifendes A-Kriterium erhält hier ausdrücklich **Teilnachweise**: M1 Eingang/Herkunft, M2/M3 Rechtsberechnung, M4 Wochen-/Ledgerregeln, M5 UI/Audit, M6 PDF. Kein späterer UI-/PDF-Nachweis ist Vorbedingung für die davorliegende Quellenimplementierung. A01–A23 müssen zum Abschluss von M7 insgesamt erfüllt sein; technische CI-/Gerätegates jedes betreffenden Produkt-PRs gelten vollständig. Diese Staffelung schwächt kein Kriterium ab.
 
 M1–M6 können mehrere kleine Produkt-PRs erfordern; Grenzen werden anhand des tatsächlichen Diffs und benötigter Geräteabnahme gesetzt. Keine künstliche Bündelung zur Umgehung der „spätestens jeder dritte Produkt-PR“-Regel. Für die Planungsfreigabe wird **keine feste VersionsCode-Folge** oder CI-Laufzeit versprochen.
+
+### 13.1 Konkret empfohlener Start M0 → M1
+
+1. **M0-Freigabe einholen:** Tobi entscheidet über diesen finalen Plan und ausdrücklich über den Start der M0-Facharbeit. Dieser Auftrag enthält diese Freigabe noch nicht.
+2. **M0-Quellenregister schließen:** amtliche Original-/Änderungs-/Berichtigungsfassungen Q01–Q14 und historische Übergänge mit Fundstelle, Abruf-/Versionsnachweis und Wirksamkeitsintervall dokumentieren. Leitlinie, technische Annex-Definition und verbindlicher Gesetzestext getrennt halten; L01/L09 abgleichen.
+3. **M0-Datenvertrag priorisieren:** L08/Q04/Q14 zu Kartenstatus/c-Bit/Entnahme/manuellem Nachtrag/Chronologie/Stichtag vollständig belegen, L05 zum unterstützten Rechtsumfang/Guard prüfen. Bestehende Karten-/Profil-/Anwendungs-/Parent-/Child-/Receiptbeziehungen und SQLCipher-Grenzen schriftlich festlegen, ohne sie zu ändern.
+4. **M0-Rechen-/Darstellungsinterpretationen ausarbeiten:** L02/L03 Zeit-/Wochen-/Tagesanker, L04 gemeinsame Wochen-/Ausgleichszuordnung, L06 Artikel12 und L07 Schweregrade mit exakten Erwartungen und Tatzeitbezug dokumentieren. P03–P05 nicht wieder als offene Produktwahl aufrollen.
+5. **M0-Referenzpaket:** LG01–LG116, PF01–PF07 und DT01–DT51 als vollständige feste Eingaben samt unabhängiger Erwartung vorbereiten. Insbesondere separate Datenvertragsvektoren für M1; kein Testwert aus einer späteren Engine. Quellen-/Interpretations-/Erwartungshash und verantwortlichen fachlichen Abgleich dokumentieren.
+6. **M0-Abschluss zur Prüfung:** Nachweisregister L01–L09, endgültigen Daten-/Ergebnisvertrag, Referenzfälle und Kriteriumszuordnung vorlegen. Offene Nachweise bleiben ausdrücklich offen und blockieren jeweils abhängige Rechenregeln. Empfohlen wird die vollständige M0-Spezifikation vor Programmierstart; mindestens sämtliche M1-relevanten L01/L05/L08/L09-Anteile müssen belegt sein.
+7. **Separate Programmierungsfreigabe, dann M1:** tatsächlichen aktuellen main/PR/CI und erhaltene Arbeit erneut prüfen; kleine isolierte Umsetzung für lesenden Quellen-/Semantikadapter und minimale notwendige getrennte Kontext-/Prüflaufpersistenz planen. Kein zweiter Parser, Kryptokern oder Originalersatz. Echte erforderliche Migration ausschließlich nach neuem Compilerstand und mit vollständigen bestehenden CI-/Gerätegates. M1-Abnahme vor Weiterarbeit im abhängigen M2-Rechenkern.
+
+M0-Quellenspezifikation ist keine unabhängige Release-Gesamtabnahme. Die qualifizierte Fachgesamtprüfung und Beta bleiben M7-Pflichten. Der tatsächliche Rechtstext-/Auslegungsnachweis wird nie aus der Produktbestätigung oder grüner Docs-CI abgeleitet.
 
 ## 14. Verbindliche Abnahmekriterien
 
@@ -291,7 +305,7 @@ Alle Kriterien sind für die vorgesehene Implementierung verpflichtend; jetzt is
 
 | ID | Abnahmekriterium |
 |---|---|
-| A01 | Alle80Entscheidungen/A–H plus E01–E12 rückverfolgbar; historische Quelle unverändert, betroffene überholte Planformulierungen explizit dokumentiert. |
+| A01 | Alle80Entscheidungen/A–H, E01–E12 und geschlossenen P01–P05 rückverfolgbar; historische Quellen/Vorschläge erhalten, überholte Stellen explizit dokumentiert. Keine offenen Produktpunkte mit fachlichen Nachweisen verwechseln. |
 | A02 | Bestehende40128-Basis, Parser/Originale/Profil-/Anwendungs-/Sitzungsbindung und Kryptografiegrenzen erhalten. Engine-Modifikationen schreiben keine Karte und erzeugen keine neue Signatur-/Trustbehauptung. |
 | A03 | Vollständige anwendbare Zeitregeln innerhalb E08/E09 sowie sichere Begrenzung unsupported Einsätze; amtliche Fassungen/Wirksamkeit und Interpretationsgoldenfälle fachlich bestätigt. L01–L09 vor jeweils abhängiger Regel schließen, keine Vollkatalogpflicht seltener Betriebe. |
 | A04 | Datenstichtag, Kartenentnahme, bekannte Kartennachträge, Crewbits und aktuelle Tagesenden belegt; kein künstliches Verlängern bis Mitternacht/Importzeit/jetzt. |
@@ -304,29 +318,66 @@ Alle Kriterien sind für die vorgesehene Implementierung verpflichtend; jetzt is
 | A11 | Kontext-/Import-/Regeländerungen atomar neu berechnet; alte Ergebnisse ausgeblendet, verspätete Läufe abgewiesen; Audit Vorher/Nachher/Grund und korrekter Gelesen-/Neu-Zustand. |
 | A12 | Schweregrade nur bei eindeutig belegter rechtlicher Verletzung und passender amtlicher Tatzeittabelle; keine Bußgelder/Ersatzklassen. Offener E07-Kandidat hat keinen bestätigten rechtlichen Verstoßgrad und keine automatische Rechtfertigung/Schuld. |
 | A13 | Vollständiger lokaler PDF mit neuer Zeitraumwahl, standardmäßig ohne Name, Lücken auf Seite1, Einzelrechtsständen und allen Details; visuell und inhaltlich geprüft, sichere optionale Android-Weitergabe. |
-| A14 | Offlinebetrieb, Deutsch, minimaler gezielter Kontextfluss, Beta-Fehlerformular/Diagnose mit Vorschau+Zustimmung und Datenminimierung abgenommen. |
+| A14 | Offlinebetrieb, Deutsch, minimaler gezielter Kontextfluss und P04-Fehlerformular/Diagnose mit vollständiger Vorschau, freiwilliger Zustimmung, lokalem Speichern und bewusstem Android-Teilen abgenommen. Kein Backend/Pflichtkonto/automatischer Versand/Rohkarten-/APDU-Bericht. |
 | A15 | Alle bisherigen technischen Gates plus eigene passende vollständige CI und Geräteabnahme für endgültigen Produktbaum; keine Testfilter/Quarantäne/Budget-/Workflow-/Upload-/Mergeabschwächung. |
 | A16 | Unabhängige qualifizierte rechtliche Gesamtprüfung, dokumentierte Beta5–10Fahrer, alle fachlichen Fehler korrigiert; keine Veröffentlichung vor eigener Releasefreigabe. |
 | A17 | Bekannte manuelle Kontrollgeräte-Tätigkeit rechtlich normal anrechnen und dezent mit exakt „Manueller Nachtrag am EG-Kontrollgerät“ im Zeitstrahl/Detail kenntlich machen. Unbekannte Folge weder Ruhe noch manuelle Bekannt-Tätigkeit; c-Bit/Kartenstatus korrekt, Originale unverändert. |
 | A18 | Aufgezeichnete Crewzeiten grundsätzlich nutzen:30-h-Tagesruhe und besondere Beifahrerpause, keine Routine-Anwesenheitsabfrage, Zweitkarte oder allgemeine Bestätigung. Lücken/Einzelbits nicht auf ganze unbekannte Perioden ausdehnen; gesetzliche Voraussetzungen/konkrete Widersprüche korrekt erklären. |
 | A19 | 23-h-Ruhe als geeignete tägliche, nicht wöchentliche Ruhe; Tageslenk-/Ruheanker fortsetzen, Wochenfrist/Reduzierungszähler nicht fälschlich erfüllen, keine erfundene22-h-Schuld. Fortbestehende Wochenepisode nicht täglich/je Import duplizieren; eigenständige Regeln erhalten. |
 | A20 | Artikel-12-Kandidaten in Übersicht, Details, Zeitstrahl und PDF mit exaktem Zahlenüberschuss und klar offener Rechtsbewertung;0/60/120/+1-min-Grenzen und Tatzeit korrekt. Keine gesicherte Rechtswidrigkeit/Schweregrad/Artikel-12-Schuld oder Heimkehrprüfung aus Zahlen. Summen/positive Meldungen und PDF enthalten keine irreführende Entwarnung. |
+| A21 | P03: Frühwarnung/relevante Ruhefristen/offene Ausgleichsfristen erhalten, an letztem belegtem Datenstand, zurückhaltend und klar von Überschreitung getrennt. Keine festen24-/2-h- oder neuen starren Stunden-/Prozent-Auslöseschwellen; keine Live-Überwachung/Uhrfortschreibung. PF01/PF02/DT44/DT45. |
+| A22 | P04: Fehlerformular/Versionsdaten, vollständige Vorschau, optionale Diagnose nur freiwillig nach Zustimmung, Datei lokal/offline speichern und bewusst teilen. Kein Backend/Konto/automatischer Versand/ungefragte Personendaten, keine vollständigen Rohkartendaten/APDU-Protokolle auch mit Zustimmung. PF03/PF04/DT46–DT49. |
+| A23 | P05: zuverlässiger belegter Schichtbeginn oder exakt „Schichtzuordnung unklar“. Alle vorhandenen Tätigkeiten in Kalenderansicht, reale Zeiten/Dauern erhalten, keine erfundenen Intervalle/Schichtgrenzen; belegte Folgeimporte können Anzeige korrigieren, reine Displayänderung erzeugt keine Verletzung/Schuld/Zählerresets. PF05–PF07/DT50/DT51. |
+
+### 14.1 Vollständige Kriteriumszuordnung zu Umsetzungspaketen
+
+Die zweite Tabelle ordnet die oben definierten Kriterien zu, sie definiert keine neuen Kriterien. Paketübergreifende Anteile bleiben bis zu ihrem letzten Paket offen; technische Produktgates gelten bei jedem relevanten PR vollständig.
+
+| Kriterium | Früher/gestaffelter Nachweis | Vollständiger Funktionsnachweis / Abschluss |
+|---|---|---|
+| **A01** | M0 Anforderungs-/Quellenrückverfolgbarkeit | M7 endgültige Umsetzung aller Entscheidungen |
+| **A02** | M1 Quellen-/Sicherheitsvertrag, jede Änderung M1–M6 | M7 gesamte unveränderte Herkunft/Kryptogrenze |
+| **A03** | M0 L01–L09 vor jeweils abhängigem M1–M6-Paket | M7 unabhängige Gesamtprüfung der Regelabdeckung |
+| **A04** | M0/L08 Referenz, M1 Inputsemantik/Stichtag | M1, Regression M7 |
+| **A05** | M1 Deduplizierung/Konflikt/Originalerhalt | M1, Replay/Regression M7 |
+| **A06** | M1 notwendige additive echte Persistenz/Migration | M1 eigene volle CI/Geräteabnahme, Regression M7 |
+| **A07** | M0 unabhängige Erwartungen, M2–M4 Regeltests | M7 Mehrregel-/Versions-/Grenzgesamtfälle |
+| **A08** | M1 UTC-Input, M2–M4 Rechtszeit, M5 Anzeigeinvarianz | M7 vollständige Zeit-/Darstellungsinvarianz |
+| **A09** | M4 Wochen-/Ausgleichsledger, M5 offene Übersicht | M5, fachliche Gesamtreferenz M7 |
+| **A10** | M2–M4 Zahlen-/Beweismengen, M5 Ergebnisdarstellung | M5, gleiche Aussage im M6-PDF/M7 |
+| **A11** | M1 atomarer Laufvertrag, M5 Audit/Neu/Ansichten | M5, Replay/Reopen/Export M6/M7 |
+| **A12** | M0 L06/L07, M5 sichere Klassifizierung | M5, gleiche PDF-/Gesamtaussage M6/M7 |
+| **A13** | M6 lokaler PDF-/Speicher-/Teilenpfad | M6 Layout-/Inhalts-/Geräteabnahme, M7 Regression |
+| **A14** | M1 Kontextminimalität, M5 deutsche/offline UI, M6 Diagnose | M6 gesamter Offline-/Deutsch-/Fehlerberichtspfad, M7 |
+| **A15** | Jedes Produktpaket/PR M1–M6, keine alten Gates auslassen | M7 exakter endgültiger Produktbaum mit CI/Geräteabnahme |
+| **A16** | M7 qualifizierte Gesamtprüfung und Beta | M7 dokumentierte Ergebnisse/Fehlerbehebung, danach eigene Releasefreigabe |
+| **A17** | M1 Nachtragssemantik, M5 dezente Kennzeichnung | M5, Regression M7 |
+| **A18** | M1 Crewqualifikation, M2 Beifahrerpause, M3 Tagesruhe, M5 Erklärung | M5, fachliche/technische Gesamtfälle M7 |
+| **A19** | M3 Tagesanker, M4 Wochenepisode/Frist, M5 Darstellung | M5, unabhängige Wochenreferenzen M7 |
+| **A20** | M2 Normalgrenzen, M5 Artikel12-Offenheit, M6 PDF | M6, unabhängige Fach-/Gesamtprüfung M7 |
+| **A21** | M2–M4 gesetzliche Fristen/Budgets, M5 Warnungsdarstellung | M5, Regression M7 |
+| **A22** | M6 lokale Beta-Fehlerberichte/Datenschutz | M6 Offline-/Vorschau-/Zustimmungs-/Teilenfälle, M7 |
+| **A23** | M1 belegter Dateninput, M5 Kalender-/Schichtdarstellung | M5, Datenergänzungs-/Projektionsregression M7 |
 
 Falsche Verstoßmeldung, falsche Entwarnung, falsches Restbudget, fehlerhafte Ruhe-/Ausgleichszuordnung, verlorener/verwechselter Herkunfts-/Auditbezug oder fehlende Trennung von Zahlenüberschreitung und offener Artikel-12-Rechtsbewertung blockieren das betreffende Produktpaket beziehungsweise Release. Fehlende Geräte- oder Fachabnahme wird nicht durch reine Docs-CI ersetzt.
 
 Die unveränderten sieben Gradle-Aufrufe sind: `help`, `build --dry-run`, `test`, `lint`, `assembleDebug`, `assembleInternal`, `:app:assembleDeviceTest`. Hinzu kommen APK-/Testsignatur-/Updatepaar-/echte Compiler-Schemavergleiche, vollständige API36-SQLCipher-/Compose-Suiten und Abschlussjob. Erfolgreiche normale CI lädt weiterhin keine Artefakte hoch; Fehlerdiagnostik drei Tage. Gerätepakete ausschließlich bewusst für exakten geprüften Kopf.
 
-## 15. Noch offene Produktpräzisierungen
+## 15. Produktentscheidungen vollständig geschlossen; Fachnachweise getrennt
 
-**P01 und P02 sind durch E04/E07 produktseitig geschlossen.** Sie bleiben als historische IDs in der Änderungsübersicht nachvollziehbar, gehören nicht mehr in die offenen Produktfragen. Noch nicht ausdrücklich festgelegt sind nur folgende drei Präzisierungen; ihre Vorschläge sind keine bereits beschlossenen Anforderungen.
+**P01–P05 sind produktseitig vollständig geschlossen. Keine konkrete weitere Produktentscheidung ist für diesen Engine-Plan erforderlich.**
 
-| ID | Tatsächlich offene Produktfrage | Konkreter Vorschlag zur Prüfung |
+| Punkt | Bestätigte Festlegung | Rückverfolgbarkeit / späterer Nachweis |
 |---|---|---|
-| P03 | Ab wann wird „Wochenruhefrist rückt näher“ sichtbar, und wann erscheint die tägliche Frühwarnung? | Übersichtsvorschlag: Wochenruhe bei≤24 h bis frühest erforderlichem gesetzlichen Beginn, tägliche Warnung bei≤2 h bis letztmöglichem legalem Ruhebeginn, immer am Datenstichtag. Keine zusätzlichen gesetzlichen Grenzwerte. Vor M5 entscheiden. |
-| P04 | Wie stellt der Tester den App-Fehlerbericht bewusst zu? | Lokales Formular mit Berichtsexport/Android-Teilen, ohne neues Backend. Konkreter Empfänger/Kanal nur nach gesondertem Auftrag; keine automatische Nachricht. Vor M6 entscheiden. |
-| P05 | Wie wird im Schichtmodus ein nicht belegbarer Schichtbeginn dargestellt? | Geeigneter tatsächlich belegter Ruhe-Endanker nur für Darstellung; sonst ungeklärte Zuordnung anzeigen, kein erfundenes Datum. Kein Rechtszählerreset. Vor M5 entscheiden. |
+| P01 | Fähre: nur konkret entscheidende Voraussetzung gezielt und Antworten wiederverwenden, keine allgemeine Unterkunftsbewertung | E04/F01–F05, LG81–LG88/LG109/LG110/DT35 |
+| P02 | Rechnerische Lenküberschreitung bleibt Liste/PDF mit offener Artikel12-Bewertung | E07/X01–X06, A20 |
+| P03 | Keine festen Warnstunden/-prozente; beschlossene Frühwarnung/Fristhinweise bleiben, ausschließlich Datenstichtag | AddendumP03, PF01/PF02/DT44/DT45, A21 |
+| P04 | Lokales Offline-Formular, Vorschau, freiwillige Diagnose, Datei speichern und bewusst Android-Teilen; kein Backend/automatischer Versand | AddendumP04, PF03/PF04/DT46–DT49, A22 |
+| P05 | Belegbarer Schichtbeginn oder „Schichtzuordnung unklar“, vollständige Kalenderdarstellung, reine Projektion ohne Rechtsänderung | AddendumP05, PF05–PF07/DT50/DT51, A23 |
 
-Getrennt davon sind **L01–L09 fachliche Nachweise**, keine erneut offenen Produktentscheidungen. Die [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md) nennt Quelle, Auslegung und Umfang; die [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md) ordnet sie den M0-/Releasegates zu. Für M7 sind tatsächliche Nachweise zu unabhängigem fachkundigem Prüfer, Beta-Teilnehmern und ihren Ergebnissen erforderlich; eine solche neue Engine-Gesamtabnahme ist im Repository nicht dokumentiert. Dieser Plan autorisiert keine Kontaktaufnahme oder Datensendung.
+Alte24-/2-h-Schwellen und der frühere Vorschlags-/Offenstatus P03–P05 sind **überholt**, im Git-Ausgangsstand `e21d297699b1304ee53f949dcd82ca3e80e2f9c7` und der [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md) nachweisbar. UI-Technik/Layout/Dateiformat bleiben normale Umsetzungsausarbeitung im beschlossenen Rahmen, keine neue Produktfrage. Neue starre Warnschwellen oder zusätzliche Funktionen brauchen ausdrücklich einen neuen Auftrag.
+
+**L01–L09 bleiben dagegen offene fachliche Quellen-/Auslegungsnachweise.** Rechtsmatrix und Änderungsübersicht nennen Quellen, benötigte Referenzen und abhängige Pakete;13.1 beschreibt den empfohlenen M0-Start. Für M7 fehlen weiterhin dokumentierte unabhängige Fachgesamtprüfung und Beta-Ergebnisse; Produktbestätigung und Docs-CI ersetzen diese nicht. Dieser Plan autorisiert keine externe Kontaktaufnahme oder Datensendung.
 
 ## 16. Aktueller Dokumentationsauftrag und nächste Freigabe
 
@@ -337,4 +388,4 @@ Jetzt ausschließlich:
 
 **Keine Engine-, Kalender-, PDF-, Datenbank-, Parser-, Reader- oder UI-Implementierung in dieser Sitzung.** Keine neue APK, Schemaänderung oder Produktversion. Bestehende Checkouts/Branches und offene Settings-Datei mit hashgleicher Sicherung bleiben erhalten.
 
-Zuerst Tobi: aktualisierten Gesamtplan und tatsächlich offene P03–P05 prüfen. Danach offene fachliche M0-Nachweise schließen und den betreffenden konkret implementierbaren Stand zur ausdrücklichen Freigabe vorlegen. Eine reine Plan-/Docs-Zustimmung wird weder als umfassende Hardwarefreigabe noch als ungeprüfte Releasefreigabe behandelt. Der Nutzer kann den Umsetzungsspielraum ausdrücklich erweitern; diese Vorlage enthält selbst keine solche Autorisierung.
+Zuerst Tobi: finalen Planungs-PR prüfen und **M0-Facharbeit ausdrücklich freigeben**. Erst danach wird M0 bearbeitet; der aktuelle Auftrag führt keine offene juristische Prüfung als erledigt. Anschließend M0-Nachweise/konkrete Spezifikation vorlegen und **separate ausdrückliche Programmierungsfreigabe für M1 und folgende Pakete** abwarten. Weder Planaktualisierung noch M0-Zustimmung ist eine automatische Code-, Hardware- oder Releasefreigabe. Alle vorhandenen technischen/CI-/Gerätegates bleiben Pflicht; eigene Releaseentscheidung erst nach M7.

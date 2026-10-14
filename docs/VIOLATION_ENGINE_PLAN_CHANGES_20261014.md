@@ -1,8 +1,8 @@
 # FahrerTagebuch 1.0 – Änderungen am Planungsentwurf in PR #88
 
-**Stand: 14.10.2026, Ergänzungsauftrag. Ausschließlich Planung.** Ausgangs-PR-Kopf `235839c152936d3e13a97cbc7f3c7e76de2ee1b6`, dessen reine Docs-CI38590591817 erfolgreich. Ausgangs-main unverändert `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. [PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88) bleibt Draft; kein Merge, keine Implementierungs- oder Releasefreigabe.
+**Stand: 14.10.2026, finale P03–P05-Produktbeschlüsse. Ausschließlich Planung; noch keine Freigabe der anschließenden M0-Facharbeit oder Programmierung.** Ursprung des E01–E12-Abgleichs `235839c152936d3e13a97cbc7f3c7e76de2ee1b6` (Docs-CI38590591817 grün); Ausgangskopf dieses finalen Auftrags `e21d297699b1304ee53f949dcd82ca3e80e2f9c7` (Docs-CI38601301433 grün). Ausgangs-main unverändert `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. [PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88) bleibt Draft; kein Merge, keine Implementierungs- oder Releasefreigabe.
 
-Lesepfad: [Gesamtplan](VIOLATION_ENGINE_V1_PLAN.md) → [Regelmatrix](VIOLATION_ENGINE_LEGAL_MATRIX.md) → [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md). Verbindliche Quelle: [Ergänzungen E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md), zusammen mit den unverändert erhaltenen [80 Entscheidungen/A–H](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md).
+Lesepfad: [Gesamtplan](VIOLATION_ENGINE_V1_PLAN.md) → [Regelmatrix](VIOLATION_ENGINE_LEGAL_MATRIX.md) → [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md). Verbindliche Quelle: [Ergänzungen E01–E12 und finaler P03–P05-Auftrag](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md), zusammen mit den unverändert erhaltenen [80 Entscheidungen/A–H](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md).
 
 ## 1. Was sich gegenüber dem ersten Entwurf ändert
 
@@ -20,47 +20,68 @@ Die folgenden alten Formulierungen sind ausdrücklich überholt beziehungsweise 
 | E08 | S03/B03/R06/W10–W13, Plan5/13 | Bestätigte Bus-Zeitsonderregeln/Historie vollständig, EF0530 nur nach Aussagekraft, gezielter minimaler Kontext; kein Reiseverwaltungsmodul als Voraussetzung | LG116, vorhandene Busfälle, DT36; A03/A07 |
 | E09 | S05–S08 und alte vollständige Art.-3-/13-Tabellen mit Vollkatalogtestpflicht; L05/M0 | Aktiver Umfang auf reguläre Lkw-/Bus-Einsätze begrenzt; konkrete gesetzliche Nichtanwendbarkeit/unsupported Sonderfälle korrekt begrenzen. Keine aktive Implementierung sämtlicher Spezial-/Notfallkataloge | Rechtsmatrix4/5 ersetzt, LG09–LG12/LG97 angepasst, DT41; A03/A10/A14 |
 | E10 | Plan6/10, S12, A08/DT09 | Eindeutige UTC-Dauern; keine zusätzliche DST-Dauerformel. Gesetzliche Wochen/Nachtfenster gesondert, Anzeigezone nur Darstellung | DT39/DT42; A08 |
-| E11 | Ursprüngliche98 LG/31 DT/16 A | **116 LG/43 DT/20 A**:18 fachliche,12 technische Fälle und4 Gates ergänzt;80 PD plus12 E vollständig zugeordnet. Keine geplanten Fälle als bestanden ausgeben | Gesamte Testmatrix; A01–A20 |
-| E12 | Alte M0–M7-Reihenfolge und offene P01–P05 | Pakete mit Voraussetzungen und Prüfgates; nur P03–P05 produktseitig offen. Bestehende Sicherheit/CI/Geräte/Lokalsicherungen unverändert | Plan13–16; WORK_START/STATUS/HANDOFF/CURRENT_RULES |
+| E11 | Ursprüngliche98 LG/31 DT/16 A | E-Abgleich ergänzte auf116 LG/43 DT/20 A. Finaler P-Abgleich erweitert zusätzlich um7 PF/8 DT/3 A auf116 LG+7PF/51DT/23A; ursprüngliche Fälle erhalten, alle80 PD/12 E/5 P zugeordnet | Gesamte Testmatrix; A01–A23, kein geplanter Fall als bestanden ausgegeben |
+| E12 | Alte M0–M7-Reihenfolge und offene P01–P05 | E-Abgleich schloss P01/P02; der frühere Zwischenstand „P03–P05 offen“ ist jetzt überholt. Alle fünf geschlossen, M0-Fachfreigabe/Programmierungsfreigabe/Releaseentscheidung getrennt; Schutz bestehender Arbeit unverändert | Plan13–16; WORK_START/STATUS/HANDOFF/CURRENT_RULES |
 
 Unverändert:9:25 h mit verfügbarer10-h-Verlängerung legal; alle normalen zulässigen Reduzierungen/Splits/Sonderregeln anwenden; keine App-Tätigkeitsnachträge, keine Herkunfts-/Originaländerung, kein28-Tage-Berechnungslimit, kein Statusfilter, lokaler deutscher PDF-Bericht und unabhängige Fachprüfung/Beta.
 
-## 2. Tatsächlich offene Produktfragen
+## 2. Letzte Produktbeschlüsse und explizit überholte Vorschläge
 
-| ID | Zur Prüfung | Vorgeschlagene Lösung, noch nicht beschlossen | Benötigt vor |
+**P01–P05 vollständig geschlossen. Für diesen Engine-Plan keine weitere konkrete Produktentscheidung nötig.** Ältere Vorschläge aus dem Ausgangskopf bleiben in Git nachlesbar; sie sind keine aktuelle Implementierungsvorgabe.
+
+| Punkt | Alter Vorschlag / Status | Vorrangiger Beschluss vom14.10.2026 | Nachweis / Paket |
 |---|---|---|---|
-| P03 | Anzeige-/Frühwarnschwellen | Wochenruhe≤24 h vor erforderlichem Ruhebeginn; tägliche Warnung≤2 h vor letztem legalem Ruhebeginn, jeweils Datenstichtag | M5 |
-| P04 | Bewusster Zustellweg des Beta-Fehlerformulars | Lokaler Berichtsexport und Android-Teilen; kein neues Backend ohne Auftrag | M6 |
-| P05 | Schichtdarstellung bei unbelegbarem Schichtbeginn | Belegten geeigneten Ruhe-Endanker verwenden; andernfalls ungeklärte Zuordnung zeigen, kein erfundenes Datum | M5 |
+| P03 | **Überholt:**24 h vor Wochenruhe und2 h vor letztem täglichen Ruhebeginn als feste UI-Auslöser; Status offen | Keine festen Stunden-/Prozentgrenzen. Frühwarnung/relevante Ruhefristen/offene Ausgleichsfristen bleiben, am letzten Datenstand, keine Liveüberwachung. UI innerhalb Vorgaben später technisch ausarbeiten | PF01/PF02/DT44/DT45, PD09/12/15/16/51, A21/M5 |
+| P04 | **Status überholt:** lokaler Formular-/Teilenpfad nur Vorschlag, Zustellweg offen | Lokales Offline-Formular/Versionsdaten, vollständige Vorschau, freiwillige optionale Diagnose, Datei speichern und bewusst Android-Teilen. Kein Backend/Konto/automatischer Versand oder Rohkarten-/APDU-Bericht | PF03/PF04/DT46–DT49, PD44/77/79, A14/A22/M6 |
+| P05 | **Präzisiert:** ungeklärter Displayanker ohne verbindlichen Hinweis; Status offen | Nur zuverlässig belegter Schichtbeginn; sonst exakt „Schichtzuordnung unklar“. Vorhandene Tätigkeiten vollständig im Kalender, Zeiten/Dauern/Originale unverändert, keine künstliche Schicht-/Rechtsgrenze. Belegte Folgeimporte können Anzeige korrigieren | PF05–PF07/DT50/DT51, PD14/27/39/40/56, A08/A23/M5 |
 
-**Geschlossen:** P01 durch E04, P02 durch E07. Kein erneuter Grundsatzbeschluss zu Crew-Beweislast, manuellem Badge, aktivem Spezialkatalog, Busumfang oder Heimkehrüberwachung nötig. Hinweise/Schwellen ändern keine gesetzlichen Grenzen.
+P01 durch E04 und P02 durch E07 bleiben geschlossen. Keine Routine-Crewbeweisabfrage, neue starre Warnschwelle, neues Backend oder zusätzliche Standort-/Schichtfunktion aus diesen Präzisierungen ableiten. Die80er-Quelle und E01–E12 bleiben erhalten und bestätigte Grundlage.
 
 ## 3. Noch erforderliche juristische Nachweise
 
 Diese Punkte sind fachliche Arbeiten und Freigabegates; sie bedeuten keine offene Produktwahl. Weder die Planung noch die Docs-CI erledigt eine unabhängige Rechtsprüfung. Die Rechtsmatrix enthält Quellen Q01–Q14 und die vollständigen L01–L09.
 
-| Punkt | Noch vorzulegender Nachweis | Abhängige Umsetzung / Gate |
-|---|---|---|
-| L01 | Amtliche Originalfassungen/Änderungen/Berichtigungen mit genauen Fundstellen, Wirksamkeit und belegten historischen Übergängen pinnen; bisher nur teils indexierter EUR-Lex-Volltext | Alle Rechtsgruppen, A03 |
-| L02 | Rechtliche Wochen-/Verlängerungszuordnung und Bus-Nachtfenster fachlich bestätigen; technische UTC-Woche nicht ungeprüft mit juristischer Auslegung gleichsetzen | M2–M4, A08 |
-| L03 | Original C(2011)3759 und Guidance7 für getrennte Tageslenk-/Ruheanker vollständig bestätigen | M2/M3, D06/R04 |
-| L04 | Unabhängig berechnete gesamte Wochenabläufe: alternative Zuordnung,23 h/fortbestehende Episode, mehrere Schulden, exakte Fristen und internationale/Bus-Pakete | M3/M4, A09/A19 |
-| L05 | Unterstützte reguläre Rechtsräume und konkrete Art.3/11/13/14-Abgrenzung gegen Primärrecht prüfen; transparente Guard-Erwartungen | M1/M2, A03/A10; kein Vollkatalog seltener Betriebe |
-| L06 | E07-Texte/Zahlenauslöser/Absatzgrenzen und offene rechtliche Bewertung inklusive PDF unabhängig rechtlich prüfen; keine Schuld aus Kandidaten | M5/M6, A20; P02 bleibt entschieden |
-| L07 | Tatzeitgenaue passende Schweregradtabellen, deren besondere Voraussetzungen und Geltungs-/Umsetzungsstatus | M5, A12 |
-| L08 | Technische Appendix-Fassungen G1/G2/V2, Entnahmenotiz/c-Bit, bekannte Nachträge und belastbare Datenstichtage/aufgezeichnete Crewzeiten vollständig bestätigen | M1, A04/A17/A18 |
-| L09 | Beschlossene Ausschlüsse organisatorischer Heimkehr/Unterkunft juristisch korrekt erklären; gezielte Art.9- und W07-Voraussetzungen davon abgrenzen | M0/M5, keine neue Standort-/Heimkehrfunktion |
+| Punkt | Noch zu verifizierende Quellen / Ergebnis | Unabhängige Referenzfälle | Erforderlich vor |
+|---|---|---|---|
+| L01 | Q01 Grund-/Tatzeitfassung, Q02/Q03 Änderungen und relevante historische Acts/Berichtigungen vollständig pinnen; genaue Fundstelle/Wirksamkeit/Übergang, Quellenhash. Direkte Abrufgrenze bleibt bis tatsächlichem Vollbeleg offen | LG02/LG35/LG76/LG85, DT21 mit alten/neuen getrennten Erwartungen | Jeder betroffene M1–M6-Regel-/Datenvertrag; empfohlen vollständig in M0, A03 |
+| L02 | Q01/Q04/Q06: rechtliche Woche, Tagesverlängerungszuordnung und Bus-Nachtfenster; technische UTC-Woche nicht ungeprüft zu juristischer Auslegung machen | LG16/LG22/LG26/LG79, DT39/DT42 | M2–M4 Rechtszeit, M5 Invarianz, A08 |
+| L03 | Q13 Original C(2011)3759 und Q07 Guidance7 vollständig lesen/pinnen; getrennte Tageslenk-/Ruhefenster mit fachlicher Erwartung | LG28/LG46/LG47, ausreichende versus unzureichende Ruhe | M2/D06 und M3/R04, A03/A07 |
+| L04 | Q01/Q02/Q03/Q06/Q08: Wochen-/Ausgleichsalternativen,23 h/fortbestehende Episode, internationale Reihenfolge/Fristen, Bus-Nachruhe und historische Übergänge fachlich bestätigen | LG58–LG80/LG101–LG108/LG114/LG115, DT37/DT38: ganze Kalenderabläufe, genaue Frist/+1 min, keine Doppelminute | M3 Tagesanteile/M4 Solver/Ledger, A09/A19 |
+| L05 | Q01; Q09/Q10 als Wegweiser für konkret relevante nationale/temporäre Primärakte im unterstützten Umfang, keine Vollkatalogpflicht. Artikel-/Zeit-/Territorialabgrenzung und unsupported Guard dokumentieren | LG01–LG14/LG97, DT41: belegte Ausnahme/unklar/partieller Artikelumfang | M1 Anwendbarkeit/M2 normale Grenzen, A03/A10 |
+| L06 | Q01/Q02/Q08: P02/E07-Hinweise,1-/2-h-Regeln/Absatzgrenzen/offene Rechtsbewertung, Normalgrenze und bedingter Ausgleich; keine Schuld aus Kandidat | LG89–LG94/LG111–LG113, DT40 für identische Übersicht/PDF-Aussage | M5 Ergebnis/Details, M6 PDF; Normalgrenzen in M2, A20 |
+| L07 | Q11/Q12: passende Tatzeit-Schweregradtabellen, besondere Voraussetzungen, Geltungs-/Umsetzungsstatus und Sonderfälle vollständig verifizieren | LG95/LG96/LG98 und Grenzen jeder tatsächlich verwendeten Zeile | M5 Klassifizierung, M6 gleiche PDF-Aussage, A12 |
+| L08 | Q04/Q14: vollständige technische Appendix-Fassungen G1/G2/V2, Entnahmenotiz/c-Bit/manuelle Nachträge, belegter Stichtag/Crewzeiten. Bestehende Quellenbindungen schriftlich ohne Codeänderung belegen | LG99/LG100, DT01–DT08/DT14/DT29–DT34/DT43 als feste Karten-/Semantikinputvektoren | M1 lesender Input-/Herkunftsvertrag, A04/A17/A18 |
+| L09 | Q01/Q02/Q03/Q08: beschlossene Ausschlüsse tatsächlicher Heimkehr/Unterkunft fachlich korrekt erklären und von Art.9/W07-Kontext trennen; keine neue Produktfrage | PD20/61, LG87/LG108/LG110, keine allgemeine Unterkunfts-/Heimkehrbehauptung | M0 Umfangsspezifikation, M1 Kontextgrenzen, M5 Erklärungen, A03/A14 |
+
+Alle L-Punkte sind weiterhin **offen**, bis das tatsächliche verlinkte Beleg-/Auslegungsergebnis vorliegt. Die Tabelle ist der Auftrag an die spätere freigegebene M0-Facharbeit und erklärt keine Referenzfälle für bereits fachkundig abgenommen. Geplante Vektoren dürfen nicht aus derselben späteren Engine errechnet werden.
 
 Vor Release zusätzlich tatsächliche unabhängige fachkundige Gesamtprüfung mit dokumentierten Feststellungen/Behebungen sowie geschlossene Beta mit ungefähr5–10 Berufskraftfahrern, zunächst Lkw. Busregeln benötigen trotzdem vollständige fachliche/technische Abnahme. Eine neue unabhängige Engine-Gesamtabnahme und Beta-Ergebnisse sind im Repository nicht dokumentiert; externe Beauftragungen werden nicht aus dem Chat vorausgesetzt. Dieser Dokumentationsauftrag ermächtigt nicht zur Kontaktaufnahme oder Datenweitergabe.
 
 ## 4. Reihenfolge und Freigabegrenzen
 
-M0 prüft Quellen/Auslegung und schließt Goldenfälle. Erst nach gesonderter ausdrücklicher Implementierungsfreigabe: M1 Eingang/Herkunft/Scope → M2 Lenkzeit/Pausen → M3 Tagesruhe/Fähre/Crew/Bus → M4 Wochenruhe/Ausgleich → M5 Ergebnis/Audit/Ansichten → M6 PDF/Beta-Werkzeuge → M7 Gesamtprüfung/Beta und separate Releaseentscheidung. Die [Paketmatrix im Gesamtplan](VIOLATION_ENGINE_V1_PLAN.md) nennt die jeweiligen Regel-/Test-/Abnahmeabhängigkeiten; betroffene M0-Nachweise müssen vor ihrem Rechenkern geschlossen sein. P03/P05 vor M5, P04 vor M6.
+Dieser Auftrag finalisiert ausschließlich den Plan. **Erste gesonderte Entscheidung durch Tobi: M0-Facharbeit freigeben.** Danach M0-Quellenregister, M1-Daten-/Scope-Vertrag, Recheninterpretationen und vollständige unabhängige Referenzfälle vorbereiten; L01–L09 tatsächlich belegen oder den abhängigen Umfang ausdrücklich blockieren. Empfohlen: vollständige M0-Spezifikation abschließen und Ergebnis zur Prüfung vorlegen.
 
-Paketübergreifende funktionale A-Kriterien werden mit ausdrücklich benannten Teilnachweisen erfüllt: Herkunft in M1, Rechtsberechnung in M2–M4, UI in M5, PDF in M6. Spätere Anzeige-/PDF-Tests blockieren nicht rückwärts die Eingangsdatenarbeit; vor M7 sind alle Kriterien insgesamt vollständig erforderlich.
+**Zweite gesonderte Entscheidung: Programmierung ab M1 freigeben.** Mindestens sämtliche M1-relevanten L01/L05/L08/L09-Anteile und Eingangs-/Herkunftsreferenzen müssen geschlossen sein. Danach M1 Quellen/Semantik/Scope/Kontext/Persistenz → M2 Lenkzeit/Pausen → M3 Tagesruhe/Fähre/Crew/Bus → M4 Wochenruhe/Ausgleich → M5 Ergebnisse/Audit/UI → M6 PDF/Beta-Werkzeuge → M7 Fachgesamtprüfung/Beta und separate Releaseentscheidung. [Gesamtplan13.1](VIOLATION_ENGINE_V1_PLAN.md) konkretisiert den Start,13/14 ordnen Pakete und sämtliche23 Kriterien vollständig zu. Keine nochmals offenen Produktfragen vor M5/M6.
+
+Paketübergreifende funktionale A-Kriterien erhalten Teilnachweise: Herkunft M1, Rechtsrechnung M2–M4, UI M5, PDF/Betaformular M6. Spätere Anzeige-/PDF-Tests blockieren nicht rückwärts die Quellenarbeit. **Zum Abschluss M7** müssen A01–A23 insgesamt erfüllt sein, einschließlich Fachgesamtprüfung/Beta A16. Alle produktbezogenen technischen Gates gelten trotzdem bei jedem betreffenden PR vollständig.
 
 Alle alten technischen Gates bleiben: sieben Gradle-Aufrufe, echte Compiler-Schemavergleiche, SQLCipher-/Keystore-/Herkunftsschutz, ungekürzte API36-SQLCipher-/Compose-Instrumentierung, APK-/Signatur-/Updatepaarnachweise, Abschlussgate und eigene Gerätebestätigung bei relevanten Änderungen beziehungsweise spätestens jedem dritten Produkt-PR. Reine Docs-CI ersetzt keinen dieser späteren Produktnachweise.
 
-**Aktuell keine Engine implementiert und kein neuer LG/DT/PD/E-/Gerätefall ausgeführt.** Sicherheits-/Herkunftsabschnitte ab „Kartenidentität und unveränderliche Herkunft“ in CURRENT_RULES bleiben bytegleich zum Ausgangskopf. Room22, versionCode40128, Kartenquellen, Signaturmathematik und erwartetes Vertrauen `NOT_EVALUATED` sind unverändert. Frühere Branches/Worktrees, offene Settings-Arbeit und hashgleiche Sicherung bleiben erhalten.
+**Aktuell keine Engine implementiert und kein neuer LG/PF/DT/PD/E/P-/Gerätefall ausgeführt.** Sicherheits-/Herkunftsabschnitte ab „Kartenidentität und unveränderliche Herkunft“ in CURRENT_RULES bleiben bytegleich zum Ausgangskopf. Room22, versionCode40128, Kartenquellen, Signaturmathematik und erwartetes Vertrauen `NOT_EVALUATED` sind unverändert. Frühere Branches/Worktrees, offene Settings-Arbeit und hashgleiche Sicherung bleiben erhalten.
 
 Nach Abschluss werden der endgültige PR-Kopf und dessen echte Docs-Checks in PR #88 und im Abschluss berichtet. Keine Behauptung einer fachlichen Abnahme oder Veröffentlichungsfreigabe aus grünen Dokumentationschecks.
+
+
+## 5. Tatsächlich ausgeführte lokale Dokumentationsprüfungen
+
+Für diesen P03–P05-Finalisierungsauftrag tatsächlich erfolgreich geprüft:
+
+- `git diff --check` ohne Fehler.
+- `bash scripts/verify_project_boundary.sh`: Projektgrenzen bestanden.
+- `python3 -m unittest discover -s scripts/tests -v`: alle10 bestehenden CI-Routing-/Schema-Guard-Prüfungen bestanden. Keine neuen Engine-/Androidtests daraus ableiten.
+- Lokale Links und Tabellenbreiten;116 LG-/7 PF-/51 DT-/80 PD-/12 E-/5 P-/23 A-Kennungen sowie vollständige23er-Paketzuordnung.
+- Die116 bisherigen LG- und43 bisherigen DT-Fälle unverändert; gesetzliche Matrix und80er-Quelle bytegleich zum Ausgangskopf. E01–E12 bleiben als unverändertes Bytepräfix im ergänzten Addendum.
+- CURRENT_RULES ab Herkunfts-/Sicherheitskapitel bytegleich; offene Settings-Datei und Backup mit unverändertem SHA256 `33d91e46cf441e1f3582f1f9c1f050e986bbb9777efbc27a7e009afc2c588ea0` erhalten.
+- Nur neun bereits erlaubte Markdown-Dateien betroffen; keine Produktcode-/Parser-/Schema-/Hardware-/APK-/Workflowänderung und keine Abschwächung bestehender Prüfskripte.
+
+Vor Abschluss zusätzlich konservative CI-Klassifikation, genaue veröffentlichte Blob-/Tree-Identität, Draftzustand/mergefähiger Kopf und echte GitHub-Docs-CI prüfen. Endgültiger SHA/CI-Link stehen im aktualisierten PR-Abschluss. Alle neuen LG/PF/DT/PD/E/P-/A-Nachweise bleiben geplante spätere Engine-/Produktabnahmen; **L01–L09 weiterhin offen, M0 noch nicht freigegeben.**

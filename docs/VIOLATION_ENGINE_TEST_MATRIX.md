@@ -2,7 +2,7 @@
 
 **Geplante Tests, 14.10.2026. Noch keine Engine implementiert, keine der neuen fachlichen Testgruppen ausgeführt.** Bestehende 40128-CI und Geräteabnahme sind davon getrennt.
 
-Bezüge: [Plan](VIOLATION_ENGINE_V1_PLAN.md), [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md), [historische80 Entscheidungen](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md), vorrangige [E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md) und [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md). **116 LG-Fälle (98+18),43 DT-Fälle (31+12),80 PD-Zuordnungen und12 Ergänzungszuordnungen;20 Abnahmekriterien im Plan (16+4).** Ursprüngliche IDs bleiben erhalten; ihre widersprechenden Erwartungen sind ausdrücklich aktualisiert, keine erfolgreiche Durchführung behauptet.
+Bezüge: [Plan](VIOLATION_ENGINE_V1_PLAN.md), [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md), [historische80 Entscheidungen](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md), vorrangige [E01–E12 und abschließende P03–P05](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md) und [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md). **116 LG-Fälle,7 produktfachliche PF-Fälle,51 DT-Fälle (43+8),80 PD-/12 E-/5 P-Zuordnungen;23 Abnahmekriterien im Plan (20+3).** Die116/43/20 des vorherigen Entwurfs bleiben die Ausgangsbasis; P03–P05 sind jetzt beschlossen. Ursprüngliche IDs bleiben erhalten; ihre widersprechenden Erwartungen sind ausdrücklich aktualisiert, keine erfolgreiche Durchführung behauptet.
 
 ## 1. Reproduzierbarer Testvertrag
 
@@ -215,6 +215,29 @@ Die18 Ergänzungsfälle erweitern die98 ursprünglichen Fälle, ohne sie zu erse
 | DT41 | Konkrete belegte ausgenommene/unsupported/unklare Sonderkonstellation mit OOS; anderer regulierter Zeitraum vollständig | Betroffene Scope-Grenze erklären, keine unberechtigten Befunde/Budgets/Entwarnung. Anderer ausreichend belegter Zeitraum bleibt prüfbar; keine aktive Vollkatalog-/Dialogpflicht. |
 | DT42 | Anzeigezone/DST/Schichtansicht ändern bei offenen Pflichten und E07-Befunden | Input-/Regelrevision, IDs, Mengen, Rechtsfenster und Audit identisch; nur Darstellung anders, kein neuer juristischer Lauf/Neu-Status. |
 | DT43 | Vollständiger Folgeimport belegt damalige manuelle Ruhe; Variante Quellenkonflikt zur alten Fahrt | Atomare Neubewertung mit alten/neuen exakten Belegen. Nur kompatibler damaliger Nachtrag schließt Lücke; Konflikt sichtbar, Originale/Receipt/Request-/Quellenfingerprint unverändert. |
+| DT44 | P03-Präsentationskonfiguration/Übergänge bei bestehender täglicher und Wochenruhe-Frist | Keine verbliebenen24-/2-h-Auslöser oder ersatzweise starren Stunden-/Prozentgrenzen. Technische UI-Ausarbeitung behält Frist-/Frühwarnanzeigen; gesetzliche24-/30-h-Fenster und1-/2-h-Artikel12-Regeln nicht mit gestrichenen UI-Schwellen verwechseln. |
+| DT45 | Gleicher Quellenstichtag, App-Uhr/Reopen/Offline/Warten ändern sich, später echter vollständiger Import | Ohne neue Quelle bleiben Warn-/Frist-/Budgetwerte am belegten Stand, kein Live-Countdown/Zukunftsverstoß. Neue belegte Daten dürfen sauber neu bewerten; unveränderte Sicherheits-/Audit-/Recompute-Regeln. |
+| DT46 | Beta-Fehlerformular und Vorschau bei ausgeschaltetem Netzwerk, lokales Dateispeichern | Problembeschreibung/Versionsdaten/Formular/Vorschau/Datei offline nutzbar; kein Konto/Backend-/Netzwerkzwang oder Versandauftrag. Dateiinhalt entspricht Vorschau. |
+| DT47 | Diagnosedaten vorgeschlagen, Zustimmung abgelehnt/erteilt, Daten nach Vorschau verändert | Ohne ausdrückliche freiwillige Zustimmung keine optionalen Diagnosen. Vorschau exakt tatsächlicher Inhalt; Zustimmung zu geändertem Inhalt nicht aus alter Vorschau ableiten. Bericht ohne optionalen Anhang bleibt möglich. |
+| DT48 | Fehlerquelle mit sensiblen Nummern, vollständigen EF-Rohbytes/APDU-Protokollen und ungefiltertem Exceptiontext | Minimierte/maskierte Feldliste; vollständige Rohkarten-/APDU-Inhalte nie im Bericht, auch nach Zustimmung nicht. Keine echte Karte in Fixtures, synthetische Sentinelwerte für Leckprüfung; Schutz-/Herkunftsdaten unverändert. |
+| DT49 | Bericht speichern, später bewusst Android-Teilen, Dialog abbrechen, Netz kehrt zurück | Kein automatischer Entwickler-/Drittversand oder Nachsenden. Android-Teilen nur Nutzeraktion mit Content-URI/begrenztem Leserecht; Abbruch respektieren, keine ungefragte Weitergabe. Zielprogrammversand nicht als Offlinefunktion zusichern. |
+| DT50 | Schichtmodus mit fehlender/mehrdeutiger Vorgeschichte, Mitternacht/DST und Detailnavigation | Exakt „Schichtzuordnung unklar“; alle vorhandenen Aktivitäten vollständig mit tatsächlichen Zeiten/Dauern in Kalenderansicht. Kein gefälschter Beginn/Intervall/Schichtgrenze oder verlorener Quellenbezug. |
+| DT51 | Reine Schichtprojektionskorrektur gegenüber Folgeimport mit wirklich neuen zeitlichen Belegen | Nur Darstellung geändert: gleiche Rechtswerte/IDs/Schulden/Zähler/Neu-Zustände, kein neuer Rechtslauf aus Displayanker. Echte Inputänderung darf atomare gesetzliche Neubewertung mit tatsächlichem Grund auslösen; niemals künstlicher Zählerreset durch neue Gruppierung. |
+
+
+### 2.8 Produktfachliche Abnahmefälle P03–P05
+
+Diese sieben Fälle ergänzen die116 LG-Regel-/Fachfälle. Es sind festgelegte spätere Prüffälle, keine neue Produktentscheidung oder bereits bestandene UI-Funktion. Sie enthalten positive, negative und unklare Datenlagen sowie die beschriebenen Zustimmungs-/Importwechsel. Vollständige Fixture-/UI-Schrittfolgen und unabhängige Erwartungen werden in M0 vorbereitet; konkrete P03-Darstellung darf M5 innerhalb des beschlossenen Rahmens ausarbeiten, ohne neue starre Auslösegrenzen.
+
+| Fall-ID | Beschluss / Bezüge | Fachliche Eingabe / Ablauf | Verbindliche Erwartung |
+|---|---|---|---|
+| PF01 | P03, PD12/15/16 | Bevorstehende noch rechtzeitig erfüllbare Tages-/Wochenruhefrist, ausreichend belegter Stichtag; ausgewählte nahe/ferne Darstellungssituationen | Beschlossene Frühwarn-/Fristfunktion bleibt. Zurückhaltender Hinweis klar vor tatsächlicher Überschreitung; keine künstliche Rechtsverletzung, kein vorgeschriebener24-/2-h- oder Prozent-Cutoff. Konkrete UI-Relevanzbeispiele in M5 fachlich prüfen statt neue harte Schwelle voraussetzen. |
+| PF02 | P03, PD09/12/51 | Zwei offene Ausgleichspflichten mit Ursprung/Frist vor Fälligkeit; Vergleich belegter Fristüberschreitung und entscheidender Datenlücke | Offene Pflichten/gesetzliche Fristen erhalten und getrennt von festgestellter Verletzung. Bei Lücke keine unsicheren Restbudgets oder falsche Entwarnung; alle Aussagen letzter belegter Datenstand, nicht Smartphone-Uhr. |
+| PF03 | P04, PD44/77 | Nutzer beschreibt Fehler, Versionsdaten vorhanden, optionale Diagnosedaten abgelehnt; Netzwerk fehlt | Lokales Formular/Vorschau/Dateispeichern funktionieren. Kein Konto/Backend; Bericht ohne optionale Diagnosen zulässig, keine Rohkarte/APDU oder automatische Übermittlung. |
+| PF04 | P04, PD77/79 | Nutzer sieht vollständige Vorschau, stimmt freiwillig optionalen minimierten Diagnosen zu, speichert und wählt später Android-Teilen/Abbruch | Genau dargestellte freigegebene Daten; sensible Inhalte minimiert/maskiert. Bewusste Nutzeraktionen, Abbruch ohne Versand. Zustimmung legitimiert keine verbotenen Rohdaten und keinen automatischen Empfänger. |
+| PF05 | P05, PD14/27, GrundsatzE | Schichtbeginn wegen Lücke oder mehreren möglichen Zuordnungen nicht zuverlässig belegbar | Sichtbar exakt „Schichtzuordnung unklar“. Keine erfundenen Tätigkeiten/Schichtgrenzen; tatsächliche vorhandene Aktivitäten vollständig mit unveränderten Zeiten/Dauern im Kalender. Gesetzliche Prüfung und Prüflücken unabhängig. |
+| PF06 | P05, PD27/39/56 | Tatsächliche Tätigkeits-/Ruhefolge bestimmt Beginn zuverlässig; gleicher Verlauf als Kalender-/Schichttag über Mitternacht | Belegte Zuordnung zum Schichtbeginn, vollständige Tätigkeiten/Navigation/00:00-Marker; tatsächliche Zeitpunkte, Dauern und Rechtsrechnung unverändert. Kein künstlicher rechtlicher Tagesreset. |
+| PF07 | P05, PD47/68, DT43 | Vollständiger Folgeimport behebt früheren Displayanker-Mangel; Vergleich reine Anzeigeänderung und wirklich neue rechtsrelevante Tätigkeit | Belegte Schichtanzeige automatisch neu bestimmbar. Nur Gruppierung korrigiert: keine neue Verletzung/Schuld/Zählerreset. Reale neue Inputdaten dürfen nach bestehendem Auditvertrag tatsächlich neu bewerten, klar von Projektion getrennt. |
 
 ## 3. Alle 80 Produktentscheidungen mit prüfbarer Abnahme
 
@@ -233,11 +256,11 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 9 | PD09 | Offene Ausgleichspflichten vor Fälligkeit mit Menge, Ursprung und genauer Frist. |
 | 10 | PD10 | Detail enthält Zeitraum, Rechenweg, Rechtsregel, Quellen und passende Überschreitungsgröße. |
 | 11 | PD11 | Zulässige täglichen Reduzierungen zwischen Wochenruhen verbraucht/verfügbar korrekt auf Start. |
-| 12 | PD12 | Drohende Ruheverletzung ist Warnung; keine definitive Verletzung solange legaler Pfad möglich. |
+| 12 | PD12 | P03 bestätigt tägliche Frühwarnung ohne feste2-h-Auslöseschwelle; Warnung klar von belegter Ruheverletzung getrennt. Keine Echtzeitfortschreibung, PF01/PF02/DT44/DT45. |
 | 13 | PD13 | 3+9 erkannt und erklärt, LG44/LG45; keine verbrauchte Reduzierung bei zulässiger Regelruhe. |
 | 14 | PD14 | Unbekannte Abschnitte und Auswirkungen im Zeitstrahl/detail; DT06. |
-| 15 | PD15 | Wochenruhefrist/-budget korrekt; Sichtbarkeit erst nach freigegebenem P03. |
-| 16 | PD16 | Relevanzschwelle blendet Anzeige, nicht Berechnung; Grenztest direkt vor/bei Schwelle. |
+| 15 | PD15 | Bevorstehende relevante Wochenruhefrist/-budget am belegten Datenstand; P03 geschlossen, keine feste24-h-Auslöseschwelle. PF01/DT44; gesetzliche Frist unverändert. |
+| 16 | PD16 | P03 präzisiert Relevanzdarstellung: alltagstauglich/zurückhaltend, keine starren Stunden-/Prozentgrenzen. Frühwarn-/Fristfunktion erhalten, konkrete technische UI später M5. |
 | 17 | PD17 | Reduzierungsdetails mit Fehlbetrag, Frist und zugrunde liegender Ruhe. |
 | 18 | PD18 | Automatische Ausgleichszuordnung mit Belegen; keine Mehrfachanrechnung, LG66–LG73. |
 | 19 | PD19 | Gezielt nur fehlende entscheidende internationale Voraussetzungen fragen; keine Adresse/Heimradius. |
@@ -248,7 +271,7 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 24 | PD24 | Woche und Doppelwoche getrennt, keine einzige irreführende Restzahl; LG23–LG26. |
 | 25 | PD25 | 30-h-/Beifahrer-Sonderregeln aus korrekt aufgezeichneter Crewchronik ohne Routine-Nachweisdialog, Voraussetzungen/konkrete Lücken im Detail erklärt. |
 | 26 | PD26 | Kompakte Startzusammenfassung mit Zugang zur ganzen Liste. |
-| 27 | PD27 | Kalendertag-/Schichttagwechsel verschiebt Markergruppierung, nicht Zeitpunkt/Ergebnis. |
+| 27 | PD27 | Kalender-/Schichtwechsel verschiebt Gruppierung, nicht Zeit/Ergebnis. P05: belegter Beginn oder „Schichtzuordnung unklar“, vorhandene Tätigkeiten vollständig im Kalender. |
 | 28 | PD28 | Typgruppen mit einzeln aufklappbaren Ereignissen und Berechnungen. |
 | 29 | PD29 | Warnung optisch zurückhaltender und sprachlich deutlich vom Verstoß getrennt. |
 | 30 | PD30 | Standardliste 28 Tage; Archive zugänglich und DT11 voller Berechnungshorizont. |
@@ -265,7 +288,7 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 41 | PD41 | Unabhängiger namentlich und fachlich qualifizierter Prüfer bestätigt Regelmatrix/Goldenfälle vor Release. |
 | 42 | PD42 | Geschlossene Beta mit ungefähr 5–10 Fahrern dokumentiert; kein größerer Testumfang behauptet. |
 | 43 | PD43 | Erste Beta Lkw-Fahrer; Busregeln dennoch technisch/fachlich vollständig in Tests, keine behauptete Bus-Hardwarebeta. |
-| 44 | PD44 | Fehlerformular in App verwendbar, freigegebener Übermittlungs-/Exportweg P04. |
+| 44 | PD44 | P04 geschlossen: lokales Offline-Fehlerformular, Problembeschreibung/Versionsdaten, vollständige Vorschau, Datei speichern und bewusst Android-Teilen. Kein Backend/Konto/automatischer Empfänger. |
 | 45 | PD45 | Fachliche Testabdeckung bleibt intern; keine öffentliche „alles rechtssicher“-Anzeige. |
 | 46 | PD46 | Gesetzesregeländerung im Änderungsprotokoll, nicht nur unspezifische Versionsnummer. |
 | 47 | PD47 | Audit enthält Vorher/Nachher sowie Import-/Kontext-/Regeländerungsgrund. |
@@ -298,9 +321,9 @@ Die folgenden PD-Prüfungen sind die vollständige Rückverfolgbarkeit der Produ
 | 74 | PD74 | Jeder Befund vollständig mit Zeit/Berechnung/Überschuss/Rechtsgrundlage; E07 bleibt Einzelbefund mit sichtbarer offener Bewertung, auch über Seitenwechsel. |
 | 75 | PD75 | Lokales Speichern über bewusste Android-Dateiwahl und optionales Teilen mit temporärem Leserecht; kein automatischer Upload. |
 | 76 | PD76 | Offlineberechnung aus versioniertem mitgeliefertem Regelpaket; Gesetzesänderung nur reguläres Update. |
-| 77 | PD77 | Diagnosen optional, Vorschau und ausdrückliche Zustimmung; Ablehnung lässt Fehlerbericht ohne Anhang zu. |
+| 77 | PD77 | P04: optionaler Diagnoseinhalt nur nach Vorschau/freiwilliger Zustimmung, ohne Zustimmung Bericht ohne Anhang. Keine vollständigen Rohkartendaten/APDU-Protokolle auch mit Zustimmung; DT47/DT48. |
 | 78 | PD78 | Je PDF-Befund richtige Gesetzesfassung, auch bei gemischter Historie. |
-| 79 | PD79 | Lokale Beta-Diagnoseansicht maskiert, keine Roh-APDUs oder sensiblen vollständigen Quellenbytes. |
+| 79 | PD79 | Lokale Beta-Diagnoseansicht maskiert; Fehlermeldung erhält nur erlaubte minimierte Diagnosedaten. P04-Vorschau/Offline/Speichern/Teilen, kein Rohdaten-/APDU-Bericht. |
 | 80 | PD80 | Alle neuen 1.0-Texte, Fehler, Berichte und Barrierefreiheitsbeschreibungen Deutsch; keine ungeprüften englischen Fallbacks. |
 
 Zusatzgrundsätze A–H erhalten eigene Sammelabnahmen: A→LG17–LG116; B→PD04/29/37/58/62 **mit vorrangigem E07**; C→LG01–LG16; D→DT01–DT08/DT14/DT20/DT23; E→DT09/DT10/PD27/39/40/56/67/70; F→PD07/08/47/68; G→LG07/PD20/59 und Legal-Matrix Abschnitt 8; H→PD41–PD45 und alle Gates des Plans.
@@ -319,8 +342,20 @@ Zusatzgrundsätze A–H erhalten eigene Sammelabnahmen: A→LG17–LG116; B→PD
 | E08 | B03/R06/W10–W13, LG35/LG36/LG50–LG53/LG76–LG80/LG98/LG116, DT23/DT36; A03/A07. |
 | E09 | S01–S10, LG01–LG14/LG97, DT41, Anwendbarkeits-/Supportmanifest; A03/A10/A14. |
 | E10 | S12, LG16/LG22/LG26, DT09/DT10/DT39/DT42, PD40/70; A08. |
-| E11 | Alle116 LG/43 DT/80 PD und A01–A20; unveränderte technische Gates und unabhängige Prüfung/Beta. |
-| E12 | Ausschließlich dokumentierter Draft-PR, unveränderte Code-/Schema-/Parser-/Hardware-/APK-Basis; ausdrückliche spätere Implementierungs- und Releasefreigabe. |
+| E11 | Alle116 LG/7 PF/51 DT/80 PD/12 E/5 P und A01–A23; unveränderte technische Gates und unabhängige Prüfung/Beta. |
+| E12 | Ausschließlich dokumentierter Draft-PR, unveränderte Code-/Schema-/Parser-/Hardware-/APK-Basis; P-Finalauftrag trennt M0-Fachfreigabe, spätere Programmierungsfreigabe und Releasefreigabe. |
+
+### 3.2 P01–P05 vollständig geschlossen und zugeordnet
+
+| Punkt | Bestätigte Quelle | Fachlicher/technischer Nachweis | Abnahme / Paket |
+|---|---|---|---|
+| P01 | E04 | LG81–LG88/LG109/LG110, DT35, PD20/61 | A03/A07/A14, M3/M5 |
+| P02 | E07 | LG89–LG94/LG111–LG113, DT40, PD04/62 | A10/A12/A20, M2/M5/M6 |
+| P03 | Abschließendes AddendumP03 | PF01/PF02, DT44/DT45, PD09/12/15/16/51 | A21, M5; normative Fristen M2–M4 |
+| P04 | Abschließendes AddendumP04 | PF03/PF04, DT46–DT49, PD44/77/79 | A14/A22, M6 |
+| P05 | Abschließendes AddendumP05 | PF05–PF07, DT50/DT51, PD14/27/39/40/56 | A08/A23, M5; belegter Input M1 |
+
+Alle Prüfungen sind geplant. Keine dieser Produktbestätigungen schließt L01–L09 oder technische Produkt-/Gerätegates; M0 startet erst nach Freigabe und darf keine Programmierung vorwegnehmen.
 
 ## 4. Technische Prüfungen und Hardware
 
@@ -333,9 +368,9 @@ Alle bestehenden Tests bleiben aktiv. Neue Tests werden den vorhandenen Gradle-/
 | Unabhängiger Vergleich | Fachkundig berechnete Fälle und dokumentierter Vergleich mit anerkannter Referenzauswertung, wo verfügbar; Referenzsoftware ist kein Ersatz für Gesetzes-/Fachprüfung. |
 | Reader-/Parser-Regressionssuite | Unveränderte 0504-/0522-/0530-Dekodierung, GEN1/GEN2/GEN2V2, Bootstrap-/FK-/Gruppen-/EOF-/Cancellationregeln; keine neuen Kartenschreibbefehle. |
 | SQLCipher/Room | Echte additive Migration von Schema 22 auf ersten benötigten Compilerstand, Historie/Originale/Fingerprints identisch, fremde Profilzugriffe abgelehnt, keine Teilresultate, Ausgleich/Audit/Readstate/Reopen/Replay. |
-| Compose | Läufe/Neuberechnung/Quellenwechsel/Details/manuelle Nachtragskennzeichnung/aufgezeichnete Crew ohne Pflichtdialog/E07-Anzeige/Markierung/Zeitzone/Schicht/Maskierung, Datenlücken und keine falsche Entwarnung; alte Ergebnisanzeige während Recompute ausgeschlossen. |
+| Compose | Läufe/Neuberechnung/Quellenwechsel/Details/Nachtragsbadge/Crew/E07/Navigation/Zone/Maskierung, P03-Fristhinweise ohne feste Cutoffs, P05-Hinweis und vollständiger Kalender, P04-Vorschau/Zustimmung/Speichern/Teilen; keine falsche Entwarnung oder alte Recompute-Ergebnisanzeige. |
 | PDF | Feste Berichtsfälle rendern und visuell/inhaltlich prüfen: leere ausreichende Daten, große Verstoßliste, gemischte Rechtsstände, E07-Kandidaten mit offener Bewertung und sicheren Summen, lange Quellen-/Regeltexte, DST, Datenlücken; erste Seite korrekt, alle Einzelbefunde enthalten. |
-| Sicherheit/Diagnose | Zustimmung und Vorschau, minimierte technische Daten, keine echten Kartennummern/APDUs/private Schlüssel in Logs/Fixtures/Fehlerreport ohne Erfordernis. |
+| Sicherheit/Diagnose | P04: vollständige Vorschau/freiwillige Diagnosezustimmung, minimierte maskierte Feldliste, keine vollständigen Rohkartendaten/APDU-Protokolle/private Schlüssel im Fehlerbericht auch mit Zustimmung. Keine echten Kartennummern in Fixtures; alle bestehenden Log-/Sicherheitsregeln erhalten. |
 | Geräteupdate | Exakter freigegebener Produktkopf, grüne vollständige CI, stabiles signiertes Updatepaar, Update über 40128 ohne Deinstallation/Datenlöschung, neue eigene Bestätigung für betreffenden Baum. |
 
 Geplante eigene Geräteanleitung spätestens mit erstem Import-/Persistenz-/Migrationsproduktpaket: Update prüfen; alte Imports und mathematische Signaturen kontrollieren; automatisch berechneten Datenstand und Regelbefunde prüfen; doppelten Import auslösen; Quellen/Anwendungen/Karte wechseln; Kontext ändern und Neuberechnung beobachten; Lücken-/OOS-/Fährhinweise prüfen, soweit tatsächlich vorhanden; Neustart ohne Leser; Abbruch/Entnahme; Kalender-/Schicht-/Zeitzonenwechsel; PDF mit und ohne Name speichern/teilen. Jeder Punkt wird verständlich direkt im Chat gegeben, nicht nur in einer ZIP.
