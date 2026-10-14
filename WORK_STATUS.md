@@ -4,7 +4,7 @@
 
 Aktuellen main, offene PRs und CI live prüfen. Regeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
-**Aktualisierter Plan zur Prüfung:** [Draft-PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88) bleibt ausschließlich Dokumentation, keine Implementierungs-/Releasefreigabe oder Merge. Ausgangskopf dieses Ergänzungsauftrags `235839c152936d3e13a97cbc7f3c7e76de2ee1b6`, reine Docs-CI [38590591817](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38590591817), Versuch1, erfolgreich. Neuere Beschlüsse vom14.10.2026 wurden vollständig eingearbeitet. Endgültigen neuen Draftkopf und dessen Checks live prüfen; Docs-CI ist keine Engine-/Produkt-/Geräteabnahme.
+**Aktualisierter Plan zur Prüfung:** [Draft-PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88) bleibt ausschließlich Dokumentation, keine Implementierungs-/Releasefreigabe oder Merge. Ergänzungen E01–E12 veröffentlicht auf `5bc0d1ebbf63412e6cac65d7532e09c09141f42f`, vollständiger geprüfter Baum `adf538027e8475a97a1ee3dee62d60cf041f305d`; reine Docs-CI [38600513431](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38600513431), Versuch1, erfolgreich. Der folgende reine Docs-Nachlauf präzisiert paketübergreifende Teilnachweise und diese Übergabenotiz. Endgültigen neuen Draftkopf und dessen Checks live prüfen; Docs-CI ist keine Engine-/Produkt-/Geräteabnahme.
 
 ## Implementiert und erhalten
 

@@ -51,11 +51,13 @@ Diese Punkte sind fachliche Arbeiten und Freigabegates; sie bedeuten keine offen
 | L08 | Technische Appendix-Fassungen G1/G2/V2, Entnahmenotiz/c-Bit, bekannte Nachträge und belastbare Datenstichtage/aufgezeichnete Crewzeiten vollständig bestätigen | M1, A04/A17/A18 |
 | L09 | Beschlossene Ausschlüsse organisatorischer Heimkehr/Unterkunft juristisch korrekt erklären; gezielte Art.9- und W07-Voraussetzungen davon abgrenzen | M0/M5, keine neue Standort-/Heimkehrfunktion |
 
-Vor Release zusätzlich tatsächliche unabhängige fachkundige Gesamtprüfung mit dokumentierten Feststellungen/Behebungen sowie geschlossene Beta mit ungefähr5–10 Berufskraftfahrern, zunächst Lkw. Busregeln benötigen trotzdem vollständige fachliche/technische Abnahme. Fachprüfer und Tester sind noch nicht beauftragt; dieser Dokumentationsauftrag ermächtigt nicht zur Kontaktaufnahme oder Datenweitergabe.
+Vor Release zusätzlich tatsächliche unabhängige fachkundige Gesamtprüfung mit dokumentierten Feststellungen/Behebungen sowie geschlossene Beta mit ungefähr5–10 Berufskraftfahrern, zunächst Lkw. Busregeln benötigen trotzdem vollständige fachliche/technische Abnahme. Eine neue unabhängige Engine-Gesamtabnahme und Beta-Ergebnisse sind im Repository nicht dokumentiert; externe Beauftragungen werden nicht aus dem Chat vorausgesetzt. Dieser Dokumentationsauftrag ermächtigt nicht zur Kontaktaufnahme oder Datenweitergabe.
 
 ## 4. Reihenfolge und Freigabegrenzen
 
 M0 prüft Quellen/Auslegung und schließt Goldenfälle. Erst nach gesonderter ausdrücklicher Implementierungsfreigabe: M1 Eingang/Herkunft/Scope → M2 Lenkzeit/Pausen → M3 Tagesruhe/Fähre/Crew/Bus → M4 Wochenruhe/Ausgleich → M5 Ergebnis/Audit/Ansichten → M6 PDF/Beta-Werkzeuge → M7 Gesamtprüfung/Beta und separate Releaseentscheidung. Die [Paketmatrix im Gesamtplan](VIOLATION_ENGINE_V1_PLAN.md) nennt die jeweiligen Regel-/Test-/Abnahmeabhängigkeiten; betroffene M0-Nachweise müssen vor ihrem Rechenkern geschlossen sein. P03/P05 vor M5, P04 vor M6.
+
+Paketübergreifende funktionale A-Kriterien werden mit ausdrücklich benannten Teilnachweisen erfüllt: Herkunft in M1, Rechtsberechnung in M2–M4, UI in M5, PDF in M6. Spätere Anzeige-/PDF-Tests blockieren nicht rückwärts die Eingangsdatenarbeit; vor M7 sind alle Kriterien insgesamt vollständig erforderlich.
 
 Alle alten technischen Gates bleiben: sieben Gradle-Aufrufe, echte Compiler-Schemavergleiche, SQLCipher-/Keystore-/Herkunftsschutz, ungekürzte API36-SQLCipher-/Compose-Instrumentierung, APK-/Signatur-/Updatepaarnachweise, Abschlussgate und eigene Gerätebestätigung bei relevanten Änderungen beziehungsweise spätestens jedem dritten Produkt-PR. Reine Docs-CI ersetzt keinen dieser späteren Produktnachweise.
 
