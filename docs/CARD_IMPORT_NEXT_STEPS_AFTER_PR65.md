@@ -36,15 +36,19 @@ Der [freigegebene Plan A1–A10](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md) ist m
 
 Reine abgeleitete Leseprojektion aus exakten historischen Originalen/Child-Receipts. Gen1-RSA-Recovery und getrennte strikte PKCS1/SHA1-Dateiprüfung; sechs feste Gen2/V2-ECDSA-Domänen. Quellen-/Snapshot-/Cancellation-/Auswahl-/Archivschutz, alle alten Fingerprints/Aufnahmezustände, DB-Zeilen/Room22 und bisherigen Sicherheits-/CI-/Migrations-/Geräteprüfungen erhalten. Andere EF-Signaturen unverifiziert, Vertrauen stets NOT_EVALUATED. Keine automatische weitere Produktfreigabe.
 
-## Aktueller Planungsauftrag: gespeicherte Dateisignaturen vollständig prüfen
+## Abgeschlossen: sämtliche gespeicherten Dateisignaturen 40128
 
-Tobi14.10.2026 10:48 Europe/Berlin: mathematische Verifikation aller bereits gespeicherten Kartensignaturen abschließen. [Kurzer Plan A1–A8](CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), **vollständige Umsetzung nach A1–A8 freigegeben14.10.2026 11:20 Europe/Berlin**. Vorhandene0501/0520/0502/0503-Receipts für GEN1/GEN2/GEN2V2 und0525 nurV2 anbinden;40127-Engine/0504/0505 und eigene Herkunft wiederverwenden, Room22/Aufnahme/Fingerprints/alle Gates erhalten. Keine neue Signaturaufnahme. Nach neuer eigener positiver Abnahme diesen mathematischen Umfang schließen; anschließend Benutzeroberfläche und vereinbarte Funktionen für1.0 planen.
+[Plan A1–A8](CARD_STORED_SIGNATURE_COMPLETION_PLAN.md) umgesetzt und nach neuer eigener positiver Geräteabnahme übernommen. [PR #85](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/85), Produktmerge `c4057b3810d1ad0f5ef8e27cf69b260acd9c8405`, vollständiger identischer Baum `066dc0532fd2de486def695323b74f8e9d1150bd` zum endgültigen Kopf `7f5f770aa71ec70bb8f02d51cae3403a6f904637`. Volle CI38547729369 und exaktes Paket38553890752, jeweils Versuch1, erfolgreich. Tobi14.10.2026 13:47 Europe/Berlin: „Funktioniert alles wie es soll 👍“. [Genauer Gerätebeleg und Grenzen](DEVICE_CONFIRMATION_40128.md), [technische Nachweise](CARD_STORED_SIGNATURE_MATH_EVIDENCE.md).
+
+0501/0520/0502/0503 für GEN1/GEN2/GEN2V2 und0525 ausschließlichV2 bei vorhandenen Belegen;40127-0504/0505, gemeinsame Engine und Core-API erhalten. Alle Belegfamilien aus exaktem Read-Snapshot, eigene Quellen/Receipts/Zertifikate, defensive Bytes und kleine bestehende Detailanzeigen. Aufnahme/Fingerprints/Room22/alle Gates unverändert; keine DB-Schreiboperation, Migration, Cache/Backfill oder neue Aufnahme. Fehlende Voraussetzungen begründet nicht prüfbar, Zertifikatsvertrauen stets NOT_EVALUATED.
+
+**Dieser mathematische Umfang ist abgeschlossen.** Nächster Produktschwerpunkt: Benutzeroberfläche und vereinbarte Funktionen für1.0 konkret planen. Kein automatischer weiterer Kryptografieauftrag; konkrete nächste Umsetzung separat abstimmen. Zusätzlichen Produkt-main-Lauf38559255131 und getrennten Dokumentationsabschluss beim nächsten Start live prüfen.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Mathematische Prüfung vorhandener Identity-/Event-/Fault-Receipts | Freigegebener Abschlussplan oben; Umsetzung40128 auf getrenntem Produktbranch, eigene endgültige volle CI und neue Geräteabnahme vor Merge. Andere nicht gespeicherte EF-Signaturen erweitern diesen Auftrag nicht. |
+| Mathematische Prüfung aller gespeicherten Dateisignaturen | Mit40128/A1–A8 abgeschlossen und übernommen; nicht erneut implementieren. Andere nicht gespeicherte EF-Signaturen erweitern den Auftrag nicht. |
 | Weitere EF-Signaturen | 0504/0505, der begrenzte 40125-Identifikationsumfang und 0502/0503 sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs anhand der vorhandenen Matrix und eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |
