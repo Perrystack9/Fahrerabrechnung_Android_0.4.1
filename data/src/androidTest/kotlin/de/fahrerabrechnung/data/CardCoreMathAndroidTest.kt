@@ -18,7 +18,7 @@ class CardCoreMathAndroidTest {
     @Test fun rsaRecoveryAndAllSixEcDomainsWorkOnAndroidWithStrictPlainFraming() {
         val providers = Security.getProviders().map { it.name }
         val archive = InstrumentationRegistry.getInstrumentation().context.assets.open("core-math/vectors.zip").use { it.readBytes() }
-        assertEquals("267440c8fdeb3240e155c55f1ac7a6bc3580152cac51612d009b31dc76817dfc",
+        assertEquals("ae367b8114245abd0a649b2725180423c811b01761a4e7a3c00b09591c594fda",
             MessageDigest.getInstance("SHA-256").digest(archive).joinToString("") { "%02x".format(it) })
         val files = ZipInputStream(ByteArrayInputStream(archive)).use { zip ->
             buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
@@ -54,6 +54,15 @@ class CardCoreMathAndroidTest {
         }
         assertTrue(crypto.ec(CardSignaturePolicy.NIST_P256, checkNotNull(crypto.ecKey(CardSignaturePolicy.NIST_P256,
             files.getValue("nist256.point"))), files.getValue("nist256-activity.raw"), files.getValue("nist256-plain30.sig")))
+        val mixed = CardCertificateFile(CardCertificateKind.SIGNING, CardGeneration.GEN2V2, files.getValue("mixed.cert"))
+        val record = CardCertificateParser.parse(mixed) as CardEccCertificateRecord
+        val subjectPolicy = checkNotNull(CardSignaturePolicy.from(CardGeneration.GEN2V2, mixed))
+        assertEquals(CardSignaturePolicy.NIST_P256, subjectPolicy)
+        assertTrue(crypto.ec(CardSignaturePolicy.BRAINPOOL_P384, checkNotNull(crypto.ecKey(CardSignaturePolicy.BRAINPOOL_P384,
+            files.getValue("mixed-issuer.point"))), record.originalBodyBytes.map(Int::toByte).toByteArray(), record.signatureBytes.map(Int::toByte).toByteArray()))
+        for (kind in listOf("activity", "vehicles")) assertTrue(crypto.ec(subjectPolicy,
+            checkNotNull(crypto.ecKey(subjectPolicy, record.publicPointBytes.map(Int::toByte).toByteArray())),
+            files.getValue("mixed-$kind.raw"), files.getValue("mixed-$kind.sig")))
         assertEquals(providers, Security.getProviders().map { it.name })
     }
 }

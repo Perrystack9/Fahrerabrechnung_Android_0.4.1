@@ -59,7 +59,7 @@ class CardCoreSignatureMathTest {
 
     @Test fun publishedVectorArchiveAndEveryEntryMatchTheirRecordedDigests() {
         val archive = checkNotNull(javaClass.getResourceAsStream("/core-math/vectors.zip")).use { it.readBytes() }
-        assertEquals("267440c8fdeb3240e155c55f1ac7a6bc3580152cac51612d009b31dc76817dfc", coreMathDigest(archive))
+        assertEquals("ae367b8114245abd0a649b2725180423c811b01761a4e7a3c00b09591c594fda", coreMathDigest(archive))
         val manifest = bytes("manifest.json").toString(Charsets.UTF_8)
         for ((name, raw) in files.filterKeys { it != "manifest.json" })
             assertTrue("Digest for $name", manifest.contains("\"$name\": \"${coreMathDigest(raw)}\""))
@@ -146,6 +146,25 @@ class CardCoreSignatureMathTest {
         assertStatus(CardSignatureMathStatus.VALID, good)
         val changedIssuerSignature = certificate.bytes.also { it[it.lastIndex] = 99 }
         assertStatus(CardSignatureMathStatus.VALID, input("nist256", cert = changedIssuerSignature))
+    }
+
+    @Test fun independentlySignedMixedIssuerCurveAndUnknownTimesNeverReplaceSubjectPolicy() {
+        val certificate = bytes("mixed.cert")
+        val parsed = CardCertificateParser.parse(CardCertificateFile(CardCertificateKind.SIGNING, CardGeneration.GEN2V2, certificate)) as CardEccCertificateRecord
+        val crypto = CoreSignatureCrypto()
+        val issuer = checkNotNull(crypto.ecKey(CardSignaturePolicy.BRAINPOOL_P384, bytes("mixed-issuer.point")))
+        assertTrue(crypto.ec(CardSignaturePolicy.BRAINPOOL_P384, issuer, parsed.originalBodyBytes.map(Int::toByte).toByteArray(),
+            parsed.signatureBytes.map(Int::toByte).toByteArray()))
+        assertEquals(96, parsed.signatureBytes.size)
+        for (kind in CardCoreEf.entries) {
+            val label = if (kind == CardCoreEf.ACTIVITY) "activity" else "vehicles"
+            assertStatus(CardSignatureMathStatus.VALID, input("nist256", kind, cert = certificate, sig = bytes("mixed-$label.sig")))
+            val unknownTime = certificate.copyOf()
+            val tag = byteArrayOf(0x5f, 0x24, 4, 0, 0, 0, 1)
+            val start = (0..unknownTime.size - tag.size).first { unknownTime.copyOfRange(it, it + tag.size).contentEquals(tag) }
+            for (index in start + 3 until start + 7) unknownTime[index] = -1
+            assertStatus(CardSignatureMathStatus.VALID, input("nist256", kind, cert = unknownTime, sig = bytes("mixed-$label.sig")))
+        }
     }
 
     @Test fun exactSourceAndFrozenBuffersPreventCrossReceiptOrEfResultReuse() {

@@ -29,6 +29,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -72,6 +73,7 @@ import de.fahrerabrechnung.data.card.CardEventFaultSignature
 import de.fahrerabrechnung.data.card.CardIdentitySignature
 import de.fahrerabrechnung.data.card.CardIdentitySourceKind
 import de.fahrerabrechnung.data.card.CardCoreSignature
+import de.fahrerabrechnung.data.card.CardCoreSignatureVerification
 import de.fahrerabrechnung.data.card.CardCoreEf
 import de.fahrerabrechnung.data.card.SavedCardCoreSnapshot
 import de.fahrerabrechnung.data.card.SavedCardControl

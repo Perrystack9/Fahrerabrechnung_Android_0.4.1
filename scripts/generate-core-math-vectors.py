@@ -77,6 +77,24 @@ for name,curve,oid,h,width in curves:
             if raw[0]==0x30:
                 key.public_key().verify(der,bytes(68),ec.ECDSA(h));save('nist256-plain30.sig',raw);break
         else:raise RuntimeError('no 30-prefix sample')
+def mixed_curve_vectors():
+    subject=ec.generate_private_key(ec.SECP256R1())
+    authority=ec.generate_private_key(ec.BrainpoolP384R1())
+    point=subject.public_key().public_bytes(serialization.Encoding.X962,serialization.PublicFormat.UncompressedPoint)
+    body=tlv(0x5f29,b'\x00')+tlv(0x42,b'ISSUER00')+tlv(0x5f4c,bytes.fromhex('ff534d52445411'))
+    body+=tlv(0x7f49,tlv(6,bytes.fromhex('2A8648CE3D030107'))+tlv(0x86,point))+tlv(0x5f20,b'SUBJECT0')+tlv(0x5f25,bytes(4))+tlv(0x5f24,(1).to_bytes(4,'big'))
+    encoded=tlv(0x7f4e,body)
+    der=authority.sign(encoded,ec.ECDSA(hashes.SHA384()))
+    authority.public_key().verify(der,encoded,ec.ECDSA(hashes.SHA384()))
+    r,v=utils.decode_dss_signature(der)
+    save('mixed.cert',tlv(0x7f21,encoded+tlv(0x5f37,r.to_bytes(48,'big')+v.to_bytes(48,'big'))))
+    save('mixed-issuer.point',authority.public_key().public_bytes(serialization.Encoding.X962,serialization.PublicFormat.UncompressedPoint))
+    for kind,raw in [('activity',bytes(68)),('vehicles',bytes(50))]:
+        der=subject.sign(raw,ec.ECDSA(hashes.SHA256()))
+        subject.public_key().verify(der,raw,ec.ECDSA(hashes.SHA256()))
+        r,v=utils.decode_dss_signature(der)
+        save('mixed-'+kind+'.raw',raw);save('mixed-'+kind+'.sig',r.to_bytes(32,'big')+v.to_bytes(32,'big'))
+mixed_curve_vectors()
 save('erca-root.bin',(base/'erca-gen1.bin').read_bytes())
 save('public-msca.bin',(base/'MK_TCC2.bin').read_bytes())
 manifest={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.iterdir()) if p.suffix!='.json'}
