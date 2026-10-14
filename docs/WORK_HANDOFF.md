@@ -2,7 +2,7 @@
 
 Einstieg: WORK_START und dessen fünf Startdateien. Branch/HEAD, Arbeitsbaum, aktuellen GitHub-main, offene PRs und relevante CI live prüfen.
 
-**40126-Produktmeilenstein abgeschlossen.** Keine weitere Umsetzung freigegeben. [PR #79](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/79) nach neuer eigener Geräteabnahme normal gemergt; Produkt-main `6334b4f67485feaee4de5d649d6788475af940ec`. Anschließend ausschließlich Gerätebeleg, Kernstatus, Folgeplan und diese Übergabe in [Docs-PR #80](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/80) aktualisiert.
+**40126-Produktmeilenstein abgeschlossen; neuer begrenzter Planauftrag.** Tobi beauftragt am 13.10.2026 zunächst einen konkreten Plan zur mathematischen Prüfung vorhandener 0504/0505-Signaturen für Gen1/Gen2/Gen2V2. **Implementierung ausdrücklich erst nach Freigabe.** [Plan mit verbindlichen Abnahmekriterien](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md). Bestätigte Produktbasis main `7bbc66ed37dc1129a1e5286319e73e0860a2f474`, aus Produkt-PR #79 und Docs-Abschluss #80; aktuelle CI vollständig grün und beim neuen Planeinstieg keine offenen PRs.
 
 ## Bestätigter Produktstand
 
@@ -30,8 +30,8 @@ Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92db
 
 ## Nächster Schritt und Grenzen
 
-Kein aktiver neuer Produktauftrag. Für die nächste Entscheidung vorhandenen [Import-Folgeplan](CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und bereits abgeschlossene Matrix verwenden, ein weiteres Paket separat begrenzen; keine automatischen Folgefunktionen. Produkt, Paket und Geräteabnahme 40126 nicht erneut durchführen.
+Nächster Schritt: Tobis Freigabe für den [0504/0505-Verifikationsplan](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md) abwarten. Vorgesehen: reiner exakter Read-Assembler und abgeleitete RSA-/ECDSA-Prüfung, keine Persistenz/Migration; Room22 bleibt, Aufnahme-Receipts/Fingerprints unverändert. Gen1 benötigt mathematische C108/C100-Rückgewinnung mit exakt referenziertem öffentlichem Rechenschlüssel; Gen2 verwendet ausschließlich C101 und sechs feste Domänen. Mathematische Gültigkeit ist keine Zertifikatsvertrauensentscheidung. Alle bisherigen Prüfungen plus eigene neue vollständige Produkt-CI und passende neue Geräteabnahme erforderlich. Produkt, Paket und Geräteabnahme 40126 nicht erneut durchführen. Planbranch `docs/core-signature-math-verification-plan-20261013`, gleicher isolierter Checkout; nur Markdown geändert.
 
-Aufnahme bleibt UNVERIFIED. Weitere EFs, mathematische Prüfung/ERCA/MSCA-Vertrauen, vollständige Kartenabdeckung, Originalexport/DDD/Standarddownload und Card_Download-Schreiben getrennt. 7F66 ohne ISO-Primärformat, 0540 ohne legitimen SC5-Weg gesperrt. Import/Profile/Historie/SQLCipher/Keystore erhalten; keine destruktive Migration. Keine Spesen-/Lohn-/Abrechnungs-/Heimatstandortphase und kein gleichzeitiger Oberflächenumbau. Browser und Unteragenten ausgeschlossen.
+Aufnahme bleibt UNVERIFIED; vorgeschlagene mathematische Dateiprüfung als separate Leseaussage, Zertifikatsvertrauen NOT_EVALUATED. Weitere EFs, vollständiges ERCA/MSCA-Vertrauen, Kartenabdeckung, Originalexport/DDD/Standarddownload und Card_Download-Schreiben getrennt. 7F66 ohne ISO-Primärformat, 0540 ohne legitimen SC5-Weg gesperrt. Import/Profile/Historie/SQLCipher/Keystore erhalten; keine destruktive Migration. Keine Spesen-/Lohn-/Abrechnungs-/Heimatstandortphase und kein gleichzeitiger Oberflächenumbau. Browser und Unteragenten ausgeschlossen.
 
 Gerätetest-Anleitungen immer verständlich direkt im Chat; Repository-/ZIP-Anleitungen nur ergänzend. Nach diesem Meilenstein Übergabe abschließen und Sitzung beenden. Neuer Einstieg: „FahrerTagebuch am aktuellen Stand fortsetzen.“

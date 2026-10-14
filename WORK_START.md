@@ -28,7 +28,7 @@ Die bestätigten Vorgänger 40124/40125 bleiben erhalten; [40125-Beleg](docs/DEV
 
 ## Nächste Arbeit
 
-Kein weiterer Produktauftrag freigegeben. 0502/0503-Meilenstein und Geräteabnahme nicht wiederholen. Für ein neues begrenztes Paket den vorhandenen Import-Folgeplan und die bereits erarbeitete Matrix verwenden; neue Umsetzung erst nach eigenständiger Umfangsentscheidung. Keine automatische weitere EF-, Export-, Vertrauens-, Schreib- oder Oberflächenphase.
+Tobi hat am 13.10.2026 die Planung einer mathematischen Verifikation der bereits gespeicherten 0504/0505-Signaturen für Gen1 und Gen2/Gen2V2 beauftragt. [Konkreter Plan mit Abnahmekriterien](docs/CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md); **Implementierung erst nach ausdrücklicher Freigabe**. Vorgesehen: exakte eigene Quellen, Gen1-RSA-Schlüsselrückgewinnung/PKCS1-SHA1 und sechs Gen2-ECDSA-Domänen; mathematische Aussage getrennt von weiterhin ungeprüftem Zertifikatsvertrauen. Nur abgeleitete Leseprojektion, Room22 bleibt. 40126, Aufnahmebelege/Fingerprints, CI-/Migrations-/Gerätegates und bestehende unvollständige Settings-Arbeit erhalten; abgeschlossene Aufnahme nicht wiederholen. Keine automatische weitere EF-, Export-, Vertrauens-, Schreib- oder Oberflächenphase.
 
 Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` erhalten; zusätzliche Sicherung in `/workspace/scratch/4c3cf966d792/session-backups`. Isolierter Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; geprüfter Produktbranch `work/40126-event-fault-remote`, Docs-Abschlussbranch `docs/close-40126-session-20261013`. Aktuellen main/PR/CI live prüfen.
 
