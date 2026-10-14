@@ -22,10 +22,12 @@ internal fun CardIdentitySourceKind.identitySourceTitle(): String = when (this) 
 @Composable
 internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardIdentitySourceKind, SavedCardIdentitySource>, receiptId: String? = null,
     signatures: Map<CardIdentitySourceKind, CardIdentitySignature> = emptyMap(),
-    generation: CardGeneration? = sources.values.firstOrNull()?.file?.generation ?: signatures.values.firstOrNull()?.generation) {
+    generation: CardGeneration? = sources.values.firstOrNull()?.file?.generation ?: signatures.values.firstOrNull()?.generation,
+    driverCardId: String? = null, verification: Map<CardSignedEf, CardSignatureVerification> = emptyMap(),
+    verificationError: Boolean = false) {
     var kind by remember { mutableStateOf(CardIdentitySourceKind.IDENTIFICATION) }
     val source = sources[kind]
-    var showNumber by remember(kind, source?.id, receiptId) { mutableStateOf(false) }
+    var showNumber by remember(kind, source?.id, receiptId, driverCardId, generation) { mutableStateOf(false) }
     val zone = remember { ZoneId.systemDefault() }
     val format = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss XXX") }
     fun time(value: Instant) = value.takeUnless { it.epochSecond in setOf(0L, 0xFFFF_FFFFL) }
@@ -38,14 +40,19 @@ internal fun CardIdentitySourceScreen(padding: PaddingValues, sources: Map<CardI
         }
         Text(kind.identitySourceTitle(), style = MaterialTheme.typography.titleMedium)
         val signature = signatures[kind]
-        if (kind == CardIdentitySourceKind.APPLICATION_V2 && generation != null && generation != CardGeneration.GEN2V2)
+        val math = verification[kind.signedEf()]?.takeIf { it.matches(receiptId, driverCardId, kind, signature) }
+        val applicable = kind != CardIdentitySourceKind.APPLICATION_V2 || generation == null || generation == CardGeneration.GEN2V2
+        if (!applicable)
             Text("Für diese Kartenanwendung nicht vorgesehen.")
         else Text(when (signature?.status) {
-            CardSignatureStatus.CAPTURED_UNVERIFIED -> "Kartensignatur: ${signature?.actualLength} Bytes · aufgenommen · ungeprüft"
+            CardSignatureStatus.CAPTURED_UNVERIFIED -> "Kartensignatur: ${signature?.actualLength} Bytes · aufgenommen" +
+                if (math == null) " · ungeprüft" else ""
             CardSignatureStatus.FAILED -> "Kartensignatur: fehlgeschlagen · ${signature?.reason.signatureMessage()}"
             CardSignatureStatus.NOT_ATTEMPTED -> "Kartensignatur: nicht aufgenommen · ${signature?.reason.signatureMessage()}"
             null -> "Signatur in diesem Import nicht aufgenommen"
         })
+        if (applicable && receiptId != null && driverCardId != null)
+            CardSignatureMathLines(kind.identitySourceTitle(), math, verificationError)
         if (source == null) Text("Für diese Übernahme sind diese Originalangaben nicht gespeichert.")
         else SectionCard {
             Text("Dateigröße: ${source.file.bytes.size} Bytes")

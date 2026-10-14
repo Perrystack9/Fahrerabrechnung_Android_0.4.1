@@ -35,6 +35,18 @@ internal class CardEventFaultSignatureStore(private val dao: CardEventFaultSigna
         }
     }
 
+    /** The existing bootstrap/capacity and exact child checks remain part of load/decode. */
+    suspend fun verificationInputs(saved: SavedDriverImport): List<SavedSignatureVerificationInput> {
+        val signatures = load(saved.driverCardId, saved.id)
+        val rows = dao.receipts(saved.id).associateBy { it.kind }
+        return CardEventFaultKind.entries.map { kind ->
+            val row = rows[kind.originalStorageKind]
+            // Original rows belong to the receipt, not a normalized event/fault projection.
+            signatureSnapshot(sources, saved, kind.signedEf(), signatures[kind]?.mathReceipt(), row?.fingerprint,
+                row?.originalSourceId, row?.certificateSourceId)
+        }
+    }
+
     private suspend fun decode(row: CardEventFaultSignatureEntity): CardEventFaultSignature {
         val kind = CardEventFaultKind.entries.single { it.originalStorageKind == row.kind }
         val generation = CardGeneration.valueOf(row.generation)

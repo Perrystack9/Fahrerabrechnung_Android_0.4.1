@@ -352,6 +352,24 @@ class DriverCardImportRepository @Inject constructor(
         }
     }
 
+    /** Every existing receipt family, one validated frozen read snapshot; no database writes. */
+    suspend fun verifySavedSignatures(id: String): Map<CardSignedEf, CardSignatureVerification> {
+        val inputs = database.withTransaction {
+            val saved = get(id) ?: return@withTransaction emptyList<SavedSignatureVerificationInput>()
+            coreSignatures.verificationInputs(saved).map { it.signatureInput() } +
+                identitySignatures.verificationInputs(saved) + eventSignatures.verificationInputs(saved)
+        }
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val verifier = CardSignatureVerifier()
+            inputs.associate { input ->
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                val result = verifier.verify(input)
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                input.source.ef to result
+            }.toMap()
+        }
+    }
+
     private suspend fun primaryImports(rows: List<DriverImportSourcesEntity>) = rows.filter { row ->
         val attempt = database.cardReadBatchDao().attemptForSession(row.sessionId)
         attempt == null || database.cardReadBatchDao().batch(attempt.batchId)?.primaryApplication == attempt.application

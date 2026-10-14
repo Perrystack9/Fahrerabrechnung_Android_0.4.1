@@ -1,6 +1,6 @@
 # Abschluss der mathematischen Prüfung gespeicherter Kartensignaturen
 
-**Planung beauftragt, Implementierung noch nicht freigegeben.** Tobi am 14.10.2026, 10:48 Europe/Berlin. Ziel: alle bereits gespeicherten Dateisignaturen abdecken und danach diesen mathematischen Teil abschließen; anschließend Oberfläche und Funktionen für Version 1.0 planen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
+**Plan beauftragt14.10.2026 10:48 und vollständig zur Umsetzung freigegeben14.10.2026 11:20 Europe/Berlin.** Tobi bestätigt PR #84 und A1–A8. Ziel: alle bereits gespeicherten Dateisignaturen abdecken und danach diesen mathematischen Teil abschließen; anschließend Oberfläche und Funktionen für Version 1.0 planen. Regeln: [CURRENT_RULES.md](CURRENT_RULES.md).
 
 ## Bestätigte Basis und Umfang
 

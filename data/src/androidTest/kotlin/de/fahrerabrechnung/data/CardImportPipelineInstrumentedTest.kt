@@ -136,6 +136,119 @@ class CardImportPipelineInstrumentedTest {
         } }
     }
 
+    private val storedMathVectors by lazy {
+        ZipInputStream(InstrumentationRegistry.getInstrumentation().context.assets.open("stored-math/vectors.zip")).use { zip ->
+            buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
+        }
+    }
+
+    /** Independently signed complete own synthetic sources; never reconstruct stored originals. */
+    private fun storedMathematicalRead(generation: CardGeneration = CardGeneration.GEN2V2,
+        bad: CardSignedEf? = null, unsigned: Boolean = false, legacy: Boolean = false): CardReadResult {
+        val name = if (generation == CardGeneration.GEN1) "rsa" else "nist256"
+        val tag = if (generation == CardGeneration.GEN1) "g1" else if (generation == CardGeneration.GEN2) "g2" else "g2v2"
+        fun prefix(ef: CardSignedEf) = "$name-$tag-${"%04x".format(ef.fileId)}" +
+            if (legacy && ef == CardSignedEf.APPLICATION) "-legacy" else ""
+        fun raw(ef: CardSignedEf) = storedMathVectors.getValue(prefix(ef) + ".raw").copyOf()
+        fun sig(ef: CardSignedEf) = storedMathVectors.getValue(prefix(ef) + ".sig").copyOf().also {
+            if (bad == ef) it[it.lastIndex] = (it.last().toInt() xor 1).toByte()
+        }
+        val certificate = CardCertificateFile(if (name == "rsa") CardCertificateKind.CARD else CardCertificateKind.SIGNING,
+            generation, storedMathVectors.getValue(if (name == "rsa") "test-card.bin" else "$name.cert"))
+        val policy = if (name == "rsa") CardSignaturePolicy.RSA_SHA1 else CardSignaturePolicy.NIST_P256
+        val certificates = mutableMapOf(certificate.kind to CardCertificateRead(certificate))
+        if (name == "rsa") certificates[CardCertificateKind.CA] = CardCertificateRead(
+            CardCertificateFile(CardCertificateKind.CA, generation, storedMathVectors.getValue("test-ca.bin")))
+        val identity = CardIdentitySourceKind.entries.filter { it.supports(generation) }.associateWith {
+            CardIdentitySourceFile(it, generation, raw(it.signedEf()))
+        }
+        val core = CardCoreEf.entries.associateWith { CardCoreSnapshot(it, generation, raw(it.signedEf())) }
+        val event = CardEventFaultKind.entries.associateWith {
+            CardEventFaultFile(it, generation, if (it == CardEventFaultKind.EVENTS) 12 else 24, raw(it.signedEf()))
+        }
+        return CardReadResult(CardRecognition.DRIVER, generation,
+            DriverCardDecoder.identity(identity.getValue(CardIdentitySourceKind.IDENTIFICATION).bytes, generation),
+            core.getValue(CardCoreEf.ACTIVITY).activity(), core.getValue(CardCoreEf.VEHICLES).vehicles(),
+            events = event.getValue(CardEventFaultKind.EVENTS), faults = event.getValue(CardEventFaultKind.FAULTS),
+            certificates = certificates, identitySources = identity.mapValues { CardIdentitySourceRead(it.value) },
+            coreReads = core.mapValues { CardCoreRead(it.key, CardCoreReadStatus.COMPLETE, it.value) },
+            coreSignatures = if (unsigned) emptyMap() else core.mapValues { (kind, original) ->
+                CardCoreSignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy,
+                    CardSignaturePhase.SIGN, statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000,
+                    actualLength = policy.length, original = original, certificate = certificate, bytes = sig(kind.signedEf()))
+            }, identitySignatures = if (unsigned) emptyMap() else identity.mapValues { (kind, original) ->
+                CardIdentitySignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy,
+                    CardSignaturePhase.SIGN, statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000,
+                    actualLength = policy.length, original = original, certificate = certificate, bytes = sig(kind.signedEf()))
+            }, eventFaultSignatures = if (unsigned) emptyMap() else event.mapValues { (kind, original) ->
+                CardEventFaultSignature(kind, generation, CardSignatureStatus.CAPTURED_UNVERIFIED, policy,
+                    CardSignaturePhase.SIGN, statusWord = 0x9000, hashStatusWord = 0x9000, signStatusWord = 0x9000,
+                    actualLength = policy.length, original = original, certificate = certificate, bytes = sig(kind.signedEf()))
+            })
+    }
+
+    @Test fun allStoredReceiptFamiliesStayReadOnlyAndOwnAcrossDedupReplayAndEncryptedReopen() = runBlocking {
+        val goodInput = storedMathematicalRead()
+        imports.bind(goodInput.card!!, true)
+        val old = pipeline.process(storedMathematicalRead(unsigned = true), "all-math-old")
+        val good = pipeline.process(goodInput, "all-math-good")
+        val bad = pipeline.process(storedMathematicalRead(bad = CardSignedEf.IDENTIFICATION), "all-math-bad")
+        val before = databaseRows()
+        val valid = imports.verifySavedSignatures(good.id)
+        assertEquals(CardSignedEf.entries.toSet(), valid.keys)
+        assertTrue(valid.values.all { it.status == CardSignatureMathStatus.VALID && it.certificateTrust == CardCertificateTrustStatus.NOT_EVALUATED })
+        val invalid = imports.verifySavedSignatures(bad.id)
+        assertEquals(CardSignatureMathStatus.INVALID, invalid.getValue(CardSignedEf.IDENTIFICATION).status)
+        assertTrue(invalid.filterKeys { it != CardSignedEf.IDENTIFICATION }.values.all { it.status == CardSignatureMathStatus.VALID })
+        assertTrue(imports.verifySavedSignatures(old.id).values.all { it.reason == CardSignatureMathReason.NO_SIGNATURE })
+        assertTrue(imports.verifySavedSignatures("foreign-or-missing-session").isEmpty())
+        assertEquals(valid, imports.verifySavedSignatures(good.id))
+        assertEquals(before, databaseRows())
+        assertEquals(good, pipeline.process(goodInput, good.id))
+        assertEquals(before, databaseRows())
+        db.close(); open()
+        assertEquals(valid, imports.verifySavedSignatures(good.id))
+        assertEquals(before, databaseRows())
+        val saved = imports.get(good.id)!!
+        assertTrue(saved.coreSignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        assertTrue(saved.identitySignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        assertTrue(saved.eventFaultSignatures.values.all { it.status == CardSignatureStatus.CAPTURED_UNVERIFIED })
+        for (ef in valid.keys) {
+            val a = valid.getValue(ef).source; val b = invalid.getValue(ef).source
+            assertEquals(a.originalSourceId, b.originalSourceId)
+            assertNotEquals(a.sessionId, b.sessionId); assertNotEquals(a.receiptFingerprint, b.receiptFingerprint)
+        }
+    }
+
+    @Test fun otherGenerationsKeepTheirOwnIssuerAndLegacyLayoutWithoutBorrowingV2() = runBlocking {
+        val g2Input = storedMathematicalRead(CardGeneration.GEN2, legacy = true)
+        imports.bind(g2Input.card!!, true)
+        val g2 = pipeline.process(g2Input, "all-math-g2-legacy")
+        val g1 = pipeline.process(storedMathematicalRead(CardGeneration.GEN1), "all-math-g1")
+        val before = databaseRows()
+        val valid = imports.verifySavedSignatures(g2.id)
+        assertEquals(6, valid.size); assertFalse(valid.containsKey(CardSignedEf.APPLICATION_V2))
+        assertTrue(valid.values.all { it.status == CardSignatureMathStatus.VALID && it.source.generation == CardGeneration.GEN2 })
+        assertEquals(15, imports.get(g2.id)!!.identitySignatures.getValue(CardIdentitySourceKind.APPLICATION).original!!.bytes.size)
+        val unavailable = imports.verifySavedSignatures(g1.id)
+        assertEquals(6, unavailable.size)
+        assertTrue(unavailable.values.all { it.reason == CardSignatureMathReason.UNKNOWN_GEN1_RECOVERY_KEY &&
+            it.source.generation == CardGeneration.GEN1 && it.source.issuerSourceId != null && it.certificateTrust == CardCertificateTrustStatus.NOT_EVALUATED })
+        assertEquals(before, databaseRows())
+    }
+
+    @Test fun corruptIdentityAndEventReceiptsRemainRejectedWithoutUnsignedOrNewerFallback() = runBlocking {
+        val input = storedMathematicalRead()
+        imports.bind(input.card!!, true)
+        val old = pipeline.process(storedMathematicalRead(unsigned = true), "all-math-corrupt-old")
+        for (table in listOf("card_identity_signature_receipts", "card_event_fault_signature_receipts")) {
+            val saved = pipeline.process(input, "all-math-corrupt-$table")
+            db.openHelper.writableDatabase.execSQL("UPDATE $table SET fingerprint = 'wrong' WHERE sessionId = ?", arrayOf(saved.id))
+            rejected<Exception> { imports.verifySavedSignatures(saved.id) }
+            assertTrue(imports.verifySavedSignatures(old.id).values.all { it.reason == CardSignatureMathReason.NO_SIGNATURE })
+        }
+    }
+
     @Test fun mathematicalProjectionIsReadOnlyOfflineAndExactAcrossReplayAndEncryptedReopen() = runBlocking {
         imports.bind(card(), true)
         val unsigned = pipeline.process(coreRead(), "math-unsigned")
