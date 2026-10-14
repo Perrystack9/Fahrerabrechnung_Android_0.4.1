@@ -3,7 +3,9 @@ package de.fahrerabrechnung.data
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import de.fahrerabrechnung.data.card.*
+import java.io.ByteArrayInputStream
 import java.math.BigInteger
+import java.security.MessageDigest
 import java.security.Security
 import java.util.zip.ZipInputStream
 import org.junit.Assert.*
@@ -15,7 +17,10 @@ import org.junit.runner.RunWith
 class CardCoreMathAndroidTest {
     @Test fun rsaRecoveryAndAllSixEcDomainsWorkOnAndroidWithStrictPlainFraming() {
         val providers = Security.getProviders().map { it.name }
-        val files = ZipInputStream(InstrumentationRegistry.getInstrumentation().context.assets.open("core-math/vectors.zip")).use { zip ->
+        val archive = InstrumentationRegistry.getInstrumentation().context.assets.open("core-math/vectors.zip").use { it.readBytes() }
+        assertEquals("267440c8fdeb3240e155c55f1ac7a6bc3580152cac51612d009b31dc76817dfc",
+            MessageDigest.getInstance("SHA-256").digest(archive).joinToString("") { "%02x".format(it) })
+        val files = ZipInputStream(ByteArrayInputStream(archive)).use { zip ->
             buildMap { while (true) { val entry = zip.nextEntry ?: break; put(entry.name, zip.readBytes()) } }
         }
         val crypto = CoreSignatureCrypto()
