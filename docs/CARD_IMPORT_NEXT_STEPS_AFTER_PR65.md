@@ -42,7 +42,7 @@ Reine abgeleitete Leseprojektion aus exakten historischen Originalen/Child-Recei
 
 0501/0520/0502/0503 für GEN1/GEN2/GEN2V2 und0525 ausschließlichV2 bei vorhandenen Belegen;40127-0504/0505, gemeinsame Engine und Core-API erhalten. Alle Belegfamilien aus exaktem Read-Snapshot, eigene Quellen/Receipts/Zertifikate, defensive Bytes und kleine bestehende Detailanzeigen. Aufnahme/Fingerprints/Room22/alle Gates unverändert; keine DB-Schreiboperation, Migration, Cache/Backfill oder neue Aufnahme. Fehlende Voraussetzungen begründet nicht prüfbar, Zertifikatsvertrauen stets NOT_EVALUATED.
 
-**Dieser mathematische Umfang ist abgeschlossen.** Nächster Produktschwerpunkt: Benutzeroberfläche und vereinbarte Funktionen für1.0 konkret planen. Kein automatischer weiterer Kryptografieauftrag; konkrete nächste Umsetzung separat abstimmen. Zusätzlichen Produkt-main-Lauf38559255131 und getrennten Dokumentationsabschluss beim nächsten Start live prüfen.
+**Dieser mathematische Umfang ist abgeschlossen.** Nächste Produktreihenfolge für1.0 laut Tobi14.10.2026 14:06: vollständige zeitbezogene Verstoß-Engine nach Verordnung(EG)Nr.561/2006, danach Kalender, Auswertungen und neue Benutzeroberfläche.80 Produktentscheidungen werden der neuen Work-Sitzung gesondert übergeben; zunächst vollständigen Anforderungsabgleich/Plan erstellen, keine fehlenden Anforderungen erfinden und noch nicht implementieren. Kein automatischer weiterer Kryptografieauftrag; konkrete nächste Umsetzung separat abstimmen. Zusätzliche volle Produkt-main-CI38559255131 inzwischen vollständig erfolgreich, alle vier Jobs; Docs-Abschluss#86 übernommen, Docs-PR-/Main-CI grün. Aktuellen main und späteren Übergabe-PR beim nächsten Start live prüfen.
 
 ## Danach weiterhin getrennte Pakete
 

@@ -32,12 +32,30 @@ Gültig leere vollständige Quellen, unterstütztes15-Byte-Gen2-0501 und Blank-V
 
 A1–A8 erfüllt; [Plan](docs/CARD_STORED_SIGNATURE_COMPLETION_PLAN.md), [technische Nachweise](docs/CARD_STORED_SIGNATURE_MATH_EVIDENCE.md), [Gerätebeleg](docs/DEVICE_CONFIRMATION_40128.md). 18 isolierte lokale JVM-Kryptotests, neue unabhängige Python/OpenSSL-Vektoren und finale volle reale Android-CI erfolgreich. Alle sieben Gradle-Aufrufe, Unit/Lint/APK-/Testsignatur-/Updatepaar-/Compiler-Schemavergleich, ungekürzte API36-SQLCipher-/Compose-Suiten und Abschlussjob bestanden. Alte Tests/Gates unverändert; keine Filter/Quarantäne, Sicherheits-/Migrations-/Workflow-/Upload-/Budgetänderung.
 
-Room22-Compilerexport-SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`. Paket nach Download tatsächlich geprüft: BUILD_INFO, Archiv-/ZIP-/APK-Hashes, Manifest40128, festes Testzertifikat sowie APK-v2-Signatur und Inhaltsdigest. APK/ZIP und verständliche neunteilige Anleitung im Chat bereitgestellt. Eigene positive Gesamtantwort13:47; keine neuen sichtbaren Einzelmesswerte oder weitere Hardware-/Kurven-/GEN2-ohne-V2-Abdeckung daraus behaupten.
+Room22-Compilerexport-SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`. Paket nach Download tatsächlich geprüft: BUILD_INFO, Archiv-/ZIP-/APK-Hashes, Manifest40128, festes Testzertifikat sowie APK-v2-Signatur und Inhaltsdigest. APK/ZIP und verständliche neunteilige Anleitung im Chat bereitgestellt. Eigene positive Gesamtantwort13:47; keine zusätzlichen Einzelmesswerte oder weitere Hardware-/Kurven-/GEN2-ohne-V2-Abdeckung aus dieser Gesamtantwort behaupten. Späterer Screenshot13:59 zeigt zusätzlich GEN2V2-Core0504/0505 jeweils mathematisch gültig, Vertrauen nicht geprüft; genaue sichtbare Werte im Gerätebeleg, kein neuer Einzelbeleg für die fünf weiteren EFs.
 
-Zusätzlicher voller Produkt-main-Lauf [38559255131](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38559255131) für `c4057b3810d1ad0f5ef8e27cf69b260acd9c8405` beim Abschluss noch laufend. Nicht als grün ausgeben; zusammen mit aktuellem Dokumentationsabschluss beim nächsten Start live prüfen. Vollständige finale PR-CI und eigene Geräteabnahme bereits grün; identischer vollständiger Produktmergebaum geprüft.
+Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38559255131), Versuch1, für Produktmerge `c4057b3810d1ad0f5ef8e27cf69b260acd9c8405` jetzt vollständig erfolgreich; alle vier Jobs einschließlich ungekürzter API36-SQLCipher-/Compose-Instrumentierung und Abschlussgate. Am14.10.2026 nach Übergabeauftrag live bestätigt. Keine offenen40128-Prüfungen; Produktmerge besitzt exakt den endgültigen CI-/Gerätebaum.
+
+## Abgeschlossene PRs
+
+| PR | Bestätigter Umfang |
+|---|---|
+| #73 /40124 | Core-Kartensignaturaufnahme; übernommen und eigene Abnahme erhalten |
+| #76 /40125 | Identifikationssignaturaufnahme; übernommen und eigene Abnahme erhalten |
+| #79 /40126 | Ereignis-/Störungssignaturaufnahme, Room22; übernommen und eigene Abnahme erhalten |
+| #82 /40127 | Mathematische0504/0505-Prüfung; übernommen und eigene Abnahme erhalten |
+| #84 | Freigegebener40128-Plan A1–A8; übernommen |
+| #85 /40128 | Mathematische Prüfung aller gespeicherten Dateisignaturen; übernommen und neu abgenommen |
+| #86 |40128-Gerätebeleg, technische Nachweise und Abschlussdokumentation; übernommen, Docs-CI grün |
+
+Dokumentationsabschluss [PR #86](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/86) übernommen, Merge `b61ed8aedbab53847c5361f05b61ef280dded613`; Docs-PR-CI38559979155 und Docs-main-CI38560196780 erfolgreich. Bei der Übergabeprüfung keine offenen PRs; aktuelle Übergabeänderungen auf eigenem Docs-Branch. Aktuellen main und späteren Übergabe-PR/-Merge weiterhin live prüfen.
 
 ## Nächster Produktschwerpunkt
 
 **Mathematische Verifikation sämtlicher derzeit gespeicherter Kartendateisignaturen abgeschlossen.** Keine weitere automatische Kryptografiephase. Zertifikatsvertrauen bleibt ungeprüft; ERCA/MSCA-Vertrauen, DDD/Originalexport, neue Signaturaufnahmen und Kartenschreiben außerhalb dieses Meilensteins.
 
-Als Nächstes Benutzeroberfläche und vereinbarte Funktionen für1.0 konkret planen; bestehende bestätigte Daten-/Importbasis erhalten. Noch kein bestimmter UI-Umbau freigegeben. [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und Regeln aus WORK_START gelten. Browser/Unteragenten ausgeschlossen; unvollständige Settings-Arbeit und Sicherungen erhalten.
+**Neue Produktpriorität, Tobi14.10.2026 14:06 Europe/Berlin:** zuerst eine vollständige zeitbezogene Verstoß-Engine nach der Verordnung (EG) Nr.561/2006; anschließend Kalender, Auswertungen und neue Benutzeroberfläche für Version1.0. Die Engine wurde in einem separaten Beratungschat mit80 Produktentscheidungen konzipiert. **Diese80 Entscheidungen werden von Tobi der neuen Work-Sitzung gesondert übergeben; sie sind hier noch nicht als vollständige verbindliche Anforderungen vorhanden.** Keine fehlenden Entscheidungen erfinden oder aus alten Chats/Teilinformationen rekonstruieren. Noch keine Engine-Implementierung beginnen.
+
+Offen: Übernahme der vollständigen80 Produktentscheidungen, Abgleich mit vorhandenen Quellen/Daten-/Codepfaden und Projektregeln, Klärung tatsächlich verbleibender Anforderungen sowie konkreter Umsetzungsplan/Abnahmekriterien und gesonderte Freigabe. **Keine neue vollständige Verstoß-Engine in dieser Sitzung implementiert oder abgenommen.** Vorhandener Altcode ist ohne fachliche Abnahme kein Nachweis der geplanten Engine; keine Anforderungen aus Namen, Teilkonzepten oder historischen Entwürfen erfinden.
+
+Kalender, Auswertungen und neue Oberfläche folgen anschließend. Keine stillschweigende Änderung der bestehenden Grenzen zu Lohn/Spesen/Abrechnung, Export, Sync oder Standortaufzeichnung. [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) und Regeln aus WORK_START gelten. Browser/Unteragenten ausgeschlossen. Offene Settings-Arbeit und vorhandene Sicherungen/Branches unverändert erhalten; nicht integrieren/verwerfen.
