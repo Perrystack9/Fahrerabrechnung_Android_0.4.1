@@ -1,0 +1,39 @@
+# 40127 — mathematische Core-Verifikation und Nachweisgrenzen
+
+Freigegeben am 14.10.2026, 06:13 Europe/Berlin. [Verbindlicher Plan A1–A10](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md). Produktbasis main `8cadcdc0ff1ad8e18496bf2c07fd54bcd5a61da0` (Plan #81), bestätigtes Produkt40126/Room22 aus #79/#80. 40127 bleibt separater Draft bis vollständiger endgültiger CI und neuer Geräteabnahme. Aktuellen Kopf/CI/Paketstatus am Produkt-PR live prüfen, nicht aus lokalen Testangaben ableiten.
+
+## Implementierung
+
+`DriverCardImportRepository.verifySavedCoreSignatures(id)` lädt ausschließlich die ausgewählte gespeicherte Übernahme. Bestehendes `get/decode` prüft Profil/Karte/Child/Parent; Core-Store prüft alte Receipt-/Original-/Certificate-Fingerprints und gleiche Sitzungsreferenzen. Gen1-C108 wird nur aus demselben Child derselben Karte geladen und geprüft. Fehler dieser Integritätsgrenze propagieren; kein Ersatz durch jüngere/unsigned Quellen. Danach wird außerhalb der Lesetransaktion mit defensiven Bytes auf Default-Dispatcher gerechnet. Keine DB-Schreiboperation und kein Cache.
+
+Ergebnisse enthalten Karten-/Child-/Batch-/EF-/Generations-/Anwendungsbindung, Receipt-Fingerprint, Original-/Signatur-/Zertifikats-/Ausstellerdigests und konkrete Quellen-IDs, Verifikatorversion `core-signature-math-v1`, verwendeten öffentlichen Schlüssel-Fingerprint und bei Gen1 Katalog-Fingerprint. Alle ursprünglichen Aufnahmestatus und Fingerprint-Algorithmen bleiben unverändert. Room22/Compilerexporte/DAO-Schema/Migrationen sind unverändert.
+
+RSA-C108/C100-Recovery prüft strikt `6A/Cr106/H20/BC`, vollständigen SHA1-Inhalt164, CPI01, beide CAR-Verknüpfungen, CHA/Rolle sowie n/e. Dateisignatur ist getrennt: vollständiger128-Byte-PKCS1-v1.5/SHA1-Rahmen einschließlich aller FF-Paddingbytes, DER-OID/NULL/Hashlänge. Gen2 verwendet nur den konkreten C101/Card_Sign-Schlüssel, sechs feste Domains mit Feld-/Kurven-/Untergruppenprüfung und strengem Plain R||S. Hash genau einmal, unsigned positive r/s<n; kein DER-Ratversuch, Kürzen, Modulo-Reparatur oder Low-S-Zwang.
+
+`VALID`/`INVALID` urteilen ausschließlich über die vollständige mögliche Dateimathematik. Fehlendes/unverwendbares Rechenmaterial oder Enginefehler: `NOT_CHECKABLE` mit Grund. Cancellation propagiert. Zertifikatsvertrauen bleibt immer `NOT_EVALUATED`; Gen1-Recovery und öffentliches Rechenmaterial schaffen keinen Truststore. Unauthentifizierte/abgelaufene Gen2-Zertifikate können mathematisch passende Dateisignaturen ergeben. Ansicht zeigt Aufnahme, Mathematik und Vertrauen getrennt; Auswahlwechsel/Archiv verhindert eine übernommene positive Aussage.
+
+## Gepinnte Bibliothek und öffentliche bekannte Antwort
+
+BC-Lightweight `org.bouncycastle:bcprov-jdk15to18:1.86`, 7.177.698 Bytes, SHA256 `fc50334d4d87b4272e72fa95ca748ead05bdef02ef760a5b13f64ffee317cd81`; Maven-SHA512 stimmt mit Download überein. [Herstellerdownload](https://www.bouncycastle.org/download/bouncy-castle-java/), [Maven-Artefakt](https://repo.maven.apache.org/maven2/org/bouncycastle/bcprov-jdk15to18/1.86/). RSAEngine/ECDSASigner/feste EC-Domänen ohne globale JCA-Providerregistrierung. Keine Änderungen an Android-Keystore/SQLCipher/TLS-Providern.
+
+JRC-EC_PK.bin144 erneut gegen SHA256 `4cc1ed00c6be8f83c0d8f014282165d037427f829734402215fb59a31a622229` geprüft, äußere CAR `fd45432000ffff01`. Öffentliches MK_TCC2.bin194 SHA256 `5b2e8f8a0d8cca84c8c9518c33706fefc9b34ab857a448b5c4632b9f2ee97f6a`; bekannte Rückgewinnung liefert CHR `244d4b2008ffff01`, n1024 und e65537. Herkunft und Format im [Gen1-Public-Audit](CARD_GEN1_PUBLIC_CERTIFICATE_AUDIT.md). Nur dieser ausdrücklich referenzierte Einstieg im Produkt; unbekannte CAR bleibt nicht prüfbar.
+
+## Unabhängige feste Testvektoren
+
+[ZIP im Testquellensatz](../data/src/test/resources/core-math/vectors.zip), SHA256 `ea71e929665bfa5f34ec12d9a70534bdfc4761e62a204ffd37ff776158d93326`. 85 öffentliche/synthetische Binärdateien plus Manifest mit Einzel-SHA256. RSA-Schlüssel und sechs EC-Schlüssel ausschließlich im RAM erzeugt; keine privaten Schlüssel oder Benutzerkarten im Repository. Nicht im Produkt-APK, nur Unit-/Android-Testressourcen.
+
+Erzeugt und unabhängig gegengeprüft mit Python `cryptography 50.0.2`, OpenSSL-Backend `4.0.3` vom29.09.2026. [Generator](../scripts/generate-core-math-vectors.py) verwendet keine BC-Library. RSA-Dateisignaturen PKCS1v1.5/SHA1 sowie EC-Dateisignaturen wurden vor Speicherung per OpenSSL geprüft; CSM-Recovery-Rahmen mit Python-Integer-Public-Exponentiation gegengeprüft. Generator reproduziert die Methode mit frischen Zufallsschlüsseln, nicht identische Zufallsbytes; archivierte feste Vektoren und deren Hashmanifest sind die bekannten Antworten.
+
+Reproduktion: verifizierte öffentliche `erca-gen1.bin` und `MK_TCC2.bin` in Materialverzeichnis bereitstellen; `python scripts/generate-core-math-vectors.py MATERIAL NEUES_LEERES_VERZEICHNIS`. Vorhandene Vektoren nicht überschreiben. ZIP mit sortierten Dateinamen und festen Zeitstempeln erzeugen; neue Digests explizit prüfen, bevor feste Testdaten ersetzt werden.
+
+| Prüfung | Eigene Abnahme |
+|---|---|
+| A1/A3/A4 | Beide EFs; Gen1 sowie alle sechs EC-Domänen für Gen2/V2. Datenpointer/Tail-Bit, falscher gültiger Schlüssel, Doppelhash, RSA-OID/Padding/Suffix/fehlendes NULL; EC r/s=0/n, Längen, ungültige Punkte, High-S und Plain-30-Präfix. Vorhandene strikte Policy-/Parser-Tests erhalten. |
+| A2 | Bekannte öffentliche MSCA-Antwort plus synthetische Root→MSCA→Card-Kette; falsche Sign/Rest/äußere CAR, korrekt signierte fehlerhafte CPI/innereCAR/CHA/Rolle/Frame/n/e werden abgewiesen. |
+| A5 | Abgelaufenes C101 mit unechter96-Byte-Ausstellersignatur; zusätzlich unabhängig signiertes NIST-P256-Subject mit Brainpool-P384-Aussteller (CSM150, encoded body) und explizit unbekannter Gültigkeitszeit; alleinige Veränderung der Ausstellersignatur lässt passende Dateimathematik VALID und Vertrauen NOT_EVALUATED. |
+| A6/A7 | SQLCipher: mathematisch gültige vollständige EFs mit fachlich ungültigen Zeigern ohne Parser-Reparatur; deduplizierter Originalblob mit getrennten guten/falschen Child-Receipts, unsigned Altimport, fremde Sitzungs-ID, korrupter Receipt-Fingerprint. Alle tatsächlichen Datenbankzeilen vor/nach Rechnen/Replay/Reopen identisch; ursprünglicher CAPTURED_UNVERIFIED unverändert. Gen1/Gen2 getrennt, synthetische unbekannte Gen1-CAR nicht durch Gen2 ersetzt. |
+| A8 | Pure Engine-/Cancellation-Fälle; Android alle sechs Domänen und RSA-Known-Answer, Providerliste gleich. Compose Session-/Karten-/Receipt-/unsigned-/Archivwechsel, getrennte Mathematik/Trust. Vollständige bestehende Keystore-/SQLCipher-/Maskierungs-/Gruppen-/Migrationssuiten bleiben erhalten. |
+| A9 | Eigene vollständige unveränderte Android-CI für den endgültigen40127-Produktkopf erforderlich; finalen Lauf/alle vier Jobs am PR live prüfen. |
+| A10 | Neues exaktes Paket und [eigene Geräteabnahme](DEVICE_TEST_40127.md) offen. Frühere40126-Bestätigung ersetzt sie nicht. |
+
+Elf lokale isolierte JVM-Kryptotests erfolgreich. Das ist kein lokaler vollständiger Android-Build: reale neue mathematische Kotlin-Dateien und Tests wurden mit Kotlin2.4.20/Java17/BC1.86 kompiliert; lediglich äußere Android-/Repository-Kontexttypen als lokale Compile-Stubs. Vollständige echten Kontexttypen, Unit/Lint/APKs/Migrationen und API36-Suiten kommen ausschließlich aus der unveränderten CI. Keine Filter, Quarantäne, Test-/CI-Absenkung oder handgeschriebenen Schemaexporte.

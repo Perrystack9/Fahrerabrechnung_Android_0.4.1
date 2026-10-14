@@ -1,0 +1,15 @@
+# Eigene Geräteabnahme 40127 / Room22
+
+Nur das exakte Paket des vollständig CI-grünen endgültigen Produktkopfes verwenden. Update über40126, keine Deinstallation und keine App-Datenlöschung. Feste Testkennung und Signatur bleiben gleich. Diese Anleitung ergänzen wir immer verständlich direkt im Chat. Frühere Geräteabnahmen bleiben erhalten; sie bestätigen die neue Mathematik nicht.
+
+1. `02-FahrerTagebuch-Test-Update.apk` installieren und Version40127 prüfen. Profil, Kartenbindung und bisherige Übernahmen müssen vorhanden bleiben.
+2. **Zuerst ohne Leser** eine bereits mit40124–40126 gespeicherte signierte Übernahme öffnen. „Gespeicherte Kartendaten“ zeigt unter „Kartensignaturen“ Tätigkeiten und Fahrzeuge. Keinen neuen Import dafür anlegen.
+3. Gen1 und Gen2/Gen2V2 derselben Übernahme jeweils getrennt auswählen, soweit angeboten. Für jede Anwendung Tätigkeiten und Fahrzeuge einzeln notieren: „mathematisch gültig“, „mathematisch ungültig“ oder „nicht prüfbar“ samt angezeigtem Grund. Auch Originalgröße/Signaturlänge dürfen unverändert bleiben. „Zertifikatsvertrauen: nicht geprüft“ muss bei beiden Dateien immer stehen.
+4. Unerwartet „mathematisch ungültig“ bitte mit sichtbarer Anwendung, Datei und Bildschirm melden; es wird vor Merge aufgeklärt. „Nicht prüfbar“ bei wirklich fehlendem Original/Zertifikat/Gen1-Einstieg ist zulässig. Keine Daten löschen, reparieren oder ältere Übernahme durch einen frischen Import ersetzen.
+5. Falls vorhanden eine ältere Übernahme **ohne** Core-Signaturen öffnen: keine Signatur/„nicht prüfbar“, niemals das gültige Ergebnis der neueren Übernahme. Auch vorhandenes Altarchiv öffnen; dort kein übertragenes Kartenurteil.
+6. Mehrfach zügig zwischen Anwendungen und alter/neuer Übernahme wechseln. Prüfung darf kurz „wird geprüft“ zeigen; das fertige Urteil muss zur aktuellen Auswahl gehören. Sensible Nummern werden nach Wechsel wieder verborgen. App schließen und ohne Leser neu öffnen: dieselbe alte Übernahme zeigt dasselbe sachliche Ergebnis.
+7. Tätigkeiten, Fahrzeuge, Ereignisse/Störungen und Identifikationsansichten kurz prüfen. Ereignis-/Störungs-/Identifikationssignaturen bleiben wie bisher aufgenommen · ungeprüft; sie werden in diesem Schritt nicht mathematisch verifiziert.
+8. Bisherige eigene Karte/Leser regulär neu importieren. Beide angebotenen Anwendungen ansehen; danach die frühere Übernahme wieder öffnen. Frühere Originale, Belege und Prüfung dürfen dadurch nicht ersetzt werden.
+9. Bei einem zusätzlichen Import Karte während des Lesens entnehmen: keine teilweise neue gespeicherte Gruppe. Nach erneutem Einlegen normaler Import erfolgreich; schon gespeicherte Übernahmen bleiben erhalten.
+
+Rückmeldung: installierte Version, Ergebnis/Grund je Anwendung für Tätigkeiten und Fahrzeuge, durchgeführte Punkte und Auffälligkeiten. Keine vollständige Kartennummer/privaten Rohdaten nötig. Die Abnahme gilt für die tatsächlich getestete Kombination. Produkt-PR bleibt bis neuer positiver Abnahme offen; Mathematik bedeutet weiterhin keine Zertifikatsvertrauens- oder DDD-/Schreibfreigabe.

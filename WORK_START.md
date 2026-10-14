@@ -28,9 +28,11 @@ Die bestätigten Vorgänger 40124/40125 bleiben erhalten; [40125-Beleg](docs/DEV
 
 ## Nächste Arbeit
 
-Tobi hat am 13.10.2026 die Planung einer mathematischen Verifikation der bereits gespeicherten 0504/0505-Signaturen für Gen1 und Gen2/Gen2V2 beauftragt. [Konkreter Plan mit Abnahmekriterien](docs/CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md); **Implementierung erst nach ausdrücklicher Freigabe**. Vorgesehen: exakte eigene Quellen, Gen1-RSA-Schlüsselrückgewinnung/PKCS1-SHA1 und sechs Gen2-ECDSA-Domänen; mathematische Aussage getrennt von weiterhin ungeprüftem Zertifikatsvertrauen. Nur abgeleitete Leseprojektion, Room22 bleibt. 40126, Aufnahmebelege/Fingerprints, CI-/Migrations-/Gerätegates und bestehende unvollständige Settings-Arbeit erhalten; abgeschlossene Aufnahme nicht wiederholen. Keine automatische weitere EF-, Export-, Vertrauens-, Schreib- oder Oberflächenphase.
+**Freigabe für 40127 erteilt**, 14.10.2026, 06:13 Europe/Berlin. [Verbindlicher Plan und Abnahmekriterien](docs/CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md). Plan-PR #81 übernommen, Basis main `8cadcdc0ff1ad8e18496bf2c07fd54bcd5a61da0`; dessen Docs-CI 38510387252 erfolgreich. 40126 bleibt bestätigte Produktbasis; 40127 liegt bis neuer vollständiger CI und eigener Gerätebestätigung auf getrenntem Produktbranch.
 
-Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` erhalten; zusätzliche Sicherung in `/workspace/scratch/4c3cf966d792/session-backups`. Isolierter Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; geprüfter Produktbranch `work/40126-event-fault-remote`, Docs-Abschlussbranch `docs/close-40126-session-20261013`. Aktuellen main/PR/CI live prüfen.
+Implementiert: abgeleitete Offline-Prüfung vorhandener 0504/0505-Receipts; Gen1-RSA-Recovery/striktes PKCS1-SHA1, sechs Gen2/V2-ECDSA-Domänen, exakte Child-/Karten-/Quellenbindung und kleine getrennte Mathematik-/Vertrauensanzeige. Aufnahmezustände/alle Fingerprints unverändert, Room22 ohne Migration. Zertifikatsvertrauen immer NOT_EVALUATED. [Belege und offene Gates](docs/CARD_CORE_SIGNATURE_MATH_EVIDENCE.md); [40127-Gerätetest](docs/DEVICE_TEST_40127.md). Keine neue weitere EF-, Export-, Trust-, Schreib- oder UI-Phase.
+
+Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`, Implementierungsbranch `feat/core-signature-math-40127`. Ursprüngliche unvollständige Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und zusätzliche Sicherung `/workspace/scratch/4c3cf966d792/session-backups` erhalten; alte Produkt-/Docs-/Sicherungsbranches nicht löschen. Aktuellen main/Produkt-PR/CI live prüfen.
 
 ## Sitzungsroutine
 

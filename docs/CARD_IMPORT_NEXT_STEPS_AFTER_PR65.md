@@ -30,13 +30,13 @@ Der [begrenzte 0502/0503-Plan](CARD_EVENT_FAULT_SIGNATURE_CAPTURE_PLAN.md) ist m
 
 Separate Rohquellen/Child-Receipts, vollständige Bytes auch bei EMPTY/INVALID, frische post-HASH-READs und strikter EOF-Beweis. Lokale HASH-/SIGN-Fehler erhalten unabhängig vollständige unsigned Originale, Transportverlust verwirft die Gruppe. Exakte historische Quellen ohne Backfill, unveränderte alte Maps/Digests/Fingerprints und alle 44 Tabellen von Schema 21 erhalten. Eigene vollständige Reader-/SQLCipher-/Migrations-/Rollback-/Compose-Abnahme; eigenständige 19→20-/20→21-Prüfungen bleiben bestehen. Room22 aus echtem Compilerexport, keine CI-Abschwächung oder Workflowänderung.
 
-**Aktueller Planauftrag, Implementierung noch gesperrt:** Tobi wählt mathematische Verifikation der bereits gespeicherten Core-Signaturen 0504/0505 für Gen1 und Gen2/Gen2V2. [Konkreter Umsetzungsplan und Abnahmekriterien](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md): exakte Rohbytes/Child-Receipts/Schlüssel, Gen1-RSA-Recovery und RSA-SHA1-Dateiprüfung, sechs ECDSA-Domänen; Zertifikatsvertrauen unabhängig und noch nicht geprüft. Reine abgeleitete Leseprojektion, Room22/alte Fingerprints und alle Gates erhalten. Umsetzung erst nach Tobis Freigabe; andere Pakete unten nicht automatisch freigegeben.
+**Aktueller freigegebener Meilenstein 40127, noch nicht übernommen:** Tobi wählt mathematische Verifikation der bereits gespeicherten Core-Signaturen 0504/0505 für Gen1 und Gen2/Gen2V2. [Konkreter Umsetzungsplan und Abnahmekriterien](CARD_CORE_SIGNATURE_VERIFICATION_PLAN.md): exakte Rohbytes/Child-Receipts/Schlüssel, Gen1-RSA-Recovery und RSA-SHA1-Dateiprüfung, sechs ECDSA-Domänen; Zertifikatsvertrauen unabhängig und noch nicht geprüft. Reine abgeleitete Leseprojektion, Room22/alte Fingerprints und alle Gates erhalten. Tobis Freigabe am 14.10.2026 liegt vor; eigene endgültige CI und neue Geräteabnahme bleiben vor Produktmerge erforderlich. Andere Pakete unten nicht automatisch freigegeben.
 
 ## Danach weiterhin getrennte Pakete
 
 | Paket | Voraussetzung / Grenze |
 |---|---|
-| Mathematische Core-Verifikation | 0504/0505 vorhandene Originale/Receipts; eigener Plan oben, Umsetzung erst nach Freigabe; keine vollständige Trust-/DDD-Prüfung |
+| Mathematische Core-Verifikation | 0504/0505 vorhandene Originale/Receipts; freigegebener Plan oben, Umsetzung auf getrenntem Produktbranch; keine vollständige Trust-/DDD-Prüfung |
 | Weitere EF-Signaturen | 0504/0505, der begrenzte 40125-Identifikationsumfang und 0502/0503 sind CI-/im eigenen Umfang gerätebestätigt; weitere EFs anhand der vorhandenen Matrix und eigener Originalpfade separat planen |
 | Originalquellenexport | Exakte Parent-/Child-Quellen; ohne erforderliche Originalsignaturen kein vollständiger Standarddownload/DDD |
 | ERCA/MSCA/Kartenvertrauen | Rollen, Referenzen, Aussteller-/Signaturkurve, Gültigkeit, Pinning/Rollover und negative Fälle; öffentliche Forschung ersetzt keine Benutzerkartenkette |

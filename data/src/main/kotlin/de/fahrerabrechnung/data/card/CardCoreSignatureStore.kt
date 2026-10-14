@@ -35,6 +35,41 @@ internal class CardCoreSignatureStore(private val dao: CardCoreSignatureDao, pri
         }
     }
 
+    /** Caller holds the existing read transaction and profile/session/batch validation. No writes. */
+    suspend fun verificationInputs(saved: SavedDriverImport): List<SavedCoreVerificationInput> {
+        val cardId = saved.driverCardId
+        val sessionId = saved.id
+        val signatures = load(cardId, sessionId)
+        val rows = dao.receipts(sessionId).associateBy { it.kind }
+        val refs = sources.sources(sessionId)
+        return CardCoreEf.entries.map { kind ->
+            val signature = signatures[kind]
+            val row = rows[kind.storageKind]
+            val original = saved.coreSnapshots[kind]
+            check(row == null || row.originalSourceId == null || row.originalSourceId == original?.id)
+            val generation = signature?.generation ?: original?.snapshot?.generation
+            val application = generation?.let(::application)
+            check(saved.application == null || application == null || saved.application == application)
+            var issuerId: String? = null
+            val issuer = if (signature?.generation == CardGeneration.GEN1) {
+                refs.singleOrNull { it.kind == CardCertificateKind.CA.storageKind }?.let { ref ->
+                    check(ref.driverCardId == cardId && ref.sessionId == sessionId)
+                    val raw = checkNotNull(sources.get(ref.sourceId))
+                    check(raw.driverCardId == cardId && raw.kind == ref.kind && raw.generation == CardGeneration.GEN1.name)
+                    CardCertificateFile(CardCertificateKind.CA, CardGeneration.GEN1, raw.bytes).also {
+                        check(CardCertificateStore.fingerprint(cardId, it) == ref.sourceId)
+                        issuerId = ref.sourceId
+                    }
+                }
+            } else null
+            SavedCoreVerificationInput(CardCoreVerificationSource(cardId, sessionId, saved.batchId, kind,
+                generation, application, row?.fingerprint, if (row == null) original?.id else row.originalSourceId,
+                row?.certificateSourceId, issuerId, (if (signature == null) original?.snapshot?.bytes else signature.original?.bytes)?.let(::coreMathDigest),
+                signature?.bytes?.let(::coreMathDigest), signature?.certificate?.bytes?.let(::coreMathDigest),
+                issuer?.bytes?.let(::coreMathDigest)), signature, issuer)
+        }
+    }
+
     private suspend fun decode(row: CardCoreSignatureEntity): CardCoreSignature {
         val kind = CardCoreEf.entries.single { it.storageKind == row.kind }
         val generation = CardGeneration.valueOf(row.generation)

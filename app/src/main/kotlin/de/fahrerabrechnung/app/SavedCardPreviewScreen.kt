@@ -24,7 +24,9 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
                                     specificConditions: SavedCardSpecificConditions? = null,
                                     receiptId: String? = null, applicationGeneration: CardGeneration? = null,
                                     coreSnapshots: Map<CardCoreEf, SavedCardCoreSnapshot> = emptyMap(),
-                                    coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap()) {
+                                    coreSignatures: Map<CardCoreEf, CardCoreSignature> = emptyMap(),
+                                    coreVerification: Map<CardCoreEf, CardCoreSignatureVerification> = emptyMap(),
+                                    coreVerificationError: Boolean = false) {
     val zone = remember { ZoneId.systemDefault() }
     val days = remember(activity, zone) { activity?.let { CardDayTimeline.build(it.days, zone) }.orEmpty() }
     var selected by remember(activity, receiptId) { mutableStateOf(days.lastIndex.coerceAtLeast(0)) }
@@ -49,12 +51,26 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
             CardCoreEf.entries.forEach { kind ->
                 val label = if (kind == CardCoreEf.ACTIVITY) "Tätigkeiten" else "Fahrzeuge"
                 val signature = coreSignatures[kind]
+                val math = coreVerification[kind]?.takeIf { it.matches(receiptId, driverCardId, kind, signature) }
                 Text(when (signature?.status) {
-                    CardSignatureStatus.CAPTURED_UNVERIFIED -> "$label: ${signature.actualLength} Bytes · aufgenommen · ungeprüft"
+                    CardSignatureStatus.CAPTURED_UNVERIFIED -> if (math == null)
+                        "$label: ${signature.actualLength} Bytes · aufgenommen · ungeprüft"
+                        else "$label: ${signature.actualLength} Bytes · aufgenommen"
                     CardSignatureStatus.FAILED -> "$label: Aufnahme fehlgeschlagen · ${signature.reason.signatureMessage()}"
                     CardSignatureStatus.NOT_ATTEMPTED -> "$label: nicht versucht · ${signature.reason.signatureMessage()}"
                     null -> "$label: Signatur in diesem Import nicht aufgenommen"
                 })
+                if (receiptId != null && driverCardId != null) {
+                    Text("$label · Signaturprüfung: " + when {
+                        coreVerificationError -> "nicht prüfbar · gespeicherte Quellen oder Prüfung nicht verfügbar"
+                        math == null -> "wird geprüft"
+                        math.status == CardSignatureMathStatus.VALID -> "mathematisch gültig"
+                        math.status == CardSignatureMathStatus.INVALID -> "mathematisch ungültig"
+                        math.status == CardSignatureMathStatus.NOT_CHECKABLE -> "nicht prüfbar · ${math.reason.mathMessage()}"
+                        else -> "wird geprüft"
+                    })
+                    Text("$label · Zertifikatsvertrauen: nicht geprüft")
+                }
             }
         }
         if (uses.isNotEmpty()) SectionCard {
@@ -93,6 +109,21 @@ internal fun SavedCardPreviewScreen(padding: PaddingValues, activity: SavedCardA
         }
         if (days.isEmpty() && uses.isEmpty()) Text("Für diese Auswahl sind keine auswertbaren Kartendaten verfügbar.")
     }
+}
+
+internal fun CardSignatureMathReason?.mathMessage(): String = when (this) {
+    CardSignatureMathReason.NO_SIGNATURE -> "keine Signatur in dieser Übernahme"
+    CardSignatureMathReason.CAPTURE_FAILED -> "Signaturaufnahme fehlgeschlagen"
+    CardSignatureMathReason.NOT_ATTEMPTED -> "Signaturaufnahme nicht versucht"
+    CardSignatureMathReason.NO_ORIGINAL -> "vollständige Originaldatei fehlt"
+    CardSignatureMathReason.NO_SIGNING_CERTIFICATE -> "zugehöriges Signaturzertifikat fehlt"
+    CardSignatureMathReason.NO_GEN1_ISSUER -> "Gen1-Ausstellerzertifikat fehlt"
+    CardSignatureMathReason.UNKNOWN_GEN1_RECOVERY_KEY -> "öffentlicher Gen1-Ausstellerschlüssel nicht verfügbar"
+    CardSignatureMathReason.CERTIFICATE_RECOVERY_FAILED -> "Gen1-Kartenschlüssel nicht rückgewinnbar"
+    CardSignatureMathReason.INVALID_PUBLIC_KEY -> "öffentlicher Signaturschlüssel nicht verwendbar"
+    CardSignatureMathReason.UNSUPPORTED_POLICY -> "Signaturverfahren nicht unterstützt"
+    CardSignatureMathReason.SOURCE_MISMATCH -> "gespeicherte Quellen stimmen nicht überein"
+    CardSignatureMathReason.ENGINE_ERROR, null -> "Prüfung konnte nicht ausgeführt werden"
 }
 
 internal fun CardSignatureReason?.signatureMessage(): String = when (this) {
