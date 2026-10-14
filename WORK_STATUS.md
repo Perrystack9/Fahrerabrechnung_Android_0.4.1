@@ -4,6 +4,8 @@
 
 Aktuellen main, offene PRs und CI live prüfen. Regeln: [CURRENT_RULES.md](docs/CURRENT_RULES.md).
 
+**Plan zur Prüfung veröffentlicht:** [Draft-PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88), keine Umsetzungsfreigabe/kein Merge. Erster veröffentlichter Planungsbaum `a20417ca62631d4aae973f852ccf16dfb43cbea8`, Quellkopf `f31885111c45b2cc692742c1889a3aec9bb2eb8e`; reine Docs-CI [38590326579](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38590326579), Versuch1, erfolgreich. Projektgrenzen/CI-Gates grün, Produktbuild/Instrumentierung nur nach unveränderter Docs-Klassifikation ausgelassen. Kein Engine-/Hardwareerfolg daraus ableiten. Diese PR-/CI-Notiz ist ein anschließender reiner Docs-Nachlauf; endgültigen Draftkopf und dessen CI beim Start live prüfen.
+
 ## Implementiert und erhalten
 
 - Automatischer eigener Vordergrund-Import, Profil-/Kartenbindung, unabhängige GEN1-/GEN2-Anwendungen, MF am Parent, atomare SQLCipher-Speicherung und Keystore-Schutz erhalten. Gen2V2 bleibt Ausprägung der Gen2-Anwendung; beide Zeitsätze nicht addieren.

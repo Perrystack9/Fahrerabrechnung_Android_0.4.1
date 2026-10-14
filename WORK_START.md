@@ -2,6 +2,8 @@
 
 Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herkunft erhalten und Tätigkeiten, Fahrzeuge und GNSS neutral darstellen.
 
+**Plan zur Prüfung veröffentlicht:** [Draft-PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88), keine Umsetzungsfreigabe/kein Merge. Erster veröffentlichter Planungsbaum `a20417ca62631d4aae973f852ccf16dfb43cbea8`, Quellkopf `f31885111c45b2cc692742c1889a3aec9bb2eb8e`; reine Docs-CI [38590326579](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38590326579), Versuch1, erfolgreich. Projektgrenzen/CI-Gates grün, Produktbuild/Instrumentierung nur nach unveränderter Docs-Klassifikation ausgelassen. Kein Engine-/Hardwareerfolg daraus ableiten. Diese PR-/CI-Notiz ist ein anschließender reiner Docs-Nachlauf; endgültigen Draftkopf und dessen CI beim Start live prüfen.
+
 ## Startvertrag
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
