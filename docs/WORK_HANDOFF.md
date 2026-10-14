@@ -22,9 +22,9 @@ Tobi bestätigt14.10.2026 13:47 Europe/Berlin: „Funktioniert alles wie es soll
 
 ## GitHub-Stand und abgeschlossene PRs
 
-Dokumentationsabschluss [PR #86](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/86) übernommen, Merge `b61ed8aedbab53847c5361f05b61ef280dded613`; Docs-PR-CI38559979155 und Docs-main-CI38560196780 erfolgreich. Bei der Übergabeprüfung keine offenen PRs; aktuelle Übergabeänderungen auf eigenem Docs-Branch. Aktuellen main und späteren Übergabe-PR/-Merge weiterhin live prüfen.
+Übergabe-PR [#87](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/87) übernommen, main `df7061659b621d67ff39ac2f02f44e13d7ac4e86`; Docs-PR-CI38562392675 und Docs-main-CI38562576031 erfolgreich. Vor Veröffentlichung des aktuellen Planungsentwurfs keine offenen PRs/laufenden Workflows. Aktuellen main und späteren Draft-Plan-PR samt CI weiterhin live prüfen.
 
-Produkt-/Plan-PRs #73,#76,#79,#82,#84,#85 sowie Docs-Abschluss#86 sind übernommen; genauere Vorgängerbelege nur bei Bedarf über WORK_STATUS/Import-Folgeplan öffnen. Keine abgeschlossenen Import-/Signatur-/Migrationsarbeiten wiederholen.
+Produkt-/Plan-PRs #73,#76,#79,#82,#84,#85 sowie Docs-Abschluss#86 und Übergabe#87 sind übernommen; genauere Vorgängerbelege nur bei Bedarf über WORK_STATUS/Import-Folgeplan öffnen. Keine abgeschlossenen Import-/Signatur-/Migrationsarbeiten wiederholen.
 
 ## Vollständige zusätzliche Produkt-Main-CI
 
@@ -32,25 +32,28 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Lokale Arbeit erhalten
 
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; Übergabebranch `docs/work-handoff-v1-violation-engine-20261014`; bestätigter Ausgangscheckout `work/40128-confirmed-main-20261014` auf Docs-main `b61ed8aedbab53847c5361f05b61ef280dded613`. Produktbranch `feat/stored-signature-math-40128`, lokaler bestätigter Quellbranch `work/40128-remote-20261014` und frühere Produkt-/Docs-/Sicherungsbranches erhalten. Veröffentlichung über GitHub-Connector mit Blob-/Tree-SHA-Abgleich; CLI-fetch funktioniert. Kein Reset/Rewrite oder Löschen von Branches/Artefakten.
+Isolierter Planungscheckout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-v1-engine-plan`, Branch `docs/v1-violation-engine-plan-20261014` auf Ausgangs-main `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. Bestätigter Vorgängercheckout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures` auf `work/v1-handoff-confirmed-main-20261014` unverändert erhalten. Alle sechs früheren Worktrees und59alten Branches plus neuer isolierter Docs-Branch erhalten. Keine Arbeit zurückgesetzt, keine Backups/Artefakte gelöscht. Veröffentlichte Blob-/Tree-SHAs gegen lokale Dokumente prüfen; CLI-fetch funktioniert.
 
 Unvollständige Settings-Arbeit `/workspace/scratch/4546aa92dbbb/FahrerTagebuch/feature/src/main/kotlin/de/fahrerabrechnung/feature/settings/SettingsScreen.kt` und zusätzliche Sicherung `/workspace/scratch/4c3cf966d792/session-backups` erhalten. SHA256 `33d91e46cf441e1f3582f1f9c1f050e986bbb9777efbc27a7e009afc2c588ea0` beim Abschluss erneut bestätigt; nicht integrieren oder verwerfen.
 
-## Auftrag für die neue Work-Sitzung
+## Aktueller Auftrag: Planungsentwurf prüfen
 
-**Neue Produktpriorität, Tobi14.10.2026 14:06 Europe/Berlin:** zuerst eine vollständige zeitbezogene Verstoß-Engine nach der Verordnung (EG) Nr.561/2006; anschließend Kalender, Auswertungen und neue Benutzeroberfläche für Version1.0. Die Engine wurde in einem separaten Beratungschat mit80 Produktentscheidungen konzipiert. **Diese80 Entscheidungen werden von Tobi der neuen Work-Sitzung gesondert übergeben; sie sind hier noch nicht als vollständige verbindliche Anforderungen vorhanden.** Keine fehlenden Entscheidungen erfinden oder aus alten Chats/Teilinformationen rekonstruieren. Noch keine Engine-Implementierung beginnen.
+Tobi hat in dieser Sitzung sämtliche80Entscheidungen und GrundsätzeA–H vollständig übergeben. [Verbindliche Produktquelle](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md); beigefügte Anlage unverändert, SHA256 `83cdc61ca31cc8271b40122d67ee1a64fa63a9111cbe95b5e72f0b91c67989fe`. Maßgeblich die vollständige neue Nachricht, keine Chatrekonstruktion.
 
-1. WORK_START und den begrenzten Startpfad befolgen; tatsächlichen main/HEAD/Arbeitsbaum, offene PRs und relevante CI prüfen. Bestätigte40128-/Room22-Basis übernehmen.
-2. Die80 von Tobi gesondert gelieferten Produktentscheidungen vollständig als Anforderungsquelle übernehmen. Fehlende Punkte sichtbar offenlassen; keine Chatrekonstruktion, erfundenen Details oder voreilige Regeln.
-3. Nach Erhalt Anforderungen mit bestehender Daten-/Codebasis und Projektregeln abgleichen. Tatsächliche Unklarheiten/Widersprüche mit Tobi klären; anschließend konkreten technischen Umsetzungsplan mit Abnahmekriterien erstellen. **Noch keine Engine-Implementierung; gesonderte Freigabe abwarten.**
-4. Danach als Produktreihenfolge Verstoß-Engine → Kalender → Auswertungen → neue Benutzeroberfläche einhalten. Keine bestimmte Detailfunktion, Architektur oder Sonderregel aus dieser Übergabe ableiten.
-5. Mathematischen Kryptografieumfang als vorerst abgeschlossen behandeln. Zertifikatsvertrauen bleibt NOT_EVALUATED; erwartete Anzeige „nicht geprüft“ auch nach Einstecken/Einlesen. Keine weitere Kryptografiephase ohne eigenen Auftrag.
-6. Bestehende Sicherheits-/Herkunfts-/CI-/Migrations-/Geräteprüfungen, vollständige Originale und alte Imports erhalten. Offene Settings-Datei und sämtliche Sicherungen/Branches unverändert lassen.
+[Planungsentwurf](VIOLATION_ENGINE_V1_PLAN.md) mit Architektur/Datenbedarf/Regel-/Teststrategie/Meilensteinen/Abnahme; [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md):57Regelzeilen, historische Geltung, sämtliche Ausnahmegruppen als Rechtsindex, getrennte Schweregrade und Quellen; [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md):98fachliche,31Daten-/Technikfälle undPD01–PD80. **Noch keine Engine implementiert, keine neuen fachlichen Tests ausgeführt, keine Umsetzungsfreigabe.**
 
-Diese Sitzung bereitet ausschließlich die vollständige Übergabe vor und beginnt keine Engine-/Kalender-/Auswertungs-/UI-Implementierung. Der nachfolgende fachliche Gesetzes-/Regelabgleich gehört zur gesonderten Engine-Planung auf Grundlage der80 Entscheidungen; aus diesem Prioritätsauftrag keine bereits geprüfte rechtliche Vollständigkeit ableiten.
+Technischer Bestand gezielt abgeglichen: Domain/Report noch ohne fertige Engine/PDF; EF0504/0522/GEN2V2-0530 bereits vorhanden; `all/latest` filtern Primäranwendung und genügen nicht als blind vollständiger Engineinput; Batch/Child-Quellen wiederverwenden. EF0504-c-Bit ist bei nicht eingesetzter Karte bekannter manueller Nachtrag/Unbekanntstatus, kein Crewbeweis. Letzte Anzeige bis UTC-Mitternacht und App-Speicherzeit sind keine belegten aktuellen Tätigkeitsenden. Diese Punkte nur dokumentiert, keine Parser-/DB-/Readeränderung.
 
-## Abschluss der Sitzung
+OffenP01–P05: gezielte Fähr-Schlafplatzvoraussetzung versus allgemeiner Unterkunftsausschluss; Artikel12-Kandidatenauslöser; Warn-/Relevanzschwellen; Zustellweg des Betaformulars; Darstellungsschichtanker bei Datenlücken. Vorschläge im Plan sind keine neuen verbindlichen Entscheidungen. Aktuelle Regeln bleiben [CURRENT_RULES](CURRENT_RULES.md).
 
-Alle tatsächlich umgesetzten/geprüften Funktionen und Nachweisgrenzen stehen in WORK_STATUS und [40128-Gerätebeleg](DEVICE_CONFIRMATION_40128.md). Vollständige finale Produkt-CI, Paketintegrität und neue eigene Geräteabnahme erhalten; aktuelles Zusatz-Main-Ergebnis und reinen Übergabe-PR live prüfen. Reine Übergabedokumentation verändert keine Produktversion oder installierte APK.
+OffenL01–L09: vollständige amtliche Volltexte/Wirksamkeit/Übergänge pinnen, Zeitkonvention/Vollzug/Zuordnung/Ausgleich/Schweregrade und nationalen Ausnahmeumfang fachlich schließen. Direktes EUR-Lex lieferte teilweise JavaScript-Prüfseiten, Auswertung amtlich indexierter Abschnitte und zugänglicher Kommissionsvolltexte tatsächlich erfolgt; vollständiger Rechtskorpus und unabhängige Abnahme nicht behauptet. Kein Browser/Unteragent als Ersatz. Fachkundige unabhängige Prüfung vor Release bleibt erforderlich.
 
-Geräteanleitungen weiterhin immer verständlich direkt im Chat. Arbeit in Git und vorhandenen Sicherungen erhalten; keine offenen Implementierungsaufträge in dieser Sitzung. Neuer Einstieg: „FahrerTagebuch am aktuellen Stand fortsetzen. Zuerst WORK_START.md lesen; die80 Produktentscheidungen zur Verstoß-Engine liefere ich gesondert. Vorerst nur Bestand/Anforderungen prüfen und planen, noch nicht implementieren.“
+Nächste Schritte:
+1. Aktuellen main, Docs-Branch/Diff, Draft-Plan-PR und erforderliche CI live prüfen; nur Dokumentation übernehmen.
+2. Tobi verständlichen Plan mit offenen Punkten vorlegen; Produktpräzisierungen klären, keine erneute80er-Befragung.
+3. Fachlichen M0-Stand schließen und konkret implementierbaren Stand gesondert zur ausdrücklichen Freigabe vorlegen. Bis dahin keine Engine starten.
+4. Anschließend Produktreihenfolge Engine → Kalender → Auswertungen → neue Oberfläche. Lokaler PDF-Verstoßbericht ausdrücklich in1.0; Lohn/Spesen/Abrechnung/DDD/Heimstandort/Sync außerhalb.
+5. Mathematische Kryptografie mit40128 abgeschlossen; Vertrauen bleibt NOT_EVALUATED. Keine bestätigte Vorgängerarbeit wiederholen.
+6. Sicherheits-/Herkunfts-/CI-/Migrations-/Gerätegates sowie alle Originale/Settings/Sicherungen unverändert erhalten. Gerätestests nur nach betreffender Implementierung, stets verständliche Anleitung direkt im Chat.
+
+Reine Planungsdokumentation ändert weder installierte40128-APK noch Room22 oder Produktcode. Keine neue Version/Paketneuausgabe. Aktueller Docs-Entwurf und spätere PR-/CI-Belege gehören zur Planung, nicht als erfolgreiche Engine-Abnahme zählen.

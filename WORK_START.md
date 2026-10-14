@@ -6,7 +6,7 @@ Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herk
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
 2. Danach [aktuelle Regeln](docs/CURRENT_RULES.md), [technischen Status](WORK_STATUS.md) und [aktuelle Übergabe](docs/WORK_HANDOFF.md) lesen.
-3. Für den nächsten Produkt-Schritt genau den [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) öffnen. Weitere Fachtexte erst bei konkretem Bedarf.
+3. Für den aktuellen 1.0-Planungsschritt genau den [Verstoß-Engine-Plan](docs/VIOLATION_ENGINE_V1_PLAN.md) öffnen. Er verlinkt die vollständig übergebenen80Entscheidungen, Regel- und Testmatrix; diese nur beim entsprechenden Planungs-/Freigabeabgleich lesen. Der [abgeschlossene Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) bleibt Detailquelle für konkrete Importfragen.
 
 Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale Markdown-Volltextlektüre oder Rekonstruktion alter Chats, wenn das Repository ausreicht.
 
@@ -14,7 +14,7 @@ Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale M
 
 - Bestehenden Fahrerkarte-Import vollständig erhalten; Fahr-, Arbeits-, Bereitschafts- und Ruhezeiten dürfen neutral angezeigt und ausgewertet werden.
 - Spesen/Reisekosten, Heimkehr/Übernachtung, Heimatstandort samt Einrichtung, Lohn/Arbeitgeberzuschläge, lohnrelevante Arbeitszeit und Abrechnung sind vollständig gestrichen.
-- PDF-Abrechnungs-/Lohnexport entfällt; neutraler Tätigkeits-/Fahrtenbericht ist nicht verbindlich geplant.
+- PDF-Abrechnungs-/Lohnexport entfällt; neutraler Tätigkeits-/Fahrtenbericht ist nicht verbindlich geplant. Nach neuer Entscheidung59/71–75/78 gehört ein eigener lokaler **PDF-Verstoßbericht** zu1.0, ausdrücklich ohne DDD-/Abrechnung.
 - GNSS bleibt: echte Punkte und später gekennzeichneter grober chronologischer Verlauf; keine behauptete gefahrene Straßenroute oder Kilometer aus Verbindungslinien.
 - Priorität für1.0: vollständige zeitbezogene Verstoß-Engine nach Verordnung (EG) Nr.561/2006; danach Kalender, Auswertungen und neue Oberfläche/Navigation/Onboarding. Zielrichtung etwa vier Bereiche **Start, Kalender, Auswertung, Einstellungen** bleibt offen; konkrete Anforderungen/Umsetzung separat planen.
 
@@ -30,15 +30,17 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**Neue Produktpriorität, Tobi14.10.2026 14:06 Europe/Berlin:** zuerst eine vollständige zeitbezogene Verstoß-Engine nach der Verordnung (EG) Nr.561/2006; anschließend Kalender, Auswertungen und neue Benutzeroberfläche für Version1.0. Die Engine wurde in einem separaten Beratungschat mit80 Produktentscheidungen konzipiert. **Diese80 Entscheidungen werden von Tobi der neuen Work-Sitzung gesondert übergeben; sie sind hier noch nicht als vollständige verbindliche Anforderungen vorhanden.** Keine fehlenden Entscheidungen erfinden oder aus alten Chats/Teilinformationen rekonstruieren. Noch keine Engine-Implementierung beginnen.
+**Aktueller Auftrag14.10.2026:** Die vollständigen80Produktentscheidungen und GrundsätzeA–H wurden in dieser Sitzung übergeben und in [der verbindlichen Produktquelle](docs/VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md) dokumentiert. Priorität unverändert: vollständige zeitbezogene561/2006-Engine, danach Kalender, Auswertungen und neue Oberfläche. AETR und eigenständige nationale Arbeitszeitprüfungen außerhalb dieses Auftrags. Keine Rekonstruktion separater Chats.
 
-Die neue Sitzung liest zunächst den bestätigten Repository-Stand und übernimmt die80 Entscheidungen nach ihrer Übergabe vollständig. Danach Anforderungen mit vorhandenem Daten-/Codeumfang und geltenden Projektregeln abgleichen, tatsächliche Lücken/Widersprüche benennen und einen konkreten technischen Umsetzungsplan mit Abnahmekriterien vorlegen. **Bis zur gesonderten Umsetzungsfreigabe keine Engine implementieren.** Bestehende Import-/Datenbasis und sämtliche Gates erhalten.
+[Planungsentwurf](docs/VIOLATION_ENGINE_V1_PLAN.md) mit Architektur, Daten-/Quellenvertrag,57Regelzeilen,98fachlichen und31Daten-/Technikfällen, vollständiger80er-Abnahmezuordnung sowie16Abnahmekriterien liegt zur Prüfung vor. **Noch keine Engine implementiert und keine Umsetzungsfreigabe.** Offene ProduktpräzisierungenP01–P05 und fachliche Primärquellen-/InterpretationspunkteL01–L09 vor betreffender Umsetzung klären. Amtliche EUR-Lex-Volltexte waren direkt teilweise nicht abrufbar; indexierte Abschnitte/Kommissionsleitlinien sind kein vollständig gepinnter und unabhängig abgenommener Gesetzeskorpus. Keine rechtliche Gesamtvollständigkeit behaupten.
+
+Bestehende EF0504/0522/0530 sowie genaue eigene Import-/Anwendungsquellen wiederverwenden. Besonderer Planbefund: EF0504-c-Bit ist bei nicht eingesetzter Karte kein Crewbeweis; bekannte Kontrollgeräte-Nachträge von unbekannten Entnahmefolgen unterscheiden. Anzeige-Tagesende und App-Speicherzeit sind kein sicherer juristischer Datenstichtag. Keine Originale/Parser/DB/Reader/UI in dieser Planung ändern.
 
 Die mathematische Signaturprüfung ist mit40128 vorerst beendet; keine automatische Trust-/DDD-/Export-/Signaturaufnahme-/Kartenschreibphase. **„Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten**, auch nach erneutem Einlesen.
 
-Dokumentationsabschluss [PR #86](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/86) übernommen, Merge `b61ed8aedbab53847c5361f05b61ef280dded613`; Docs-PR-CI38559979155 und Docs-main-CI38560196780 erfolgreich. Bei der Übergabeprüfung keine offenen PRs; aktuelle Übergabeänderungen auf eigenem Docs-Branch. Aktuellen main und späteren Übergabe-PR/-Merge weiterhin live prüfen.
+Übergabe-PR [#87](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/87) übernommen, aktueller Ausgangs-main `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. Docs-main-CI38562576031 und volle Produkt-main-CI38559255131 erfolgreich. Vor Planveröffentlichung keine offenen PRs. Aktuellen main und den späteren Draft-Plan-PR weiterhin live prüfen; keine bereits abgenommenen Produktprüfungen wiederholen.
 
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; Übergabebranch `docs/work-handoff-v1-violation-engine-20261014`. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
+Isolierter Planungscheckout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-v1-engine-plan`, Branch `docs/v1-violation-engine-plan-20261014`. Bestätigter Vorgängercheckout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures` auf `work/v1-handoff-confirmed-main-20261014` erhalten. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
 
 ## Sitzungsroutine
 
