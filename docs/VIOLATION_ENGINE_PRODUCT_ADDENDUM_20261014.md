@@ -181,3 +181,10 @@ PR #88 enthält nun alle80 Entscheidungen/A–H, E01–E12 und geschlossenen P01
 Dieser Auftrag erlaubt nur Planung/Dokumentationsprüfung und Aktualisierung des Draft-PR. Keine Androidcode-, Parser-, Schema-/Migrations-, Sicherheits-/Krypto-, Hardware-, APK-/Versions- oder CI-/Sicherheitsvorgabenänderung. Bestehende Arbeit/Originale/Herkunft und technische Gates erhalten.
 
 **Freigabefolge:** jetzt finalen Plan/echte Dokumentationschecks vorlegen; erst Tobis ausdrückliche Freigabe erlaubt die anschließende M0-Facharbeit. M0 erarbeitet die abschließende fachliche Spezifikation/Nachweise. **Programmierung ab M1 braucht danach eine weitere gesonderte ausdrückliche Umsetzungsfreigabe.** Releasefreigabe nochmals getrennt. PR bleibt bis zu Tobis Entscheidung Planungsentwurf.
+
+
+## Nachgelagerte M0-Freigabe und Wiederaufnahme14./15.10.2026
+
+Quelle: ausdrücklicher Auftrag Tobi nach Prüfung des finalisierten Planungs-PR88: „Hiermit erteile ich die ausdrückliche Freigabe für Meilenstein M0, ausschließlich zur fachlichen Spezifikation und Dokumentation.“ Prioritäten: amtliche Original-/historische Rechtsquellen/Wirksamkeit, L01–L09, abschließender M1-Daten-/Herkunfts-/Anwendbarkeitsvertrag, unabhängig hergeleitete Referenzen einschließlich Grenzen und ausdrücklich offene Rechtsfragen. Nach Pause am14.10. auf Tobis „Mach bitte weiter“ am15.10. fortgesetzt.
+
+Dies ist **keine Änderung der80/A–H/E01–E12/P01–P05**, keine Programmierungs-/Produktcode-/Parser-/Schema-/Kryptografie-/Hardware-/APK-Freigabe. PR88 darf nicht allein aus diesem Auftrag gemergt werden; ein notwendiger Dokumentationsmerge ist zuvor gesondert vorzulegen. M1 benötigt eigene ausdrückliche Zustimmung nach M0-Ergebnis. [M0-Bericht](VIOLATION_ENGINE_M0_REPORT.md) führt tatsächliche Ergebnisse und offene Freigabenachweise. Historische Quellen-/Beschlusstexte oberhalb unverändert erhalten.

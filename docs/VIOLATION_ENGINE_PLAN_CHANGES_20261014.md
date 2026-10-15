@@ -1,5 +1,7 @@
 # FahrerTagebuch 1.0 – Änderungen am Planungsentwurf in PR #88
 
+**Fortschreibung15.10.2026:** Abschnitte1–5 dokumentieren den historischen P03–P05-Finalisierungsstand amAusgangskopf6800d796. Deren frühere Aussage „M0 noch nicht freigegeben“ ist durch Tobis anschließende M0-Freigabe überholt. **Aktueller Nachweis-/Freigabestand: Abschnitt6 und [M0-Bericht](VIOLATION_ENGINE_M0_REPORT.md).** Keine historische Produktgrundlage kommentarlos ersetzt.
+
 **Stand: 14.10.2026, finale P03–P05-Produktbeschlüsse. Ausschließlich Planung; noch keine Freigabe der anschließenden M0-Facharbeit oder Programmierung.** Ursprung des E01–E12-Abgleichs `235839c152936d3e13a97cbc7f3c7e76de2ee1b6` (Docs-CI38590591817 grün); Ausgangskopf dieses finalen Auftrags `e21d297699b1304ee53f949dcd82ca3e80e2f9c7` (Docs-CI38601301433 grün). Ausgangs-main unverändert `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. [PR #88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88) bleibt Draft; kein Merge, keine Implementierungs- oder Releasefreigabe.
 
 Lesepfad: [Gesamtplan](VIOLATION_ENGINE_V1_PLAN.md) → [Regelmatrix](VIOLATION_ENGINE_LEGAL_MATRIX.md) → [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md). Verbindliche Quelle: [Ergänzungen E01–E12 und finaler P03–P05-Auftrag](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md), zusammen mit den unverändert erhaltenen [80 Entscheidungen/A–H](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md).
@@ -85,3 +87,22 @@ Für diesen P03–P05-Finalisierungsauftrag tatsächlich erfolgreich geprüft:
 - Nur neun bereits erlaubte Markdown-Dateien betroffen; keine Produktcode-/Parser-/Schema-/Hardware-/APK-/Workflowänderung und keine Abschwächung bestehender Prüfskripte.
 
 Vor Abschluss zusätzlich konservative CI-Klassifikation, genaue veröffentlichte Blob-/Tree-Identität, Draftzustand/mergefähiger Kopf und echte GitHub-Docs-CI prüfen. Endgültiger SHA/CI-Link stehen im aktualisierten PR-Abschluss. Alle neuen LG/PF/DT/PD/E/P-/A-Nachweise bleiben geplante spätere Engine-/Produktabnahmen; **L01–L09 weiterhin offen, M0 noch nicht freigegeben.**
+
+
+## 6. M0 – tatsächliche Quellen-/Spezifikationsfortschreibung15.10.2026
+
+Tobi hat M0 ausdrücklich nur dokumentarisch freigegeben; nach Pause fortgesetzt. Keine M1-, Merge- oder Releasefreigabe.80/A–H/E01–E12/P01–P05 und alle58Regel-IDs/23A-Kriterien erhalten. Die frühere reine Quellen-Beschaffungsplanung ist jetzt durch belegte Teilresultate ersetzt, nicht durch eine behauptete Fachabnahme.
+
+| Betroffene Planstelle | Vorheriger Stand | Tatsächliche Fortschreibung / Nachweis |
+|---|---|---|
+| Rechtsmatrix1/Q01–Q14 | Teils Indexbeleg/JavaScript-Prüfseite, kein vollständiger Primärpin |35 verifizierte amtliche Repräsentationen, historische Original-/Änderungsakte, aktuelleDE/EN-Texte und benannte Berichtigungen; [Register](VIOLATION_ENGINE_M0_SOURCE_REGISTER.md), [Manifest](m0/SOURCE_RETRIEVAL_MANIFEST.md),14Auszüge. |
+| S12/D02/L02 | Technische UTC-Woche/TRACE-Zuordnung als vorgesehene Umsetzung | Juristische Wochen-/Nachtzeitzone und Erweiterungszuordnung ausdrücklich noch offen. RTM-Anhang gilt nur dort; Referenzparameter keine stille Rechtsvorgabe. |
+| D06/R04/L03 | Q13-Originalbeschaffung noch offen | C(2011)3759 vollständig gelesen/gepinnt: empfohlener Tageslenkansatz, keine zulässige7h-Ruhe; unabhängige Anwendungs-/Fensterbestätigung bleibt. |
+| S13/Plan4/L08 | Semantik vorgesehen, technische Vollbelege offen | G1/G2/V2-p/c-/Entnahmenotiz und aktuelleG2/V2-Fassung gepinnt, Wahrheitstabelle/Rohwortreferenzen; [M1-Vertrag](VIOLATION_ENGINE_M1_INPUT_CONTRACT.md). End-/Herkunfts-/Fassungsabgleich vorM1-Gate offen. |
+| W03/W11/L04 | Verbot doppelter Wochenzuordnung, Buspaket noch abstrakt | Ein45h-Block nicht doppelt; normative Bus-Nachruhe≥90/≥69h gesondert. Physisch angrenzendeR-Blöcke nie künstlich trennen; globale Auslegung noch fachlich zu bestätigen. |
+| H01/L07 | Aktuelle indexierte Tabelle, frühere Familien nicht vollständig gepinnt | Q11-PDF mit visuellen Klassenspalten; historische2006/22/2009/5 und2016/403/2022/694 gepinnt. E4–E8-Grenzzeichen inRF-H. Nationale Umsetzung/Historie/Konkurrenz weiterhin offen. |
+| Testvertrag LG/DT/PF | Kurzfälle ohne vollständige feste Parameter |116LG-/51DT-/7PF-Zuordnungen mit festen Bausteinen, vier ganze Mehrregelreferenzen, offene Übergangsurteile gekennzeichnet. Keine tatsächlichen Engine-/UI-/PDF-Tests. |
+| Exakte Zeitzuordnung | Ein allgemeiner Grenzpunkt | Grenzerreichung und spätere erste überschüssige Fahrt getrennt; Pausen zählen nicht als zusätzlicheFahrt.9+3-/25h-Alternativpfade ohne falsche Befunde präzisiert. |
+| Plan13/16 und Start/Status/Handoff/Regeln | M0 erst freigeben lassen | M0-Freigabe dokumentiert, Bericht/Restblocker vorgelegt; M1 und auch Dokumentationsmerge weiterhin gesondert genehmigen lassen. Sicherheitsabschnitte bytegleich. |
+
+Tatsächlich ausgeführt:74 reine Referenzarithmetik-/Bit-/Zeitzonenprüfungen,10 bestehende CI-Scope-/Schema-Guard-Tests, Projektgrenzen undDiff-Whitespaceprüfung. Links/Tabellen/IDs/Originalgleichheit/Settings-Hashes und die reine16er-Markdown-Dateimenge zusätzlich erfolgreich geprüft. Konservative CI-Einstufung und endgültigen Veröffentlichungsbaum/CI im PR nachweisen. Unabhängige Fachabnahme und Produkt-/Gerätenachweise daraus nicht ableiten. [M0-Bericht](VIOLATION_ENGINE_M0_REPORT.md) benennt die verbleibenden M1-Blocker und weitere paketbezogene L01–L09-Nachweise.

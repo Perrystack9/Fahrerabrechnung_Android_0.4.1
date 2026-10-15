@@ -1,6 +1,6 @@
 # FahrerTagebuch 1.0 – Plan für die zeitbezogene Verstoß-Engine
 
-**Stand: 14.10.2026, finale Produktplanung zur Prüfung. P01–P05 geschlossen. PR #88 bleibt ENTWURF. Noch keine M0-Freigabe, Programmierungs- oder Releasefreigabe; keine Engine implementiert.**
+**Stand15.10.2026: M0 ausdrücklich für fachliche Spezifikation/Dokumentation freigegeben. M0-Nachweispaket zur Prüfung; P01–P05 geschlossen. PR #88 bleibt ENTWURF. Keine Programmierungs-, Merge- oder Releasefreigabe; keine Engine implementiert.**
 
 Die technischen und fachlichen Arbeitspakete, Datenverträge, Regelmatrix, Teststrategie und Abnahmekriterien sind hier zusammengeführt. Gesetzliche Einzelheiten mit noch ausstehender Primärquellen- oder unabhängiger Fachprüfung sind ausdrücklich als Freigabepunkte ausgewiesen. Die Planung darf nicht als bereits geprüfte vollständige Rechtsberechnung ausgegeben werden.
 
@@ -12,7 +12,9 @@ Die technischen und fachlichen Arbeitspakete, Datenverträge, Regelmatrix, Tests
 4. [Gesetzliche Regelmatrix](VIOLATION_ENGINE_LEGAL_MATRIX.md):58 Regelzeilen, historischer Rechtsstand, Anwendbarkeitsgrenzen, Zeitsonderregeln, Schweregrade und Quellen.
 5. [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md):116 gesetzliche/fachliche Mindestfälle,7 zusätzliche produktfachliche Fälle PF01–PF07 und51 Daten-/Technikfälle (43+8), PD01–PD80 sowie vollständige E01–E12-/P01–P05-Zuordnung;23 Abnahmekriterien (20+3), allen M0–M7-Paketen zugeordnet.
 
-Die vollständig übergebenen Nachrichten sind die Quelle; der spätere Abschlussauftrag präzisiert beziehungsweise ersetzt nur seine ausdrücklich betroffenen älteren Formulierungen. Gesetze haben Vorrang vor Produktentscheidungen. **PR #88 bleibt Entwurf. Dieser Finalisierungsauftrag ist keine Freigabe der anschließenden M0-Facharbeit. Erst gesonderte Zustimmung startet M0; nach dessen fachlicher Spezifikation benötigt Programmierung ab M1 eine weitere ausdrückliche Umsetzungsfreigabe. Releasefreigabe bleibt getrennt.**
+M0-Lesepaket: [Bericht/Freigabeempfehlung](VIOLATION_ENGINE_M0_REPORT.md) → [Quellen/L01–L09](VIOLATION_ENGINE_M0_SOURCE_REGISTER.md) → [M1-Eingangsvertrag](VIOLATION_ENGINE_M1_INPUT_CONTRACT.md) → [gesetzliche Referenzen](VIOLATION_ENGINE_M0_REFERENCE_CASES.md) und [Daten-/Produktreferenzen](VIOLATION_ENGINE_M0_DATA_CASES.md). Quellenpins/Auszüge unterdocs/m0. Autorenseitig hergeleitete Erwartungen sind von unabhängiger Fachabnahme und ausgeführten Produkttests getrennt.
+
+Die vollständig übergebenen Nachrichten sind die Quelle; der spätere Abschlussauftrag präzisiert beziehungsweise ersetzt nur seine ausdrücklich betroffenen älteren Formulierungen. Gesetze haben Vorrang vor Produktentscheidungen. **PR #88 bleibt Entwurf. Tobi hat am14.10.2026 M0 ausdrücklich ausschließlich für Spezifikation/Dokumentation freigegeben, am15.10. nach Pause fortgesetzt. Diese Zustimmung ersetzt keine M1-Programmierungsfreigabe, keine Mergefreigabe (auch nicht für Dokumentation) und keine Releasefreigabe.**
 
 **Version1.0:** vollständige anwendbare zeitbezogene561/2006-Berechnung für regulären professionellen Güterverkehr und unterstützten Linien-/Gelegenheitsbusverkehr, einschließlich Verlängerungen, Reduzierungen, Anrechnung, Ausgleich und bestätigten Sonderregeln. E09 begrenzt aktive Spezialbetriebskataloge; nachgewiesen nicht anwendbare oder unzuverlässig einzuordnende Einsätze erhalten keine unberechtigten EU-Befunde, Budgets oder Entwarnungen. Anwendbare nationale/temporäre Abweichungen werden nicht durch die Produktgrenze aufgehoben, sondern bei konkreter Betroffenheit berücksichtigt oder als Prüfgrenze ausgewiesen.
 
@@ -85,7 +87,9 @@ Lange Berechnungen laufen außerhalb von Room-Transaktionen auf einem Rechen-Dis
 
 ## 4. Eingangsdaten und Provenienz
 
-Der geplante Prüfinput enthält:
+Der abschließend formulierte **logische** [M1-Eingangs-/Herkunfts-/Scope-Vertrag](VIOLATION_ENGINE_M1_INPUT_CONTRACT.md) konkretisiert diesen Abschnitt mit Feldern, Beleggrenzen, Wahrheitstabelle, bestehender Import-Commitgrenze und festen synthetischen Datenfällen. Er ist kein implementiertes Schema. Unabhängige Bestätigung der eingesetzten technischen Ableitungen bleibt ein M1-Gate.
+
+Der Prüfinput enthält:
 - vorhandenes Fahrerprofil und zulässige eigene Karten;
 - deduplizierte Tätigkeitsintervalle mit originalem Quelltyp, Karten-/Generations-/Anwendungs-/Parent-/Child-/Import-/Datei-/Recordbezug;
 - tatsächliche Zeitauflösung und endbegründende Quelle pro Intervall;
@@ -274,7 +278,7 @@ Die Reihenfolge hält die Engine als nächsten Produktschwerpunkt fest. Kalender
 
 | Paket | Abhängigkeit und konkreter Umfang | Prüfgate vor Folgepaket / Merge |
 |---|---|---|
-| M0 – Fachliche Spezifikation schließen | Erst nach Tobis ausdrücklicher M0-Freigabe: amtliche Fassungen/Fundstellen/Wirksamkeit pinnen, L01–L09 mit konkreten Quellen-/Auslegungsnachweisen bearbeiten, vollständige unabhängige Referenzvektoren ausarbeiten. Alle Produktpunkte bereits geschlossen. | Ausschließlich Fach-/Dokumentationsarbeit; keine Programmierung/Schema-/Parser-/Hardwareänderung. M0-Ergebnis mit nachvollziehbaren Belegen/Restblockern vorlegen; gesonderte Freigabe für M1/Programmierung erforderlich. |
+| M0 – Fachliche Spezifikation schließen | Am14.10.2026 ausschließlich fachlich freigegeben: amtliche Fassungen/Fundstellen/Wirksamkeit pinnen, L01–L09 mit konkreten Quellen-/Auslegungsnachweisen bearbeiten, vollständige unabhängige Referenzvektoren ausarbeiten. Alle Produktpunkte bereits geschlossen. | Ausschließlich Fach-/Dokumentationsarbeit; keine Programmierung/Schema-/Parser-/Hardwareänderung. M0-Ergebnis mit nachvollziehbaren Belegen/Restblockern vorlegen; gesonderte Freigabe für M1/Programmierung erforderlich. |
 | M1 – Eingang und Herkunft | Erst nach M0-Ergebnis und gesonderter ausdrücklicher Programmierungsfreigabe, mit geschlossenem M1-Datenvertrag: lesende0504-Semantik, beide Quellen, Stichtage, Scope-Guard, Duplikate/Konflikte, gezielter Kontext mit Antwortwiederverwendung, getrennte abgeleitete Persistenz. | A01–A06 sowie Eingangs-/Herkunftsanteile A17/A18; passende DT-Quellenfälle. LG99/LG100 zunächst als freigegebene Vektoren, tatsächlicher Rechtsnachweis in M2/M3, UI-Anteil A17 in M5. Eigene volle CI; Import-/Persistenz-/Migrationsänderung braucht eigene Geräteabnahme vor Merge. |
 | M2 – Lenkzeit und Pausen | Nach M1 + M0 zu S/D/B: D01–D06/B01–B05, gesetzliche Woche, aufgezeichnete Crew-/Beifahrerpause, historische Buspausen; E07-Normalgrenzwerte. | A03/A07/A08 und Pausenanteil A18; LG17–LG39 sowie Normalgrenzen-/Zahlenteile LG111–LG113, deren E07-Anzeigen erst M5/M6. Keine Teilengine als1.0 freigeben. |
 | M3 – Tägliche Ruhe und Sonderfälle | Nach M1/M2 + M0 zu R/F: R01–R07/F01–F05, Crew30 h, Bus25 h, Fährnettoruhe, offene Fenster und23-h-Tagesanker. | A03/A07/A08 und vollständiger Ruheanteil A18, Tagesankeranteil A19; LG40–LG57/LG81–LG88/LG99/LG100/LG109/LG110, Tagesanteil LG101–LG103. Wochenanteile danach M4. |
@@ -287,17 +291,16 @@ Ein paketübergreifendes A-Kriterium erhält hier ausdrücklich **Teilnachweise*
 
 M1–M6 können mehrere kleine Produkt-PRs erfordern; Grenzen werden anhand des tatsächlichen Diffs und benötigter Geräteabnahme gesetzt. Keine künstliche Bündelung zur Umgehung der „spätestens jeder dritte Produkt-PR“-Regel. Für die Planungsfreigabe wird **keine feste VersionsCode-Folge** oder CI-Laufzeit versprochen.
 
-### 13.1 Konkret empfohlener Start M0 → M1
+### 13.1 Tatsächlicher M0-Stand und nächster M1-Schritt
 
-1. **M0-Freigabe einholen:** Tobi entscheidet über diesen finalen Plan und ausdrücklich über den Start der M0-Facharbeit. Dieser Auftrag enthält diese Freigabe noch nicht.
-2. **M0-Quellenregister schließen:** amtliche Original-/Änderungs-/Berichtigungsfassungen Q01–Q14 und historische Übergänge mit Fundstelle, Abruf-/Versionsnachweis und Wirksamkeitsintervall dokumentieren. Leitlinie, technische Annex-Definition und verbindlicher Gesetzestext getrennt halten; L01/L09 abgleichen.
-3. **M0-Datenvertrag priorisieren:** L08/Q04/Q14 zu Kartenstatus/c-Bit/Entnahme/manuellem Nachtrag/Chronologie/Stichtag vollständig belegen, L05 zum unterstützten Rechtsumfang/Guard prüfen. Bestehende Karten-/Profil-/Anwendungs-/Parent-/Child-/Receiptbeziehungen und SQLCipher-Grenzen schriftlich festlegen, ohne sie zu ändern.
-4. **M0-Rechen-/Darstellungsinterpretationen ausarbeiten:** L02/L03 Zeit-/Wochen-/Tagesanker, L04 gemeinsame Wochen-/Ausgleichszuordnung, L06 Artikel12 und L07 Schweregrade mit exakten Erwartungen und Tatzeitbezug dokumentieren. P03–P05 nicht wieder als offene Produktwahl aufrollen.
-5. **M0-Referenzpaket:** LG01–LG116, PF01–PF07 und DT01–DT51 als vollständige feste Eingaben samt unabhängiger Erwartung vorbereiten. Insbesondere separate Datenvertragsvektoren für M1; kein Testwert aus einer späteren Engine. Quellen-/Interpretations-/Erwartungshash und verantwortlichen fachlichen Abgleich dokumentieren.
-6. **M0-Abschluss zur Prüfung:** Nachweisregister L01–L09, endgültigen Daten-/Ergebnisvertrag, Referenzfälle und Kriteriumszuordnung vorlegen. Offene Nachweise bleiben ausdrücklich offen und blockieren jeweils abhängige Rechenregeln. Empfohlen wird die vollständige M0-Spezifikation vor Programmierstart; mindestens sämtliche M1-relevanten L01/L05/L08/L09-Anteile müssen belegt sein.
-7. **Separate Programmierungsfreigabe, dann M1:** tatsächlichen aktuellen main/PR/CI und erhaltene Arbeit erneut prüfen; kleine isolierte Umsetzung für lesenden Quellen-/Semantikadapter und minimale notwendige getrennte Kontext-/Prüflaufpersistenz planen. Kein zweiter Parser, Kryptokern oder Originalersatz. Echte erforderliche Migration ausschließlich nach neuem Compilerstand und mit vollständigen bestehenden CI-/Gerätegates. M1-Abnahme vor Weiterarbeit im abhängigen M2-Rechenkern.
+1. **M0-Freigabe liegt vor.** Die frühere Aufforderung, M0 erst freizugeben, ist überholt. Produktentscheidungen bleiben geschlossen; Bearbeitung ausschließlich dokumentarisch.
+2. **Quellen und Vertrag vorgelegt:** amtliche Primärakte/Konsolidierungen/Berichtigungen und technische p/c-Semantik tatsächlich beschafft. M1-Daten-/Herkunfts-/Scope-Vertrag formuliert; Unknown-/Konflikt-/Endbeleggrenzen ohne neue Hardware/Parser/DB. [Quellenregister](VIOLATION_ENGINE_M0_SOURCE_REGISTER.md) unterscheidet Beleg von Auslegung.
+3. **Referenzen hergeleitet:**116LG-,51DT- und7PF-Zuordnungen konkretisiert, vier vollständige Mehrregelabläufe und zusätzliche Grenztabellen. Reine Referenzarithmetik/Dokumentationsprüfungen werden berichtet; keine Engine-/UI-/Gerätetests als gelaufen behauptet. Offene Interpretationen haben ausdrücklich noch kein freigegebenes Goldenurteil.
+4. **M0-Restnachweise schließen:** insbesondere unabhängiger technischer End-/Fassungs-/Quellenabgleich des M1-Vertrags (L08), abgestimmtes begrenztes Scope-/Kontextmanifest (L01/L05/L09-Anteile) und die weiteren paketabhängigen fachlichen Nachweise im Bericht. Keine automatische Verschiebung eines echten M1-Gates nachM7. Die qualifizierte Release-Gesamtprüfung/Beta bleiben zusätzlich M7.
+5. **Tobis Entscheidung bleibt erforderlich.** M0-Bericht prüfen; M1 erst gesondert ausdrücklich freigeben, wenn die bezeichneten M1-Voraussetzungen erfüllt sind. Vorbehaltlose Programmierungsfreigabe ist derzeit nicht empfohlen. PR88 nicht aus M0-Auftrag mergen; notwendiger Dokumentationsmerge separat vorlegen.
+6. **Danach M1 klein beginnen:** eingefrorener lesender Input aus beiden eigenen Anwendungsquellen und semantischem Adapter; anschließend regelbezogene Abdeckung/Scope/Kontextrevision und minimale getrennte abgeleitete Laufpersistenz. Zuerst vorhandene Zugriffe, keine zweite Parser-/Kryptofamilie. Eigene volle CI und bei tatsächlichen Import-/Persistenz-/Migrationsänderungen passende Geräteabnahme vor Merge. M1-Abnahme vor M2; ungeklärte Rechtszeit-/Solverfragen werden nicht als Defaults mitprogrammiert.
 
-M0-Quellenspezifikation ist keine unabhängige Release-Gesamtabnahme. Die qualifizierte Fachgesamtprüfung und Beta bleiben M7-Pflichten. Der tatsächliche Rechtstext-/Auslegungsnachweis wird nie aus der Produktbestätigung oder grüner Docs-CI abgeleitet.
+M0-Spezifikationsarbeit ist keine unabhängige Release-Rechtsabnahme. Produktbestätigung/Docs-CI ersetzen weder Fachnachweise noch Programmierungsfreigabe.
 
 ## 14. Verbindliche Abnahmekriterien
 
@@ -379,13 +382,10 @@ Alte24-/2-h-Schwellen und der frühere Vorschlags-/Offenstatus P03–P05 sind **
 
 **L01–L09 bleiben dagegen offene fachliche Quellen-/Auslegungsnachweise.** Rechtsmatrix und Änderungsübersicht nennen Quellen, benötigte Referenzen und abhängige Pakete;13.1 beschreibt den empfohlenen M0-Start. Für M7 fehlen weiterhin dokumentierte unabhängige Fachgesamtprüfung und Beta-Ergebnisse; Produktbestätigung und Docs-CI ersetzen diese nicht. Dieser Plan autorisiert keine externe Kontaktaufnahme oder Datensendung.
 
-## 16. Aktueller Dokumentationsauftrag und nächste Freigabe
+## 16. Aktueller M0-Auftrag und Freigabegrenzen
 
-Jetzt ausschließlich:
-- Anforderungen dokumentieren, Quellen-/Codebestand abgleichen und überprüfbaren Plan ausarbeiten;
-- Dokumente auf isoliertem Branch sichern, reine Docs-Prüfungen ausführen und als Draft-PR zur Diskussion vorlegen;
-- WORK_START/STATUS/HANDOFF/CURRENT_RULES gezielt aktualisieren, ohne alte Sicherheits-/CI-/Gerätevorgaben abzuschwächen.
+Tobis ausdrückliche M0-Freigabe umfasst amtliche Rechtsquellen/Historie, L01–L09, den M1-Vertrag und unabhängige Referenzherleitung. Das [M0-Ergebnis](VIOLATION_ENGINE_M0_REPORT.md) weist Belege, tatsächliche Prüfungen und Restblocker aus. Keine Produktentscheidung wird neu aufgerollt.
 
-**Keine Engine-, Kalender-, PDF-, Datenbank-, Parser-, Reader- oder UI-Implementierung in dieser Sitzung.** Keine neue APK, Schemaänderung oder Produktversion. Bestehende Checkouts/Branches und offene Settings-Datei mit hashgleicher Sicherung bleiben erhalten.
+**Keine Engine-, Kalender-, PDF-, Datenbank-, Parser-, Reader- oder UI-Implementierung.** Keine APK/Produktversion/Schema-/Kryptografie-/Hardware-/Workflowänderung. Bestehende Checkouts/Branches, offene Settings-Arbeit und hashgleiche Sicherung bleiben erhalten. Kein externer Versand/keine Beauftragung einer Fachperson aus diesem Auftrag.
 
-Zuerst Tobi: finalen Planungs-PR prüfen und **M0-Facharbeit ausdrücklich freigeben**. Erst danach wird M0 bearbeitet; der aktuelle Auftrag führt keine offene juristische Prüfung als erledigt. Anschließend M0-Nachweise/konkrete Spezifikation vorlegen und **separate ausdrückliche Programmierungsfreigabe für M1 und folgende Pakete** abwarten. Weder Planaktualisierung noch M0-Zustimmung ist eine automatische Code-, Hardware- oder Releasefreigabe. Alle vorhandenen technischen/CI-/Gerätegates bleiben Pflicht; eigene Releaseentscheidung erst nach M7.
+PR88 bleibt Planungsentwurf, offen und ungemergt bis gesonderter Entscheidung. Ein Dokumentationsmerge bedarf eigener vorheriger Zustimmung. Programmierung abM1 benötigt eine weitere ausdrückliche Freigabe nach Prüfung der tatsächlichen M0-Nachweise; keine automatische Freigabe aus einem grünen Docs-Lauf. Release erst nach M7 einschließlich unabhängiger qualifizierter Fachprüfung/Beta5–10Berufskraftfahrer und allen unveränderten CI-/Gerätenachweisen.
