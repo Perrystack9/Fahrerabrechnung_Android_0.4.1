@@ -4,6 +4,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrations {
+    val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""CREATE TABLE IF NOT EXISTS `violation_context_revisions` (`id` TEXT NOT NULL, `profileId` TEXT NOT NULL, `previousId` TEXT, `sequence` INTEGER NOT NULL, `payloadVersion` INTEGER NOT NULL, `payload` TEXT NOT NULL, `payloadDigest` TEXT NOT NULL, `semanticRevision` TEXT NOT NULL, `recordedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`profileId`) REFERENCES `profiles`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`previousId`, `profileId`) REFERENCES `violation_context_revisions`(`id`, `profileId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_violation_context_revisions_profileId_sequence` ON `violation_context_revisions` (`profileId`, `sequence`)")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_violation_context_revisions_id_profileId` ON `violation_context_revisions` (`id`, `profileId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_violation_context_revisions_previousId_profileId` ON `violation_context_revisions` (`previousId`, `profileId`)")
+        }
+    }
+
     val MIGRATION_21_22 = object : Migration(21, 22) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""CREATE TABLE IF NOT EXISTS `card_event_fault_signature_receipts` (`sessionId` TEXT NOT NULL, `driverCardId` TEXT NOT NULL, `kind` TEXT NOT NULL, `generation` TEXT NOT NULL, `application` TEXT NOT NULL, `originalSourceId` TEXT, `certificateKind` TEXT, `certificateSourceId` TEXT, `status` TEXT NOT NULL, `policy` TEXT, `phase` TEXT, `reason` TEXT, `statusWord` INTEGER, `hashStatusWord` INTEGER, `signStatusWord` INTEGER, `failure` TEXT, `actualLength` INTEGER, `bytes` BLOB, `fingerprint` TEXT NOT NULL, PRIMARY KEY(`sessionId`, `kind`), FOREIGN KEY(`sessionId`, `driverCardId`) REFERENCES `driver_import_sources`(`sessionId`, `driverCardId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`, `driverCardId`, `kind`, `originalSourceId`) REFERENCES `driver_import_metadata_sources`(`sessionId`, `driverCardId`, `kind`, `sourceId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`sessionId`, `driverCardId`, `certificateKind`, `certificateSourceId`) REFERENCES `driver_import_metadata_sources`(`sessionId`, `driverCardId`, `kind`, `sourceId`) ON UPDATE NO ACTION ON DELETE RESTRICT)""")

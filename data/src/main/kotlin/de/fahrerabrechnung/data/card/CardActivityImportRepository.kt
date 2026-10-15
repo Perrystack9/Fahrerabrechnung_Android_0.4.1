@@ -24,14 +24,7 @@ class CardActivityImportRepository @Inject constructor(
         val file = result.activity
         val days = CardActivityParser.parse(file)
         require(days.isNotEmpty())
-        val id = MessageDigest.getInstance("SHA-256").apply {
-            update(result.generation.name.toByteArray(Charsets.UTF_8))
-            update(0)
-            update(result.card.card.number.toByteArray(Charsets.UTF_8))
-            update(0)
-            update(ByteBuffer.allocate(8).putInt(file.oldestDayOffset).putInt(file.newestDayOffset).array())
-            update(file.dailyRecords)
-        }.digest().joinToString("") { "%02x".format(it) }
+        val id = fingerprint(result.generation, result.card.card.number, file)
         return CardActivityImportEntity(
             id = id,
             cardNumber = result.card.card.number,
@@ -55,5 +48,18 @@ class CardActivityImportRepository @Inject constructor(
         check(days.size == entity.dayCount)
         return SavedCardActivity(file, generation, days.size, entity.importedAtEpochMillis,
             entity.cardNumber, days)
+    }
+
+    companion object {
+        /** The existing persisted source ID algorithm, also used by the read-only M1 adapter. */
+        internal fun fingerprint(generation: CardGeneration, cardNumber: String, file: CardActivityFile): String =
+            MessageDigest.getInstance("SHA-256").apply {
+                update(generation.name.toByteArray(Charsets.UTF_8))
+                update(0)
+                update(cardNumber.toByteArray(Charsets.UTF_8))
+                update(0)
+                update(ByteBuffer.allocate(8).putInt(file.oldestDayOffset).putInt(file.newestDayOffset).array())
+                update(file.dailyRecords)
+            }.digest().joinToString("") { "%02x".format(it) }
     }
 }

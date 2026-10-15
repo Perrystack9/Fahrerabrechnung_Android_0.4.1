@@ -279,6 +279,7 @@ class DriverProfileImportInstrumentedTest {
         db.driverProfileDao().insertCard(DriverCardEntity("old-card", "old-profile", "legacy-id", "UNASSIGNED", 1, 1))
         db.driverProfileDao().insertSession(ImportSessionEntity("old-session", "old-profile", "LEGACY", 1, 1))
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_import_file_results")
             execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE driver_vehicle_use_sources")

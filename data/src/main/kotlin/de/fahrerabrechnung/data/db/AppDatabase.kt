@@ -50,6 +50,7 @@ import androidx.room.RoomDatabase
         CardApplicationAttemptEntity::class,
         CardMasterSourceEntity::class,
         CardBatchMasterFileEntity::class,
+        ViolationContextRevisionEntity::class,
     ],
     version = AppDatabase.SCHEMA_VERSION,
     exportSchema = true,
@@ -79,9 +80,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardIdentitySignatureDao(): CardIdentitySignatureDao
     abstract fun cardEventFaultSignatureDao(): CardEventFaultSignatureDao
     abstract fun cardReadBatchDao(): CardReadBatchDao
+    abstract fun violationContextDao(): ViolationContextDao
 
     companion object {
-        const val SCHEMA_VERSION = 22
+        const val SCHEMA_VERSION = 23
         const val DATABASE_NAME = "fahrerabrechnung.db"
     }
 }

@@ -277,6 +277,7 @@ class NormalizedCardVehicleInstrumentedTest {
             db.driverActivityDao().sourceDays(before.driverCardId, source.id)
         }
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_import_file_results")
             execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE driver_vehicle_use_sources")

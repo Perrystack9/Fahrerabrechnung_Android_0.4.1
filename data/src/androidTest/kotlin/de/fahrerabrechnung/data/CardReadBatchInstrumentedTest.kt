@@ -270,10 +270,11 @@ class CardReadBatchInstrumentedTest {
             val id = checkNotNull(attempt.run).sessionId!!; id to db.cardIdentitySignatureDao().receipts(id).map { row -> row.fingerprint }
         }
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_event_fault_signature_receipts"); execSQL("DELETE FROM room_master_table"); version = 21
         }
         db.close(); open()
-        assertEquals(22, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
         assertEquals(runs, old.applications.map { db.cardImportRunDao().run(it.run!!.id) })
         assertEquals(0, count("card_event_fault_signature_receipts"))
         assertBatchContent(old, pipeline.processApplications(identityBatch(), "before-event-upgrade"))
@@ -401,12 +402,13 @@ class CardReadBatchInstrumentedTest {
         }
         val core = old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint }
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_identity_signature_receipts")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 20
         }
         db.close(); open()
-        assertEquals(22, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.writableDatabase.version); assertEquals(profile, imports.profile())
         assertBatchContent(old, pipeline.processApplications(input, "before-identity-upgrade"))
         assertEquals(core, old.applications.flatMap { db.cardCoreSignatureDao().receipts(it.run!!.sessionId!!) }.map { it.fingerprint })
         for ((id, rawIds) in sources) {
@@ -648,6 +650,7 @@ class CardReadBatchInstrumentedTest {
         val bytes = imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes
         // Remove only the new, empty additive relations to recreate the real encrypted v18 schema.
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             for (table in listOf("card_identity_signature_receipts", "card_core_signature_receipts", "card_batch_master_files", "card_application_attempts", "card_master_sources", "card_read_batches"))
                 execSQL("DROP TABLE $table")
             execSQL("DROP INDEX index_card_import_runs_id_driverCardId")
@@ -658,7 +661,7 @@ class CardReadBatchInstrumentedTest {
             version = 18
         }
         db.close(); open()
-        assertEquals(22, db.openHelper.writableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.writableDatabase.version)
         assertEquals(old, pipeline.process(oldRead, "before-upgrade"))
         assertArrayEquals(bytes, imports.get(old.sessionId!!)!!.identitySources.getValue(CardIdentitySourceKind.IDENTIFICATION).file.bytes)
         assertEquals(0, count("card_read_batches")); assertEquals(0, count("card_application_attempts"))
