@@ -1,6 +1,6 @@
 # FahrerTagebuch - aktueller technischer Zustand
 
-**M0/M1 integriert; M2/40130/Room23 wird auf eigenem Branch geprüft.** M1/40129/Room23 ist ausdrücklich abgenommen. Tobi bestätigte die eigene Geräteprüfung am15.10.2026 15:13 Europe/Berlin („Passt alles 👌🏻“) und erteilte danach ausdrücklich M1-Abnahme, kontrollierte Mergefreigabe für PR88/PR89 sowie anschließende M2-Implementierungsfreigabe. Keine M2-Merge-/M3–M7-/Releasefreigabe. [Regeln](docs/CURRENT_RULES.md), [M1-Bericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md), [Abnahmematrix](docs/VIOLATION_ENGINE_M1_ACCEPTANCE.md), [Gerätebeleg](docs/DEVICE_CONFIRMATION_40129.md).
+**M2/40130/Room23 technisch abgenommen und integriert; M3 ausdrücklich genehmigt.** Basis `c542b4c9cd371a6e3a9489678e752e07ca7e7360`, exakt derselbe Baum wie der abschließende CI-/Gerätestand. [M2-Integrationsbeleg](docs/M2_INTEGRATION_20261015.md), [aktuelle Regeln](docs/CURRENT_RULES.md). Keine juristische Gesamtbestätigung, kein M3-Merge/M4–M7/Release.
 
 ## Integration und nachgewiesene Basis
 
@@ -17,16 +17,12 @@ Room23 ergänzt ausschließlich `violation_context_revisions`, additive Migratio
 
 40128-Kryptografie bleibt abgeschlossen: [PR85](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/85), Merge `c4057b3810d1ad0f5ef8e27cf69b260acd9c8405`, volle CI38547729369 und Produkt-main-CI38559255131 erfolgreich; [eigene Gerätebestätigung](docs/DEVICE_CONFIRMATION_40128.md). Gespeicherte0504/0505,0501/0520,0502/0503 sowie bedingtesV2-0525 mathematisch geprüft. Zertifikatsvertrauen immer NOT_EVALUATED. Keine neue Trust-/DDD-/Signaturaufnahme-/Kartenschreibphase. Frühere40124–40128 nicht erneut implementieren.
 
-## Aktueller M2-Umfang und Gates
+## Aktuelle M3-Arbeit und fortbestehende Grenzen
 
-[Implementierungsbericht](docs/VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [fachliche Nachweise](docs/VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahme](docs/VIOLATION_ENGINE_M2_ACCEPTANCE.md). M2-Branch `feature/v1-m2-driving-breaks-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m2`, Basis3c99b7db.40130/Room23; keine neue DB-Tabelle, Migration, Parser-/Krypto-/Hardware-/CI-Änderung.
+M2 implementiert9-/10-h-Tagesfahrt, zwei Vorgänge je technischer UTC-Woche,56-/90-h-Projektionen,270/45/15+30 sowie datierte Bus-/Crewpausen auf M1. Finale CI38773986395 erfolgreich,609 Unit-Tests ohne Fehler/Skip, vollständige API36-/SQLCipher-/Compose-Prüfung. Eigene40130-Geräteantwort15.10.2026 19:38 Europe/Berlin positiv. Merge und neue volle main-CI38780974996 im [Integrationsbeleg](docs/M2_INTEGRATION_20261015.md); dessen laufender Status gilt nicht als erfolgreich. Keine Schema-/Parser-/Krypto-/Hardware-/CI-Änderung in M2.
 
-Implementiert: reiner M1-Konsument für9-/10-h-Tagesfahrt, zwei Verlängerungsvorgänge je technischer UTC-Woche,56-/90-h-UTC-Projektionen,270-/45-/15+30-Pausen, datierte Gelegenheitsbus-/eigene Crewpause; genaue Fahrteilstücke/Herkunft, lokale Lücken-/Scopegrenzen, offener Artikel12-Zahlenvertrag und revisionsgeprüfter automatischer Flow während der App-Nutzung. Keine Verstoßoberfläche oder PDF. Ursprüngliche Rohdaten bleiben unverändert.
+M3-Branch `feature/v1-m3-daily-rest-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`. [Implementierungsvertrag](docs/VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellenprüfung](docs/VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Abnahmesollwerte](docs/VIOLATION_ENGINE_M3_ACCEPTANCE.md). Quellen/Dokumentationsarbeit läuft; keine fertige M3-Implementierung oder bestandene Prüfung behauptet. Produktarbeit beginnt erst nach vollständig erfolgreicher M2-main-CI.
 
-L02 ist **nicht geschlossen**; gesicherte Wochen-/Verlängerungsbudgets bleiben gesperrt. Konkrete Entscheidungsvorlage zu technischer UTC-Norm versus lokaler TRACE-Auslegung, Grenzübertritt>9h und historischen Tatbeständen vorhanden. Q13-Empfehlung getrennt von M3-Ruhequalifikation; Fähranker und12-Tage-Bus-Nachtqualifikation bleiben M3/M4. Zwei10-h-Vorgänge werden nicht durch eine Wochenruhe zurückgesetzt; späterer Tagesruhereduzierungszähler ist anderer Vertrag.
-
-Frühe isolierte Domainprüfungen und projektkonfigurierte Domain-Gradleprüfung sind Entwicklungsnachweise; endgültige vollständige CI, alle bestehenden API36-SQLCipher-/Compose-Suiten und neue40130-Geräteprüfung müssen am veröffentlichten Kopf gesondert nachgewiesen werden. Aktueller tatsächlicher Endstatus im M2-PR-Protokoll, keine offene Prüfung als erfolgreich behandeln.
-
-M2-Merge benötigt neue ausdrückliche Zustimmung. M3–M7/Release gesperrt; qualifizierte unabhängige Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates. Historische Ortszeit ist neue bevorzugte spätere M5/M6-Anzeige, ohne Auswirkung auf Rechtswerte.
+L02/L03/L09 und sonstige betroffene Fachgrenzen bleiben erhalten. Tagesruhe, Tageslenkkonvention und Wochen-Verlängerungszähler sind verschiedene Verträge. Kein Wochen-/Ausgleichsmotor M4, keine UI M5/PDF M6; unabhängige Fachgesamtprüfung/Beta M7 weiter verbindlich. Historische Ortszeit ist spätere bevorzugte Anzeige, UTC bleibt Berechnungsbasis.
 
 Automatische Workspace-Wartung entfernte frühere Checkouts und die separate unvollständige Settings-Arbeitskopie. M1 ist aus GitHub wiederhergestellt; der alte Entwurf nicht. Keine Rekonstruktion erfinden. [Nachweisgrenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Browser/Unteragenten ausgeschlossen; alle vorhandenen Arbeiten erhalten.

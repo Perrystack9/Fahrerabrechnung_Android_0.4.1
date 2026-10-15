@@ -1,34 +1,22 @@
 # FahrerTagebuch - aktuelle Übergabe
 
-**M0/M1 kontrolliert integriert, M2-Implementierung genehmigt und in eigener Prüfung.** Kein M2-Merge, M3–M7 oder Release. Zuerst WORK_START und fünf Startdateien; keine pauschale Volllektüre/Chatrekonstruktion, Browser oder Unteragenten. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md).
+**M2 technisch abgenommen und PR90 kontrolliert integriert; M3 ausdrücklich genehmigt.** Zuerst WORK_START/fünf Startdateien; keine pauschale Volllektüre, Browser oder Unteragenten. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md).
 
-## Neue Basis und Nachweise
+## Integrierte Basis
 
-PR88-Merge `9ff0a525d8394031148aada37593c9fed8f84148` nach erfolgreicher Docs-CI38684167403; zusätzliche Docs-main-CI38744376819 ebenfalls erfolgreich. Anschließend PR89 auf Planung abgestimmt: vier reine Dokumentkonflikte aufgelöst, alle Produktdateien gegenüber dem eigenen Geräteprüfkopf212a140 unverändert und geschützter Regelabschnitt bytegleich. Neue volle CI38744945937/Versuch1 auf `1f1655de023ae6463419be8be9278f0c1c05232e` vollständig erfolgreich, alle vier Jobs/ungekürzte API36-Suiten. PR89 nach abschließender Live-Prüfung integriert: **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**,40129/Room23. Zusätzliche volle Produkt-main-CI38749285258/Versuch1 ebenfalls erfolgreich. [Integrationsbeleg](M0_M1_INTEGRATION_20261015.md), [eigene Gerätebestätigung und ausdrückliche M1-Abnahme](DEVICE_CONFIRMATION_40129.md).
+PR88/M0 und PR89/M1 sind unverändert erhalten. PR90-Endkopf `8fc3fd4d64876450373989952edcbc31feaed0f0`, volle CI38773986395/Versuch1 erfolgreich,609 Unit-Tests ohne Fehler/Skip und vollständige API36-SQLCipher-/Compose-Suiten. Tobi bestätigt40130/Room23 am15.10.2026 19:38 Europe/Berlin mit „Funktioniert alles wie es soll 👌🏻“ und erteilt danach technische M2-Abnahme sowie Merge-/M3-Freigabe. Keine weitergehenden Geräte- oder juristischen Nachweise daraus ableiten.
 
-## Aktueller M2-Auftrag
+Tatsächlicher PR90-Merge **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, vollständiger Baum `8fe032142f9987e8c46b818d802bdf97f25c9ca7`, exakt identisch mit dem finalen Prüf-/Gerätebaum. Neue vollständige Produkt-main-CI38780974996 wurde automatisch gestartet; Endstatus im [Integrationsbeleg](M2_INTEGRATION_20261015.md) vor Produktarbeit prüfen. Keine doppelte CI auslösen und kein laufendes Gate als bestanden darstellen.
 
-Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m2`, Branch `feature/v1-m2-driving-breaks-20261015`, Basis3c99b7db. Stand40130/Room23; keine neue Migration/Schema-/Parser-/Krypto-/Hardware-/Workflowänderung. [M2-Bericht](VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [L02/L03/L05/L06 und Quellen](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahmematrix](VIOLATION_ENGINE_M2_ACCEPTANCE.md).
+## M3-Auftrag und nächster Schritt
 
-D01–D06/B01–B05 auf dem vorhandenen M1-Snapshot: normale Tagesfahrt/Verlängerungsvorgänge,56-/90-h-UTC-Projektionen, reguläre/geteilte Pause, datierte Bus-/Crewfälle und artikelbezogener Scope; genaue Fahrteilstücke und Revisions-/Herkunftsbezug. Automatischer read-only Flow während der App-Nutzung, letzte M1-Tokenprüfung vor Veröffentlichung. Kein UI-/PDF-/Ruhe-/Ausgleichsmotor.
+Branch `feature/v1-m3-daily-rest-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`; früh gesicherter Dokumentationszwischenstand auf GitHub. [Arbeitsvertrag](VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellen/L-Gates](VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Referenz-/Abnahmevertrag](VIOLATION_ENGINE_M3_ACCEPTANCE.md). Nach grüner vollständiger M2-main-CI R01–R07/F01–F05 tatsächlich implementieren, testen und bedeutende Zwischenstände früh sichern. Keine zweite Parserarchitektur oder unnötige Datenbankänderung.
 
-L02 bleibt offen: technische UTC-Norm versus lokale TRACE-Woche nicht verbindlich aufgelöst. Wochen-/Verlängerungsbudgets nicht als gesichert ausgeben. Q13 nur Tageslenk-Konvention;7h ist keine legale Tagesruhe. Die zwei10-h-Verlängerungen zählen je Kalenderwoche ohne Wochenruhe-Reset, spätere Ruhereduzierungen zwischen qualifizierenden Wochenruhen bleiben separater M3-Vertrag. Fährenabhängige Tagesanker und12-Tage-Bus-Nachtqualifikation M3/M4, keine erfundene Entwarnung. Artikel12-Zahlenbefunde offen, keine Anerkennung/Schuld/Heimkehrüberwachung.
+Drei Tagesreduzierungen zwischen qualifizierenden Wochenruhen nicht mit den zwei M2-Verlängerungen je Woche verwechseln.23h sind Tagesruhe, kein Wochenreset;7h-Konvention keine tägliche Ruhe. L02/L03/L09 und übrige fallbezogene Rechtsfragen bleiben offen; keine unbedingten Ergebnisse/Budgets aus bedingten Voraussetzungen. Eigene Crewaufzeichnung grundsätzlich nutzen, keine zweite Karte/Routinebestätigung. Fähre/Bus nur fallbezogener Kontext. UTC rechnet, Anzeigezone verändert nichts.
 
-## Wiederaufnahme nach Kontingentunterbrechung
+M3 benötigt eigene vollständige unveränderte CI und erforderliches neues Gerätepaket mit verständlicher Anleitung direkt im Chat. **Kein M3-Merge/M4–M7/Release ohne gesonderte Freigabe.** Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.40128-Kryptografie abgeschlossen, Zertifikatsvertrauen NOT_EVALUATED.
 
-Am15.10.2026 war lokal nur der ältere M1-Checkout vorhanden; der frühere M2-Checkout, seine Buildumgebung und die noch nicht veröffentlichten Folgeänderungen waren nicht auffindbar. Ohne vorhandene M1-Dateien zu verwerfen wurde M2 separat aus dem unveränderten PR90-Kopf `9a7911bde88347e82660cc1f7ba31806b38ceb6d` wiederhergestellt, Baum `a8dbce895d2214ccdedd33e3dcb0121cae04a240`. Seine vollständige CI [38752173910](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38752173910), Versuch1, alle vier Jobs einschließlich ungekürzter API36-Prüfung, war erfolgreich. Kein veröffentlichter M0-/M1-/M2-Fortschritt ging verloren. Die lokalen Folgeänderungen zu mehreren Pausenpfaden/kurzen Crew-Teilen wurden erneut implementiert und durch84 isolierte M1-/M2-Domainmethoden geprüft; dies ist kein Nachweis identischer Wiederherstellung der verlorenen Arbeitskopie. Die neue Interpretationsrevision `561-m2-driving-breaks-2` benötigt erneut volle CI und eigenes exakt zugeordnetes Gerätepaket. Der neue Q08-Abruf samt eigener Byte-Prüfsumme ist dokumentiert. Endgültiger Kopf, CI, Build- und Paketnachweise im PR90-Protokoll, nicht aus dem älteren grünen Lauf ableiten.
-
-## Verbindliche nächsten Prüfschritte
-
-1. Tatsächlichen M2-Remote-Kopf/Arbeitsbaum/CI prüfen und vorhandene Arbeit erhalten. Frühere M1-Checkouts/Branches nicht löschen oder neu implementieren.
-2. Fachliche Referenzen und zusätzliche Regressionen aus der M2-Matrix tatsächlich ausführen; früher isolierter Compilerlauf ist keine konfigurierte Projekt-/Android-Abnahme.
-3. Alle sieben unveränderten Gradle-Gates und vollständige API36-SQLCipher-/Compose-Suiten einschließlich neuer sechs M2-Androidmethoden, Signatur/Updatepaar/Compilerexporte; keine Filter/Quarantäne. Fehler beheben und finalen Kopf komplett prüfen.
-4. Exaktes40130-Gerätepaket erst nach grünen Gates prüfen und mit verständlicher Anleitung direkt im Chat vorlegen;40129-Antwort nicht übertragen. Keine Datenlöschung oder neue Geräteabnahme behaupten.
-5. M2 zur gesonderten fachlichen/technischen Abnahme und Mergeentscheidung vorlegen. L02-Entscheidungsvorlage und weitere konkrete Fachnachweise ausdrücklich offen; keine unbelegten Annahmen zum Schließen von Gates.
-
-Anzeigeentscheidung15.10.2026 ersetzt die ausschließlich feste Zone als bevorzugte Darstellung: später belegbare historische Ortszeit einschließlich DST/Länder-/GNSS-/Grenzdaten, feste einstellbare Standardzone als Rückfall und Kennzeichnung von Unklarheit. M2 rechnet ausschließlich UTC, keine Standortüberwachung. Produktentscheidungen ansonsten unverändert; neue Entscheidung im historischen Addendum nachvollziehbar ergänzt.
-
-40128-Kryptografie abgeschlossen; Zertifikatsvertrauen NOT_EVALUATED. Keine Trust-/DDD-/Kartenschreibarbeit. Unabhängige qualifizierte Fachgesamtprüfung/Beta5–10 Fahrer bleiben Releasegates.
+Alle vorhandenen M1-/M2-Checkouts, nativen/API-Commits, Buildbelege und Gerätepakete erhalten. Der frühere M2-Workspace-Rückfall verlor keine veröffentlichten GitHub-Arbeiten; unveröffentlichte Folgeänderungen wurden neu erstellt und anschließend unter8fc3fd4 mit eigener voller CI und eigenem Paket geprüft. Keine byteidentische Wiederherstellung der verlorenen Kopie behaupten.
 
 ## Lokale Arbeit und Workspace-Wiederherstellung
 
