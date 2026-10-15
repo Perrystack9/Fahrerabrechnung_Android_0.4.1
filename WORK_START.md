@@ -36,7 +36,7 @@ M1-Branch `feature/v1-m1-input-foundation-20261015`, Checkout `/workspace/scratc
 
 40128 ist abgeschlossen; keine automatische neue Trust-/DDD-/Signaturaufnahme-/Kartenschreibphase. „Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten. M1 verwendet bestehende Parser/Stores/Verifikations-Snapshotprüfungen; Originale/Fingerprints/Receipts werden nicht geändert.
 
-Der separate Planungscheckout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-v1-engine-plan` samt lokalen M0-Sicherungscommits und die vorherigen Worktrees/Branches bleiben erhalten. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
+Eine automatische Workspace-Bereinigung während der Pause am15.10.2026 hat die früheren lokalen Checkouts, Builddateien und Sicherungspfade entfernt. M1 einschließlich der vorbereiteten Testkorrektur ist aus GitHub wiederhergestellt; PR88 enthält weiterhin die gepinnte M0-Facharbeit. Aktueller lokaler Branch `work/m1-resumed-20261015`, Ziel unverändert PR89/`feature/v1-m1-input-foundation-20261015`. Die zuvor per SHA256 bestätigte uncommittete Settings-Sicherung konnte in den geprüften Git-Versionen und gespeicherten Dateien nicht wiedergefunden werden; [genaue Grenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Nicht als erneut vorhanden bestätigen oder durch eine vermutete Rekonstruktion ersetzen. Keine vorhandenen Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
 
 ## Sitzungsroutine
 

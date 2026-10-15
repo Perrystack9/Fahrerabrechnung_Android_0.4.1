@@ -63,9 +63,13 @@ class M1MigrationInstrumentedTest {
                         for (i in 0 until entities.length()) {
                             val entity = entities.getJSONObject(i)
                             db.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", entity.getString("tableName")))
-                            val indexes = entity.getJSONArray("indices")
-                            for (j in 0 until indexes.length()) db.execSQL(indexes.getJSONObject(j).getString("createSql")
-                                .replace("\${TABLE_NAME}", entity.getString("tableName")))
+                            // Compiler exports omit indices for entities without declared indexes.
+                            // A present malformed value still fails through the strict accessor.
+                            if (entity.has("indices")) {
+                                val indexes = entity.getJSONArray("indices")
+                                for (j in 0 until indexes.length()) db.execSQL(indexes.getJSONObject(j).getString("createSql")
+                                    .replace("\${TABLE_NAME}", entity.getString("tableName")))
+                            }
                         }
                         val setup = schema.getJSONArray("setupQueries")
                         for (i in 0 until setup.length()) db.execSQL(setup.getString(i))
