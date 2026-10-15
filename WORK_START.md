@@ -30,7 +30,7 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**M0/M1 kontrolliert integriert; M2-Implementierung ausdrücklich genehmigt.** Tobi hat M1/40129/Room23 nach neuer eigener Geräteprüfung am15.10.2026 abgenommen und PR88 zuerst/PR89 danach freigegeben. M0-Planungsmerge `9ff0a525d8394031148aada37593c9fed8f84148`, M1-Produktmerge/neue Basis **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**. Neue volle Integrations-CI38744945937/Versuch1 erfolgreich, alle Produktdateien gegenüber dem bestätigten40129-Kopf212a140 bytegleich. [Nachweise](docs/M0_M1_INTEGRATION_20261015.md). Zusätzliche main-CI38749285258 live prüfen.
+**M0/M1 kontrolliert integriert; M2-Implementierung ausdrücklich genehmigt.** Tobi hat M1/40129/Room23 nach neuer eigener Geräteprüfung am15.10.2026 abgenommen und PR88 zuerst/PR89 danach freigegeben. M0-Planungsmerge `9ff0a525d8394031148aada37593c9fed8f84148`, M1-Produktmerge/neue Basis **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**. Neue volle Integrations-CI38744945937/Versuch1 erfolgreich, alle Produktdateien gegenüber dem bestätigten40129-Kopf212a140 bytegleich. [Nachweise](docs/M0_M1_INTEGRATION_20261015.md). Zusätzliche volle main-CI38749285258/Versuch1 ebenfalls erfolgreich.
 
 M2-Branch `feature/v1-m2-driving-breaks-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m2`; Entwicklungsstand40130/Room23. [Implementierung](docs/VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [Rechtsnachweise/Entscheidungsvorlage](docs/VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahme](docs/VIOLATION_ENGINE_M2_ACCEPTANCE.md). D01–D06/B01–B05, keine zweite Parserarchitektur, keine DB-/Krypto-/Hardware-/CI-Änderung. Alle80/A–H/E01–E12/P01–P05 bleiben maßgeblich.
 

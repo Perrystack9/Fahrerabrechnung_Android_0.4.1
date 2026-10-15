@@ -200,6 +200,59 @@ class DrivingReferenceTest {
         assertTrue(r.projections.last { it.law.id == "B01" }.breakCredits.any { it.ruleId == "B04" })
         assertFalse(r.issues.any { it.reason.contains("SECOND_CARD") || it.reason.contains("CONFIRM") })
     }
+    @Test fun partialCrewAvailabilitySplitIsConditionalAndAProvenFullBreakRestoresCertainty() {
+        for (crewFirst in listOf(false, true)) {
+            val f = DrivingFixture().d(120, true)
+            if (crewFirst) f.a(15, true) else f.r(15)
+            f.d(150, true)
+            if (crewFirst) f.r(30) else f.a(30, true)
+            f.d(1, true)
+            val r = run(f)
+            assertTrue(r.breaks().isEmpty())
+            val p = r.projections.last { it.law.id == "B01" }
+            assertFalse(p.quantityIsExact)
+            assertEquals(1, p.breakCredits.count { it.conditionalCrewSplit })
+            assertTrue(CalculationRestriction.L09_PARTIAL_CREW_AVAILABILITY_SPLIT_NOT_CONFIRMED in p.restrictions)
+            assertNull(r.provenCurrentBreakHeadroomSeconds)
+            assertTrue(r.issues.any { it.reason == "L09_PARTIAL_CREW_SPLIT_REQUIRES_REVIEW" })
+            val continued = run(f.d(270, true)).breaks().single()
+            assertEquals(60, continued.excessSeconds)
+            assertFalse(continued.quantityIsExact)
+            assertFalse(continued.onsetIsExact)
+            assertEquals(LegalAssessment.NOT_DETERMINED, continued.legalAssessment)
+            val later = run(f.r(45).d(1))
+            assertEquals(269 * 60L, later.provenCurrentBreakHeadroomSeconds)
+            assertTrue(later.projections.last { it.law.id == "B01" }.quantityIsExact)
+            assertTrue(later.issues.any { it.reason == "L09_PARTIAL_CREW_SPLIT_REQUIRES_REVIEW" })
+        }
+        val bus = run(DrivingFixture(passengers=true, occasional=true).d(120, true).a(30, true).d(150, true).r(15).d(1))
+        assertTrue(bus.breaks().isEmpty())
+        assertFalse(bus.projections.last { it.law.id == "B01" }.quantityIsExact)
+        assertTrue(bus.projections.last { it.law.id == "B01" }.breakCredits.all { it.occasionalBus })
+    }
+    @Test fun actualRecordedRestSplitInCrewNeedsNoAdditionalLegalOrUserConfirmation() {
+        val r = run(DrivingFixture().d(120, true).r(15).d(150, true).r(30).d(1, true))
+        assertTrue(r.breaks().isEmpty())
+        assertTrue(r.projections.last { it.law.id == "B01" }.quantityIsExact)
+        assertEquals(269 * 60L, r.provenCurrentBreakHeadroomSeconds)
+        assertFalse(r.issues.any { it.reason.contains("PARTIAL_CREW") || it.reason.contains("CONFIRM") })
+    }
+    @Test fun shorterOccasionalBusFirstPartSurvivesALongerEarlierOrdinaryPart() {
+        val f = DrivingFixture(passengers=true).d(60).r(30).d(60).r(20).d(150).r(25).d(1)
+        val snapshot = f.snapshot()
+        val changeAt = f.start.plusSeconds(90 * 60L)
+        val regular = snapshot.context.assertions.single { it.key == ContextKey.PASSENGER_SERVICE }
+        val context = snapshot.context.copy(assertions = snapshot.context.assertions.map {
+            if (it == regular) it.copy(until = changeAt) else it
+        } + regular.copy(value = ContextValue.Text("OCCASIONAL"), from = changeAt))
+        val range = InputRange(snapshot.intervals.first().range.start, snapshot.intervals.last().range.end)
+        val r = DrivingCalculator.calculate(snapshot.copy(context=context, scopes=ScopeGuard.evaluate(range, context)))
+        assertTrue(r.breaks().isEmpty())
+        val p = r.projections.last { it.law.id == "B01" }
+        assertEquals(listOf(20L, 25L), p.breakCredits.map { Duration.between(it.range.start, it.range.end).toMinutes() })
+        assertTrue(p.breakCredits.all { it.occasionalBus && !it.conditionalCrewSplit })
+        assertTrue(p.quantityIsExact)
+    }
     @Test fun lg37_workAndManualAvailabilityCannotMasqueradeAsACrewPassengerBreak() {
         for (work in listOf(true,false)) {
             val f = DrivingFixture().d(270,true)

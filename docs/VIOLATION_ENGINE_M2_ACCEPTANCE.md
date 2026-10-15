@@ -44,6 +44,9 @@ Domainklasse `DrivingReferenceTest`; synthetische Sequenzen werden durch den bes
 - AETR/ungeprüfter Rechtsraum/50-km-Linie:keine unberechtigten EU-Befunde oder Budgets; Rohfahrt bleibt unverändert. Cancellation propagiert.
 - Fähre:nettozeit-/ankerabhängige Tagesbewertung bleibt für M3 gesperrt; späterer Marker löscht vorher belegte1min nicht. Crew-/Slotkonflikt erzeugt keinen erfundenen gesicherten Pausenverstoß.
 - Historischer Artikel12-Hinweis vor2020 ausgeschlossen. Nach abgeschlossener45-min-Pause aktuelles270-min-Budget ohne erfundene Folgeminute; neueste Lücke blendet es aus und erhält frühere Befunde.
+- `partialCrewAvailabilitySplitIsConditionalAndAProvenFullBreakRestoresCertainty`:15+30 mit kurzem Bereitschaftsteil an erster oder zweiter Stelle, zusätzlich Bus30+15; günstige Zuordnung, kein erfundener gesicherter Pausenverstoß, L09 offen, keine exakte Gesamtmenge oder gesichertes Budget nach bedingtem Reset. Spätere belegte45min stellen269min nach einer weiteren Fahrminute wieder her; ursprünglicher Hinweis bleibt.
+- `actualRecordedRestSplitInCrewNeedsNoAdditionalLegalOrUserConfirmation`:echte aufgezeichnete15+30-Ruhe in Crew wird regulär angerechnet, danach269min belegtes Pausenrestbudget, kein zusätzlicher Bestätigungsdialog oder künstlicher L09-Vorbehalt.
+- `shorterOccasionalBusFirstPartSurvivesALongerEarlierOrdinaryPart`:frühere30min im Linienverkehr verdrängen spätere20min im Gelegenheitsverkehr nicht; letztere+25min erfüllen den Buspfad, Herkunft beider Teile erhalten. Insgesamt50 M2-Domainmethoden, unverändert sechs neue Daten-Instrumentierungsmethoden.
 
 ## Echte SQLCipher-/Import-/Flow-Prüfungen
 
@@ -54,7 +57,13 @@ Domainklasse `DrivingReferenceTest`; synthetische Sequenzen werden durch den bes
 1. Alle sieben unveränderten Gradle-Aufrufe, alle Unit-/Lint-/APK-/Testsignatur-/Updatepaar-/echten Compilerexportprüfungen; komplette API36-App-/Compose-/Datensuiten einschließlich aller sechs neuen M2-Methoden, Abschlussjob.
 2. Alle bestehenden SQLCipher-/Keystore-/Wrong-key-/Migration-/Herkunfts-/Signatur-/Rollback-/Reopen-Prüfungen erhalten. Exporte1–23 und geschützter CURRENT_RULES-Abschnitt bytegleich. Keine neue Migration/Schemaänderung notwendig; bestehende Kette bleibt auszuführen.
 3. Neues identifiziertes Testupdate40130 mit stabilem Testzertifikat, eigener verständlicher Chat-Anleitung und erforderlicher neuer Geräteantwort.40129-Bestätigung gilt nicht für M2.
-4. Fachliches Review der tatsächlichen Zahlen-/Zeit-/Herkunftsergebnisse, L02-Projektionen und L03/Historie; [konkrete offene Nachweise](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md). Keine erfolgreiche CI als juristischen Nachweis ausgeben.
+4. Fachliches Review der tatsächlichen Zahlen-/Zeit-/Herkunftsergebnisse, L02-Projektionen, L03/Historie und L09-Anrechnung kurzer Crew-Bereitschaftsteile; [konkrete offene Nachweise](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md). Keine erfolgreiche CI als juristischen Nachweis ausgeben.
 5. Tobi entscheidet danach gesondert über M2-Abnahme/Merge. M3–M7/Release unverändert gesperrt. Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.
 
 A03/A07/A08 und PausenanteilA18/A20 sind damit konkret M2 zugeordnet; vollständige spätere UI-/PDF-/Ruhe-/Releaseanteile bleiben an ihren ursprünglichen Paketen. Die Regeln zu unterschiedlichen Reduzierungs-/Verlängerungszählern werden nicht mit einer vorgezogenen M3-Ruheimplementierung verwechselt.
+
+## Tatsächlich belegter Prüfstand bei Wiederaufnahme
+
+PR90-Ausgangskopf `9a7911bde88347e82660cc1f7ba31806b38ceb6d`/Baum `a8dbce895d2214ccdedd33e3dcb0121cae04a240`: vollständige CI [38752173910](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38752173910), Versuch1, alle vier Jobs erfolgreich; sieben Gradle-Gates, APK-/Testsignatur-/Updatepaar-/Compilerexportprüfung und ungekürzte API36-App-/Dateninstrumentierung. Keine Filter oder CI-Änderung.
+
+Die Folgekorrektur hat zusätzlich einen tatsächlich erfolgreichen isolierten Lauf mit84 Methoden (34 M1 und50 M2). Compiler2.3.21 aus der geprüften Gradle-Distribution, JUnit4.13.2; ausdrücklich kein Ersatz des projektkonfigurierten Kotlin2.4.20, der vollständigen Projekt-CI oder echter SQLCipher-/Gerätetests. Finaler Folgekopf und tatsächlich ausgeführte vollständige Ergebnisse werden im PR90-Abnahmeprotokoll ergänzt. Neue40130-Gerätebestätigung bleibt offen.

@@ -265,11 +265,12 @@ object DrivingCalculator {
         val article = if (id.startsWith("B")) ScopeArticle.BREAK_7 else ScopeArticle.DRIVING_6
         val cov = coverage(snapshot, range, id, article)
         val restriction = restrictions.toMutableSet()
-        if (!exact) restriction += CalculationRestriction.LEFT_HISTORY_MISSING
+        if (!exact && CalculationRestriction.L09_PARTIAL_CREW_AVAILABILITY_SPLIT_NOT_CONFIRMED !in restriction)
+            restriction += CalculationRestriction.LEFT_HISTORY_MISSING
         if (!cov.factualPrerequisitesCovered) restriction += CalculationRestriction.ACTIVITY_OR_SCOPE_GAP
         val baseLaw = law(id, range.start)
         val legal = when {
-            credits.any { it.ruleId == "B03" } -> baseLaw.copy(version = "561/2006+2024/1258", sourceIds = listOf("Q01-B", "Q02", "Q03"))
+            credits.any { it.occasionalBus } -> baseLaw.copy(version = "561/2006+2024/1258", sourceIds = listOf("Q01-B", "Q02", "Q03"))
             credits.any { it.ruleId == "B04" } && "Q02" !in baseLaw.sourceIds ->
                 baseLaw.copy(version = "561/2006+2020/1054", sourceIds = listOf("Q01-B", "Q02"))
             else -> baseLaw
@@ -299,7 +300,9 @@ object DrivingCalculator {
         var end = start
         var exact = false
         var driving = mutableListOf<DrivingSlice>()
-        var firstPart: BreakCredit? = null
+        // Retain distinct legal possibilities when service/context changes. At most four candidates:
+        // ordinary/occasional service x recorded rest/conditional crew availability.
+        val firstParts = mutableListOf<BreakCredit>()
         var resetCredits = emptyList<BreakCredit>()
         val restrictions = mutableSetOf<CalculationRestriction>()
         fun finish(until: Instant, completion: List<BreakCredit> = emptyList()) {
@@ -312,11 +315,11 @@ object DrivingCalculator {
             check()
             val atom = atoms[i]
             if (end < atom.range.start) {
-                finish(end); start = atom.range.start; exact = false; firstPart = null; resetCredits = emptyList(); restrictions.clear()
+                finish(end); start = atom.range.start; exact = false; firstParts.clear(); resetCredits = emptyList(); restrictions.clear()
                 issues += DrivingCheckIssue(setOf("B01", "B05"), "MISSING_ACTIVITY_RANGE", InputRange(end, atom.range.start))
             }
             if (!atom.known || atom.ambiguousCrew || (atom.driving && atom.breakScope?.status !in setOf(ScopeStatus.APPLICABLE, ScopeStatus.NOT_APPLICABLE))) {
-                finish(atom.range.start); start = atom.range.end; exact = false; firstPart = null; resetCredits = emptyList(); restrictions.clear()
+                finish(atom.range.start); start = atom.range.end; exact = false; firstParts.clear(); resetCredits = emptyList(); restrictions.clear()
                 issues += DrivingCheckIssue(setOf("B01", "B05"), "BREAK_ACTIVITY_OR_SCOPE_UNDETERMINED", atom.range)
                 end = atom.range.end; i++; continue
             }
@@ -345,25 +348,43 @@ object DrivingCalculator {
                 val busDate = if (DateState.UNCERTAIN in busDates) DateState.UNCERTAIN
                     else if (DateState.BEFORE in busDates) DateState.BEFORE else DateState.AFTER
                 val occasion = parts.all { it.transportKind == "PASSENGERS" && it.passengerService == "OCCASIONAL" } && busDate != DateState.BEFORE
-                val credit = BreakCredit(range, if (crew) "B04" else if (occasion) "B03" else "B02", frozen(support.distinct()))
+                val credit = BreakCredit(range, if (crew) "B04" else if (occasion) "B03" else "B02", frozen(support.distinct()),
+                    occasionalBus = occasion, conditionalCrewSplit = crew,
+                    historicalTimeUnconfirmed = (crew && crewDate == DateState.UNCERTAIN) || (occasion && busDate == DateState.UNCERTAIN))
                 val full = duration >= 45 * 60L && (allRest || crewDate != DateState.BEFORE)
-                val split = allRest && firstPart != null && if (occasion && firstPart.ruleId == "B03") duration >= 15 * 60L &&
-                    seconds(firstPart.range) + duration >= 45 * 60L else duration >= 30 * 60L
-                if (full || split) {
+                val splitFirst = if (allRest || crewDate != DateState.BEFORE) firstParts
+                    .filter { first -> if (occasion && first.occasionalBus) duration >= 15 * 60L &&
+                        seconds(first.range) + duration >= 45 * 60L else duration >= 30 * 60L }
+                    .sortedWith(compareBy<BreakCredit> { it.conditionalCrewSplit }.thenBy { it.range.start })
+                    .firstOrNull() else null
+                if (full || splitFirst != null) {
                     if ((crew && crewDate == DateState.UNCERTAIN) || (occasion && busDate == DateState.UNCERTAIN))
                         restrictions += CalculationRestriction.HISTORICAL_CHANGE_TIME_NOT_CONFIRMED
-                    val completion = if (full) listOf(credit) else listOf(checkNotNull(firstPart), credit)
+                    val conditional = !full && (credit.conditionalCrewSplit || checkNotNull(splitFirst).conditionalCrewSplit)
+                    val completion = if (full) listOf(credit.copy(conditionalCrewSplit = false))
+                        else listOf(checkNotNull(splitFirst), credit)
+                    val historical = completion.any { it.historicalTimeUnconfirmed }
+                    if (historical) restrictions += CalculationRestriction.HISTORICAL_CHANGE_TIME_NOT_CONFIRMED
+                    if (conditional) {
+                        restrictions += CalculationRestriction.L09_PARTIAL_CREW_AVAILABILITY_SPLIT_NOT_CONFIRMED
+                        issues += DrivingCheckIssue(setOf("B02", "B03", "B04"), "L09_PARTIAL_CREW_SPLIT_REQUIRES_REVIEW",
+                            InputRange(checkNotNull(splitFirst).range.start, range.end))
+                    }
                     finish(range.start, completion)
-                    start = breakEnd; exact = true; firstPart = null; resetCredits = completion; restrictions.clear()
-                    if ((crew && crewDate == DateState.UNCERTAIN) || (occasion && busDate == DateState.UNCERTAIN))
-                        restrictions += CalculationRestriction.HISTORICAL_CHANGE_TIME_NOT_CONFIRMED
+                    start = breakEnd; exact = !conditional; firstParts.clear(); resetCredits = completion; restrictions.clear()
+                    if (conditional) restrictions += CalculationRestriction.L09_PARTIAL_CREW_AVAILABILITY_SPLIT_NOT_CONFIRMED
+                    if (historical) restrictions += CalculationRestriction.HISTORICAL_CHANGE_TIME_NOT_CONFIRMED
                     end = breakEnd; i = j; continue
                 }
-                if (allRest && duration >= 15 * 60L && (firstPart == null || (occasion && seconds(firstPart.range) < duration)))
-                    firstPart = credit
+                if (duration >= 15 * 60L && (allRest || crewDate != DateState.BEFORE)) {
+                    val previous = firstParts.indexOfFirst { it.occasionalBus == credit.occasionalBus &&
+                        it.conditionalCrewSplit == credit.conditionalCrewSplit }
+                    if (previous < 0) firstParts += credit
+                    else if (occasion && seconds(firstParts[previous].range) < duration) firstParts[previous] = credit
+                }
                 if (crew && crewDate == DateState.BEFORE) {
                     // Do not claim the pre-2020 treatment of an on-board break has been legally reviewed.
-                    finish(range.start); start = breakEnd; exact = false; firstPart = null; resetCredits = emptyList(); restrictions.clear()
+                    finish(range.start); start = breakEnd; exact = false; firstParts.clear(); resetCredits = emptyList(); restrictions.clear()
                     issues += DrivingCheckIssue(setOf("B04"), "PRE_2020_CREW_BREAK_REQUIRES_HISTORICAL_REVIEW", range)
                 }
                 end = breakEnd; i = j; continue

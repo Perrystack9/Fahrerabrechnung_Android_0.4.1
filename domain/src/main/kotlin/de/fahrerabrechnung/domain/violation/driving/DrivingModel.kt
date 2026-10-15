@@ -6,7 +6,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-const val DRIVING_INTERPRETATION = "561-m2-driving-breaks-1"
+const val DRIVING_INTERPRETATION = "561-m2-driving-breaks-2"
 
 /** Research parameters, not a selectable display zone or a declaration that L02 is closed. */
 enum class WeekTimeEvidence { UTC_TECHNICAL_PROJECTION_ONLY }
@@ -18,6 +18,7 @@ enum class CalculationRestriction {
     M3_FERRY_REST_BOUNDARY_NOT_EVALUATED, HISTORICAL_CHANGE_TIME_NOT_CONFIRMED,
     PASSENGER_SERVICE_UNDETERMINED, M4_BUS_TWELVE_DAY_NIGHT_NOT_EVALUATED,
     TRAVEL_REST_PREREQUISITE_NOT_ESTABLISHED,
+    L09_PARTIAL_CREW_AVAILABILITY_SPLIT_NOT_CONFIRMED,
 }
 
 /** Only the normal limits are calculated. No Art.12 acceptance, liability, severity or debt. */
@@ -72,7 +73,9 @@ data class NormalLimitFinding(
     }
 }
 
-data class BreakCredit(val range: InputRange, val ruleId: String, val support: List<IntervalSupport>)
+data class BreakCredit(val range: InputRange, val ruleId: String, val support: List<IntervalSupport>,
+    val occasionalBus: Boolean = false, val conditionalCrewSplit: Boolean = false,
+    val historicalTimeUnconfirmed: Boolean = false)
 
 data class DrivingProjection(
     val id: String, val law: RuleLaw, val range: InputRange, val observedThrough: Instant,

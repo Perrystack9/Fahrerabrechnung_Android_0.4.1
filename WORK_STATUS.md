@@ -7,7 +7,7 @@
 - Planungs-/M0-PR88: geprüfter Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78`, erfolgreiche Docs-CI38684167403/Versuch1; zuerst integriert durch Merge `9ff0a525d8394031148aada37593c9fed8f84148`. Alle80/A–H/E01–E12/P01–P05, N01–N19 und MI01–MI24 erhalten.
 - M1-PR89: ursprünglicher Produktprüfkopf `212a1401d31b3ca95b535e59b0dffbfba90e7edb`, Baum `64003129407730cd1ce01822dcc07d6c777a1020`, vollständige CI38729242320/Versuch1 erfolgreich.559 Unit-Tests; vollständige API36-SQLCipher-/Compose-Suiten (151 App-/297 Datenmethoden), sieben Gradle-Gates, APK/Signatur/Updatepaar/Schemaexport. Keine Filter/Quarantäne.
 - Eigene Gerätebestätigung für exakt40129/Room23 und APK-SHA256 `f5f7873e88149515829c406ce04f20dc83cb56ac478497f05cd5c077c65bc996`; keine zusätzlichen Einzelmesswerte oder weitere Hardware-/Kartenabdeckung daraus ableiten.
-- PR89 nach erfolgreicher neuer vollständiger CI38744945937/Versuch1 integriert: **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**. Produktdateien40129 und geschützter Regelabschnitt bytegleich zum bestätigten Kopf. Zusätzliche Produkt-main-CI38749285258 live prüfen; [Integrationsnachweis](docs/M0_M1_INTEGRATION_20261015.md).
+- PR89 nach erfolgreicher neuer vollständiger CI38744945937/Versuch1 integriert: **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**. Produktdateien40129 und geschützter Regelabschnitt bytegleich zum bestätigten Kopf. Zusätzliche Produkt-main-CI38749285258/Versuch1 ebenfalls vollständig erfolgreich; [Integrationsnachweis](docs/M0_M1_INTEGRATION_20261015.md).
 
 ## Implementiert und erhalten
 
