@@ -1,5 +1,6 @@
 # M2 – Referenztests und Abnahme
 
+**Fortschreibung15.10.2026:** M2 ist im tatsächlich nachgewiesenen technischen Umfang ausdrücklich abgenommen und PR90 kontrolliert integriert. [Eigener Gerätebeleg40130](DEVICE_CONFIRMATION_40130.md), [Merge und neue main-CI](M2_INTEGRATION_20261015.md). Historische offene Prüfvermerke unten bezeichnen ihren damaligen Entwicklungsstand; Rechtsfragen bleiben offen.
 Stand15.10.2026. M0-Sollwerte [LG17–LG39](VIOLATION_ENGINE_M0_REFERENCE_CASES.md) bleiben unverändert. Diese Zuordnung benennt reale Testmethoden, keine behauptete zusätzliche Rechtsfreigabe. **Endgültige vollständige Projekt-CI, deren exakter Kopf und neue Geräteabnahme müssen im M2-PR-Protokoll nachgewiesen werden.** Ein isolierter Lauf ist keine Gradle-/Android-/SQLCipher-Abnahme.
 
 ## Fachliche Referenzzuordnung

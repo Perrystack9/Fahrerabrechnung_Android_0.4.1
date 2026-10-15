@@ -6,7 +6,7 @@
 
 PR88/M0 und PR89/M1 sind unverändert erhalten. PR90-Endkopf `8fc3fd4d64876450373989952edcbc31feaed0f0`, volle CI38773986395/Versuch1 erfolgreich,609 Unit-Tests ohne Fehler/Skip und vollständige API36-SQLCipher-/Compose-Suiten. Tobi bestätigt40130/Room23 am15.10.2026 19:38 Europe/Berlin mit „Funktioniert alles wie es soll 👌🏻“ und erteilt danach technische M2-Abnahme sowie Merge-/M3-Freigabe. Keine weitergehenden Geräte- oder juristischen Nachweise daraus ableiten.
 
-Tatsächlicher PR90-Merge **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, vollständiger Baum `8fe032142f9987e8c46b818d802bdf97f25c9ca7`, exakt identisch mit dem finalen Prüf-/Gerätebaum. Neue vollständige Produkt-main-CI38780974996 wurde automatisch gestartet; Endstatus im [Integrationsbeleg](M2_INTEGRATION_20261015.md) vor Produktarbeit prüfen. Keine doppelte CI auslösen und kein laufendes Gate als bestanden darstellen.
+Tatsächlicher PR90-Merge **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, vollständiger Baum `8fe032142f9987e8c46b818d802bdf97f25c9ca7`, exakt identisch mit dem finalen Prüf-/Gerätebaum. Neue vollständige Produkt-main-CI38780974996/Versuch1 am15.10.2026 18:19:46 UTC erfolgreich, alle vier Jobs; vor M3-Produktarbeit live kontrolliert. [Integrationsbeleg](M2_INTEGRATION_20261015.md).
 
 ## M3-Auftrag und nächster Schritt
 

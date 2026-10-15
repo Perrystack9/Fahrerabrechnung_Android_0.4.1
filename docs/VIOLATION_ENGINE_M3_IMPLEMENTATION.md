@@ -20,3 +20,9 @@ M2-Sicherungen L02/L03/L09 werden nicht entfernt. Sieben Stunden Ruhe sind kein 
 ## Geplante Nachweise dieser Umsetzung
 
 Tatsächlich implementierte Komponenten, Referenzfälle LG40–LG57/LG81–LG88/LG98–LG100/LG109/LG110 und Tagesanteile LG101–LG103 werden mit konkreten Soll-/Ist-Ergebnissen ergänzt. Zusätzlich: Herkunft/Reimport/Konflikte, offene Enden, historische Grenzen, UTC-/DST-Invarianz, getrennte Zähler, Kontextrevision/Reopen/CAS und Abbruch. Alle bestehenden technischen Gates bleiben unverändert. Keine abgeschlossene Prüfung wird aus diesem Arbeitsdokument abgeleitet.
+
+## Gesicherter Entwicklungszwischenstand
+
+Nach erfolgreicher vollständiger M2-main-CI38780974996 wurden das Ruhemodell, M1-basierte Ruhe-/Fährkandidaten und minimale konkrete Kontextschlüssel implementiert. Zwölf neue Kandidatentests und84 bestehende M1-/M2-Domainmethoden wurden isoliert erfolgreich ausgeführt (**96/96**, Kotlin2.3.21/JUnit4.13.2). Dies ersetzt weder die konfigurierte Projekt-CI noch Geräteabnahme. Keine bestehenden Testassertionen geändert.
+
+Kontext-/Fensterbewertung ist zunächst kompilierter Arbeitsstand; der vollständige chronologische Mehrpfadlauf und dessen fachliche Tests folgen im nächsten Schritt. Keine fertige M3-Regelabnahme, sichere Restbudgets oder neue APK daraus ableiten. Zwischenstand ausdrücklich zur Verlustvorsorge auf dem M3-Arbeitsbranch, nicht zur Integration in main.

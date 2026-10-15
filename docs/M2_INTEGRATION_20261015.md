@@ -10,7 +10,7 @@ Stand15.10.2026. Tobi hat M2 im tatsächlich nachgewiesenen technischen Umfang a
 - Update-APK-SHA256: `42d5b9bfd29c4fc48329ceb7ce951bbd0538394ec6b4bf81f7d0846b53a1f698`; Paket-ZIP-SHA256: `877d6a9e10fb55a4d5dae8ec7a4661d8fc6ac1633f1aae3e36cf3a2e9881a871`. Fester Testsignierer und Paketidentität unverändert.
 - Unmittelbar vor dem Merge Kopf, Basis, Mergefähigkeit und grüne Checks erneut abgefragt. Schutzwirkung L02/L03/L09 anhand des Produktcodes kontrolliert: keine gesicherten Wochen-/Verlängerungsbudgets, kein Art.8-Ruhebeweis aus7h, kein gesichertes Pausenbudget aus bedingten kurzen Bereitschaftsteilen. Artikel12 bleibt rechtlich offen.
 - Tatsächlicher Merge: **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**. Sein gesamter Dateibaum ist exakt identisch mit dem finalen PR-/Gerätebaum oben; keine zusätzliche Produktänderung beim Merge.
-- Neue vollständige Produkt-main-CI [38780974996](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38780974996), Versuch1, wurde durch diesen Merge gestartet. **Beim Anlegen dieses Nachweises noch laufend; vor M3-Produktimplementierung vollständig erfolgreich nachzuweisen.**
+- Neue vollständige Produkt-main-CI [38780974996](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38780974996), Versuch1, wurde durch diesen Merge gestartet. **Vollständig erfolgreich**, alle vier Jobs; Abschluss15.10.2026 18:19:46 UTC, erneut live vor M3-Produktarbeit kontrolliert.
 
 ## Grenzen bleiben erhalten
 

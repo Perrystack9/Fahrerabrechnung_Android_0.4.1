@@ -30,9 +30,9 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**M2 technisch abgenommen und PR90 kontrolliert integriert; M3 ausdrücklich genehmigt.** Neue Basis **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, identischer Baum zum final grün geprüften und selbst gerätebestätigten40130/Room23-Stand. [M2-Integration, CI und Gerätebeleg](docs/M2_INTEGRATION_20261015.md). Die neue vollständige Produkt-main-CI ist dort mit ihrem tatsächlichen Endstatus nachzuweisen; keine positive Prüfung aus einem laufenden Job ableiten.
+**M2 technisch abgenommen und PR90 kontrolliert integriert; M3 ausdrücklich genehmigt.** Neue Basis **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, identischer Baum zum final grün geprüften und selbst gerätebestätigten40130/Room23-Stand. [M2-Integration, CI und Gerätebeleg](docs/M2_INTEGRATION_20261015.md). Die neue vollständige Produkt-main-CI38780974996/Versuch1 ist mit allen vier Jobs erfolgreich.
 
-M3-Branch `feature/v1-m3-daily-rest-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`. [Arbeitsvertrag](docs/VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellen und offene Rechtsnachweise](docs/VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Prüfvertrag](docs/VIOLATION_ENGINE_M3_ACCEPTANCE.md). R01–R07/F01–F05 auf M1/M2, ohne neuen Parser. M3-Produktimplementierung erst nach erfolgreicher vollständiger M2-main-CI. Unfertige Zwischenstände früh auf GitHub sichern.
+M3-Branch `feature/v1-m3-daily-rest-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`. [Arbeitsvertrag](docs/VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellen und offene Rechtsnachweise](docs/VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Prüfvertrag](docs/VIOLATION_ENGINE_M3_ACCEPTANCE.md). R01–R07/F01–F05 auf M1/M2, ohne neuen Parser. M2-main-CI vollständig erfolgreich; M3-Produktimplementierung begonnen. Unfertige Zwischenstände früh auf GitHub sichern.
 
 L02-Wochenzeit/Verlängerungszuordnung, L03-Konventionen, L09-Anrechnungen und übrige fallbezogene Fachgrenzen bleiben offen.7h ist keine erfüllte Tagesruhe; drei Tagesruhereduzierungen zwischen qualifizierenden Wochenruhen und zwei Tageslenkverlängerungen je Woche sind getrennte Zähler. Keine gesicherten Budgets aus bedingten Tatsachen/Zuordnungen. UTC rechnet; spätere historische Ortszeitanzeige M5/M6 ändert keine Rechtswerte.
 
