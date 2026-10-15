@@ -414,6 +414,7 @@ class CardImportPipelineInstrumentedTest {
         val old = pipeline.process(coreRead(), "signature-upgrade-old")
         val profile = imports.profile(); val request = db.cardImportRunDao().run(old.id)
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_identity_signature_receipts")
             execSQL("DROP TABLE card_core_signature_receipts")
             execSQL("DROP INDEX index_driver_import_metadata_sources_sessionId_driverCardId_kind_sourceId")
@@ -421,7 +422,7 @@ class CardImportPipelineInstrumentedTest {
             execSQL("DELETE FROM room_master_table"); version = 19
         }
         db.close(); open()
-        assertEquals(22, db.openHelper.readableDatabase.version)
+        assertEquals(AppDatabase.SCHEMA_VERSION, db.openHelper.readableDatabase.version)
         assertEquals(profile, imports.profile()); assertEquals(request, db.cardImportRunDao().run(old.id))
         assertTrue(imports.get(old.id)!!.coreSignatures.isEmpty())
         assertEquals(2, imports.get(old.id)!!.coreSnapshots.size)
@@ -788,6 +789,7 @@ class CardImportPipelineInstrumentedTest {
         val profile = imports.profile(); val identity = db.driverProfileDao().cards(old.profileId)
         val originalSession = db.driverProfileDao().session(old.id, old.profileId)
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE card_import_file_results"); execSQL("DROP TABLE card_import_runs")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 7
@@ -949,6 +951,7 @@ class CardImportPipelineInstrumentedTest {
         val rows = db.cardImportRunDao().files(old.id)
         val profile = imports.profile(); val identities = db.driverProfileDao().cards(profile!!.id)
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_control_sources"); execSQL("DROP TABLE card_control_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 8
@@ -1123,6 +1126,7 @@ class CardImportPipelineInstrumentedTest {
         val identities = db.driverProfileDao().cards(imports.profile()!!.id)
         val control = imports.get(three.id)!!.controls!!
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_event_fault_sources"); execSQL("DROP TABLE card_event_fault_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 9
@@ -1290,6 +1294,7 @@ class CardImportPipelineInstrumentedTest {
         val identities = db.driverProfileDao().cards(imports.profile()!!.id)
         val eventBytes = imports.get(old.id)!!.events!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_specific_condition_sources"); execSQL("DROP TABLE card_specific_condition_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 10
@@ -1420,6 +1425,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.specificConditions!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_gnss_sources"); execSQL("DROP TABLE card_gnss_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 11
@@ -1536,6 +1542,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.specificConditions!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_place_sources"); execSQL("DROP TABLE card_place_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 12
@@ -1640,6 +1647,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_border_crossing_sources"); execSQL("DROP TABLE card_border_crossing_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 13
@@ -1744,6 +1752,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
@@ -1850,6 +1859,7 @@ class CardImportPipelineInstrumentedTest {
         val row = db.cardImportRunDao().run(old.id); val files = db.cardImportRunDao().files(old.id)
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DROP TABLE driver_import_load_type_sources"); execSQL("DROP TABLE card_load_type_imports")
@@ -1965,6 +1975,7 @@ class CardImportPipelineInstrumentedTest {
         val bytes = imports.get(old.id)!!.places!!.file.bytes
         val typeBytes = imports.get(old.id)!!.loadType!!.file.bytes
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE driver_import_vehicle_units_sources"); execSQL("DROP TABLE card_vehicle_units_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
@@ -2136,6 +2147,7 @@ class CardImportPipelineInstrumentedTest {
         val bytes = imports.get(old.id)!!.vehicleUnits!!.file.bytes
         val licenceAbsent = imports.get(old.id)!!.metadata
         db.openHelper.writableDatabase.apply {
+            execSQL("DROP TABLE violation_context_revisions") // Empty M1 relation is absent in the historical fixture.
             execSQL("DROP TABLE driver_import_metadata_sources"); execSQL("DROP TABLE card_metadata_imports")
             execSQL("DROP TABLE IF EXISTS card_event_fault_signature_receipts")
             execSQL("DELETE FROM room_master_table"); version = 17

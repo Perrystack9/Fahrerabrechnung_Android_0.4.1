@@ -61,6 +61,8 @@ Der Flow ist ein Eingang für die spätere Engine: er liefert Preparing vor Neub
 
 Echter Room-Compilerexport23: SHA256 `f55ad0fbe684753dfc47d4067e7002072064f8d95d70134bf4095ffbf14e5dc8`. Alle45 vorherigen Entities einschließlich Indizes und Foreign Keys sind strukturell identisch zum Export22. Export22 bleibt bytegleich, SHA256 `e555aec9e6b1db51372db348c2afc57d6a38a0889df26642b7ef8cee3e4eef4f`. Alte Exportdateien werden nicht ersetzt. Neue Migrationstests prüfen direkte22→23- und vollständige1→23-Validierung sowie echte verschlüsselte18→23-/22→23-Upgrades, Wiederöffnung, unveränderte Inhalte aller alten Tabellen, Foreign Keys und ausbleibenden Backfill. Kontexttests prüfen CAS, Historie, Reopen, Rollback, Cancellation und abgewiesene Beschädigung.
 
+Die19 vorhandenen synthetischen Altversionsaufbauten in sechs Androidtestdateien entfernen vor der historischen Rückstufung auch die dort noch leere neue Kontexttabelle. Vier bisher fest auf22 gesetzte Zielprüfungen folgen nun `AppDatabase.SCHEMA_VERSION`; die neuen M1-Migrationstests prüfen23 ausdrücklich. Sämtliche bisherigen Prüfungen auf unveränderte Profile, Requests, Originale, Signaturen und fehlenden Backfill bleiben erhalten. Keine Tests werden entfernt oder gefiltert.
+
 **Noch verbindlich nachzuweisen:** vollständige unveränderte Android-CI für den endgültigen PR-Kopf, erfolgreiche ungekürzte API36-Instrumentierung und exaktes geprüftes Gerätepaket mit neuer eigener Gerätebestätigung vor Merge. Lauf-IDs, endgültiger Produktkopf, tatsächlich ausgeführte Ergebnisse und ggf. Fehlerkorrekturen werden im PR-Abnahmeprotokoll und Abschlussbericht commitgebunden ausgewiesen. Der Dokumentstand allein bestätigt diese nachgelagerten Gates nicht.
 
 ## Verbleibende Grenzen und Empfehlung

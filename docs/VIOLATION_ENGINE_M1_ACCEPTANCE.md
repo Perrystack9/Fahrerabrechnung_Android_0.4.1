@@ -41,11 +41,13 @@ Die vollständige lokale Gradle-Unit-Suite wurde ausgeführt:559 Tests,0 Fehler 
 
 Projektgrenzenprüfung und alle10 bestehenden Skriptregressionstests bestanden; `git diff --check` ohne Fehler. Die Originalparser,40128-Kryptografie-Engine, Keystore, CI-Workflows/Skripte und22 alte Exportdateien werden nicht geändert. Frühere lokale Gradle-Ergebnisdateien aus einem überlappenden lokalen Prüfanlauf wurden gesichert; der anschließende serielle Lauf ohne Buildcache bestand. Keine Testfilter, Quarantäne oder CI-Änderung als Umgehung.
 
+Historische Android-Migrationsfixtures sind für die additive M1-Tabelle nachgeführt:19 Rückstufungsaufbauten entfernen deren leere Relation, vier Zielversionsprüfungen verwenden die aktuelle Anwendungsversion des Schemas. Alle bisherigen Inhalts-, Quellen-, Request-, Signatur- und No-backfill-Assertions bleiben erhalten. Der zusätzliche Androidtest-Kompilierungslauf nach dieser Anpassung bestand. Die tatsächliche vollständige Instrumentierung bleibt das CI-Gate.
+
 Die gesamten sieben vorgeschriebenen Gradle-Aufrufe und zusätzlichen Androidtest-Builds werden protokolliert. Ihr endgültiges Ergebnis, exakte CI-Läufe, Versuch und Quellkopf stehen im zugehörigen M1-PR-Abnahmeprotokoll/Abschlussbericht. Eine reine Kompilierung ist kein ausgeführter Geräte-/Migrationstest. Keine alte40128-Geräteantwort gilt als M1-Bestätigung.
 
 ## Unveränderte verbindliche Abnahmegates
 
-1. Vollständige Android-CI am endgültigen Kopf:help, build--dry-run, test, lint, assembleDebug, assembleInternal, assembleDeviceTest; APK-/Signatur-/Updatepaar-/Compilerexportprüfungen, alle unveränderten API36-SQLCipher-/Compose-Tests und Abschlussjob.
+1. Vollständige Android-CI am endgültigen Kopf:help, build--dry-run, test, lint, assembleDebug, assembleInternal, assembleDeviceTest; APK-/Signatur-/Updatepaar-/Compilerexportprüfungen, alle bestehenden und neuen API36-SQLCipher-/Compose-Tests ohne Kürzung ihrer Prüfinhalte sowie Abschlussjob.
 2. Neue verschlüsselte Migration18/22→23 und sämtliche bestehenden Migrationen, Keystore-/Wrong-key-/Reopen-/Provenienz-/Rollback-/Signaturregressionen; kein destruktiver Fallback.
 3. Exaktes geprüftes Testupdate40129 mit unverändertem Testpaket/Testzertifikat und passender eigener Gerätebestätigung. Bestehende Installation/Daten nicht löschen; direkte verständliche Anleitung im Chat ist Pflicht.
 4. Review der MI-Zuordnung und konservativen Unknown-/Konflikt-/Scopegrenzen. Freigabesperrend: erfundene positive Intervalle, doppelte Minuten, falsche Crewsemantik, verlorene Herkunft, fälschlich vollständige Abdeckung, überschriebene Originale/Kontexte oder Veröffentlichung veralteter/halber Snapshots.
