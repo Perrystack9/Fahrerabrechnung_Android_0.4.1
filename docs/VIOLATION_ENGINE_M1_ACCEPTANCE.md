@@ -20,7 +20,7 @@ Testdateien: Domain **AI**=`ActivityInputAcceptanceTest`, **SC**=`ScopeContextAc
 | MI10 | AI/DB `mi10`: vollständige gleiche Quelle22:00→00:00→09:00:660min REST, beide Record-/00:00-Endbezüge; ab09:00 offen. |
 | MI11 | AI `mi11`: kein Folgetag, Datumslücke, unvollständiger Kopf, fremde unbestätigte Quelle oder mehrdeutiger00:00-Punkt erlauben keine historische Brücke. |
 | MI12 | AI `mi12`: derselbe Mitternachts-Endbeleg schließt660min Unknown; daraus werden0min REST. |
-| MI13 | AI/DB `mi13`: wirklicher0000-Wechsel versus vollständig genulltes Original: Punkt versus gültig leer; beide ohne erfundenen Tagesrest. Fehlende Aktivitätsprojektions-ID bleibt null. |
+| MI13 | AI/DB `mi13`: wirklicher0000-Wechsel versus vollständig genulltes Original: Punkt versus gültig leer mit unterschiedlicher Faktenrevision; beide ohne erfundenen Tagesrest. Fehlende Aktivitätsprojektions-ID bleibt null. |
 | MI14 | AI/DB `mi14` und DB `mi05_mi06`: Ringplatz neutral, andere Karte/c/p/Reihenfolge nicht neutral; falsche Karten-/Originalabfrage leer; zwei Anwendungen/replay/zusätzliche kompatible Herkunft ohne doppelte Minuten; verschlüsselte Wiederöffnung. |
 | MI15 | SC `mi15`: >3500kg strikt, inklusive konkret angegebener Gesamtmasse.3500kg nicht pauschal reguliert/freigestellt; fehlende entscheidende Fakten Unknown. |
 | MI16 | SC `mi16`:30.06./02.07.2026, internationale/Kabotage-2500/2501/3500kg, national, konkrete Art.3ha-Angaben; kein Rückdatieren. Unbelegte Rechtszeitkonvention bleibt Unknown. |

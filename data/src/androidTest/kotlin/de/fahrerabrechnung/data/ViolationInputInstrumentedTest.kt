@@ -258,6 +258,7 @@ class ViolationInputInstrumentedTest {
         val second = snapshot()
         assertEquals(1, second.observations.size); assertTrue(second.intervals.isEmpty())
         assertNotEquals(first.revision, second.revision)
+        assertNotEquals(first.dataRevision, second.dataRevision)
     }
 
     @Test fun mi18_mi21_actualConditionAndPassengerPointsRetainPhysicalRecordAndDoNotProveScope() = runBlocking {

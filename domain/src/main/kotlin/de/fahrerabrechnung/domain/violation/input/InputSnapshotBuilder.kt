@@ -37,8 +37,17 @@ object InputSnapshotBuilder {
         val dataRevision = InputRevision.hash("facts") {
             text(input.profileId); int(prepared.intervals.size)
             prepared.intervals.forEach { instant(it.range.start); instant(it.range.end); meaning(it.meaning) }
+            val observations = prepared.observations.map { point -> InputRevision.hash("activity-observation-fact") {
+                instant(point.at); meaning(point.meaning)
+                val states = point.rawChanges.map { change -> InputRevision.hash("observed-state") {
+                    meaning(ActivityIntervals.meaning(change))
+                } }.distinct().sorted()
+                int(states.size); states.forEach(::text)
+            } }.distinct().sorted()
+            int(observations.size); observations.forEach(::text)
             val pointFacts = points.map { point -> InputRevision.hash("point-fact") {
-                text(point.family.name); nullable(point.timeUtc?.toString()); int(point.fields.size)
+                text(point.family.name); text(point.source.generation)
+                nullable(point.timeUtc?.toString()); int(point.fields.size)
                 point.fields.toSortedMap().forEach { (key, value) -> text(key); text(value) }
             } }.distinct().sorted()
             int(pointFacts.size); pointFacts.forEach(::text)

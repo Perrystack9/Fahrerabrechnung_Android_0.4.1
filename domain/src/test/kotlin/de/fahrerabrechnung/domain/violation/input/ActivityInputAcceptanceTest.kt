@@ -194,6 +194,7 @@ class ActivityInputAcceptanceTest {
         assertEquals(1, observed.observations.size); assertTrue(observed.intervals.isEmpty())
         assertTrue(empty.observations.isEmpty()); assertTrue(empty.intervals.isEmpty())
         assertNotEquals(observed.revision, empty.revision)
+        assertNotEquals(observed.dataRevision, empty.dataRevision)
     }
 
     @Test fun mi14_bothApplicationsAndCompatibleReplayCountActualMinutesOnceAndRetainAllOrigins() {
@@ -208,6 +209,14 @@ class ActivityInputAcceptanceTest {
         assertEquals(merged.revision, build(g1, g1, g2).revision)
         assertEquals(setOf("GEN1", "GEN2V2"), merged.intervals.last().support.flatMap { it.begin }.map { it.source.generation }.toSet())
         assertEquals("GEN2", merged.sources.single { it.key.generation == "GEN2V2" }.key.application)
+        // Identical raw condition codes can have different meanings in the two technical formats.
+        fun withConditions(input: ActivitySource) = input.copy(source = input.source.copy(files = input.source.files +
+            FileEvidence(InputFamily.SPECIAL_CONDITIONS, 0x0522, FileAvailability.PRESENT, "conditions", "digest")))
+        val firstFormat = withConditions(g1); val secondFormat = withConditions(g2)
+        fun marker(input: ActivitySource) = listOf(InputPoint(input.source.key, InputFamily.SPECIAL_CONDITIONS,
+            0, at(60), mapOf("typeRaw" to "3")))
+        assertNotEquals(build(firstFormat, points = marker(firstFormat)).dataRevision,
+            build(secondFormat, points = marker(secondFormat)).dataRevision)
     }
 
     @Test fun mi20_crewOnlyInRecordedInsertedIntervalAndNeverInheritedIntoManualOrGap() {
