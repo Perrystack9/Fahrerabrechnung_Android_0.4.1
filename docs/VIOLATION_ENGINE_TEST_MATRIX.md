@@ -1,5 +1,8 @@
 # FahrerTagebuch 1.0 – Test- und Nachweismatrix
 
+**Tatsächliche M2-Implementierung15.10.2026:** [LG17–LG39/LG99/LG100/LG111–LG113 und zusätzliche Regressionen mit realen Methoden](VIOLATION_ENGINE_M2_ACCEPTANCE.md). Die historischen Mindestfälle/PD-/E-/P-IDs darunter bleiben erhalten. Zusätzliche Prüfungen: kein Wochenruhe-Reset des Verlängerungszählers, keine erfundene genaue Zeit bei Lücke, gesperrte L02-Budgets, aktuelle Pausenbudgets ohne Folgeminute, Fähren-M3-Grenze und Kontext-/Importtoken bis zur Veröffentlichung. Neue historische Ortszeit betrifft später M5/M6; M2-Invarianz gegen Anzeigezonen bleibt Pflicht.
+
+
 **Geplante Tests, 14.10.2026. Noch keine Engine implementiert, keine der neuen fachlichen Testgruppen ausgeführt.** Bestehende 40128-CI und Geräteabnahme sind davon getrennt.
 
 Bezüge: [Plan](VIOLATION_ENGINE_V1_PLAN.md), [gesetzliche Matrix](VIOLATION_ENGINE_LEGAL_MATRIX.md), [historische80 Entscheidungen](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md), vorrangige [E01–E12 und abschließende P03–P05](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md) und [Änderungsübersicht](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md). **116 LG-Fälle,7 produktfachliche PF-Fälle,51 DT-Fälle (43+8),80 PD-/12 E-/5 P-Zuordnungen;23 Abnahmekriterien im Plan (20+3).** Die116/43/20 des vorherigen Entwurfs bleiben die Ausgangsbasis; P03–P05 sind jetzt beschlossen. Ursprüngliche IDs bleiben erhalten; ihre widersprechenden Erwartungen sind ausdrücklich aktualisiert, keine erfolgreiche Durchführung behauptet.

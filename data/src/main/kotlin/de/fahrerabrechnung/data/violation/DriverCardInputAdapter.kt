@@ -202,10 +202,18 @@ class DriverCardInputAdapter @Inject constructor(
         if (current != token) false else { currentCoroutineContext().ensureActive(); publish(); true }
     }
 
+    /** M2 retains exactly the M1 read-token framing when publishing a downstream calculation. */
+    internal suspend fun publishIfCurrent(snapshot: ViolationInputSnapshot, publish: () -> Unit): Boolean =
+        publishIfCurrent(token(snapshot.profileId, snapshot.context.revisionId, snapshot.manifest), publish)
+
     private suspend fun tokenInside(profile: ProfileEntity, context: InputContext): String {
-        val manifest = manifestInside(profile).toSortedMap()
+        return token(profile.id, context.revisionId, manifestInside(profile))
+    }
+
+    private fun token(profileId: String, contextRevision: String, values: Map<String, String>): String {
+        val manifest = values.toSortedMap()
         return InputRevision.hash("input-manifest-token") {
-            text(profile.id); text(context.revisionId); int(manifest.size)
+            text(profileId); text(contextRevision); int(manifest.size)
             manifest.forEach { (key, value) -> text(key); text(value) }
         }
     }

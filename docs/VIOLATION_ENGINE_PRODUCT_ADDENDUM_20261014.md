@@ -193,3 +193,15 @@ Dies ist **keine Änderung der80/A–H/E01–E12/P01–P05**, keine Programmieru
 ## Fachliche Nachweisfortschreibung15.10.2026 – keine neue Produktentscheidung
 
 Die beschlossenen80/A–H/E01–E12/P01–P05 bleiben unverändert geschlossen. [M1-Eingangsnachweise N01–N19](VIOLATION_ENGINE_M0_M1_EVIDENCE.md) und [MI01–MI24](m0/M1_INPUT_PROBE_20261015.md) konkretisieren E01/E02/E03/E05/E06/E09/E10 sowie PD03/07/08/14/20/25/33/40/50/51/61/63–68. Kartenstatus/c-Bit werden gemäß Format ausgelegt; zulässige manuelle Nachträge dezent gekennzeichnet, unbekannte oder mehrdeutige Folgen nicht erfunden. Die technischen Fassungs-/End-/Herkunfts- und begrenzten Kontextnachweise sind jetzt autorenseitig erbracht, keine externe Rechtsgesamtprüfung. Die frühere generische L08-M1-Sperre ist in diesem Umfang ersetzt. Dieser M0-Auftrag enthält weiterhin keine Implementierungs-, Merge- oder Releasefreigabe.
+
+
+## Nachtrag15.10.2026 – M1-Abnahme/Merge, M2 und historische Ortszeit
+
+**Quelle:** Tobis ausdrücklicher Auftrag „Verbindliche Freigabe zum M1-Abschluss und Beginn von M2“,15.10.2026 15:36 Europe/Berlin. Ältere Freigabestände oberhalb bleiben historische Belege, werden durch diesen Auftrag ersetzt. Alle80/A–H/E01–E12/P01–P05 gelten ansonsten unverändert.
+
+- M1/40129/Room23 ausdrücklich abgenommen. PR88 zuerst, PR89 nach Abstimmung und neuer voller CI kontrolliert integrieren; tatsächlich mit [Integrationsnachweis](M0_M1_INTEGRATION_20261015.md) erledigt.
+- M2 D01–D06/B01–B05 zur Implementierung genehmigt, inklusive offener fachlicher Nachweise. Kein M2-Merge; eigene Abnahme/Geräteprüfung und ausdrückliche spätere Mergeentscheidung. M3–M7/Release nicht genehmigt.
+- UTC bleibt einheitliche Speicher-/Intervall-/Dauerbasis. Montag00-UTC ist gewünschtes technisches Wochenraster, **kein Abschluss von L02**. Gesetzliche Zeitzuordnung vor uneingeschränkt gesicherter Ausgabe tatsächlich nachweisen.
+- Zwei10-h-Verlängerungen je gesetzlicher Woche: kein Reset durch Zwischenwochenruhe. Drei tägliche Ruhezeitreduzierungen dagegen zwischen qualifizierenden Wochenruhen; eigener späterer M3-Anker/Zähler, kein gemeinsamer Reset.
+- **Anzeigeänderung:** PD40/feste Zone als ausschließlich bevorzugte Darstellung ist insoweit überholt. Später bevorzugt historische Ortszeit am belegten Aufenthaltsort mit historischer Sommer-/Winterzeit, Länderwechseln, vorhandenen Länder-/GNSS-/Grenzdaten. Einstellbare Standardzone als Rückfall; nicht zuverlässig bestimmbare Zonen transparent kennzeichnen. M5/M6, keine Ortszeit-UI oder zusätzliche Standortüberwachung in M2. Anzeigewechsel verändert keine Rechtswerte. P05/belegte Schichtzuordnung bleibt unverändert.
+- Verlorene lokale Settings-Sicherung bleibt unbekannter, nicht wiederhergestellter unvollständiger Entwurf; keine erfundene Rekonstruktion.

@@ -1,5 +1,8 @@
 # FahrerTagebuch 1.0 – gesetzliche Regelmatrix
 
+**M2-Nachweisfortschreibung15.10.2026:** [Konkrete erneute Originalabgleiche und L02-Entscheidungsvorlage](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Implementierung D01–D06/B01–B05](VIOLATION_ENGINE_M2_IMPLEMENTATION.md). L02 bleibt offen; UTC-Wochen-/Verlängerungszuordnung ist ausdrücklich nur bedingte technische Projektion. Q13 ist ausschließlich empfohlene Tageslenkkonvention, keine erfüllte tägliche Ruhe. Zwei10-h-Vorgänge zählen je Rechtswoche ohne Reset durch Zwischenwochenruhe; M3-Reduzierungen benötigen eigenen Anker/Zähler. Die neue bevorzugte historische Ortszeitanzeige verändert keine der folgenden gesetzlichen Regeln.
+
+
 **M0-Quellen-/Spezifikationsstand15.10.2026 zur Prüfung. M0 ist freigegeben; keine Implementierung oder unabhängige Rechtsabnahme.**
 
 Verbindliche Produktgrundlage: [historische Entscheidungen 1–80 und A–H](VIOLATION_ENGINE_PRODUCT_DECISIONS_80.md) mit vorrangigen [Ergänzungen E01–E12](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md). **58 Regelzeilen; aktive Zeitregeln für regulären Güterverkehr und unterstützten Linien-/Gelegenheitsbusverkehr, begrenzte Anwendbarkeitsprüfung für weitere Einsätze.** [Änderungen gegenüber dem ersten PR-Entwurf](VIOLATION_ENGINE_PLAN_CHANGES_20261014.md). Architektur und Gates: [Umsetzungsplan](VIOLATION_ENGINE_V1_PLAN.md). Reproduzierbare Prüffälle: [Testmatrix](VIOLATION_ENGINE_TEST_MATRIX.md).
