@@ -386,3 +386,12 @@ Keine dieser geplanten Hardwarefällen bestätigt bislang Busbetrieb, fehlende K
 ## 5. Durchführung und Ergebnisprotokoll
 
 Jeder Testnachweis enthält Eingabehash, fachlichen Erwartungshash, Regelpaket-/Engineversion, endgültigen Git-SHA, Toolchain, Prüfer und echtes Resultat. Nicht gelaufene Fälle bleiben „geplant“ im internen Nachweis, werden nie in eine erfolgreiche Gesamtzahl eingerechnet. Entscheidungen dürfen nicht über Teständerung passend gemacht werden. Jeder fachliche Fehler blockiert den betroffenen Meilenstein; falsche Verstoßmeldung/Entwarnung/Budgets, falsche Ruhe-/Ausgleichszuordnung, Herkunftsverlust/-verwechslung oder fehlende E07-Zahlen-/Rechtstrennung blockieren den Release.
+
+
+## 6. M0-Eingangsabgleich15.10.2026 und zusätzliche M1-Vektoren
+
+[N01–N19](VIOLATION_ENGINE_M0_M1_EVIDENCE.md) dokumentieren Quelle/Prüfung/Erwartung/Ergebnis. [MI01–MI24](m0/M1_INPUT_PROBE_20261015.md) ergänzen die bisherigen116LG/51DT/7PF-Fälle ohne Umnummerierung: gleichminütige Bedeutungsmehrdeutigkeit, Datum/Kalenderreihenfolge, manuellesDRIVING als Anomalie, nachgewiesenes historisches Tagesende versus offenes jüngstes Ende und minimaler Scope-/Kontextguard. M1 ordnet sie A02/A04/A05 und Eingangsanteilen A08/A10/A11/A17/A18/A23 zu; Badge-/PDF-/Ergebnisdarstellung bleibt M5/M6.
+
+Tatsächlich jetzt ausgeführt: drei bestehende unveränderte Parser-Tests plus zwölf synthetische Parser-/Fingerprint-/UI-Abgrenzungsproben,15 JUnit insgesamt;12 separate Prüfungen an unverändertem Room22-DDL und exakten DAO-Abfragen in SQLite-memory. Das beweist vorhandene Quelldekodierung/-struktur; **kein neuer M1-Adapter-/Room-/SQLCipher-/UI-/PDF-/Gerätetest** und kein neues schwächeres CI-Gate. Alle MI-Adaptertests sind nach Implementierung auszuführen. Nicht gelaufene DT/LG/PF/MI-Fälle bleiben geplant.
+
+Die frühere allgemeine Aussage „L08-End-/Fassungs-/Quellenabgleich vor M1 noch offen“ ist für den genau bezeichneten Eingangsvertrag überholt. Andere L-Nachweise und die unabhängige qualifizierte Gesamtprüfung bleiben nach ihrem tatsächlichen Umfang offen. M1 startet weiterhin erst nach eigener ausdrücklicher Freigabe.

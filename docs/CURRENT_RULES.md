@@ -25,6 +25,9 @@ Aktuelle Regeln ohne Chronologie. Einstieg: [WORK_START.md](../WORK_START.md). D
 - P04: lokale Offline-Fehlerberichtsfunktion mit Problembeschreibung/Versionsdaten, vollständiger Vorschau und optionaler Diagnose ausschließlich nach freiwilliger Zustimmung. Datei lokal speichern und bewusst Android-Teilen; kein Backend/Pflichtkonto/automatischer Versand oder ungefragte Personendaten. Vollständige Karten-Rohdaten/APDU-Protokolle niemals im Bericht, auch nicht nach Zustimmung. Bestehende Minimierung/Maskierung erhalten.
 - P05: im Schichtmodus nur zuverlässig aus vorhandenen Aktivitäten/Ruhe bestimmbarer Beginn; sonst exakt „Schichtzuordnung unklar“. Keine erfundenen Tätigkeiten/Schichtgrenzen; vorhandene Aktivitäten vollständig mit tatsächlichen Zeiten/Dauern im Kalender. Vollständiger Folgeimport darf Anzeige verbessern; reine Projektionsänderung niemals Rechtsbefund/Schuld/Zählerreset.
 
+
+- M0-Fortschreibung15.10.: [N01–N19](VIOLATION_ENGINE_M0_M1_EVIDENCE.md) belegen die begrenzten M1-Eingangsteile L01/L05/L08/L09 gegen konkrete amtliche Formate und tatsächlichen Parser-/Speicherbestand. **M1 weiter bis zu Tobis erneuter ausdrücklicher Zustimmung gesperrt**, ebenso Merge/Release. Weiter offene Rechts-/Fachnachweise vor ihren Rechenpaketen, unabhängige qualifizierte Gesamtprüfung/Beta unverändert. Kein Produkt-/Parser-/Schema-/Krypto-/Hardware-/APK-/CI-Diff.
+
 ## Kartenidentität und unveränderliche Herkunft
 
 - Erste eigene Karte ausdrücklich bestätigen. Dauerhafte Identität ist das lokale Fahrerprofil: DriverProfile -> DriverCard(s) -> ImportSession(s), mit Gruppen-/Anwendungsbelegen.

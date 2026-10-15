@@ -1,6 +1,6 @@
 # M0 – feste Daten-, Herkunfts- und Produktreferenzen
 
-Stand 15.10.2026. Spezifikation, keine ausgeführten Adapter-/UI-/PDF-Tests. Verbindlich sind [M1-Eingangsvertrag](VIOLATION_ENGINE_M1_INPUT_CONTRACT.md), [gesetzliche Referenzen](VIOLATION_ENGINE_M0_REFERENCE_CASES.md) und die unveränderten Sicherheits-/CI-/Gerätevorgaben. IDs DT01–DT51/PF01–PF07 bleiben erhalten. Erwartungen sind aus Quellenformat, explizitem Ablauf und Produktbeschlüssen hergeleitet; technische Implementierung und unabhängiger Abgleich stehen noch aus.
+Stand 15.10.2026. Spezifikation, keine ausgeführten Adapter-/UI-/PDF-Tests. Verbindlich sind [M1-Eingangsvertrag](VIOLATION_ENGINE_M1_INPUT_CONTRACT.md), [gesetzliche Referenzen](VIOLATION_ENGINE_M0_REFERENCE_CASES.md) und die unveränderten Sicherheits-/CI-/Gerätevorgaben. IDs DT01–DT51/PF01–PF07 bleiben erhalten. Erwartungen sind aus Quellenformat, explizitem Ablauf und Produktbeschlüssen hergeleitet; technische Implementierung steht noch aus. Der unabhängige Quellen-/Bestandsabgleich für den begrenzten M1-Eingang liegt jetzt in [N01–N19/MI01–MI24](VIOLATION_ENGINE_M0_M1_EVIDENCE.md) vor; keine externe qualifizierte Gesamtprüfung.
 
 ## 1. Geschlossene synthetische Datenbausteine
 
@@ -102,4 +102,9 @@ Weitere Bausteine:
 
 Die Datenbausteine und Schritte sind in M0 festgelegt; ausführbare Fixtures, DB-/Compose-/PDF-/Gerätetests entstehen erst nach eigener Umsetzungsfreigabe. Ergebnis-ID-/Hashserialisierung und UI-Ausgestaltung sind technische Details innerhalb des Vertrags, keine offenen Produktentscheidungen. Eine grüne Docs-CI beweist keine DT/PF-Ausführung.
 
-Vor M1 ist insbesondere L08 zu Endbelegen, gleichminütigen Wechselfolgen und exakten Quellenbindungen unabhängig abzugleichen. Vor vollständiger M1-Abnahme alle passenden DT01–DT08/DT14/DT20/DT23/DT24/DT27/DT29–DT31/DT33/DT35/DT36/DT43 sowie atomare Vertragsanteile prüfen. Spätere UI-/PDF-Anteile bleiben M5/M6-Gates; alle A01–A23 abschließend M7, keine Abschwächung bestehender CI-/Gerätevorgaben.
+Der vor M1 erforderliche begrenzte L08-Quellen-/Bestandsabgleich ist jetzt [konkret nachgewiesen](VIOLATION_ENGINE_M0_M1_EVIDENCE.md); End-/Gleichminutenbedingungen und24 ergänzende MI-Vektoren sind verbindlich. Die neuen tatsächlichen Bestandsproben sind keine Ausführung dieser Adapter-/UI-/PDF-Fälle. Vor vollständiger M1-Abnahme alle passenden DT01–DT08/DT14/DT20/DT23/DT24/DT27/DT29–DT31/DT33/DT35/DT36/DT43 sowie atomare Vertragsanteile prüfen. Spätere UI-/PDF-Anteile bleiben M5/M6-Gates; alle A01–A23 abschließend M7, keine Abschwächung bestehender CI-/Gerätevorgaben.
+
+
+## 5. Ergänzende Eingangsreferenzen nach L08-Abgleich
+
+[MI01–MI24](m0/M1_INPUT_PROBE_20261015.md) präzisieren die späteren M1-Tests: Quelle/Kartenstatus, gleicher Minutenstempel, tatsächlicher historischer00:00-Endbeleg, ungültige Datums-/Kalenderreihenfolge, offene jüngste Enden, minimale Scope-/Kontextgrenzen und Herkunft. Bestehende F1–F12/DT01–DT51/PF01–PF07 bleiben erhalten. DT33 wird durch MI05/MI06 konkretisiert: keine sichere Folgebedeutung allein aus einem höheren Index bei semantisch unterschiedlichen gleichminütigen Wechseln. Legale manuelle Eingabe umfasst WORK/AVAILABILITY/REST; ein gespeichertes p=1/c=1/DRIVING ist Anomalie statt automatisch zulässiger Fahrt. Dies ersetzt keine ursprüngliche Produktentscheidung.

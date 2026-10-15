@@ -106,3 +106,20 @@ Tobi hat M0 ausdrücklich nur dokumentarisch freigegeben; nach Pause fortgesetzt
 | Plan13/16 und Start/Status/Handoff/Regeln | M0 erst freigeben lassen | M0-Freigabe dokumentiert, Bericht/Restblocker vorgelegt; M1 und auch Dokumentationsmerge weiterhin gesondert genehmigen lassen. Sicherheitsabschnitte bytegleich. |
 
 Tatsächlich ausgeführt:74 reine Referenzarithmetik-/Bit-/Zeitzonenprüfungen,10 bestehende CI-Scope-/Schema-Guard-Tests, Projektgrenzen undDiff-Whitespaceprüfung. Links/Tabellen/IDs/Originalgleichheit/Settings-Hashes und die reine16er-Markdown-Dateimenge zusätzlich erfolgreich geprüft. Konservative CI-Einstufung und endgültigen Veröffentlichungsbaum/CI im PR nachweisen. Unabhängige Fachabnahme und Produkt-/Gerätenachweise daraus nicht ableiten. [M0-Bericht](VIOLATION_ENGINE_M0_REPORT.md) benennt die verbleibenden M1-Blocker und weitere paketbezogene L01–L09-Nachweise.
+
+
+## 7. M0-Eingangsabschluss15.10.2026 – L08 und L01/L05/L09
+
+Dieser Abschnitt ist der aktuelle fachliche Nachweisstand. Frühere Abschnitte dokumentieren die jeweilige damalige Planung/Ausführung; ihre allgemeine L08-M1-Sperre ist für den jetzt begrenzten Vertrag überholt. Alle Produktentscheidungen, Regel-/Test-/A-IDs und Sicherheitsregeln bleiben erhalten.
+
+| Betroffene Stelle | Vorher | Konkrete Fortschreibung / Beleg |
+|---|---|---|
+| M1-Vertrag/L08/Plan13.1 | Generischer unabhängiger Fassungs-/End-/Quellenabgleich noch offen | [N01–N14](VIOLATION_ENGINE_M0_M1_EVIDENCE.md), konkrete G1/G2/V2-Fassungen/Änderungsanweisungen und echte unveränderte Parser-/Fingerprint-/SQL-Quellen unabhängig abgeglichen;15 JUnit-/12 Strukturprüfungen bestanden. |
+| Gleichminuten/Kartenentnahme/manuelle Nachträge | Geordneter Endzustand noch nicht ausreichend eingegrenzt | Alle Punkte/Indizes erhalten; bei unterschiedlicher semantischer Bedeutung kein Indexgewinner, betroffene Folge unklar. p=1/c=1 kein Crew; manuellesDRIVING als Quellenanomalie, nicht als zulässige Nachtragsfahrt. |
+| Kalenderchronologie/Endbelege | Konservativer offener Pfad ohne abgeschlossenen konkreten Tagesendvertrag | Parser prüft UTC-Mitternacht/Tagesreihenfolge tatsächlich noch nicht. Fünf belegte Bedingungen für historischen Tagesabschluss durch Folge00:00; kein fehlender Tag, Kopf oder jüngstes offenes Ende als Beweis. |
+| L01/L05/L09 | Eingangsteile noch generisch offen | Minimaler datierter Scope-/Kontextvertrag nach Art.2/3a/3ha/6(5)/8/9/12, AETR-Abgrenzung, konkrete Sondervoraussetzungen und excluded Prüfungen geschlossen; weitere konkrete Rechts-/Ländergates bleiben vor ihren Rechenpaketen. |
+| Quellenregister/Archiv |35 Pins/14 Auszüge | Acht zusätzliche Downloadpins einschließlich sechs bytegleicher direkterHTTPS-Nachweise;43 Gesamtpins und elf neue exakte Auszüge,25 insgesamt. Keine globale aktuelle Rechtsstands-/Gesamtabnahme behauptet. |
+| Test-/Abnahmespezifikation |116LG/51DT/7PF und generische Eingangsanforderungen | [MI01–MI24](m0/M1_INPUT_PROBE_20261015.md) ergänzen passende M1-A02/A04/A05-/Eingangskriterien. Bestehende Fälle/IDs unverändert; neue Adapter-/Room-/UI-/PDF-/Gerätetests noch nicht gelaufen. |
+| Bericht/Übergabe | Keine vorbehaltlose M1-Empfehlung bei offenen Eingangsnachweisen | [Aktualisierter Bericht](VIOLATION_ENGINE_M0_REPORT.md): Eingangsvoraussetzungen für genau begrenztes M1 erfüllt; separate ausdrückliche Freigabe empfehlbar. **M1 bleibt gesperrt, kein Merge**, keine externe Fachgesamtprüfung behauptet. |
+
+Die tatsächlichen Dokumentationsprüfungen und der veröffentlichte Kopf/CI werden im aktualisierten Bericht/PR belegt. Keine Produktcode-/Schema-/Parser-/Krypto-/Hardware-/APK-/Workflowänderung, kein externer Versand und keine Abschwächung technischer Abnahmen.
