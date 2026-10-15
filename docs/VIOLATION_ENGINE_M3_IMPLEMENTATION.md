@@ -23,6 +23,8 @@ Tatsächlich implementierte Komponenten, Referenzfälle LG40–LG57/LG81–LG88/
 
 ## Gesicherter Entwicklungszwischenstand
 
-Nach erfolgreicher vollständiger M2-main-CI38780974996 wurden das Ruhemodell, M1-basierte Ruhe-/Fährkandidaten und minimale konkrete Kontextschlüssel implementiert. Zwölf neue Kandidatentests und84 bestehende M1-/M2-Domainmethoden wurden isoliert erfolgreich ausgeführt (**96/96**, Kotlin2.3.21/JUnit4.13.2). Dies ersetzt weder die konfigurierte Projekt-CI noch Geräteabnahme. Keine bestehenden Testassertionen geändert.
+Nach erfolgreicher vollständiger M2-main-CI38780974996 wurden Ruhemodell, M1-basierte Ruhe-/Fährkandidaten, minimale konkrete Kontextschlüssel und der chronologische Mehrpfadlauf implementiert. Zwölf Kandidaten- und32 fachliche Tagesruhetests sowie84 bestehende M1-/M2-Domainmethoden wurden isoliert erfolgreich ausgeführt (**128/128**, Kotlin2.3.21/JUnit4.13.2). Dies ersetzt weder konfigurierte Projekt-CI noch Geräteabnahme. Keine bestehenden Testassertionen geändert.
 
-Kontext-/Fensterbewertung ist zunächst kompilierter Arbeitsstand; der vollständige chronologische Mehrpfadlauf und dessen fachliche Tests folgen im nächsten Schritt. Keine fertige M3-Regelabnahme, sichere Restbudgets oder neue APK daraus ableiten. Zwischenstand ausdrücklich zur Verlustvorsorge auf dem M3-Arbeitsbranch, nicht zur Integration in main.
+Nachgewiesene Tagesfälle:11/9/3+9, drei Reduzierungen ohne Montagsreset,24/30h, bekannte manuelle Ruhe versus Unknown,23h ohne Wochenreset, offene tatsächliche Ruheenden, verspätete Mindestdauer und Q07-Folgefenster, Datenstandbudgets ohne Systemuhr, UTC/DST und Herkunft/Reimport. Zahlenbefunde bleiben ohne abschließende Artikel12-/Rechtswidrigkeitsbewertung. Offene Crew-Zählerauslegung wird nicht in eine gesicherte Reduzierungsverfügbarkeit umgedeutet.
+
+Bus-/Fähr-Gesamtläufe, zusätzliche Grenz-/Konfliktfälle, App-Flow, technische Vollprüfung und eigenes Gerätepaket folgen. Keine fertige M3-Abnahme oder neue APK daraus ableiten. Zwischenstände ausdrücklich zur Verlustvorsorge auf GitHub, nicht zur Integration in main.

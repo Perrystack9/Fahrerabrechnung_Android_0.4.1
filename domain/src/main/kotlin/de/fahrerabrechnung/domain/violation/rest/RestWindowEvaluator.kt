@@ -43,8 +43,11 @@ internal object RestWindowEvaluator {
             if (!candidate.interrupted && amount >= 32400 && amount < 39600) {
                 if (choice.mode == RestWindowMode.CREW_30) add(DailyRestKind.CREW_NINE_HOURS, listOf(candidate), false)
                 else if (counter.minimumObservedCount < 3) add(DailyRestKind.REDUCED, listOf(candidate), true,
-                    reductionRestrictions(counter) + if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25)
-                        listOf(RestRestriction.BUS_REDUCED_25_HOUR_INTERPRETATION_OPEN) else emptyList())
+                    reductionRestrictions(counter) +
+                        (if (!candidate.actualEndProved && through < start.plusSeconds(choice.mode.seconds))
+                            listOf(RestRestriction.OPEN_REST_CLASSIFICATION_PENDING) else emptyList()) +
+                        (if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25)
+                            listOf(RestRestriction.BUS_REDUCED_25_HOUR_INTERPRETATION_OPEN) else emptyList()))
             }
         }
         if (choice.mode != RestWindowMode.CREW_30) for ((index, first) in usable.withIndex()) {

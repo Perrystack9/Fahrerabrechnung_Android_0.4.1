@@ -26,3 +26,9 @@ Der alte2016-09-Link für Leitlinie6 und der erneut versuchte BALM-Leitfaden v7 
 - L09: Fährunterbrechungen/3+9-Zuordnung, Crew-Tagesruhe und Bus-Vorbehalte am konkreten Fall absichern. Kurze Crew-Bereitschaft aus M2 bleibt offen und wird nicht als Tagesruhe behandelt.
 
 Konkrete Implementierung, unabhängige Rechenreferenzen und Restblocker werden vor M3-Abnahme ergänzt. Keine externe Fachprüfung wird durch selbst geschriebene Tests ersetzt.
+
+## Konkrete verbleibende M3-Auslegungen
+
+Bei Art.8(5) ist die9-h-/30-h-Mindestmenge aus dem Original belegt. Die Wechselwirkung wiederholter9-h-Crewruhen mit Art.8(4) bei anschließendem Solobetrieb wurde jedoch durch die bisher verfügbaren Auslegungshilfen nicht unabhängig und eindeutig bestätigt. Der Implementierungsvertrag hält deshalb die beobachtete Mindestbelastung und mögliche Obergrenze getrennt; kein gesichertes Reduzierungsbudget aus dieser offenen L09-Zuordnung. Keine neue Bestätigungsfrage oder Zweitkarte.
+
+Q07-Folgefenster erhalten eine eigene Kennzeichnung. Eine später abgeschlossene volle Ruhe darf den früheren Zahlenfehlbetrag nicht rückwirkend löschen. Bei offenen Ruheenden kann die Mindestdauer feststehen, die endgültige Einstufung als reduziert/regelmäßig oder der nächste tatsächliche Endanker aber noch offen sein.
