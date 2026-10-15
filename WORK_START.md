@@ -6,7 +6,7 @@ Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herk
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
 2. Danach [aktuelle Regeln](docs/CURRENT_RULES.md), [technischen Status](WORK_STATUS.md) und [aktuelle Übergabe](docs/WORK_HANDOFF.md) lesen.
-3. Für den nächsten Produkt-Schritt genau den [Import-Folgeplan](docs/CARD_IMPORT_NEXT_STEPS_AFTER_PR65.md) öffnen. Weitere Fachtexte erst bei konkretem Bedarf.
+3. Für den aktuellen freigegebenen M1-Schritt genau den [M1-Implementierungsbericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md) öffnen. MI-Matrix und gepinnte PR88-Fachbelege erst bei konkretem Bedarf.
 
 Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale Markdown-Volltextlektüre oder Rekonstruktion alter Chats, wenn das Repository ausreicht.
 
@@ -30,15 +30,13 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**Neue Produktpriorität, Tobi14.10.2026 14:06 Europe/Berlin:** zuerst eine vollständige zeitbezogene Verstoß-Engine nach der Verordnung (EG) Nr.561/2006; anschließend Kalender, Auswertungen und neue Benutzeroberfläche für Version1.0. Die Engine wurde in einem separaten Beratungschat mit80 Produktentscheidungen konzipiert. **Diese80 Entscheidungen werden von Tobi der neuen Work-Sitzung gesondert übergeben; sie sind hier noch nicht als vollständige verbindliche Anforderungen vorhanden.** Keine fehlenden Entscheidungen erfinden oder aus alten Chats/Teilinformationen rekonstruieren. Noch keine Engine-Implementierung beginnen.
+**Aktuell ausschließlich M1 freigegeben.** Tobi hat am15.10.2026 die Implementierung der begrenzten Datengrundlage ausdrücklich genehmigt. Die80 Entscheidungen/A–H/E01–E12/P01–P05, M0/N01–N19 und MI01–MI24 sind in [PR88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88), Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78`, dokumentiert. PR88 bleibt Draft/unmerged. Keine fehlenden Entscheidungen erfinden oder erneut diskutieren. M2–M7 und Produktmerges bleiben gesperrt.
 
-Die neue Sitzung liest zunächst den bestätigten Repository-Stand und übernimmt die80 Entscheidungen nach ihrer Übergabe vollständig. Danach Anforderungen mit vorhandenem Daten-/Codeumfang und geltenden Projektregeln abgleichen, tatsächliche Lücken/Widersprüche benennen und einen konkreten technischen Umsetzungsplan mit Abnahmekriterien vorlegen. **Bis zur gesonderten Umsetzungsfreigabe keine Engine implementieren.** Bestehende Import-/Datenbasis und sämtliche Gates erhalten.
+M1-Branch `feature/v1-m1-input-foundation-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m1`, Basis main `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. Implementierte Eingangsgrundlage40129/Room23 samt isoliertem Kontext, echter Compilerexport und neue Domain-/SQLCipher-/Migrationsprüfungen: [Bericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md), [Abnahme](docs/VIOLATION_ENGINE_M1_ACCEPTANCE.md). **Nicht als bereits gerätebestätigt oder gemergt behandeln.** Endgültigen M1-PR-Kopf, vollständige CI und Gerätebelege live prüfen. Während ungeklärter Gates nur M1-Fehler beheben; M2 benötigt neue ausdrückliche Freigabe.
 
-Die mathematische Signaturprüfung ist mit40128 vorerst beendet; keine automatische Trust-/DDD-/Export-/Signaturaufnahme-/Kartenschreibphase. **„Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten**, auch nach erneutem Einlesen.
+40128 ist abgeschlossen; keine automatische neue Trust-/DDD-/Signaturaufnahme-/Kartenschreibphase. „Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten. M1 verwendet bestehende Parser/Stores/Verifikations-Snapshotprüfungen; Originale/Fingerprints/Receipts werden nicht geändert.
 
-Dokumentationsabschluss [PR #86](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/86) übernommen, Merge `b61ed8aedbab53847c5361f05b61ef280dded613`; Docs-PR-CI38559979155 und Docs-main-CI38560196780 erfolgreich. Bei der Übergabeprüfung keine offenen PRs; aktuelle Übergabeänderungen auf eigenem Docs-Branch. Aktuellen main und späteren Übergabe-PR/-Merge weiterhin live prüfen.
-
-Checkout `/workspace/scratch/4c3cf966d792/FahrerTagebuch-event-fault-signatures`; Übergabebranch `docs/work-handoff-v1-violation-engine-20261014`. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
+Der separate Planungscheckout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-v1-engine-plan` samt lokalen M0-Sicherungscommits und die vorherigen Worktrees/Branches bleiben erhalten. Ursprüngliche offene Settings-Arbeit in `/workspace/scratch/4546aa92dbbb/FahrerTagebuch` und Sicherungen `/workspace/scratch/4c3cf966d792/session-backups` unverändert erhalten. Keine Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
 
 ## Sitzungsroutine
 
