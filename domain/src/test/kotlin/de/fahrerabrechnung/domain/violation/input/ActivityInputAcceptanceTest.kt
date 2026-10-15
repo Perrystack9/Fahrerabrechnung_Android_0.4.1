@@ -218,6 +218,12 @@ class ActivityInputAcceptanceTest {
         assertTrue(snapshot.intervals[2].meaning.manualTachograph)
         assertEquals(InputQuality.UNKNOWN, snapshot.intervals[3].meaning.quality)
         assertTrue(snapshot.contextNeeds.none { it.key.name.contains("CREW") })
+        val ambiguousCrew = activity(record(change(0), change(360, work, c = true),
+            change(360, work, inserted = false), change(600)))
+        val manual = activity(record(change(0), change(360, work, c = true, inserted = false), change(600)), input = source("S2"))
+        val resolvedActivity = build(ambiguousCrew, manual).intervals.last()
+        assertEquals(work, resolvedActivity.meaning.activity)
+        assertEquals(CrewEvidence.NOT_RECORDED, resolvedActivity.meaning.crew)
     }
 
     @Test fun mi24_conflictingKnownSourcesHaveNoGenerationOrNewestWinner() {
@@ -229,6 +235,12 @@ class ActivityInputAcceptanceTest {
         assertEquals(InputQuality.CONFLICT, snapshot.intervals.single { it.range.start == at(480) }.meaning.quality)
         assertEquals(snapshot.revision, build(new, old).revision)
         assertTrue(snapshot.issues.any { it.code == InputIssueCode.SOURCE_CONFLICT })
+        val ambiguousKnown = activity(record(change(0), change(480, work), change(480, driving), change(600)))
+        val claimedWinner = activity(record(change(0), change(480, work), change(600)), input = source("S2", "GEN2V2"))
+        val retained = build(ambiguousKnown, claimedWinner)
+        assertEquals(InputQuality.CONFLICT, retained.intervals.last().meaning.quality)
+        assertEquals(120, minutes(retained, ActivityType.UNBEKANNT))
+        assertEquals(0, minutes(retained, work))
     }
 
     @Test fun compatibleOpenStartBorrowsConcreteEndWithBothSourcesExplicit() {
@@ -251,6 +263,9 @@ class ActivityInputAcceptanceTest {
         assertEquals(0, minutes(snapshot, driving))
         assertTrue(conflict.support.any { it.kind == EndEvidenceKind.OPEN_POINT_CONFLICT && it.begin.single().source.sessionId == "S2" })
         assertTrue(snapshot.issues.any { it.code == InputIssueCode.OPEN_END && it.source?.sessionId == "S2" })
+        val ambiguousOpen = activity(record(change(0), change(540, work), change(540, driving)), input = source("S2"))
+        val retained = build(closed, ambiguousOpen)
+        assertEquals(InputQuality.CONFLICT, retained.intervals.single { it.range.start == at(540) }.meaning.quality)
     }
 
     @Test fun incompatibleCrewOrSlotDoesNotInventAConflictInTheRecordedActivity() {

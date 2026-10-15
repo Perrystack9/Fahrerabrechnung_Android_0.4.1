@@ -84,9 +84,18 @@ class ScopeContextAcceptanceTest {
         assertTrue(segments.all { it.decisions.single { d -> d.article == ScopeArticle.DRIVING_6 }.status == ScopeStatus.APPLICABLE })
         assertTrue(ScopeGuard.evaluate(range, goods(40000, text(ContextKey.OPERATION_COUNTRY, "FR")), reviewed = listOf(adjustment))
             .all { segment -> segment.decisions.all { it.status == ScopeStatus.APPLICABLE } })
+        val missingCountry = ScopeGuard.evaluate(range, goods(40000), reviewed = listOf(adjustment))[1]
+        assertEquals(ScopeStatus.UNKNOWN, missingCountry.decisions.single { it.article == ScopeArticle.BREAK_7 }.status)
+        assertEquals(ContextKey.OPERATION_COUNTRY, missingCountry.needs.single().key)
+        assertEquals(ScopeStatus.APPLICABLE, missingCountry.decisions.single { it.article == ScopeArticle.DRIVING_6 }.status)
+        val commercial = regular.copy(assertions = regular.assertions + flag(ContextKey.COMMERCIAL_OPERATION, true))
+        assertEquals(LegalActivityHint.NONE, ScopeGuard.evaluate(range, commercial, reviewed = listOf(adjustment))[1]
+            .decisions.single { it.article == ScopeArticle.BREAK_7 }.activityHint)
         val aetr = regular.copy(assertions = regular.assertions.filter { it.key != ContextKey.JOURNEY_AREA } + text(ContextKey.JOURNEY_AREA, "AETR_MIXED"))
         assertEquals(ScopeStatus.UNSUPPORTED, decision(aetr).status)
         assertEquals("AETR_WHOLE_JOURNEY", decision(aetr).reason)
+        assertTrue(ScopeGuard.evaluate(range, aetr, reviewed = listOf(adjustment))
+            .all { segment -> segment.decisions.all { it.status == ScopeStatus.UNSUPPORTED } })
         assertThrows(IllegalArgumentException::class.java) { adjustment.copy(legalArticle = "12") }
         assertThrows(IllegalArgumentException::class.java) { adjustment.copy(legalArticle = "11") }
     }
@@ -95,6 +104,7 @@ class ScopeContextAcceptanceTest {
         val commercial = goods(2000, flag(ContextKey.COMMERCIAL_OPERATION, true))
         assertEquals(ScopeStatus.NOT_APPLICABLE, decision(commercial).status)
         assertEquals(LegalActivityHint.OTHER_WORK, decision(commercial).activityHint)
+        assertTrue(decision(commercial).contextEvidence.contains(commercial.assertions.single { it.key == ContextKey.COMMERCIAL_OPERATION }.semanticId))
         assertEquals(LegalActivityHint.OTHER_WORK, decision(goods(2000, flag(ContextKey.TRANSFER_REQUIRES_OTHER_WORK, true))).activityHint)
         assertEquals(LegalActivityHint.UNDETERMINED, decision(goods(2000)).activityHint)
     }

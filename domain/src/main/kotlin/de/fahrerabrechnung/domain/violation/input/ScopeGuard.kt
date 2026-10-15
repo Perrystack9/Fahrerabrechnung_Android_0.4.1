@@ -116,27 +116,42 @@ object ScopeGuard {
                     }
                 }
             }
-            val country = context.resolve(ContextKey.OPERATION_COUNTRY, part).text
-            val matches = reviewed.filter { base.first == ScopeStatus.APPLICABLE &&
-                it.country == country && it.range.start <= start && it.range.end >= end }
+            val countryContext = context.resolve(ContextKey.OPERATION_COUNTRY, part)
+            val country = countryContext.text
+            val potential = reviewed.filter { base.first == ScopeStatus.APPLICABLE &&
+                it.range.start <= start && it.range.end >= end }
                 .sortedWith(compareBy({ it.legalArticle }, { it.reviewId }, { it.sourceDigest }))
-            fun hint(status: ScopeStatus) = if (status == ScopeStatus.NOT_APPLICABLE) {
-                if (context.resolve(ContextKey.COMMERCIAL_OPERATION, part).flag == true ||
-                    context.resolve(ContextKey.TRANSFER_REQUIRES_OTHER_WORK, part).flag == true) LegalActivityHint.OTHER_WORK
+            val matches = potential.filter { it.country == country }
+            if (potential.isNotEmpty()) {
+                evidence += countryContext.evidence.map { it.semanticId }
+                if (country == null) needs += ContextNeed(ContextKey.OPERATION_COUNTRY, null, part,
+                    if (countryContext.conflict) "CONFLICTING_EXCEPTION_TERRITORY" else "MISSING_EXCEPTION_TERRITORY")
+            }
+            // A partial exemption from Art.7 does not turn otherwise regulated driving into work.
+            val activityHint = if (base.first == ScopeStatus.NOT_APPLICABLE) {
+                val commercial = context.resolve(ContextKey.COMMERCIAL_OPERATION, part)
+                val transfer = context.resolve(ContextKey.TRANSFER_REQUIRES_OTHER_WORK, part)
+                evidence += commercial.evidence.map { it.semanticId }
+                if (commercial.flag != true) evidence += transfer.evidence.map { it.semanticId }
+                if (commercial.flag == true || transfer.flag == true) LegalActivityHint.OTHER_WORK
                 else LegalActivityHint.UNDETERMINED
             } else LegalActivityHint.NONE
             ScopeSegment(part, frozen(ScopeArticle.entries.map { article ->
                 val adjustment = matches.filter { article in it.articles }
+                val unresolvedTerritory = country == null && potential.any { article in it.articles }
                 val status = when {
+                    unresolvedTerritory -> ScopeStatus.UNKNOWN
                     adjustment.any { !it.exemption } -> ScopeStatus.UNKNOWN
                     adjustment.isNotEmpty() -> ScopeStatus.NOT_APPLICABLE
                     else -> base.first
                 }
                 ScopeDecision(article, status,
                     adjustment.firstOrNull()?.let { "561/2006 Art.${it.legalArticle}" } ?: base.second,
-                    when { adjustment.any { !it.exemption } -> "STRICTER_RULE_NOT_IMPLEMENTED"
+                    when { unresolvedTerritory -> "EXCEPTION_TERRITORY_UNDETERMINED"
+                        adjustment.any { !it.exemption } -> "STRICTER_RULE_NOT_IMPLEMENTED"
                         adjustment.isNotEmpty() -> "REVIEWED_PARTIAL_EXEMPTION"; else -> base.third },
-                    frozen((evidence + adjustment.map { it.reviewId }).sorted()), hint(status))
+                    frozen((evidence + (if (unresolvedTerritory) potential.filter { article in it.articles } else adjustment)
+                        .map { it.reviewId }).sorted()), activityHint)
             }), frozen(needs.distinctBy { it.id }))
         })
     }

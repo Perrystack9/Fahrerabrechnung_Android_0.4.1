@@ -106,6 +106,13 @@ object ActivityIntervals {
             events.getOrPut(interval.range.end, ::Events).end += index
         }
         val byTime = points.groupBy { it.at }
+        fun recordedKnown(point: ActivityObservation): List<ActivityMeaning> =
+            if (point.meaning.quality == InputQuality.KNOWN) listOf(point.meaning)
+            else if (point.meaning.reason == InputIssueCode.AMBIGUOUS_MINUTE)
+                point.rawChanges.map(::meaning).filter { it.quality == InputQuality.KNOWN }.distinct()
+            else emptyList()
+        val ambiguousStates = points.filter { it.meaning.reason == InputIssueCode.AMBIGUOUS_MINUTE }
+            .flatMap { point -> point.references.map { it.stableKey to recordedKnown(point) } }.toMap()
         val closedBegins = slices.flatMap { it.support }.flatMap { it.begin }.map { it.stableKey }.toSet()
         val openPoints = points.filter { point -> point.references.none { it.stableKey in closedBegins } }.toSet()
         byTime.keys.forEach { events.getOrPut(it, ::Events) }
@@ -121,29 +128,40 @@ object ActivityIntervals {
             for (point in byTime[start].orEmpty()) {
                 val source = point.references.first().source.stableKey
                 unresolvedPoints.remove(source)
-                if (point in openPoints && point.meaning.quality == InputQuality.KNOWN) unresolvedPoints[source] = point
+                if (point in openPoints && recordedKnown(point).isNotEmpty()) unresolvedPoints[source] = point
             }
             val end = times.getOrNull(index + 1) ?: break
             val values = active.values.toList()
             val known = values.filter { it.meaning.quality == InputQuality.KNOWN }
-            val activities = known.map { it.meaning.activity }.distinct()
+            // Unknown withdrawal carries no positive state. Actual known alternatives inside an
+            // ambiguous minute must still contradict an incompatible other source; grouping must
+            // not erase them and let a newer application become a silent winner.
+            val alternatives = values.filter { it.meaning.reason == InputIssueCode.AMBIGUOUS_MINUTE }
+                .flatMap { it.support }.flatMap { it.begin }.flatMap { ambiguousStates[it.stableKey].orEmpty() }.distinct()
+            val positive = known.map { it.meaning } + alternatives
+            val activities = positive.map { it.activity }.distinct()
+            val openKnown = unresolvedPoints.values.flatMap(::recordedKnown)
             // An unended conflicting observation cannot assert a duration, but it also cannot be
             // ignored in favour of another source's old closed state. Carry an explicit obstacle
             // until a further observation from that source; never create a positive interval from it.
-            val openConflict = known.isNotEmpty() && unresolvedPoints.values.any { it.meaning.activity !in activities }
+            val openConflict = known.isNotEmpty() && openKnown.any { it.activity !in activities }
             val meaning = when {
-                activities.size > 1 || openConflict -> ActivityMeaning(ActivityType.UNBEKANNT, InputQuality.CONFLICT,
+                (known.isNotEmpty() && activities.size > 1) || openConflict -> ActivityMeaning(ActivityType.UNBEKANNT, InputQuality.CONFLICT,
                     CrewEvidence.CONFLICT, SlotEvidence.CONFLICT, false, InputIssueCode.SOURCE_CONFLICT)
                 known.isNotEmpty() -> {
                     val crews = known.map { it.meaning.crew }.filter { it != CrewEvidence.NOT_RECORDED }.distinct()
                     val slots = known.map { it.meaning.slot }.filter { it != SlotEvidence.NOT_RELEVANT }.distinct()
-                    val openCrewConflict = crews.isNotEmpty() && unresolvedPoints.values.any {
-                        it.meaning.crew != CrewEvidence.NOT_RECORDED && it.meaning.crew !in crews }
-                    val openSlotConflict = slots.isNotEmpty() && unresolvedPoints.values.any {
-                        it.meaning.slot != SlotEvidence.NOT_RELEVANT && it.meaning.slot !in slots }
+                    val alternativeCrewConflict = crews.isNotEmpty() && alternatives.any {
+                        it.crew != CrewEvidence.NOT_RECORDED && it.crew !in crews }
+                    val alternativeSlotConflict = slots.isNotEmpty() && alternatives.any {
+                        it.slot != SlotEvidence.NOT_RELEVANT && it.slot !in slots }
+                    val openCrewConflict = crews.isNotEmpty() && openKnown.any {
+                        it.crew != CrewEvidence.NOT_RECORDED && it.crew !in crews }
+                    val openSlotConflict = slots.isNotEmpty() && openKnown.any {
+                        it.slot != SlotEvidence.NOT_RELEVANT && it.slot !in slots }
                     ActivityMeaning(activities.single(), InputQuality.KNOWN,
-                        if (crews.size > 1 || openCrewConflict) CrewEvidence.CONFLICT else crews.singleOrNull() ?: CrewEvidence.NOT_RECORDED,
-                        if (slots.size > 1 || openSlotConflict) SlotEvidence.CONFLICT else slots.singleOrNull() ?: SlotEvidence.NOT_RELEVANT,
+                        if (crews.size > 1 || openCrewConflict || alternativeCrewConflict) CrewEvidence.CONFLICT else crews.singleOrNull() ?: CrewEvidence.NOT_RECORDED,
+                        if (slots.size > 1 || openSlotConflict || alternativeSlotConflict) SlotEvidence.CONFLICT else slots.singleOrNull() ?: SlotEvidence.NOT_RELEVANT,
                         known.any { it.meaning.manualTachograph })
                 }
                 values.isNotEmpty() -> ActivityMeaning.unknown(
@@ -151,12 +169,13 @@ object ActivityIntervals {
                 else -> ActivityMeaning.unknown(InputIssueCode.MISSING_INTERVAL)
             }
             val support = values.flatMap { it.support }.toMutableList()
-            val conflictingPoints = unresolvedPoints.values.filter { point -> known.any { interval ->
-                interval.meaning.activity != point.meaning.activity ||
-                    (interval.meaning.crew != CrewEvidence.NOT_RECORDED && point.meaning.crew != CrewEvidence.NOT_RECORDED &&
-                        interval.meaning.crew != point.meaning.crew) ||
-                    (interval.meaning.slot != SlotEvidence.NOT_RELEVANT && point.meaning.slot != SlotEvidence.NOT_RELEVANT &&
-                        interval.meaning.slot != point.meaning.slot)
+            val conflictingPoints = unresolvedPoints.values.filter { point -> recordedKnown(point).any { observed -> known.any { interval ->
+                interval.meaning.activity != observed.activity ||
+                    (interval.meaning.crew != CrewEvidence.NOT_RECORDED && observed.crew != CrewEvidence.NOT_RECORDED &&
+                        interval.meaning.crew != observed.crew) ||
+                    (interval.meaning.slot != SlotEvidence.NOT_RELEVANT && observed.slot != SlotEvidence.NOT_RELEVANT &&
+                        interval.meaning.slot != observed.slot)
+            }
             } }
             for (point in conflictingPoints) {
                 support += IntervalSupport(point.references, frozen(known.flatMap { it.support }.flatMap { it.end }.distinct()),
