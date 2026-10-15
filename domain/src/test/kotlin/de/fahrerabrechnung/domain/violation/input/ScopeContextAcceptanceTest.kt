@@ -143,6 +143,8 @@ class ScopeContextAcceptanceTest {
     }
 
     @Test fun conflictingContextNeverUsesLatestEntryAndMissingQuestionsAreMinimal() {
+        assertThrows(IllegalArgumentException::class.java) { number(ContextKey.MAX_MASS_KG, 0) }
+        assertThrows(IllegalArgumentException::class.java) { number(ContextKey.PASSENGER_CAPACITY, 0) }
         val base = goods(40000)
         val conflicting = base.copy(assertions = base.assertions + assertion(ContextKey.MAX_MASS_KG,
             ContextValue.Number(2000), start = range.start, end = range.end))

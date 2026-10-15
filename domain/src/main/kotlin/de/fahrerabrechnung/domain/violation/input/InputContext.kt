@@ -21,7 +21,8 @@ enum class ContextKey {
 
     fun accepts(value: ContextValue): Boolean = when (this) {
         ROAD_CARRIAGE, OWN_ACCOUNT, DRIVING_MAIN_ACTIVITY, COMMERCIAL_OPERATION, TRANSFER_REQUIRES_OTHER_WORK -> value is ContextValue.Flag
-        MAX_MASS_KG, PASSENGER_CAPACITY, LINE_LENGTH_METRES, FERRY_SCHEDULED_MINUTES -> value is ContextValue.Number && value.value >= 0
+        MAX_MASS_KG, PASSENGER_CAPACITY -> value is ContextValue.Number && value.value > 0
+        LINE_LENGTH_METRES, FERRY_SCHEDULED_MINUTES -> value is ContextValue.Number && value.value >= 0
         TRANSPORT_KIND -> value.textIn("GOODS", "PASSENGERS")
         JOURNEY_AREA -> value.textIn("EU_ONLY", "EU_EEA_CH", "AETR_MIXED", "OTHER")
         JOURNEY_KIND -> value.textIn("DOMESTIC", "INTERNATIONAL", "CABOTAGE")
