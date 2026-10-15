@@ -1,28 +1,34 @@
 # FahrerTagebuch - aktuelle Übergabe
 
-**M1 ist ausdrücklich abgenommen; kontrollierte Integration von PR88/PR89 und anschließend M2 sind genehmigt.** Auftrag15.10.2026. M2 braucht vor eigenem Merge erneut ausdrückliche Zustimmung; M3–M7/Release bleiben gesperrt. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md), [M1-Bericht](VIOLATION_ENGINE_M1_IMPLEMENTATION.md), [Abnahme](VIOLATION_ENGINE_M1_ACCEPTANCE.md).
+**M0/M1 kontrolliert integriert, M2-Implementierung genehmigt und in eigener Prüfung.** Kein M2-Merge, M3–M7 oder Release. Zuerst WORK_START und fünf Startdateien; keine pauschale Volllektüre/Chatrekonstruktion, Browser oder Unteragenten. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md).
 
-Zuerst WORK_START und begrenzten Startpfad; aktuellen main/PR-Kopf/Checks live prüfen. Keine Chatrekonstruktion, Browser oder Unteragenten. Vorhandene Arbeitsstände nicht löschen/zurücksetzen.
+## Neue Basis und Nachweise
 
-## M1-Abnahme und kontrollierte Integration
+PR88-Merge `9ff0a525d8394031148aada37593c9fed8f84148` nach erfolgreicher Docs-CI38684167403; zusätzliche Docs-main-CI38744376819 ebenfalls erfolgreich. Anschließend PR89 auf Planung abgestimmt: vier reine Dokumentkonflikte aufgelöst, alle Produktdateien gegenüber dem eigenen Geräteprüfkopf212a140 unverändert und geschützter Regelabschnitt bytegleich. Neue volle CI38744945937/Versuch1 auf `1f1655de023ae6463419be8be9278f0c1c05232e` vollständig erfolgreich, alle vier Jobs/ungekürzte API36-Suiten. PR89 nach abschließender Live-Prüfung integriert: **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**,40129/Room23. Zusätzliche volle Produkt-main-CI38749285258/Versuch1 ebenfalls erfolgreich. [Integrationsbeleg](M0_M1_INTEGRATION_20261015.md), [eigene Gerätebestätigung und ausdrückliche M1-Abnahme](DEVICE_CONFIRMATION_40129.md).
 
-- PR88 zuerst nach erfolgreicher unveränderter Docs-CI38684167403/Versuch1 und exaktem Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78` integriert: Merge `9ff0a525d8394031148aada37593c9fed8f84148`.
-- M1-PR89 ursprünglich `212a1401d31b3ca95b535e59b0dffbfba90e7edb`, Baum `64003129407730cd1ce01822dcc07d6c777a1020`, volle CI38729242320/Versuch1 erfolgreich: sieben Gradle-Gates,559 Unit-Tests, vollständige151 App-/297 Daten-API36-Methoden, SQLCipher/Migrationen/Keystore/Signaturen/Updatepaar/Room23-Compilerexport.
-- [Neue eigene Gerätebestätigung40129](DEVICE_CONFIRMATION_40129.md): Tobi15.10.2026 15:13 Europe/Berlin „Passt alles 👌🏻“, anschließend ausdrückliche M1-Abnahme und Mergefreigabe. Keine zusätzlichen Hardware-/EF-/Kurvenmesswerte oder M2-Geräteabnahme daraus ableiten.
-- PR89 wird auf den neuen main abgestimmt. Vier Konflikte ausschließlich in Status-/Übergabetexten werden anhand der aktuellen Freigabe aufgelöst; Planungsdateien und M1-Nachweise bleiben erhalten. Keine Produktcodeänderung. Neue vollständige Integrations-CI und Produktgleichheit vor Merge nachweisen. Exakte neue Kopf-/Lauf-/Merge-IDs anschließend im PR-Abnahmeprotokoll und M2-Übergabe festhalten.
-- Checkout für Integration `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-integration`, Branch `work/m1-integration-20261015`; alter M1-Checkout/Branch bleiben erhalten. Keine neuen Workflows/Prüfgrenzen oder Versions-/Schemaänderungen für reine Integration.
+## Aktueller M2-Auftrag
 
-## Verbindlicher nächster Auftrag M2
+Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m2`, Branch `feature/v1-m2-driving-breaks-20261015`, Basis3c99b7db. Stand40130/Room23; keine neue Migration/Schema-/Parser-/Krypto-/Hardware-/Workflowänderung. [M2-Bericht](VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [L02/L03/L05/L06 und Quellen](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahmematrix](VIOLATION_ENGINE_M2_ACCEPTANCE.md).
 
-1. Nach kontrolliertem M1-Merge eigener Entwicklungsbranch/PR. Gesamtplan D01–D06/B01–B05, M0-LG17–LG39 und einschlägige weitere Fälle gezielt lesen.
-2. Vor abhängigen Regeln L02 (Rechtswoche/Verlängerungszuordnung), L03 (7-h-Vollzug), L05/Scope und L06/Artikel12-Zahlenvertrag mit amtlichen historischen Quellen/Fachhinweisen nachweisen. UTC-Speicherung/Dauern und gewünschtes technisches Montag00-UTC-Raster sind keine juristische L02-Freigabe. Offene Unvereinbarkeit konkret vorlegen; keine Testannahme als Rechtsbeweis.
-3. Zwei10-h-Verlängerungen je gesetzlicher Woche ohne Wochenruhe-Reset; reduzierte Tagesruhen zwischen qualifizierenden Wochenruhen sind eigener M3-Zähler. Kein gemeinsamer Reset.7h können nur belegte Vollzugskonvention, niemals erfüllte Tagesruhe sein.
-4. Ausreichend belegte unabhängige M2-Komponenten implementieren, M1-Flow/Herkunft/Scope nutzen, keine unbekannten Enden/Ruhezeiten ergänzen. Artikel12 nicht rechtfertigen oder ungeklärt als sicher rechtswidrig ausgeben. Kein M3/M4-Ruhe-/Ausgleichsmotor, M5-UI oder M6-PDF.
-5. Alle bestehenden CI-/SQLCipher-/Keystore-/Signatur-/Schema-/Gerätegates bleiben bestehen. Vor M2-Merge erforderliche Geräteprüfung und gesonderte Nutzerfreigabe. Verständliche Geräteanleitung direkt im Chat.
+D01–D06/B01–B05 auf dem vorhandenen M1-Snapshot: normale Tagesfahrt/Verlängerungsvorgänge,56-/90-h-UTC-Projektionen, reguläre/geteilte Pause, datierte Bus-/Crewfälle und artikelbezogener Scope; genaue Fahrteilstücke und Revisions-/Herkunftsbezug. Automatischer read-only Flow während der App-Nutzung, letzte M1-Tokenprüfung vor Veröffentlichung. Kein UI-/PDF-/Ruhe-/Ausgleichsmotor.
 
-Neue Anzeigeentscheidung15.10.2026: historische belegte Ortszeit später bevorzugt (M5/M6), Standardanzeigezone als Rückfall, Unklarheit kennzeichnen. Keine Standortüberwachung und keinerlei Einfluss auf UTC-Dauer-/Rechtsberechnung. PD01–PD80/A–H/E01–E12/P01–P05 bleiben ansonsten unverändert; historische widersprechende Anzeigeformulierungen nachvollziehbar ergänzen, nicht unkommentiert löschen.
+L02 bleibt offen: technische UTC-Norm versus lokale TRACE-Woche nicht verbindlich aufgelöst. Wochen-/Verlängerungsbudgets nicht als gesichert ausgeben. Q13 nur Tageslenk-Konvention;7h ist keine legale Tagesruhe. Die zwei10-h-Verlängerungen zählen je Kalenderwoche ohne Wochenruhe-Reset, spätere Ruhereduzierungen zwischen qualifizierenden Wochenruhen bleiben separater M3-Vertrag. Fährenabhängige Tagesanker und12-Tage-Bus-Nachtqualifikation M3/M4, keine erfundene Entwarnung. Artikel12-Zahlenbefunde offen, keine Anerkennung/Schuld/Heimkehrüberwachung.
 
-40128-Kryptografie und Vorgänger40124–40128 abgeschlossen, [40128-Gerätebeleg](DEVICE_CONFIRMATION_40128.md). Vertrauen NOT_EVALUATED bleibt korrekt. Keine automatische Trust-/DDD-/Signaturaufnahme-/Kartenschreibarbeit. Qualifizierte unabhängige Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.
+## Wiederaufnahme nach Kontingentunterbrechung
+
+Am15.10.2026 war lokal nur der ältere M1-Checkout vorhanden; der frühere M2-Checkout, seine Buildumgebung und die noch nicht veröffentlichten Folgeänderungen waren nicht auffindbar. Ohne vorhandene M1-Dateien zu verwerfen wurde M2 separat aus dem unveränderten PR90-Kopf `9a7911bde88347e82660cc1f7ba31806b38ceb6d` wiederhergestellt, Baum `a8dbce895d2214ccdedd33e3dcb0121cae04a240`. Seine vollständige CI [38752173910](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/actions/runs/38752173910), Versuch1, alle vier Jobs einschließlich ungekürzter API36-Prüfung, war erfolgreich. Kein veröffentlichter M0-/M1-/M2-Fortschritt ging verloren. Die lokalen Folgeänderungen zu mehreren Pausenpfaden/kurzen Crew-Teilen wurden erneut implementiert und durch84 isolierte M1-/M2-Domainmethoden geprüft; dies ist kein Nachweis identischer Wiederherstellung der verlorenen Arbeitskopie. Die neue Interpretationsrevision `561-m2-driving-breaks-2` benötigt erneut volle CI und eigenes exakt zugeordnetes Gerätepaket. Der neue Q08-Abruf samt eigener Byte-Prüfsumme ist dokumentiert. Endgültiger Kopf, CI, Build- und Paketnachweise im PR90-Protokoll, nicht aus dem älteren grünen Lauf ableiten.
+
+## Verbindliche nächsten Prüfschritte
+
+1. Tatsächlichen M2-Remote-Kopf/Arbeitsbaum/CI prüfen und vorhandene Arbeit erhalten. Frühere M1-Checkouts/Branches nicht löschen oder neu implementieren.
+2. Fachliche Referenzen und zusätzliche Regressionen aus der M2-Matrix tatsächlich ausführen; früher isolierter Compilerlauf ist keine konfigurierte Projekt-/Android-Abnahme.
+3. Alle sieben unveränderten Gradle-Gates und vollständige API36-SQLCipher-/Compose-Suiten einschließlich neuer sechs M2-Androidmethoden, Signatur/Updatepaar/Compilerexporte; keine Filter/Quarantäne. Fehler beheben und finalen Kopf komplett prüfen.
+4. Exaktes40130-Gerätepaket erst nach grünen Gates prüfen und mit verständlicher Anleitung direkt im Chat vorlegen;40129-Antwort nicht übertragen. Keine Datenlöschung oder neue Geräteabnahme behaupten.
+5. M2 zur gesonderten fachlichen/technischen Abnahme und Mergeentscheidung vorlegen. L02-Entscheidungsvorlage und weitere konkrete Fachnachweise ausdrücklich offen; keine unbelegten Annahmen zum Schließen von Gates.
+
+Anzeigeentscheidung15.10.2026 ersetzt die ausschließlich feste Zone als bevorzugte Darstellung: später belegbare historische Ortszeit einschließlich DST/Länder-/GNSS-/Grenzdaten, feste einstellbare Standardzone als Rückfall und Kennzeichnung von Unklarheit. M2 rechnet ausschließlich UTC, keine Standortüberwachung. Produktentscheidungen ansonsten unverändert; neue Entscheidung im historischen Addendum nachvollziehbar ergänzt.
+
+40128-Kryptografie abgeschlossen; Zertifikatsvertrauen NOT_EVALUATED. Keine Trust-/DDD-/Kartenschreibarbeit. Unabhängige qualifizierte Fachgesamtprüfung/Beta5–10 Fahrer bleiben Releasegates.
 
 ## Lokale Arbeit und Workspace-Wiederherstellung
 

@@ -123,3 +123,10 @@ Dieser Abschnitt ist der aktuelle fachliche Nachweisstand. Frühere Abschnitte d
 | Bericht/Übergabe | Keine vorbehaltlose M1-Empfehlung bei offenen Eingangsnachweisen | [Aktualisierter Bericht](VIOLATION_ENGINE_M0_REPORT.md): Eingangsvoraussetzungen für genau begrenztes M1 erfüllt; separate ausdrückliche Freigabe empfehlbar. **M1 bleibt gesperrt, kein Merge**, keine externe Fachgesamtprüfung behauptet. |
 
 Die tatsächlichen Dokumentationsprüfungen und der veröffentlichte Kopf/CI werden im aktualisierten Bericht/PR belegt. Keine Produktcode-/Schema-/Parser-/Krypto-/Hardware-/APK-/Workflowänderung, kein externer Versand und keine Abschwächung technischer Abnahmen.
+
+
+## 8. M1-Abschluss und M2-Freigabe15.10.2026
+
+Neuer ausdrücklicher Auftrag ersetzt nur die historischen Freigabesperren für PR88/PR89 und M2-Implementierung. M0/M1 kontrolliert integriert, [Commit-/CI-/Gerätebelege](M0_M1_INTEGRATION_20261015.md). M2-Merge und M3–M7/Release weiterhin gesperrt. Bestehende Produkt-/Sicherheits-/Herkunfts-/Testgrundlagen unverändert.
+
+Betroffen: aktuelle Start-/Status-/Übergabetexte; M2-Implementierungs-/Rechts-/Abnahmedokumente; Rechtsmatrix L02/L03 und Referenztestzuordnung. Neue historische Ortszeitanzeige ersetzt nur die ausschließlich feste Präferenz von PD40/Planabschnitt10; spätere M5/M6-Umsetzung, keine Änderung gesetzlicher Grenzen oder M2-Dauern. Historische80er-Quelle und bisherige Addendumteile erhalten. L02 nicht geschlossen; konkrete Entscheidungsvorlage und gesperrte sichere Wochen-/Verlängerungsbudgets dokumentiert.

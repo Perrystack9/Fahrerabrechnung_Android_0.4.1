@@ -1,5 +1,10 @@
 # FahrerTagebuch 1.0 – Plan für die zeitbezogene Verstoß-Engine
 
+**Aktueller Freigabestand15.10.2026:** M0/M1 inzwischen ausdrücklich abgenommen und kontrolliert integriert, [Nachweise](M0_M1_INTEGRATION_20261015.md). M2-Implementierung D01–D06/B01–B05 genehmigt, eigener Merge/Abnahme noch nicht. M3–M7/Release gesperrt. Historische Freigabeformulierungen unten bezeichnen ihren damaligen Planungsstand. [M2-Vertrag](VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [offene Rechtsnachweise/Entscheidungsvorlage](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md).
+
+**Neue Anzeigeentscheidung15.10.2026:** Die ausschließlich feste Anzeigezone als bevorzugte Darstellung aus PD40/Abschnitt10 ist ersetzt durch belegbare historische Ortszeit, mit Standardzone als Rückfall und gekennzeichneter Unsicherheit. Umsetzung M5/M6; UTC-Rechnung unverändert. [Historischer Nachtrag](VIOLATION_ENGINE_PRODUCT_ADDENDUM_20261014.md).
+
+
 **Stand15.10.2026: M0 ausdrücklich für fachliche Spezifikation/Dokumentation freigegeben. M0-Nachweispaket zur Prüfung; P01–P05 geschlossen. PR #88 bleibt ENTWURF. Keine Programmierungs-, Merge- oder Releasefreigabe; keine Engine implementiert.**
 
 Die technischen und fachlichen Arbeitspakete, Datenverträge, Regelmatrix, Teststrategie und Abnahmekriterien sind hier zusammengeführt. Gesetzliche Einzelheiten mit noch ausstehender Primärquellen- oder unabhängiger Fachprüfung sind ausdrücklich als Freigabepunkte ausgewiesen. Die Planung darf nicht als bereits geprüfte vollständige Rechtsberechnung ausgegeben werden.

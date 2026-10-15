@@ -6,7 +6,7 @@ Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herk
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
 2. Danach [aktuelle Regeln](docs/CURRENT_RULES.md), [technischen Status](WORK_STATUS.md) und [aktuelle Übergabe](docs/WORK_HANDOFF.md) lesen.
-3. Für die M1-Integration zunächst den [M1-Implementierungsbericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md) öffnen. MI-Matrix und gepinnte PR88-Fachbelege erst bei konkretem Bedarf.
+3. Für den aktuellen M2-Schritt den [M2-Implementierungsbericht](docs/VIOLATION_ENGINE_M2_IMPLEMENTATION.md) öffnen. M2-Rechtsnachweise/Abnahme und ältere M0/M1-Belege nur bei konkretem Bedarf.
 
 Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale Markdown-Volltextlektüre oder Rekonstruktion alter Chats, wenn das Repository ausreicht.
 
@@ -30,15 +30,15 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**M1 ist am15.10.2026 ausdrücklich abgenommen; die kontrollierte Integration von PR88 und PR89 sowie anschließend M2 sind genehmigt.** PR88 wurde nach unveränderter erfolgreicher Docs-CI38684167403 auf Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78` zuerst integriert: Merge `9ff0a525d8394031148aada37593c9fed8f84148`. Die freigegebenen80/A–H/E01–E12/P01–P05 und M0/N01–N19 stehen jetzt im Repository.
+**M0/M1 kontrolliert integriert; M2-Implementierung ausdrücklich genehmigt.** Tobi hat M1/40129/Room23 nach neuer eigener Geräteprüfung am15.10.2026 abgenommen und PR88 zuerst/PR89 danach freigegeben. M0-Planungsmerge `9ff0a525d8394031148aada37593c9fed8f84148`, M1-Produktmerge/neue Basis **`3c99b7db397f307ccbe91b33fa9862e2b410a144`**. Neue volle Integrations-CI38744945937/Versuch1 erfolgreich, alle Produktdateien gegenüber dem bestätigten40129-Kopf212a140 bytegleich. [Nachweise](docs/M0_M1_INTEGRATION_20261015.md). Zusätzliche volle main-CI38749285258/Versuch1 ebenfalls erfolgreich.
 
-PR89 wird auf diesen main abgestimmt. Dabei werden ausschließlich vier überlappende Status-/Übergabetexte konsolidiert und M1-Abnahmebelege ergänzt; der gerätebestätigte Produktcode40129/Room23 muss vollständig identisch bleiben. Ursprünglicher geprüfter Kopf `212a1401d31b3ca95b535e59b0dffbfba90e7edb`, vollständige CI38729242320 erfolgreich; eigene Geräteantwort15.10.2026 15:13 Europe/Berlin: „Passt alles 👌🏻“. [M1-Abnahmebeleg](docs/DEVICE_CONFIRMATION_40129.md). Vor PR89-Merge neue vollständige Integrations-CI abwarten und exakten Kopf/Produktgleichheit erneut prüfen. Keine Qualitätsprüfung lockern.
+M2-Branch `feature/v1-m2-driving-breaks-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m2`; Entwicklungsstand40130/Room23. [Implementierung](docs/VIOLATION_ENGINE_M2_IMPLEMENTATION.md), [Rechtsnachweise/Entscheidungsvorlage](docs/VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahme](docs/VIOLATION_ENGINE_M2_ACCEPTANCE.md). D01–D06/B01–B05, keine zweite Parserarchitektur, keine DB-/Krypto-/Hardware-/CI-Änderung. Alle80/A–H/E01–E12/P01–P05 bleiben maßgeblich.
 
-**M2 ist anschließend zur Implementierung D01–D06/B01–B05 freigegeben**, mit seinen verbleibenden L01–L09-Gates. L02 bleibt ausdrücklich offen: UTC ist Speicher-/Dauerbasis und gewünschtes technisches Wochenraster, ersetzt aber keinen juristischen Nachweis der Wochen-/Verlängerungszuordnung. Die zwei10-h-Verlängerungen zählen je gesetzlicher Woche, ohne Reset durch Wochenruhe. Reduzierte Tagesruhen gehören zu M3 und einem getrennten Anker/Zähler. Sieben-Stunden-Konvention ist keine erfüllte Tagesruhe; Artikel12 weder automatisch gerechtfertigt noch abschließend rechtswidrig. M2 braucht vor eigenem Merge erneute ausdrückliche Zustimmung und die erforderliche Geräteprüfung. M3–M7/Release bleiben gesperrt.
+**L02 bleibt offen:** UTC ist Speicher-/Dauerbasis und technisches Wochenraster. Technische UTC-Norm und lokale TRACE-Auslegung sind nicht hinreichend verbindlich aufgelöst. Wochen-/Verlängerungsprojektionen tragen feste Einschränkungen, sichere davon abhängige Budgets bleiben null. Keine Testannahme oder Nutzerpräferenz als Rechtsnachweis.7h ist nur benannte Tageslenk-Vollzugskonvention, keine erfüllte Tagesruhe. Wochenruhe setzt zwei10-h-Verlängerungen innerhalb derselben Woche nicht zurück; M3-Ruhereduzierungen bleiben getrennter Anker/Zähler.
 
-Ab15.10.2026 ist historische belegte Ortszeit die bevorzugte spätere Anzeige (M5/M6), feste einstellbare Anzeigezone der Rückfall; Unklarheit kennzeichnen. M2 rechnet weiter ausschließlich mit Instants/Dauern und separater Rechtszeitkonvention, ohne Displayabhängigkeit.
+M2 benötigt seine eigene vollständige unveränderte CI und erforderliche neue Geräteprüfung. Nicht aus frühen isolierten Rechentests oder40129-Antwort ableiten. **M2-Merge und M3–M7/Release bleiben gesperrt**, bis Tobi ausdrücklich zustimmt. Neue Oberfläche/Badges M5, PDF M6, keine vorgezogene Ruhe-/Ausgleichsqualifikation. Historische Ortszeit ist ab15.10.2026 bevorzugte spätere Anzeige; Standardzone als Rückfall, Unklarheit kennzeichnen, nie Rechtsberechnung verändern.
 
-Automatische Workspace-Wartung entfernte frühere lokale Checkouts und die uncommittete Settings-Sicherung. M1 wurde vollständig aus GitHub wiederhergestellt; der alte unvollständige Entwurf ist nicht wiederhergestellt und wird nicht erfunden. [Genaue Grenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Alle vorhandenen Dateien/Branches/Sicherungen erhalten; kein Reset/Clean.
+Frühere automatische Workspace-Wartung entfernte die alte uncommittete Settings-Arbeit. M1 ist aus GitHub wiederhergestellt; der alte unvollständige Entwurf nicht. [Verlustgrenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Nicht rekonstruieren oder als vorhanden melden. Alle vorhandenen Dateien/Branches/Backups erhalten, kein Reset/Clean.
 
 ## Sitzungsroutine
 
