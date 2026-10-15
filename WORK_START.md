@@ -6,7 +6,7 @@ Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herk
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
 2. Danach [aktuelle Regeln](docs/CURRENT_RULES.md), [technischen Status](WORK_STATUS.md) und [aktuelle Übergabe](docs/WORK_HANDOFF.md) lesen.
-3. Für den aktuellen freigegebenen M1-Schritt genau den [M1-Implementierungsbericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md) öffnen. MI-Matrix und gepinnte PR88-Fachbelege erst bei konkretem Bedarf.
+3. Für die M1-Integration zunächst den [M1-Implementierungsbericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md) öffnen. MI-Matrix und gepinnte PR88-Fachbelege erst bei konkretem Bedarf.
 
 Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale Markdown-Volltextlektüre oder Rekonstruktion alter Chats, wenn das Repository ausreicht.
 
@@ -30,13 +30,15 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**Aktuell ausschließlich M1 freigegeben.** Tobi hat am15.10.2026 die Implementierung der begrenzten Datengrundlage ausdrücklich genehmigt. Die80 Entscheidungen/A–H/E01–E12/P01–P05, M0/N01–N19 und MI01–MI24 sind in [PR88](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/88), Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78`, dokumentiert. PR88 bleibt Draft/unmerged. Keine fehlenden Entscheidungen erfinden oder erneut diskutieren. M2–M7 und Produktmerges bleiben gesperrt.
+**M1 ist am15.10.2026 ausdrücklich abgenommen; die kontrollierte Integration von PR88 und PR89 sowie anschließend M2 sind genehmigt.** PR88 wurde nach unveränderter erfolgreicher Docs-CI38684167403 auf Kopf `a55d747513e79d5eb3a5961db35bd3d35d44cc78` zuerst integriert: Merge `9ff0a525d8394031148aada37593c9fed8f84148`. Die freigegebenen80/A–H/E01–E12/P01–P05 und M0/N01–N19 stehen jetzt im Repository.
 
-M1-Branch `feature/v1-m1-input-foundation-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m1`, Basis main `df7061659b621d67ff39ac2f02f44e13d7ac4e86`. Implementierte Eingangsgrundlage40129/Room23 samt isoliertem Kontext, echter Compilerexport und neue Domain-/SQLCipher-/Migrationsprüfungen: [Bericht](docs/VIOLATION_ENGINE_M1_IMPLEMENTATION.md), [Abnahme](docs/VIOLATION_ENGINE_M1_ACCEPTANCE.md). **Nicht als bereits gerätebestätigt oder gemergt behandeln.** Endgültigen M1-PR-Kopf, vollständige CI und Gerätebelege live prüfen. Während ungeklärter Gates nur M1-Fehler beheben; M2 benötigt neue ausdrückliche Freigabe.
+PR89 wird auf diesen main abgestimmt. Dabei werden ausschließlich vier überlappende Status-/Übergabetexte konsolidiert und M1-Abnahmebelege ergänzt; der gerätebestätigte Produktcode40129/Room23 muss vollständig identisch bleiben. Ursprünglicher geprüfter Kopf `212a1401d31b3ca95b535e59b0dffbfba90e7edb`, vollständige CI38729242320 erfolgreich; eigene Geräteantwort15.10.2026 15:13 Europe/Berlin: „Passt alles 👌🏻“. [M1-Abnahmebeleg](docs/DEVICE_CONFIRMATION_40129.md). Vor PR89-Merge neue vollständige Integrations-CI abwarten und exakten Kopf/Produktgleichheit erneut prüfen. Keine Qualitätsprüfung lockern.
 
-40128 ist abgeschlossen; keine automatische neue Trust-/DDD-/Signaturaufnahme-/Kartenschreibphase. „Zertifikatsvertrauen: nicht geprüft“ bleibt erwartetes Verhalten. M1 verwendet bestehende Parser/Stores/Verifikations-Snapshotprüfungen; Originale/Fingerprints/Receipts werden nicht geändert.
+**M2 ist anschließend zur Implementierung D01–D06/B01–B05 freigegeben**, mit seinen verbleibenden L01–L09-Gates. L02 bleibt ausdrücklich offen: UTC ist Speicher-/Dauerbasis und gewünschtes technisches Wochenraster, ersetzt aber keinen juristischen Nachweis der Wochen-/Verlängerungszuordnung. Die zwei10-h-Verlängerungen zählen je gesetzlicher Woche, ohne Reset durch Wochenruhe. Reduzierte Tagesruhen gehören zu M3 und einem getrennten Anker/Zähler. Sieben-Stunden-Konvention ist keine erfüllte Tagesruhe; Artikel12 weder automatisch gerechtfertigt noch abschließend rechtswidrig. M2 braucht vor eigenem Merge erneute ausdrückliche Zustimmung und die erforderliche Geräteprüfung. M3–M7/Release bleiben gesperrt.
 
-Eine automatische Workspace-Bereinigung während der Pause am15.10.2026 hat die früheren lokalen Checkouts, Builddateien und Sicherungspfade entfernt. M1 einschließlich der vorbereiteten Testkorrektur ist aus GitHub wiederhergestellt; PR88 enthält weiterhin die gepinnte M0-Facharbeit. Aktueller lokaler Branch `work/m1-resumed-20261015`, Ziel unverändert PR89/`feature/v1-m1-input-foundation-20261015`. Die zuvor per SHA256 bestätigte uncommittete Settings-Sicherung konnte in den geprüften Git-Versionen und gespeicherten Dateien nicht wiedergefunden werden; [genaue Grenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Nicht als erneut vorhanden bestätigen oder durch eine vermutete Rekonstruktion ersetzen. Keine vorhandenen Dateien/Änderungen/Branches/Sicherungen verwerfen oder zurücksetzen.
+Ab15.10.2026 ist historische belegte Ortszeit die bevorzugte spätere Anzeige (M5/M6), feste einstellbare Anzeigezone der Rückfall; Unklarheit kennzeichnen. M2 rechnet weiter ausschließlich mit Instants/Dauern und separater Rechtszeitkonvention, ohne Displayabhängigkeit.
+
+Automatische Workspace-Wartung entfernte frühere lokale Checkouts und die uncommittete Settings-Sicherung. M1 wurde vollständig aus GitHub wiederhergestellt; der alte unvollständige Entwurf ist nicht wiederhergestellt und wird nicht erfunden. [Genaue Grenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Alle vorhandenen Dateien/Branches/Sicherungen erhalten; kein Reset/Clean.
 
 ## Sitzungsroutine
 

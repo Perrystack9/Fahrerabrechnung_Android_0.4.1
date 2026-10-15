@@ -1,6 +1,6 @@
 # M1 – Abnahmematrix und Prüfprotokoll
 
-Stand15.10.2026. Zuordnung zum [Implementierungsbericht](VIOLATION_ENGINE_M1_IMPLEMENTATION.md) und dessen unverändert gepinntem M0-/PR88-Vertrag. Nur Eingangsdaten-/Kontextabnahme; keine M2–M7-Freigabe.
+Stand15.10.2026. Zuordnung zum [Implementierungsbericht](VIOLATION_ENGINE_M1_IMPLEMENTATION.md) und dessen unverändert gepinntem M0-/PR88-Vertrag. M1-Eingangsdaten-/Kontextabnahme ist ausdrücklich erteilt; die zusätzliche M2-Freigabe15.10.2026 gilt getrennt und nicht für dessen Merge oder M3–M7.
 
 ## Reproduzierbare MI-Zuordnung
 
@@ -53,4 +53,10 @@ Die gesamten sieben vorgeschriebenen Gradle-Aufrufe und zusätzlichen Androidtes
 2. Neue verschlüsselte Migration18/22→23 und sämtliche bestehenden Migrationen, Keystore-/Wrong-key-/Reopen-/Provenienz-/Rollback-/Signaturregressionen; kein destruktiver Fallback.
 3. Exaktes geprüftes Testupdate40129 mit unverändertem Testpaket/Testzertifikat und passender eigener Gerätebestätigung. Bestehende Installation/Daten nicht löschen; direkte verständliche Anleitung im Chat ist Pflicht.
 4. Review der MI-Zuordnung und konservativen Unknown-/Konflikt-/Scopegrenzen. Freigabesperrend: erfundene positive Intervalle, doppelte Minuten, falsche Crewsemantik, verlorene Herkunft, fälschlich vollständige Abdeckung, überschriebene Originale/Kontexte oder Veröffentlichung veralteter/halber Snapshots.
-5. Gesonderte Produktmergefreigabe. PR88 bleibt Draft/unmerged. M2 nur mit neuer ausdrücklicher Freigabe und seinen eigenen rechtlichen Nachweisen. Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben spätere Releasegates.
+5. Gesonderte Produktmergefreigabe: am15.10.2026 für PR88/PR89 ausdrücklich erteilt, unter erneuter vollständiger Prüfung des integrierten Entwicklungsstands. PR88 zuerst integriert. M2-Implementierung zusätzlich genehmigt, mit eigenen rechtlichen Gates und gesondertem späterem M2-Merge. Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben spätere Releasegates.
+
+## Abschließender M1-Nachweis und Integrationsgate
+
+Der spätere vollständige Lauf38729242320/Versuch1 am Kopf `212a1401d31b3ca95b535e59b0dffbfba90e7edb` bestand alle vier Jobs, sieben Gradle-Gates und ungekürzte API36-Suiten151 App-/297 Datenmethoden.559 lokale Unit-Tests bestanden. Die oben beschriebene frühere rote Vorstufe bleibt als Fehlerhistorie erhalten und ist nicht der finale Prüfstand. [Identifiziertes Paket, tatsächliche Geräteantwort und ausdrückliche Abnahme](DEVICE_CONFIRMATION_40129.md).
+
+Vor genehmigtem PR89-Merge muss der auf PR88-main abgestimmte neue Kopf erneut die gesamte CI bestehen. Die vier Status-/Übergabekonflikte werden dokumentarisch aufgelöst; keine Produktdatei, CI-Grenze, Sicherheits-/Herkunftsregel oder Gerätepaketänderung. Keine ausstehende Prüfung als bestanden markieren. Exakte neue Kopf-/Lauf-/Merge-IDs im PR-Protokoll festhalten.
