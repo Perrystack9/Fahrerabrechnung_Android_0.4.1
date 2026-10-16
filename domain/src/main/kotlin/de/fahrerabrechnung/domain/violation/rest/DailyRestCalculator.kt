@@ -83,11 +83,15 @@ object DailyRestCalculator {
                     observed, path.anchor, choice, path.counter, candidates, path.methodRestrictions, checkCancellation) }
                 val standard = evaluatedWindows.firstOrNull { it.first.mode == RestWindowMode.SOLO_24 }?.second
                 // A proved legal route supersedes the arithmetic failure of a shorter inapplicable window.
-                val fulfilled = evaluatedWindows.filter { it.second.options.any { o -> o.eligibility == RestEligibility.PROVED } }
+                val fulfilled = evaluatedWindows.filter { it.second.state == RestWindowState.FULFILLED }
                 val retained = if (fulfilled.isEmpty()) evaluatedWindows else fulfilled
                 for ((choice, window) in retained) {
                     checkCancellation()
                     windows[window.id] = window
+                    needs += RestContexts.transportConflicts(snapshot, InputRange(window.referenceStart,
+                        minOf(window.deadline, observed))).map { point ->
+                        ContextNeed(ContextKey.TRANSPORT_KIND, null, null, "RECORDED_TRANSPORT_CONTEXT_CONFLICT", point.timeUtc)
+                    }
                     if (choice.mode != RestWindowMode.SOLO_24 && standard?.state != RestWindowState.FULFILLED &&
                         (window.options.isNotEmpty() || window.potentialDeficitSeconds < (standard?.potentialDeficitSeconds ?: 0)))
                         needs += choice.needs
@@ -139,7 +143,8 @@ object DailyRestCalculator {
                             val restrictions = frozen((rest.restrictions + RestRestriction.Q07_SUCCESSIVE_WINDOW_INTERPRETATION_OPEN).distinct())
                             val anchor = RestAnchor(rest.id, rest.range, RestAnchorMethod.Q07_LATE_REST_END, false, restrictions)
                             anchors += anchor
-                            val counter = afterWeekly(rest, anchor, counterAfterCoverage(path.counter, window))
+                            val coveredCounter = counterAfterCoverage(path.counter, window)
+                            val counter = if (factsCovered(window)) afterWeekly(rest, anchor, coveredCounter) else coveredCounter
                             enqueue(Path(anchor.at, anchor, counter, path.serviceUses, path.historyFrom, restrictions, must))
                         } else if (candidates.any { !it.actualEndProved && it.range.start < window.deadline && it.range.end >= observed &&
                                 it.eligibility != RestEligibility.REJECTED }) {
@@ -198,15 +203,18 @@ object DailyRestCalculator {
             assessmentWindowIds = frozen((a.assessmentWindowIds + b.assessmentWindowIds).distinct().sorted()))
     }
 
+    private fun factsCovered(window: DailyRestWindow) = window.coverage.factualPrerequisitesCovered &&
+        window.coverage.excludedScope.isEmpty() && RestRestriction.SCOPE_UNDETERMINED !in window.restrictions
+
     private fun counterAfterCoverage(counter: DailyReductionCounter, window: DailyRestWindow): DailyReductionCounter =
-        if (window.coverage.factualPrerequisitesCovered && window.coverage.excludedScope.isEmpty()) counter else
+        if (factsCovered(window)) counter else
             DailyReductionCounter(counter.weeklyAnchor, 0, null, counter.reductions,
                 listOf(RestRestriction.LEFT_REDUCTION_HISTORY_MISSING, RestRestriction.ACTIVITY_GAP))
 
     private fun nextCounter(path: Path, window: DailyRestWindow, option: DailyRestOption,
         rest: RestCandidate): DailyReductionCounter {
         var counter = counterAfterCoverage(path.counter, window)
-        if (option.consumesReduction && window.coverage.factualPrerequisitesCovered && window.coverage.excludedScope.isEmpty()) {
+        if (option.consumesReduction && factsCovered(window)) {
             val id = InputRevision.hash("m3-daily-reduction") {
                 instant(window.referenceStart); text(rest.id)
             }
@@ -221,7 +229,7 @@ object DailyRestCalculator {
             restrictions = frozen((counter.restrictions + RestRestriction.L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED).distinct()))
         if (option.restrictions.isNotEmpty()) counter = counter.copy(restrictions = frozen((counter.restrictions + option.restrictions).distinct()))
         val anchor = RestAnchor(rest.id, rest.range, RestAnchorMethod.ACTUAL_REST_END, true, option.restrictions)
-        return if (window.coverage.factualPrerequisitesCovered && window.coverage.excludedScope.isEmpty())
+        return if (factsCovered(window))
             afterWeekly(rest, anchor, counter) else counter
     }
 

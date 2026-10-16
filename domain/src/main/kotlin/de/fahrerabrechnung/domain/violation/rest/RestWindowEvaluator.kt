@@ -153,6 +153,7 @@ internal object RestWindowEvaluator {
         val range = InputRange(start, through)
         val coverage = InputCoverage.forRule(snapshot, range,
             RuleInputRequirement("R01–R07", setOf(InputDependency.ACTIVITY, InputDependency.SCOPE), ScopeArticle.DAILY_REST_8))
+        val transportConflict = RestContexts.transportConflicts(snapshot, range).isNotEmpty()
         val options = options(start, through, choice, counter, candidates, check)
         var score = potential(start, through, deadline, choice, counter, candidates, check)
         val regular = options.firstOrNull { it.eligibility == RestEligibility.PROVED && it.kind != DailyRestKind.REDUCED }
@@ -164,7 +165,7 @@ internal object RestWindowEvaluator {
         val restrictions = linkedSetOf<RestRestriction>()
         restrictions += choice.restrictions; restrictions += methodRestrictions
         if (!coverage.factualPrerequisitesCovered) restrictions += RestRestriction.ACTIVITY_GAP
-        if (coverage.gaps.any { it.dependency == InputDependency.SCOPE }) restrictions += RestRestriction.SCOPE_UNDETERMINED
+        if (transportConflict || coverage.gaps.any { it.dependency == InputDependency.SCOPE }) restrictions += RestRestriction.SCOPE_UNDETERMINED
         if (coverage.excludedScope.isNotEmpty()) restrictions += RestRestriction.SCOPE_EXCLUDED
         when (RestLawVersions.phase(range, RestLawVersions.base)) {
             RestDatePhase.BEFORE -> restrictions += RestRestriction.BEFORE_561_TEMPORAL_SCOPE
@@ -173,7 +174,7 @@ internal object RestWindowEvaluator {
         }
         restrictions += score.restrictions
         val state = when {
-            !coverage.factualPrerequisitesCovered || coverage.excludedScope.isNotEmpty() -> RestWindowState.INDETERMINATE
+            transportConflict || !coverage.factualPrerequisitesCovered || coverage.excludedScope.isNotEmpty() -> RestWindowState.INDETERMINATE
             options.any { it.eligibility == RestEligibility.PROVED } -> RestWindowState.FULFILLED
             options.isNotEmpty() -> RestWindowState.INDETERMINATE
             score.deficit > 0 -> RestWindowState.NORMAL_RULE_DEFICIT

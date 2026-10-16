@@ -65,7 +65,10 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
         fun source(id: String, generation: String): InputSource = InputSource(InputSourceKey("P1", "C1", id, "raw-$id", generation,
             if (generation == "GEN1") "GEN1" else "GEN2", "B1", "run-$id"),
             listOf(FileEvidence(InputFamily.ACTIVITIES, 0x0504, FileAvailability.PRESENT, "raw-$id", "digest-$id"),
-                FileEvidence(InputFamily.SPECIAL_CONDITIONS, 0x0522, FileAvailability.EMPTY, "conditions-$id", "empty")), emptyList())
+                FileEvidence(InputFamily.SPECIAL_CONDITIONS, 0x0522, FileAvailability.EMPTY, "conditions-$id", "empty")) +
+                if (pointsExtra.any { it.family == InputFamily.LOAD_TYPE && it.source.sessionId == id })
+                    listOf(FileEvidence(InputFamily.LOAD_TYPE, 0x0530, FileAvailability.PRESENT, "load-$id", "synthetic-load-$id"))
+                else emptyList(), emptyList())
         val sources = mutableListOf(source("S1", "GEN1"))
         if (extraIdenticalSource || conflictingCrewSource) sources += source("S2", "GEN2V2")
         val subject = ContextSubject(ContextSubjectKind.PROFILE, "P1")

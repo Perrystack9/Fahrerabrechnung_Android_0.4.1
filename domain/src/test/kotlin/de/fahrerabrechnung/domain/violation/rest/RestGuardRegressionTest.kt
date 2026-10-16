@@ -94,4 +94,25 @@ class RestGuardRegressionTest {
         assertTrue(r.windows.any { it.referenceStart==t.plusSeconds(1380*60L) && it.state==RestWindowState.FULFILLED })
         assertFalse(r.establishesLegalAllClear)
     }
+    @Test fun ContraryRecordedPassengerPointGuardsTheAffectedWindowWithoutExtrapolatingAFakePeriod() {
+        val f=RestFixture(priorReductions=3).w(781).r(660).loadMarker(t.plusSeconds(60),2)
+        val r=DailyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.windows.filter {it.referenceStart==t}.all {
+            it.state==RestWindowState.INDETERMINATE && RestRestriction.SCOPE_UNDETERMINED in it.restrictions })
+        assertTrue(r.findings.none {it.normalRuleDeficitIsProved})
+        assertTrue(r.finalCounters.all {it.provenRemaining==null})
+        assertTrue(r.contextNeeds.any {it.key==ContextKey.TRANSPORT_KIND && it.at==t.plusSeconds(60)})
+        // A compatible earlier point is not itself a completeness proof; it creates no new restriction either.
+        val compatible=DailyRestCalculator.calculate(RestFixture(priorReductions=3).w(720).loadMarker(t.plusSeconds(60),1).snapshot())
+        assertEquals(3600L,compatible.windows.single {it.referenceStart==t}.provenSecondsUntilLatestRestStart)
+    }
+    @Test fun ContraryGoodsPointDoesNotTurnAnOccasionalPassengerProfileIntoAProvedTwentyFiveHourException() {
+        val f=RestFixture(priorReductions=3,passengers=true,occasional=true)
+            .service(t,t.plusSeconds(6*86400L)).dl(420).w(375).r(660).loadMarker(t.plusSeconds(60),1)
+        val r=DailyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.windows.filter {it.referenceStart==t}.all {it.state==RestWindowState.INDETERMINATE})
+        assertTrue(r.findings.none {it.normalRuleDeficitIsProved})
+        assertTrue(r.finalCounters.all {it.provenRemaining==null})
+    }
+
 }

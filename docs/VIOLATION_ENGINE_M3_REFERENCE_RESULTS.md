@@ -4,7 +4,7 @@ Stand16.10.2026, Entwicklungsstand vor der technischen Gesamtprüfung. Sollwerte
 
 ## Tatsächlich ausgeführter Domainlauf
 
-162 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und78 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
+164 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und80 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
 
 | Feste Referenz | Implementierte Methode/Klasse und Soll, durch Assertions geprüft |
 |---|---|
@@ -19,10 +19,10 @@ Stand16.10.2026, Entwicklungsstand vor der technischen Gesamtprüfung. Sollwerte
 | LG81/82/83/84 | `RestSpecialReferenceTest.LG81…`/`LG82…`/`LG83…`/`LG84…`:660min Netto bei2×30min Unterbrechung erfüllt;61min/3 Unterbrechungen nicht. G1 benötigt keinen erfundenen Endpunkt;270+270 unterbrochen sind keine reduzierte9h-Tagesruhe. Fehlender konkreter Kontext bleibt bedingt. |
 | LG85/86/87/110 | `RestCandidatesTest.LG85…`/`LG86…`/`LG87And110…` und Kontextrevision:unterbrochene Wochenruhe erst ab20.08.2020;479/480min geplante Fahrt sowie Kabine separat. Unbekannt→belegte Antwort bewertet neu, Original-/Tätigkeitsdaten unverändert. |
 | LG88/109 | `RestSpecialReferenceTest.LG88…`/`LG109…`, `RestCandidatesTest.LG109All…`:3+9 mit unterbrochenem zweiten Teil; Nettogrenzen659/660,1439/1440,2699/2700 statt verstrichener Zeit. Konkreter659min-Fährfall:19:00 mathematische Grenze,19:01 erste Fehlminute. |
-| Eingangs-/Sicherheitsgrenzen | `RestGuardRegressionTest`, weitere Kandidaten-/Tagesmethoden:Scope/AETR/50km, vor2007, offene echte Enden, Datenkonflikt/Unknown, spätere bekannte Teilzeit, Kontexttransfer ohne Originaländerung, UTC/DST/Zonenwechsel, Reimport/alle Ursprünge, Abbruch und Ressourcenlimit ohne garantierte Teilresultate. |
+| Eingangs-/Sicherheitsgrenzen | `RestGuardRegressionTest`, weitere Kandidaten-/Tagesmethoden:Scope/AETR/50km, vor2007, konkrete EF0530-Kontextwidersprüche ohne zeitliche Extrapolation, offene echte Enden, Datenkonflikt/Unknown, spätere bekannte Teilzeit, Kontexttransfer ohne Originaländerung, UTC/DST/Zonenwechsel, Reimport/alle Ursprünge, Abbruch und Ressourcenlimit ohne garantierte Teilresultate. |
 
 ## Vorbereitete echte Androidnachweise
 
-`DailyRestInstrumentedTest` enthält zehn Methoden für echte SQLCipher-Datenbank, vorhandene Parser/Importpipeline und beide Kartenanwendungen:Manual/Replay/Herkunft;Unknown;drei frühere Reduzierungen;gemeinsamer M2/M3-Flow;neue Kontextschlüssel/Reopen/verschlüsselter Header/Integrität;finaler CAS;Quellenkonflikt;AETR;gleiche Minute;offenes Ruheende. **Noch kein bestandener Androidlauf aus dieser Liste ableiten.**
+`DailyRestInstrumentedTest` enthält zehn Methoden für echte SQLCipher-Datenbank, vorhandene Parser/Importpipeline und beide Kartenanwendungen:Manual/Replay/Herkunft;Unknown;drei frühere Reduzierungen;gemeinsamer M2/M3-Flow;neue Kontextschlüssel/Reopen/verschlüsselter Header/Integrität;finaler CAS;Quellenkonflikt;AETR;gleiche Minute;offenes Ruheende. **Erfolgreich im Projekt kompiliert; noch kein bestandener Emulatorlauf aus dieser Liste ableiten.**
 
 A03/A07/A08 und RuheanteilA18/TagesankeranteilA19 sind diesem M3-Teilnachweis zugeordnet. UI-, Wochenledger-, PDF- und Releaseanteile bleiben M4–M7. Unabhängige qualifizierte Fachprüfung und Beta5–10 Berufskraftfahrer werden durch diese Autorentests nicht ersetzt.

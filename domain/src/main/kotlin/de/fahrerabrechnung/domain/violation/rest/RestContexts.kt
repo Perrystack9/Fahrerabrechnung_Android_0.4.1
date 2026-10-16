@@ -12,6 +12,18 @@ internal data class RestModeChoice(val mode: RestWindowMode, val eligibility: Re
 
 /** Reads the same contextual assertions and M2 driving slices. No routine crew confirmation. */
 internal object RestContexts {
+    /** A recorded point is a concrete obstacle, never an extrapolated transport interval. */
+    fun transportConflicts(snapshot: ViolationInputSnapshot, range: InputRange): List<InputPoint> =
+        snapshot.points.filter { point ->
+            val at = point.timeUtc
+            point.family == InputFamily.LOAD_TYPE && at != null && at >= range.start && at < range.end &&
+                when (snapshot.context.resolveAt(ContextKey.TRANSPORT_KIND, at).text) {
+                    "GOODS" -> point.fields["loadTypeRaw"] == "2"
+                    "PASSENGERS" -> point.fields["loadTypeRaw"] == "1"
+                    else -> false
+                }
+        }
+
     fun modes(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, start: Instant, observed: Instant,
         candidates: List<RestCandidate>, serviceUses: Map<String, Int>, historyFrom: Instant): List<RestModeChoice> {
         val restStart = candidates.filter { it.range.start >= start && it.eligibility != RestEligibility.REJECTED &&

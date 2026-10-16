@@ -28,6 +28,11 @@ internal class RestFixture(val start: Instant = Instant.parse("2026-09-07T00:00:
     fun d(minutes: Int, crew: Boolean = false) = apply { recorded.d(minutes, crew) }
     fun dl(minutes: Int) = apply { recorded.dl(minutes) }
     fun a(minutes: Int, crew: Boolean = false) = apply { recorded.a(minutes, crew) }
+    fun loadMarker(at: Instant, raw: Int) = apply {
+        secondApplication = true
+        points += InputPoint(InputSourceKey("P1", "C1", "S2", "raw-S2", "GEN2V2", "GEN2", "B1", "run-S2"),
+            InputFamily.LOAD_TYPE, points.size, at, mapOf("entryTimeRaw" to at.epochSecond.toString(), "loadTypeRaw" to raw.toString()))
+    }
     fun ferryMarker(at: Instant, end: Boolean = false, gen2: Boolean = true) = apply {
         secondApplication = secondApplication || gen2
         points += InputPoint(if (gen2) InputSourceKey("P1", "C1", "S2", "raw-S2", "GEN2V2", "GEN2", "B1", "run-S2")
