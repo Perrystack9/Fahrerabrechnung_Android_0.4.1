@@ -148,7 +148,7 @@ internal object WeeklyAssignments {
         stack.addLast(sequenceOf(0 to WeeklyAssignmentDraft(emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())).iterator())
         while (stack.isNotEmpty()) {
             budget.step()
-            val frame = stack.peekLast()
+            val frame = checkNotNull(stack.peekLast())
             if (!frame.hasNext()) { stack.removeLast(); continue }
             val (index, path) = frame.next()
             if (index == natural.size) accept(path) else stack.addLast(children(index, path).iterator())

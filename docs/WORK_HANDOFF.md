@@ -10,7 +10,7 @@ Tatsächlicher Merge **`ba0cf1933f8d01590d8fdef32526f1715ec8d571`**, vollständi
 
 ## Aktueller M4-Auftrag
 
-Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](VIOLATION_ENGINE_M4_IMPLEMENTATION.md). W01–W14 auf demselben M1-/M2-/M3-Snapshot: Wochenruhe, globale Pflicht-/Ausgleichszuordnung, internationale Vierwochenfälle und historische Bus-Zwölftageregel. Quellenabgleich und erste Domainimplementierung mit270 zuletzt erfolgreichen Domain-Tests; M4 noch unvollständig, kein PR/Abnahmenachweis.
+Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](VIOLATION_ENGINE_M4_IMPLEMENTATION.md). W01–W14 auf demselben M1-/M2-/M3-Snapshot: Wochenruhe, globale Pflicht-/Ausgleichszuordnung, internationale Vierwochenfälle und historische Bus-Zwölftageregel. Quellenabgleich und M4-Implementierung mit282 erfolgreichen Domain-Tests, darunter110 M4-Referenzmethoden ohne Fehler/Skip. Ruhebeginn-/End- und RED-Budgetguards ergänzt, numerische Mengenuntergrenzen korrigiert. Vollständige lokale Gates, GitHub-CI und eigene40132-Geräteprüfung noch nachzuweisen; kein M4-Abnahmenachweis.
 
 Primärquellen/Fassungen, L02/L03/L04/L09 und übrige betroffene Nachweise konkret prüfen. LG58–LG80/LG101–LG108/LG114–LG116, DT37/DT38 und A07/A09/A19 zuordnen. Keine pauschale FIFO-/Greedyentscheidung, Zusatzruhe nicht automatisch Schuld, jede Zusatzminute nur einmal;23h keine Wochenruhe und getrennte Wochen-/Tageszähler. Bedingte Voraussetzungen erzeugen keine gesicherten Budgets oder Entwarnungen. UTC rechnet, Anzeigezone verändert nichts.
 
