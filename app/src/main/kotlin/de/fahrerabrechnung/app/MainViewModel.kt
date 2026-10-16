@@ -18,7 +18,7 @@ class MainViewModel @Inject constructor(
     private val preferences: AppPreferencesRepository,
     drivingChecks: DrivingCheckRepository,
 ) : ViewModel() {
-    // Read-only M2 calculation stays active while the app is open. User-facing results follow in M5.
+    // Read-only M2/M3 calculation stays active while the app is open. User-facing results follow in M5.
     val drivingCheckState: StateFlow<DrivingCheckState> = drivingChecks.observe().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,

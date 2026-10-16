@@ -36,7 +36,7 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
     fun week(vararg minutes: Int): DrivingFixture { require(minutes.size == 7); minutes.forEach(::day); return this }
     fun snapshot(extraIdenticalSource: Boolean = false, withEnd: Boolean = true,
         contextAdditions: List<ContextAssertion> = emptyList(), pointsExtra: List<InputPoint> = emptyList(),
-        conflictingCrewSource: Boolean = false): ViolationInputSnapshot {
+        conflictingCrewSource: Boolean = false, contextTransform: (InputContext) -> InputContext = { it }): ViolationInputSnapshot {
         val all = points.toMutableList()
         if (withEnd) all += Point(cursor, ActivityType.SONSTIGE_ARBEIT, false, true, false)
         require(all.isNotEmpty())
@@ -65,7 +65,10 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
         fun source(id: String, generation: String): InputSource = InputSource(InputSourceKey("P1", "C1", id, "raw-$id", generation,
             if (generation == "GEN1") "GEN1" else "GEN2", "B1", "run-$id"),
             listOf(FileEvidence(InputFamily.ACTIVITIES, 0x0504, FileAvailability.PRESENT, "raw-$id", "digest-$id"),
-                FileEvidence(InputFamily.SPECIAL_CONDITIONS, 0x0522, FileAvailability.EMPTY, "conditions-$id", "empty")), emptyList())
+                FileEvidence(InputFamily.SPECIAL_CONDITIONS, 0x0522, FileAvailability.EMPTY, "conditions-$id", "empty")) +
+                if (pointsExtra.any { it.family == InputFamily.LOAD_TYPE && it.source.sessionId == id })
+                    listOf(FileEvidence(InputFamily.LOAD_TYPE, 0x0530, FileAvailability.PRESENT, "load-$id", "synthetic-load-$id"))
+                else emptyList(), emptyList())
         val sources = mutableListOf(source("S1", "GEN1"))
         if (extraIdenticalSource || conflictingCrewSource) sources += source("S2", "GEN2V2")
         val subject = ContextSubject(ContextSubjectKind.PROFILE, "P1")
@@ -84,6 +87,6 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
         return InputSnapshotBuilder.build(InputSources("P1", listOf("C1"), sources.mapIndexed { index, source ->
             ActivitySource(source, if (conflictingCrewSource && index == 1) recorded.map { day -> day.copy(changes = day.changes.map {
                 if (it.activity == ActivityType.BEREITSCHAFT) it.copy(rawC = false, coDriverSlot = false) else it }) } else recorded) },
-            pointsExtra, sources, emptyList(), emptyMap()), context)
+            pointsExtra, sources, emptyList(), emptyMap()), contextTransform(context))
     }
 }

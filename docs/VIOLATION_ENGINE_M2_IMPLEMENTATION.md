@@ -1,5 +1,6 @@
 # M2 – Lenkzeiten und Fahrtunterbrechungen
 
+**Fortschreibung15.10.2026:** M2 ist im tatsächlich nachgewiesenen technischen Umfang ausdrücklich abgenommen und PR90 kontrolliert integriert. [Eigener Gerätebeleg40130](DEVICE_CONFIRMATION_40130.md), [Merge und neue main-CI](M2_INTEGRATION_20261015.md). Historische offene Prüfvermerke unten bezeichnen ihren damaligen Entwicklungsstand; Rechtsfragen bleiben offen.
 Stand15.10.2026. Ausdrücklich freigegebener M2-Entwicklungsstand **40130/Room23**, eigene Implementierung auf Basis des kontrolliert integrierten M1 `3c99b7db397f307ccbe91b33fa9862e2b410a144`. **Kein M2-Merge, keine M2-Geräteabnahme oder Releasefreigabe.** Aktueller vollständiger technischer Nachweis wird commitgebunden im M2-PR-Protokoll festgehalten. [M0/M1-Integration](M0_M1_INTEGRATION_20261015.md), [Rechtsnachweise/offene Gates](VIOLATION_ENGINE_M2_LEGAL_EVIDENCE.md), [Abnahmematrix](VIOLATION_ENGINE_M2_ACCEPTANCE.md).
 
 ## Tatsächlich implementierte Komponenten
