@@ -156,4 +156,13 @@ class RestSpecialReferenceTest {
         assertTrue(r.anchors.any { it.candidateId==full.id && it.at==f.cursor })
         assertTrue(r.alternativesComplete)
     }
+    @Test fun OverlappingServiceAssertionsRemainConditionalAndRetainAllAssessmentWindows() {
+        val f=bus(safety=null).service(t,t.plusSeconds(8*86400L),id="overlap",safety=null).busDay()
+        val r=calculate(f)
+        assertTrue(r.findings.none {it.normalRuleDeficitIsProved})
+        assertTrue(r.findings.all {finding -> finding.assessmentWindowIds.all {id -> r.windows.any {it.id==id}}})
+        assertTrue(r.windows.filter {it.mode==RestWindowMode.OCCASIONAL_BUS_25}.all {
+            RestRestriction.BUS_SERVICE_PREREQUISITE_UNCONFIRMED in it.restrictions })
+    }
+
 }

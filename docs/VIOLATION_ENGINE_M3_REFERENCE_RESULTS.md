@@ -4,7 +4,7 @@ Stand16.10.2026, Entwicklungsstand vor der technischen Gesamtprüfung. Sollwerte
 
 ## Tatsächlich ausgeführter Domainlauf
 
-161 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und77 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
+162 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und78 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
 
 | Feste Referenz | Implementierte Methode/Klasse und Soll, durch Assertions geprüft |
 |---|---|

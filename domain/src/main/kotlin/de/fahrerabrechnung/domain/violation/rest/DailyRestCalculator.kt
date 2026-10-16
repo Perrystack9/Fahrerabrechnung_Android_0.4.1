@@ -101,11 +101,13 @@ object DailyRestCalculator {
                             text(window.mode.name); long(window.minimumRequiredSeconds); text(window.law.id)
                         }
                         val onset = RestWindowEvaluator.onset(window, choice, candidates, checkCancellation)
-                        findings[id] = DailyRestFinding(id, window.id, window.law, InputRange(window.referenceStart, through),
+                        val finding = DailyRestFinding(id, window.id, window.law, InputRange(window.referenceStart, through),
                             window.potentialDeficitSeconds, window.minimumRequiredSeconds, window.creditedSeconds,
                             onset?.first, onset?.second, onset?.first?.takeIf { it < through }?.let { InputRange(it, through) },
                             false, window.restrictions.isEmpty(), window.restrictions, snapshot.revision,
                             (window.potentialRestCapacitySeconds - window.creditedSeconds).coerceAtLeast(0), observed >= window.deadline)
+                        val previous = findings[id]
+                        findings[id] = if (previous == null) finding else mergeFinding(previous, finding)
                         must = must + id
                     }
                     if (window.options.isNotEmpty()) {
@@ -177,6 +179,23 @@ object DailyRestCalculator {
             frozen(resultWindows.sortedWith(compareBy({ it.referenceStart }, { it.mode.name }, { it.id }))),
             frozen(resultFindings.sortedWith(compareBy({ it.assessedRange.start }, { it.id }))), frozen(finalCounters),
             frozen(needs.distinctBy { it.id }.sortedBy { it.id }), frozen(issues.distinct()), complete, snapshot)
+    }
+
+    /** No later alternative may overwrite an earlier uncertainty with a stronger assertion. */
+    private fun mergeFinding(a: DailyRestFinding, b: DailyRestFinding): DailyRestFinding {
+        val sameQuantity = a.missingRestSeconds == b.missingRestSeconds &&
+            a.creditedRestSeconds == b.creditedRestSeconds && a.optimisticAdditionalRestSeconds == b.optimisticAdditionalRestSeconds
+        val conservative = if (a.missingRestSeconds <= b.missingRestSeconds) a else b
+        return conservative.copy(
+            quantityIsProved = a.quantityIsProved && b.quantityIsProved && sameQuantity,
+            quantityIsExact = a.quantityIsExact && b.quantityIsExact && sameQuantity,
+            mathematicalOnset = a.mathematicalOnset.takeIf { it == b.mathematicalOnset },
+            firstProvableAt = listOfNotNull(a.firstProvableAt, b.firstProvableAt).maxOrNull()
+                .takeIf { a.firstProvableAt != null && b.firstProvableAt != null },
+            affectedRange = a.affectedRange.takeIf { it == b.affectedRange },
+            restrictions = frozen((a.restrictions + b.restrictions + if (!sameQuantity)
+                listOf(RestRestriction.ALTERNATIVE_ASSIGNMENT_UNRESOLVED) else emptyList()).distinct()),
+            assessmentWindowIds = frozen((a.assessmentWindowIds + b.assessmentWindowIds).distinct().sorted()))
     }
 
     private fun counterAfterCoverage(counter: DailyReductionCounter, window: DailyRestWindow): DailyReductionCounter =

@@ -107,6 +107,7 @@ data class DailyRestFinding(
     val presentInEveryRetainedPath: Boolean, val quantityIsProved: Boolean,
     val restrictions: List<RestRestriction>, val inputRevision: String,
     val optimisticAdditionalRestSeconds: Long, val quantityIsExact: Boolean,
+    val assessmentWindowIds: List<String> = listOf(windowId),
 ) {
     init { require(missingRestSeconds > 0) }
     val normalRuleDeficitIsProved: Boolean get() = quantityIsProved && presentInEveryRetainedPath && restrictions.isEmpty()
