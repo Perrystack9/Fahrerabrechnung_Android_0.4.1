@@ -68,7 +68,7 @@ object DailyRestCalculator {
                 issues += DailyRestIssue(setOf("R01", "R02", "R03", "R04", "R05", "R06"), "ALTERNATIVE_SEARCH_LIMIT_NO_VERDICT")
                 break
             }
-            val paths = frontier.pollFirstEntry().value.values
+            val paths = checkNotNull(frontier.pollFirstEntry()).value.values
             for (path in paths) {
                 checkCancellation()
                 if (evaluated >= maxPathEvaluations) {
