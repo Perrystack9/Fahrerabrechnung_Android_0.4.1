@@ -78,6 +78,15 @@ class RestGuardRegressionTest {
         val r=DailyRestCalculator.calculate(RestFixture(priorReductions=3).w(60).r(1440).w(1).snapshot())
         assertTrue(r.finalCounters.all { it.provenRemaining==null })
         assertTrue(r.finalCounters.any { RestRestriction.WEEKLY_ASSIGNMENT_REQUIRES_M4 in it.restrictions })
+        assertTrue(r.finalCounters.all { it.reductions.size==3 })
+        assertTrue(r.finalCounters.flatMap { it.reductions }.all { event -> r.candidates.any { it.id==event.restCandidateId } })
+    }
+    @Test fun BeforeTheRegulationTookEffectThereIsNoGuaranteedCounterOr561Deficit() {
+        val s=RestFixture(Instant.parse("2006-09-07T00:00:00Z")).w(960).r(660).snapshot()
+        val r=DailyRestCalculator.calculate(s)
+        assertTrue(r.findings.isEmpty())
+        assertTrue(r.windows.all { it.provenSecondsUntilLatestRestStart==null })
+        assertTrue(r.finalCounters.all { it.provenRemaining==null })
     }
     @Test fun KnownLaterSubperiodCanResumeAfterADataGap() {
         val f=RestFixture().w(60).u(660).r(660).w(780).r(660)

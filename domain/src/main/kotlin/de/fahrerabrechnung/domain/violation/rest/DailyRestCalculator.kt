@@ -61,7 +61,7 @@ object DailyRestCalculator {
             enqueue(Path(anchor.at, anchor, counter, emptyMap(), anchor.at, candidate.restrictions, emptySet()))
         }
         var evaluated = 0
-        while (frontier.isNotEmpty()) {
+        traversal@ while (frontier.isNotEmpty()) {
             checkCancellation()
             if (evaluated >= maxPathEvaluations) {
                 complete = false
@@ -70,7 +70,13 @@ object DailyRestCalculator {
             }
             val paths = frontier.pollFirstEntry().value.values
             for (path in paths) {
-                checkCancellation(); evaluated++
+                checkCancellation()
+                if (evaluated >= maxPathEvaluations) {
+                    complete = false
+                    issues += DailyRestIssue(setOf("R01–R07"), "ALTERNATIVE_SEARCH_LIMIT_NO_VERDICT")
+                    break@traversal
+                }
+                evaluated++
                 if (observed == null || path.start >= observed) { terminal(path); continue }
                 val choices = RestContexts.modes(snapshot, drivingResult, path.start, observed, candidates, path.serviceUses, path.historyFrom)
                 val evaluatedWindows = choices.map { choice -> choice to RestWindowEvaluator.evaluate(snapshot, path.start,
@@ -175,7 +181,7 @@ object DailyRestCalculator {
 
     private fun counterAfterCoverage(counter: DailyReductionCounter, window: DailyRestWindow): DailyReductionCounter =
         if (window.coverage.factualPrerequisitesCovered && window.coverage.excludedScope.isEmpty()) counter else
-            DailyReductionCounter(counter.weeklyAnchor, 0, null, emptyList(),
+            DailyReductionCounter(counter.weeklyAnchor, 0, null, counter.reductions,
                 listOf(RestRestriction.LEFT_REDUCTION_HISTORY_MISSING, RestRestriction.ACTIVITY_GAP))
 
     private fun nextCounter(path: Path, window: DailyRestWindow, option: DailyRestOption,
@@ -206,7 +212,7 @@ object DailyRestCalculator {
             return DailyReductionCounter(anchor, 0, 0, emptyList(), emptyList())
         if (rest.weekly.any { it.eligibility != RestEligibility.REJECTED }) {
             // M4 must resolve reduced/additional/compensation assignments jointly. Never invent a debt here.
-            return DailyReductionCounter(anchor, 0, counter.maximumPossibleCount, emptyList(),
+            return DailyReductionCounter(anchor, 0, counter.maximumPossibleCount, counter.reductions,
                 frozen((counter.restrictions + RestRestriction.WEEKLY_ASSIGNMENT_REQUIRES_M4).distinct()))
         }
         return counter
@@ -218,7 +224,7 @@ object DailyRestCalculator {
             it.eligibility == RestEligibility.PROVED }.minByOrNull { it.range.end } ?: return false
         val anchor = RestAnchor(next.id, next.range, RestAnchorMethod.ACTUAL_REST_END, null, emptyList())
         anchors += anchor
-        val unknown = DailyReductionCounter(path.counter.weeklyAnchor, 0, null, emptyList(),
+        val unknown = DailyReductionCounter(path.counter.weeklyAnchor, 0, null, path.counter.reductions,
             listOf(RestRestriction.LEFT_REDUCTION_HISTORY_MISSING))
         enqueue(path.copy(start = anchor.at, anchor = anchor, counter = afterWeekly(next, anchor, unknown),
             methodRestrictions = emptyList()))

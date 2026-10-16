@@ -177,6 +177,14 @@ internal object RestCandidates {
             val limits = restrictions.toMutableSet()
             val contextIds = evidence.toMutableSet()
             val missing = needs.toMutableList()
+            when (RestLawVersions.phase(range, RestLawVersions.base)) {
+                RestDatePhase.BEFORE -> { status = RestEligibility.REJECTED; limits += RestRestriction.BEFORE_561_TEMPORAL_SCOPE }
+                RestDatePhase.UNCONFIRMED -> {
+                    if (status != RestEligibility.REJECTED) status = RestEligibility.CONDITIONAL
+                    limits += RestRestriction.HISTORICAL_ACTIVATION_UNCONFIRMED
+                }
+                RestDatePhase.AFTER -> Unit
+            }
             if (ferry) {
                 when (RestLawVersions.phase(range, RestLawVersions.ferryWeekly)) {
                     RestDatePhase.BEFORE -> status = RestEligibility.REJECTED

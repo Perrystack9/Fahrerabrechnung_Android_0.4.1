@@ -113,4 +113,32 @@ class RestCandidatesTest {
             }
         }
     }
+    @Test fun LG109AllNetWeeklyThresholdsUseNetRestAndNeverTheElapsedFerryTime() {
+        for(net in listOf(659,660,1439,1440,2699,2700)) {
+            val first=if(net>=2699) 900 else 180
+            val f=RestFixture(prefix=false).r(first).w(30).r(first).w(30).r(net-2*first)
+                .ferryMarker(t).ferryContext(t,facility="CABIN",scheduledMinutes=480)
+            val c=f.candidates().single {it.interruptions.size==2 && it.range.start==t}
+            assertEquals(net*60L,c.netRestSeconds)
+            assertEquals((net+60)*60L,java.time.Duration.between(c.range.start,c.range.end).seconds)
+            assertEquals(net>=1440,c.weekly.any {it.kind==WeeklyRestKind.REDUCED && it.eligibility==RestEligibility.PROVED})
+            assertEquals(net>=2700,c.weekly.any {it.kind==WeeklyRestKind.REGULAR && it.eligibility==RestEligibility.PROVED})
+        }
+    }
+    @Test fun SleepingFacilityNoneDoesNotBecomeAnOptimisticValidFerryRest() {
+        val f=RestFixture().w(720).r(180).w(30).r(480).ferryMarker(t.plusSeconds(720*60L))
+            .ferryContext(t.plusSeconds(720*60L),facility="NONE")
+        val c=f.candidates().single {it.interrupted && it.range.start>=t}
+        assertEquals(RestEligibility.REJECTED,c.eligibility)
+        assertTrue(RestRestriction.FERRY_FACILITY_RULED_OUT in c.restrictions)
+        assertTrue(DailyRestCalculator.calculate(f.snapshot()).windows.single().options.isEmpty())
+    }
+    @Test fun FerryBeginAtPreviousRestEndAndEndAtNewRestStartDoNotRetroactivelyReclassifyEither() {
+        val f=RestFixture().w(60).r(660).w(30);val next=f.cursor
+        f.r(660).ferryMarker(t.plusSeconds(720*60L)).ferryMarker(next,end=true)
+        val c=f.candidates().filter {it.range.start>=t && !it.interrupted}
+        assertEquals(2,c.size)
+        assertTrue(c.all {it.ferryPoints.isEmpty() && it.eligibility==RestEligibility.PROVED})
+    }
+
 }

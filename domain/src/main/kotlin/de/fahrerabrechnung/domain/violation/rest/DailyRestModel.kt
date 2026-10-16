@@ -67,6 +67,7 @@ data class DailyRestReduction(val id: String, val restCandidateId: String, val w
     val restInWindowSeconds: Long)
 data class DailyReductionCounter(
     val weeklyAnchor: RestAnchor?, val minimumObservedCount: Int, val maximumPossibleCount: Int?,
+    /** Recorded events still relevant to at least one unresolved history; size is not the definite count. */
     val reductions: List<DailyRestReduction>, val restrictions: List<RestRestriction>,
 ) {
     val exact: Boolean get() = maximumPossibleCount == minimumObservedCount && restrictions.isEmpty()

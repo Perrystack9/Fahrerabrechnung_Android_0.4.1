@@ -197,6 +197,8 @@ internal object RestWindowEvaluator {
                 if (RestLawVersions.phase(range, RestLawVersions.ferryWeekly) == RestDatePhase.AFTER) "2020-08-20" else "2007-04-11",
             sourceIds = frozen((law.sourceIds + "M3-GN6" + if (RestLawVersions.phase(range, RestLawVersions.ferryWeekly) == RestDatePhase.AFTER)
                 listOf("Q02") else emptyList()).distinct()))
+        if (RestRestriction.Q07_SUCCESSIVE_WINDOW_INTERPRETATION_OPEN in methodRestrictions)
+            law = law.copy(sourceIds = frozen((law.sourceIds + "Q07").distinct()))
         val id = InputRevision.hash("m3-rest-window") {
             text(DAILY_REST_INTERPRETATION); text(snapshot.profileId); instant(start); text(choice.mode.name)
             int(counter.minimumObservedCount); nullable(counter.maximumPossibleCount?.toString()); nullable(choice.serviceId)

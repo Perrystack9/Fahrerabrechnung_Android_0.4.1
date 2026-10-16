@@ -1,6 +1,6 @@
 # M3 – Prüfvertrag und tatsächliche Abnahme
 
-Arbeitsstand15.10.2026. **Noch keine ausgeführten M3-Produkttests oder Geräteabnahme.** Die nachfolgenden Sollwerte stammen aus den vor der Implementierung hergeleiteten [M0-Referenzen](VIOLATION_ENGINE_M0_REFERENCE_CASES.md); sie sind kein durch den Algorithmus erzeugtes Testorakel. M2 ist separat technisch abgenommen, [Integration](M2_INTEGRATION_20261015.md).
+Arbeitsstand16.10.2026.161 isolierte Domainmethoden erfolgreich; [konkrete Zuordnung](VIOLATION_ENGINE_M3_REFERENCE_RESULTS.md). **Noch keine abgeschlossene technische Gesamtprüfung oder Geräteabnahme.** Die nachfolgenden Sollwerte stammen aus den vor der Implementierung hergeleiteten [M0-Referenzen](VIOLATION_ENGINE_M0_REFERENCE_CASES.md); sie sind kein durch den Algorithmus erzeugtes Testorakel. M2 ist separat technisch abgenommen, [Integration](M2_INTEGRATION_20261015.md).
 
 ## Fachliche Vektoren
 
