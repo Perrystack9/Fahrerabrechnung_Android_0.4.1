@@ -4,7 +4,7 @@ Stand16.10.2026, Entwicklungsstand vor der technischen Gesamtprüfung. Sollwerte
 
 ## Tatsächlich ausgeführter Domainlauf
 
-164 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und80 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
+165 JUnit-Methoden erfolgreich:84 bestehende M1/M2 und81 neue M3. Ausführung mit Kotlin2.3.21 aus der SHA256-geprüften Gradle9.6.1-Distribution und JUnit4.13.2. Dieser isolierte Nachweis ist ausdrücklich noch kein projektkonfigurierter Kotlin2.4.20-, Android-, SQLCipher-, CI- oder Gerätebeleg. Die vollständigen Projektergebnisse werden im Abnahmebericht separat eingetragen.
 
 | Feste Referenz | Implementierte Methode/Klasse und Soll, durch Assertions geprüft |
 |---|---|
@@ -12,7 +12,7 @@ Stand16.10.2026, Entwicklungsstand vor der technischen Gesamtprüfung. Sollwerte
 | LG42/43 | `LG42…`/`LG43…`:vier900+540-Tage; vierter120min Fehlmenge. Beobachtete Zähler0/1/2/3 ohne Montagsreset. |
 | LG44/45 | `LG44…`, drei`LG45…`:3+9 ergibt720min;179/539 verfehlen den jeweiligen Teil.9+3 löscht eine vorher gültige9h-Ruhe nicht. |
 | LG46/47 | `LG46…`/`LG47…`:960+660→480 statt540 im ersten Fenster,60min fehlen, tatsächliches Ende+27h. Drei1080+360-Fenster je180min Fehlmenge, Q07 ausdrücklich gekennzeichnet. |
-| LG48/49/100 | `LG48…`/`LG49…`/`LG100…` und `RestGuardRegressionTest.PrepWork…`:Crew9h in30h;1261+540 lässt539min,60s fehlen.61min belegte Solofahrt schließt Crew aus; vorbereitende Arbeit startet nicht die optionale Fahrstunde. Unbekannt/manuelles c-Bit ist kein Crewbeweis. |
+| LG48/49/100 | `LG48…`/`LG49…`/`LG100…` und `RestGuardRegressionTest.PrepWork…`:Crew9h in30h;1261+540 lässt539min,60s fehlen.61min belegte Solofahrt schließt Crew aus; vorbereitende Arbeit startet nicht die optionale Fahrstunde. Unbekannt/manuelles c-Bit ist kein Crewbeweis. Frühere Crew-Beifahrerbereitschaft plus spätere Solofahrt erzeugt keine unbewiesen neue sichere Anfangsstunde (L09). |
 | LG50–53/98 | `RestSpecialReferenceTest.LG50…`/`LG51…`/`LG52…`/`LG53…`/`OrdinaryOnTimeDays…`:420 Fahrt+45 Pause+375 Arbeit+660 Ruhe=1500.6-Tage-Dienst einmal,8-Tage-Dienst zweimal; nächste Ausnahme nicht verfügbar.421 Fahrt oder5 Tage scheitern. Unbekannter Sicherheitsvorbehalt bleibt bedingt. Normale rechtzeitige24h-Tage verbrauchen keinen Ausnahmeplatz. |
 | LG54/101–103, Tagesanteile | `LG54…`/`LG101…` und `RestCandidatesTest.LG101And103…`:23h/1439min kein Wochenreset;1440/2699/2700 nur zeitliche Wochenkandidaten.45h bilden ihren tatsächlichen vollen Endanker. M4-Zuordnung bleibt gesperrt, vorhandene Ursprungsereignisse bleiben erreichbar. |
 | LG55/56/57/99 | `LG55…`/beide`LG56…`/`LG57…`/`LG99…` und `FuturePossibleRest…`/`RecordedRestIsCredited…`:bei Datenstand12:00 noch3600s bis11h-Beginn;13:01 irreversible60s.0min tatsächlich aufgezeichnete Ruhe bleibt0,659min mögliche Zukunft sind nur Kapazität. Unknown660min erzeugt weder Ruhe noch gesicherte Fehlruhe/Entwarnung. Bekannter manueller Nachtrag zählt. |

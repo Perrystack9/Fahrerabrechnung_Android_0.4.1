@@ -60,11 +60,21 @@ internal object RestContexts {
         val contraryLater = optionalEnd != null && intervals.any { it.range.end > optionalEnd &&
             it.meaning.quality == InputQuality.KNOWN && it.meaning.activity != ActivityType.PAUSE_RUHE &&
             it.meaning.crew == CrewEvidence.SOLO }
+        // A preceding crew/co-driver availability may already belong to a moving crew journey.
+        // It proves no vehicle movement on its own, so it neither starts a certain clock nor grants
+        // another certain optional hour when later recorded solo driving would depend on that choice.
+        val earlierCrewAvailability = intervals.filter { it.meaning.quality == InputQuality.KNOWN &&
+            it.meaning.activity == ActivityType.BEREITSCHAFT && it.meaning.crew == CrewEvidence.CREW &&
+            it.meaning.slot == SlotEvidence.CO_DRIVER && (first == null || it.range.start < first) }
+            .minOfOrNull { maxOf(start, it.range.start) }
+        val ambiguousOptionalStart = earlierCrewAvailability != null && intervals.any {
+            it.meaning.quality == InputQuality.KNOWN && it.meaning.activity == ActivityType.LENKZEIT &&
+                it.meaning.crew == CrewEvidence.SOLO && it.range.end > earlierCrewAvailability.plusSeconds(3600) }
         val coverage = InputCoverage.forRule(snapshot, range, RuleInputRequirement("R05", setOf(InputDependency.ACTIVITY)))
         val unrecorded = intervals.any { it.meaning.quality != InputQuality.KNOWN ||
             (it.meaning.activity != ActivityType.PAUSE_RUHE && (it.meaning.crew !in setOf(CrewEvidence.SOLO, CrewEvidence.CREW) ||
                 it.meaning.slot in setOf(SlotEvidence.NOT_RELEVANT, SlotEvidence.CONFLICT))) }
-        if (!coverage.factualPrerequisitesCovered || unrecorded || contraryLater) return RestEligibility.CONDITIONAL
+        if (!coverage.factualPrerequisitesCovered || unrecorded || contraryLater || ambiguousOptionalStart) return RestEligibility.CONDITIONAL
         return if (hasCrew) RestEligibility.PROVED else RestEligibility.REJECTED
     }
 

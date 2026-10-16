@@ -115,4 +115,14 @@ class RestGuardRegressionTest {
         assertTrue(r.finalCounters.all {it.provenRemaining==null})
     }
 
+    @Test fun EarlierCrewAvailabilityDoesNotGrantAnUnprovedSecondOptionalHourForLaterSoloDriving() {
+        val f=RestFixture().a(120,crew=true).d(60).d(210,crew=true).a(45,crew=true)
+            .w(555,crew=true).d(270,crew=true).r(540)
+        val r=DailyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.windows.filter {it.referenceStart==t}.all {
+            RestRestriction.CREW_PREREQUISITE_UNCONFIRMED in it.restrictions && it.provenSecondsUntilLatestRestStart==null })
+        assertTrue(r.findings.none {it.normalRuleDeficitIsProved})
+        assertTrue(r.contextNeeds.none {it.reason.contains("CREW")})
+    }
+
 }
