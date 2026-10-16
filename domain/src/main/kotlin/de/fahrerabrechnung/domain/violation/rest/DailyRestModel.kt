@@ -18,7 +18,7 @@ enum class RestRestriction {
     L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED, BUS_SERVICE_PREREQUISITE_UNCONFIRMED,
     BUS_SERVICE_HISTORY_INCOMPLETE, BUS_REDUCED_25_HOUR_INTERPRETATION_OPEN,
     WEEKLY_ASSIGNMENT_REQUIRES_M4, OPEN_REST_CLASSIFICATION_PENDING,
-    ALTERNATIVE_ASSIGNMENT_UNRESOLVED, COMPUTATION_LIMIT_REACHED,
+    ALTERNATIVE_ASSIGNMENT_UNRESOLVED, COMPUTATION_LIMIT_REACHED, L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED,
 }
 
 /** Actual M1 intervals only; no hypothetical future rest is materialised as a slice. */
@@ -37,19 +37,25 @@ data class RestCandidate(
     val interruptions: List<RestInterruption>, val actualEndProved: Boolean,
     val eligibility: RestEligibility, val restrictions: List<RestRestriction>,
     val ferryPoints: List<InputPoint>, val contextEvidence: List<String>, val needs: List<ContextNeed>,
-    val weekly: List<WeeklyRestQualification>,
+    val weekly: List<WeeklyRestQualification>, val allocation: DailyRestAllocation? = null,
 ) {
     init {
         require(rest.isNotEmpty() && rest.zipWithNext().all { (a, b) -> a.range.end <= b.range.start })
         require(rest.first().range.start == range.start && rest.last().range.end == range.end)
     }
     val netRestSeconds: Long get() = rest.sumOf { it.seconds }
+    val creditRest: List<RestSlice> get() = allocation?.credit ?: rest
+    val dailyRestSeconds: Long get() = creditRest.sumOf { it.seconds }
+    val effectiveWeekly: List<WeeklyRestQualification> get() = allocation?.weekly ?: weekly
     val interrupted: Boolean get() = interruptions.isNotEmpty()
     val interruptionSeconds: Long get() = interruptions.sumOf { it.seconds }
     val recordedFerryEnd: Boolean get() = ferryPoints.any {
         it.fields["typeRaw"] == "4" && it.source.generation != "GEN1" && it.timeUtc != null
     }
     fun restSecondsThrough(at: Instant): Long = rest.sumOf {
+        if (at <= it.range.start) 0 else Duration.between(it.range.start, minOf(at, it.range.end)).seconds
+    }
+    fun dailyRestSecondsThrough(at: Instant): Long = creditRest.sumOf {
         if (at <= it.range.start) 0 else Duration.between(it.range.start, minOf(at, it.range.end)).seconds
     }
 }

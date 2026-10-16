@@ -27,7 +27,7 @@ internal object RestContexts {
     fun modes(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, start: Instant, observed: Instant,
         candidates: List<RestCandidate>, serviceUses: Map<String, Int>, historyFrom: Instant): List<RestModeChoice> {
         val restStart = candidates.filter { it.range.start >= start && it.eligibility != RestEligibility.REJECTED &&
-            it.netRestSeconds >= if (it.interrupted) 39600 else 32400 }.minByOrNull { it.range.end }?.range?.start
+            it.dailyRestSeconds >= if (it.interrupted) 39600 else 32400 }.minByOrNull { it.range.end }?.range?.start
         val crewEnd = minOf(restStart ?: observed, start.plusSeconds(RestWindowMode.CREW_30.seconds), observed)
         val crew = crew(snapshot, start, crewEnd)
         if (crew == RestEligibility.PROVED) return listOf(RestModeChoice(RestWindowMode.CREW_30, crew))

@@ -11,7 +11,7 @@ internal data class RestScore(val required: Long, val capacity: Long, val actual
 
 internal object RestWindowEvaluator {
     private fun seconds(start: Instant, end: Instant) = Duration.between(start, end).seconds.coerceAtLeast(0)
-    private fun credit(candidate: RestCandidate, start: Instant, through: Instant): Long = candidate.rest.sumOf {
+    private fun credit(candidate: RestCandidate, start: Instant, through: Instant): Long = candidate.creditRest.sumOf {
         val from = maxOf(start, it.range.start); val end = minOf(through, it.range.end)
         if (from < end) seconds(from, end) else 0
     }
@@ -73,7 +73,7 @@ internal object RestWindowEvaluator {
         val firstCandidates = result.filter { it.actualEnd == firstRegular }.flatMap { it.candidates }.toSet()
         return frozen(result.filter { option -> firstRegular == null || option.actualEnd?.let { it <= firstRegular } != false ||
             option.candidates.any { id -> usable.any { it.id == id && it.interrupted &&
-                it.rest.any { slice -> slice.range.end == firstRegular } && firstCandidates.isNotEmpty() } } }
+                it.creditRest.any { slice -> slice.range.end == firstRegular } && firstCandidates.isNotEmpty() } } }
             .distinctBy { it.id }.sortedWith(compareBy({ it.actualEnd }, { it.kind.name }, { it.id })))
     }
 
@@ -100,7 +100,7 @@ internal object RestWindowEvaluator {
         }
         fun available(candidate: RestCandidate): Long {
             val actual = credit(candidate, start, cut)
-            val latest = candidate.rest.lastOrNull { it.range.start < cut } ?: return 0
+            val latest = candidate.creditRest.lastOrNull { it.range.start < cut } ?: return 0
             val tail = latest.range.end >= cut && (latest.range.end > cut || !candidate.actualEndProved)
             if (tail) return actual + future
             // Hypothetical continuation of a ferry rest after an already elapsed interruption.
@@ -187,7 +187,7 @@ internal object RestWindowEvaluator {
             else -> RestWindowState.OPEN
         }
         val firstPart = candidates.any { it.eligibility != RestEligibility.REJECTED && it.range.start >= start &&
-            it.range.end <= through && it.netRestSeconds >= 10800 }
+            it.range.end <= through && it.dailyRestSeconds >= 10800 }
         val futureMinimum = if (choice.mode == RestWindowMode.CREW_30 || counter.minimumObservedCount < 3 || firstPart) 32400L else 39600L
         val inRest = candidates.any { it.range.start < through && it.range.end >= through && !it.actualEndProved }
         val budget = seconds(start, deadline) - seconds(start, through) - futureMinimum
