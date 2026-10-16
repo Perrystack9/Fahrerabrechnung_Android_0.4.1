@@ -2,6 +2,8 @@ package de.fahrerabrechnung.data.violation
 
 import de.fahrerabrechnung.domain.violation.driving.DrivingCalculation
 import de.fahrerabrechnung.domain.violation.driving.DrivingCalculator
+import de.fahrerabrechnung.domain.violation.rest.DailyRestCalculation
+import de.fahrerabrechnung.domain.violation.rest.DailyRestCalculator
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +20,8 @@ import kotlinx.coroutines.withContext
 sealed interface DrivingCheckState {
     data object Preparing : DrivingCheckState
     data object NoProfile : DrivingCheckState
-    data class Ready(val calculation: DrivingCalculation) : DrivingCheckState
-    data class Failed(val reason: String = "DRIVING_CALCULATION_FAILED") : DrivingCheckState
+    data class Ready(val calculation: DrivingCalculation, val dailyRest: DailyRestCalculation) : DrivingCheckState
+    data class Failed(val reason: String = "TIME_CALCULATION_FAILED") : DrivingCheckState
 }
 
 /** Automatic read-only recalculation after M1 publishes an entire committed import/context. */
@@ -37,11 +39,14 @@ class DrivingCheckRepository @Inject constructor(
                 is ViolationInputState.Ready -> try {
                     val result = withContext(Dispatchers.Default) {
                         val context = currentCoroutineContext()
-                        DrivingCalculator.calculate(state.snapshot, checkCancellation = { context.ensureActive() })
+                        val driving = DrivingCalculator.calculate(state.snapshot, checkCancellation = { context.ensureActive() })
+                        val rest = DailyRestCalculator.calculate(state.snapshot, driving,
+                            checkCancellation = { context.ensureActive() })
+                        DrivingCheckState.Ready(driving, rest)
                     }
                     currentCoroutineContext().ensureActive()
                     // A newer outer commit may win while the arithmetic runs. Never expose the old result.
-                    adapter.publishIfCurrent(state.snapshot) { trySend(DrivingCheckState.Ready(result)).getOrThrow() }
+                    adapter.publishIfCurrent(state.snapshot) { trySend(result).getOrThrow() }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {

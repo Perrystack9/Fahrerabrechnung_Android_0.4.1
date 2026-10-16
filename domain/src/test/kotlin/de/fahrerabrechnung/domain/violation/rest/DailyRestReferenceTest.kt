@@ -119,8 +119,8 @@ class DailyRestReferenceTest {
         assertEquals(60L, r.targetFindings().single().missingRestSeconds)
     }
     @Test fun LG49SoloAfterTheOptionalHourDisprovesCrewQualification() {
-        val f = RestFixture().w(60, crew = true).w(60).w(555, crew = true)
-            .d(270, crew = true).a(45, crew = true).d(270, crew = true).r(540)
+        val f = RestFixture().w(675, crew = true).d(61)
+            .d(209, crew = true).a(45, crew = true).d(270, crew = true).r(540)
         val r = calculate(f)
         assertEquals(RestWindowMode.SOLO_24, r.at(t).mode)
         assertTrue(r.targetFindings().isNotEmpty())
@@ -163,8 +163,8 @@ class DailyRestReferenceTest {
     @Test fun LG57UnknownElevenHoursNeverBecomeRestOrAConfirmedInfringement() {
         val r = calculate(RestFixture().w(780).u(660))
         assertTrue(r.targetFindings().isEmpty())
-        assertEquals(RestWindowState.INDETERMINATE, r.at(t).state)
-        assertNull(r.at(t).provenSecondsUntilLatestRestStart)
+        assertTrue(r.windows.filter { it.referenceStart == t }.all { it.state == RestWindowState.INDETERMINATE })
+        assertTrue(r.windows.filter { it.referenceStart == t }.all { it.provenSecondsUntilLatestRestStart == null })
         assertFalse(r.establishesLegalAllClear)
         assertTrue(r.candidates.none { it.range.start >= t })
     }

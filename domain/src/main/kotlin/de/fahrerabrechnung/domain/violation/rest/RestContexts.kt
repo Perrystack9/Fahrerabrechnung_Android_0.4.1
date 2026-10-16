@@ -36,19 +36,23 @@ internal object RestContexts {
         val intervals = snapshot.intervals.filter { it.range.overlaps(range) }
         val hasCrew = intervals.any { it.meaning.quality == InputQuality.KNOWN &&
             it.meaning.crew == CrewEvidence.CREW && it.meaning.activity != ActivityType.PAUSE_RUHE }
+        // Art.4(o), TRACE II example3: preparatory other work does not start the optional driving hour.
         val first = intervals.firstOrNull { it.meaning.quality == InputQuality.KNOWN &&
-            (it.meaning.activity == ActivityType.LENKZEIT ||
-                (it.meaning.crew == CrewEvidence.CREW && it.meaning.activity != ActivityType.PAUSE_RUHE)) }
-            ?.range?.start?.let { maxOf(it, start) } ?: start
-        val optionalEnd = first.plusSeconds(3600)
-        val knownSoloLater = intervals.any { it.range.end > optionalEnd && it.meaning.quality == InputQuality.KNOWN &&
-            it.meaning.activity != ActivityType.PAUSE_RUHE && it.meaning.crew == CrewEvidence.SOLO }
+            it.meaning.activity == ActivityType.LENKZEIT }?.range?.start?.let { maxOf(it, start) }
+        val optionalEnd = first?.plusSeconds(3600)
+        val knownSoloLater = optionalEnd != null && intervals.any { it.range.end > optionalEnd &&
+            it.meaning.quality == InputQuality.KNOWN && it.meaning.activity == ActivityType.LENKZEIT &&
+            it.meaning.crew == CrewEvidence.SOLO }
         if (knownSoloLater) return RestEligibility.REJECTED
+        // Contrary non-driving markers after the beginning of driving are not an invented crew fact.
+        val contraryLater = optionalEnd != null && intervals.any { it.range.end > optionalEnd &&
+            it.meaning.quality == InputQuality.KNOWN && it.meaning.activity != ActivityType.PAUSE_RUHE &&
+            it.meaning.crew == CrewEvidence.SOLO }
         val coverage = InputCoverage.forRule(snapshot, range, RuleInputRequirement("R05", setOf(InputDependency.ACTIVITY)))
         val unrecorded = intervals.any { it.meaning.quality != InputQuality.KNOWN ||
             (it.meaning.activity != ActivityType.PAUSE_RUHE && (it.meaning.crew !in setOf(CrewEvidence.SOLO, CrewEvidence.CREW) ||
                 it.meaning.slot in setOf(SlotEvidence.NOT_RELEVANT, SlotEvidence.CONFLICT))) }
-        if (!coverage.factualPrerequisitesCovered || unrecorded) return RestEligibility.CONDITIONAL
+        if (!coverage.factualPrerequisitesCovered || unrecorded || contraryLater) return RestEligibility.CONDITIONAL
         return if (hasCrew) RestEligibility.PROVED else RestEligibility.REJECTED
     }
 
@@ -72,6 +76,7 @@ internal object RestContexts {
         val serviceEntries = snapshot.context.assertions.filter { it.key == ContextKey.SINGLE_OCCASIONAL_SERVICE &&
             it.from <= start && (it.until == null || it.until > start) }.groupBy { it.subject }
         val common = linkedSetOf<RestRestriction>()
+        if (serviceEntries.size > 1) common += RestRestriction.BUS_SERVICE_PREREQUISITE_UNCONFIRMED
         if (phase != RestDatePhase.AFTER) common += RestRestriction.HISTORICAL_ACTIVATION_UNCONFIRMED
         if (!coverage.factualPrerequisitesCovered || coverage.excludedScope.isNotEmpty()) common += RestRestriction.ACTIVITY_GAP
         if (serviceEntries.isEmpty()) return listOf(RestModeChoice(RestWindowMode.OCCASIONAL_BUS_25, RestEligibility.CONDITIONAL,

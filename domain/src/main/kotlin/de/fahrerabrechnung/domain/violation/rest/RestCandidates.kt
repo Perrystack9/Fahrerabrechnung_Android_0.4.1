@@ -141,6 +141,9 @@ internal object RestCandidates {
             evidence += transfer.evidence.map { it.semanticId }
             if (transfer.conflict) conditional(RestRestriction.TRAVEL_REST_PREREQUISITE_UNCONFIRMED)
         }
+        // A context-created boundary must retain the assertion that actually cuts the recorded rest.
+        evidence += snapshot.context.assertions.filter { it.key == ContextKey.TRANSFER_REQUIRES_OTHER_WORK &&
+            (it.from == range.end || it.until == range.start) }.map { it.semanticId }
         val subject = snapshot.context.assertions.filter { it.covers(range) && it.subject.kind in
             setOf(ContextSubjectKind.REST, ContextSubjectKind.JOURNEY) && it.key in
             setOf(ContextKey.FERRY_SLEEPING_FACILITY, ContextKey.FERRY_ACCOMPANIES_VEHICLE, ContextKey.FERRY_SCHEDULED_MINUTES) }
@@ -159,7 +162,9 @@ internal object RestCandidates {
             val accompanies = read(ContextKey.FERRY_ACCOMPANIES_VEHICLE)
             val facility = read(ContextKey.FERRY_SLEEPING_FACILITY)
             if (accompanies.flag == false) conditional(RestRestriction.FERRY_CONTEXT_CONFLICT)
-            if (facility.text == "NONE") eligibility = RestEligibility.REJECTED
+            if (facility.text == "NONE") {
+                eligibility = RestEligibility.REJECTED; restrictions += RestRestriction.FERRY_FACILITY_RULED_OUT
+            }
             if (RestLawVersions.phase(range, RestLawVersions.ferryWeekly) != RestDatePhase.AFTER && facility.text == "CABIN")
                 conditional(RestRestriction.HISTORICAL_ACTIVATION_UNCONFIRMED)
         }

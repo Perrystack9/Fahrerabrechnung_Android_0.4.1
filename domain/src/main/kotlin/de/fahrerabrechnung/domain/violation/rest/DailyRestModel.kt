@@ -12,7 +12,7 @@ enum class RestEligibility { PROVED, CONDITIONAL, REJECTED }
 enum class RestRestriction {
     LEFT_DAILY_ANCHOR_MISSING, LEFT_REDUCTION_HISTORY_MISSING, ACTIVITY_GAP, SCOPE_UNDETERMINED, SCOPE_EXCLUDED,
     TRAVEL_REST_PREREQUISITE_UNCONFIRMED, FERRY_PREREQUISITE_MISSING, FERRY_CONTEXT_CONFLICT,
-    FERRY_INTERRUPTION_LIMIT_EXCEEDED, FERRY_SPLIT_ALLOCATION_GUIDANCE_ONLY,
+    FERRY_INTERRUPTION_LIMIT_EXCEEDED, FERRY_FACILITY_RULED_OUT, FERRY_SPLIT_ALLOCATION_GUIDANCE_ONLY,
     HISTORICAL_ACTIVATION_UNCONFIRMED, BEFORE_561_TEMPORAL_SCOPE, MIXED_HISTORICAL_VERSION,
     Q07_SUCCESSIVE_WINDOW_INTERPRETATION_OPEN, CREW_PREREQUISITE_UNCONFIRMED,
     L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED, BUS_SERVICE_PREREQUISITE_UNCONFIRMED,
@@ -85,6 +85,7 @@ data class DailyRestWindow(
     val mode: RestWindowMode, val deadline: Instant, val observedThrough: Instant,
     val counterBefore: DailyReductionCounter, val options: List<DailyRestOption>,
     val state: RestWindowState, val minimumRequiredSeconds: Long, val creditedSeconds: Long,
+    val potentialRestCapacitySeconds: Long, val creditedRestCandidates: List<String>, val patternKind: DailyRestKind,
     val potentialDeficitSeconds: Long, val coverage: RuleInputCoverage,
     val restrictions: List<RestRestriction>, val contextEvidence: List<String>,
     /** At observedThrough, without a wall clock or a product warning threshold. */
@@ -104,6 +105,7 @@ data class DailyRestFinding(
     val mathematicalOnset: Instant?, val firstProvableAt: Instant?, val affectedRange: InputRange?,
     val presentInEveryRetainedPath: Boolean, val quantityIsProved: Boolean,
     val restrictions: List<RestRestriction>, val inputRevision: String,
+    val optimisticAdditionalRestSeconds: Long, val quantityIsExact: Boolean,
 ) {
     init { require(missingRestSeconds > 0) }
     val normalRuleDeficitIsProved: Boolean get() = quantityIsProved && presentInEveryRetainedPath && restrictions.isEmpty()

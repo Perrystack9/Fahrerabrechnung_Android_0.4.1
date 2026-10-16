@@ -36,7 +36,7 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
     fun week(vararg minutes: Int): DrivingFixture { require(minutes.size == 7); minutes.forEach(::day); return this }
     fun snapshot(extraIdenticalSource: Boolean = false, withEnd: Boolean = true,
         contextAdditions: List<ContextAssertion> = emptyList(), pointsExtra: List<InputPoint> = emptyList(),
-        conflictingCrewSource: Boolean = false): ViolationInputSnapshot {
+        conflictingCrewSource: Boolean = false, contextTransform: (InputContext) -> InputContext = { it }): ViolationInputSnapshot {
         val all = points.toMutableList()
         if (withEnd) all += Point(cursor, ActivityType.SONSTIGE_ARBEIT, false, true, false)
         require(all.isNotEmpty())
@@ -84,6 +84,6 @@ internal class DrivingFixture(val start: Instant = Instant.parse("2026-09-07T00:
         return InputSnapshotBuilder.build(InputSources("P1", listOf("C1"), sources.mapIndexed { index, source ->
             ActivitySource(source, if (conflictingCrewSource && index == 1) recorded.map { day -> day.copy(changes = day.changes.map {
                 if (it.activity == ActivityType.BEREITSCHAFT) it.copy(rawC = false, coDriverSlot = false) else it }) } else recorded) },
-            pointsExtra, sources, emptyList(), emptyMap()), context)
+            pointsExtra, sources, emptyList(), emptyMap()), contextTransform(context))
     }
 }

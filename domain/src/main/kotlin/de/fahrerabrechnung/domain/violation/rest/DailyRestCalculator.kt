@@ -23,10 +23,11 @@ object DailyRestCalculator {
         }
     }
 
-    fun calculate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation = DrivingCalculator.calculate(snapshot),
+    fun calculate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation? = null,
         maxPathEvaluations: Int = 20000, checkCancellation: () -> Unit = {}): DailyRestCalculation {
+        val drivingResult = driving ?: DrivingCalculator.calculate(snapshot, checkCancellation = checkCancellation)
         require(maxPathEvaluations > 0)
-        require(driving.inputRevision == snapshot.revision && driving.sourceSnapshot == snapshot)
+        require(drivingResult.inputRevision == snapshot.revision && drivingResult.sourceSnapshot == snapshot)
         require(snapshot.intervals.zipWithNext().all { (a, b) -> a.range.end <= b.range.start })
         val candidates = RestCandidates.build(snapshot, checkCancellation)
         val byId = candidates.associateBy { it.id }
@@ -71,11 +72,14 @@ object DailyRestCalculator {
             for (path in paths) {
                 checkCancellation(); evaluated++
                 if (observed == null || path.start >= observed) { terminal(path); continue }
-                val choices = RestContexts.modes(snapshot, driving, path.start, observed, candidates, path.serviceUses, path.historyFrom)
+                val choices = RestContexts.modes(snapshot, drivingResult, path.start, observed, candidates, path.serviceUses, path.historyFrom)
                 val evaluatedWindows = choices.map { choice -> choice to RestWindowEvaluator.evaluate(snapshot, path.start,
                     observed, path.anchor, choice, path.counter, candidates, path.methodRestrictions, checkCancellation) }
                 val standard = evaluatedWindows.firstOrNull { it.first.mode == RestWindowMode.SOLO_24 }?.second
-                for ((choice, window) in evaluatedWindows) {
+                // A proved legal route supersedes the arithmetic failure of a shorter inapplicable window.
+                val fulfilled = evaluatedWindows.filter { it.second.options.any { o -> o.eligibility == RestEligibility.PROVED } }
+                val retained = if (fulfilled.isEmpty()) evaluatedWindows else fulfilled
+                for ((choice, window) in retained) {
                     checkCancellation()
                     windows[window.id] = window
                     if (choice.mode != RestWindowMode.SOLO_24 && standard?.state != RestWindowState.FULFILLED &&
@@ -94,7 +98,8 @@ object DailyRestCalculator {
                         findings[id] = DailyRestFinding(id, window.id, window.law, InputRange(window.referenceStart, through),
                             window.potentialDeficitSeconds, window.minimumRequiredSeconds, window.creditedSeconds,
                             onset?.first, onset?.second, onset?.first?.takeIf { it < through }?.let { InputRange(it, through) },
-                            false, window.restrictions.isEmpty(), window.restrictions, snapshot.revision)
+                            false, window.restrictions.isEmpty(), window.restrictions, snapshot.revision,
+                            (window.potentialRestCapacitySeconds - window.creditedSeconds).coerceAtLeast(0), observed >= window.deadline)
                         must = must + id
                     }
                     if (window.options.isNotEmpty()) {
@@ -102,7 +107,9 @@ object DailyRestCalculator {
                             checkCancellation()
                             val last = byId.getValue(option.candidates.last())
                             val counter = nextCounter(path, window, option, last)
-                            val uses = if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25 && choice.serviceId != null)
+                            val uses = if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25 && choice.serviceId != null &&
+                                last.restSecondsThrough(path.start.plusSeconds(86400)) <
+                                    (if (option.kind == DailyRestKind.SPLIT_REGULAR) 32400 else 39600))
                                 path.serviceUses + (choice.serviceId to ((path.serviceUses[choice.serviceId] ?: 0) + 1)) else path.serviceUses
                             if (option.actualEnd == null) {
                                 val next = path.copy(counter = counter, serviceUses = uses, mustFindings = must)
@@ -114,7 +121,7 @@ object DailyRestCalculator {
                             }
                         }
                     } else if (through < window.deadline) {
-                        terminal(path.copy(mustFindings = must))
+                        terminal(path.copy(counter = counterAfterCoverage(path.counter, window), mustFindings = must))
                     } else {
                         val minimum = if (choice.mode == RestWindowMode.CREW_30 || path.counter.minimumObservedCount < 3) 32400 else 39600
                         val crossing = candidates.filter { it.range.start < window.deadline && it.range.end > window.deadline &&
@@ -128,7 +135,7 @@ object DailyRestCalculator {
                             enqueue(Path(anchor.at, anchor, counter, path.serviceUses, path.historyFrom, restrictions, must))
                         } else if (candidates.any { !it.actualEndProved && it.range.start < window.deadline && it.range.end >= observed &&
                                 it.eligibility != RestEligibility.REJECTED }) {
-                            terminal(path.copy(mustFindings = must))
+                            terminal(path.copy(counter = counterAfterCoverage(path.counter, window), mustFindings = must))
                         } else enqueue(path.copy(start = window.deadline, counter = counterAfterCoverage(path.counter, window),
                             methodRestrictions = frozen((path.methodRestrictions + RestRestriction.Q07_SUCCESSIVE_WINDOW_INTERPRETATION_OPEN).distinct()),
                             mustFindings = must))
@@ -156,11 +163,11 @@ object DailyRestCalculator {
         }
         snapshot.issues.forEach { issues += DailyRestIssue(setOf("R01–R07", "F01–F05"), "INPUT_" + it.code.name, it.range) }
         val revision = InputRevision.hash("m3-daily-rest-calculation") {
-            text(DAILY_REST_INTERPRETATION); text(snapshot.revision); text(driving.revision); int(maxPathEvaluations)
+            text(DAILY_REST_INTERPRETATION); text(snapshot.revision); text(drivingResult.revision); int(maxPathEvaluations)
         }
         checkCancellation()
         return DailyRestCalculation(snapshot.profileId, snapshot.revision, snapshot.dataRevision, snapshot.provenanceRevision,
-            driving.revision, revision, observed, candidates, frozen(anchors.sortedWith(compareBy({ it.at }, { it.candidateId }))),
+            drivingResult.revision, revision, observed, candidates, frozen(anchors.sortedWith(compareBy({ it.at }, { it.candidateId }))),
             frozen(resultWindows.sortedWith(compareBy({ it.referenceStart }, { it.mode.name }, { it.id }))),
             frozen(resultFindings.sortedWith(compareBy({ it.assessedRange.start }, { it.id }))), frozen(finalCounters),
             frozen(needs.distinctBy { it.id }.sortedBy { it.id }), frozen(issues.distinct()), complete, snapshot)
@@ -189,7 +196,8 @@ object DailyRestCalculator {
             restrictions = frozen((counter.restrictions + RestRestriction.L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED).distinct()))
         if (option.restrictions.isNotEmpty()) counter = counter.copy(restrictions = frozen((counter.restrictions + option.restrictions).distinct()))
         val anchor = RestAnchor(rest.id, rest.range, RestAnchorMethod.ACTUAL_REST_END, true, option.restrictions)
-        return afterWeekly(rest, anchor, counter)
+        return if (window.coverage.factualPrerequisitesCovered && window.coverage.excludedScope.isEmpty())
+            afterWeekly(rest, anchor, counter) else counter
     }
 
     private fun afterWeekly(rest: RestCandidate, anchor: RestAnchor, counter: DailyReductionCounter): DailyReductionCounter {

@@ -4,9 +4,9 @@ import de.fahrerabrechnung.domain.violation.input.*
 import java.time.Duration
 import java.time.Instant
 
-internal data class RestScore(val required: Long, val credit: Long, val kind: DailyRestKind,
+internal data class RestScore(val required: Long, val capacity: Long, val actualCredit: Long, val kind: DailyRestKind,
     val eligibility: RestEligibility, val restrictions: List<RestRestriction>, val candidates: List<String>) {
-    val deficit get() = maxOf(0, required - credit)
+    val deficit get() = maxOf(0, required - capacity)
 }
 
 internal object RestWindowEvaluator {
@@ -63,59 +63,82 @@ internal object RestWindowEvaluator {
                     if (first.interrupted) listOf(RestRestriction.FERRY_SPLIT_ALLOCATION_GUIDANCE_ONLY) else emptyList())
             }
         }
-        // A completed regular daily rest ends the duty period. Never skip it to a later preferred date.
-        val barrier = result.filter { it.kind == DailyRestKind.REGULAR && it.eligibility == RestEligibility.PROVED }
+        val firstRegular = result.filter { it.kind == DailyRestKind.REGULAR && it.eligibility == RestEligibility.PROVED }
             .mapNotNull { it.actualEnd }.minOrNull()
-        return frozen(result.filter { barrier == null || it.actualEnd?.let { end -> end <= barrier } != false }
+        // A ferry rest can extend a completed eleven-hour part to its actual longer end (R07).
+        val firstCandidates = result.filter { it.actualEnd == firstRegular }.flatMap { it.candidates }.toSet()
+        return frozen(result.filter { option -> firstRegular == null || option.actualEnd?.let { it <= firstRegular } != false ||
+            option.candidates.any { id -> usable.any { it.id == id && it.interrupted &&
+                it.rest.any { slice -> slice.range.end == firstRegular } && firstCandidates.isNotEmpty() } } }
             .distinctBy { it.id }.sortedWith(compareBy({ it.actualEnd }, { it.kind.name }, { it.id })))
     }
 
-    /** Optimistic scalar capacity; future time is not recorded, credited or persisted as rest. */
+    /** Capacity may include an optimistic future scalar; actualCredit contains recorded rest only. */
     fun potential(start: Instant, cut: Instant, deadline: Instant, choice: RestModeChoice,
         counter: DailyReductionCounter, candidates: List<RestCandidate>, check: () -> Unit): RestScore {
         val future = seconds(cut, deadline)
-        val usable = candidates.filter { it.range.start < cut && it.range.end > start && it.eligibility != RestEligibility.REJECTED }
+        fun interruptions(c: RestCandidate) = c.interruptions.filter { it.range.start < cut }
+        fun interruptionTime(c: RestCandidate) = interruptions(c).sumOf { seconds(it.range.start, minOf(it.range.end, cut)) }
+        val usable = candidates.filter { c -> c.range.start >= start && c.range.start < cut &&
+            (c.eligibility != RestEligibility.REJECTED || c.restrictions.all {
+                it == RestRestriction.FERRY_INTERRUPTION_LIMIT_EXCEEDED }) &&
+            interruptions(c).size <= 2 && interruptionTime(c) <= 3600 }
         val scores = mutableListOf<RestScore>()
-        fun status(parts: List<RestCandidate>, restrictions: List<RestRestriction>) =
-            if (choice.eligibility == RestEligibility.PROVED && parts.all { it.eligibility == RestEligibility.PROVED } && restrictions.isEmpty())
-                RestEligibility.PROVED else RestEligibility.CONDITIONAL
-        fun add(required: Long, amount: Long, kind: DailyRestKind, parts: List<RestCandidate>, extra: List<RestRestriction> = emptyList()) {
-            val restrictions = (choice.restrictions + parts.flatMap { it.restrictions } + extra).distinct()
-            scores += RestScore(required, minOf(required, amount), kind, status(parts, restrictions), frozen(restrictions), frozen(parts.map { it.id }))
+        fun add(required: Long, amount: Long, actual: Long, kind: DailyRestKind, parts: List<RestCandidate>,
+            extra: List<RestRestriction> = emptyList()) {
+            val restrictions = (choice.restrictions + parts.flatMap { it.restrictions }.filterNot {
+                it == RestRestriction.FERRY_INTERRUPTION_LIMIT_EXCEEDED } + extra).distinct()
+            val eligibility = if (choice.eligibility == RestEligibility.PROVED && restrictions.isEmpty() &&
+                parts.all { it.eligibility == RestEligibility.PROVED || it.restrictions.all { r ->
+                    r == RestRestriction.FERRY_INTERRUPTION_LIMIT_EXCEEDED } }) RestEligibility.PROVED else RestEligibility.CONDITIONAL
+            scores += RestScore(required, minOf(required, amount), minOf(required, actual), kind, eligibility,
+                frozen(restrictions), frozen(parts.map { it.id }))
         }
         fun available(candidate: RestCandidate): Long {
             val actual = credit(candidate, start, cut)
-            val tailCanContinue = candidate.rest.any { it.range.start < cut && it.range.end > cut } ||
-                (candidate.range.end == cut && !candidate.actualEndProved)
-            return actual + if (tailCanContinue) future else 0
+            val latest = candidate.rest.lastOrNull { it.range.start < cut } ?: return 0
+            val tail = latest.range.end >= cut && (latest.range.end > cut || !candidate.actualEndProved)
+            if (tail) return actual + future
+            // Hypothetical continuation of a ferry rest after an already elapsed interruption.
+            val ferry = candidate.interrupted || candidate.ferryPoints.isNotEmpty()
+            val extraGap = seconds(latest.range.end, cut)
+            val existingGap = candidate.interruptions.any { it.range.start == latest.range.end && it.range.start < cut }
+            val count = interruptions(candidate).size + if (existingGap || extraGap == 0L) 0 else 1
+            val time = interruptionTime(candidate) + if (existingGap) 0 else extraGap
+            return actual + if (ferry && count <= 2 && time <= 3600) future else 0
         }
-        add(if (choice.mode == RestWindowMode.CREW_30) 32400 else 39600, future,
+        add(if (choice.mode == RestWindowMode.CREW_30) 32400 else 39600, future, 0,
             if (choice.mode == RestWindowMode.CREW_30) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, emptyList())
         for (candidate in usable) {
             check()
             val required = if (choice.mode == RestWindowMode.CREW_30 && !candidate.interrupted) 32400L else 39600L
-            add(required, available(candidate), if (required == 32400L) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR,
-                listOf(candidate))
+            add(required, available(candidate), credit(candidate, start, cut),
+                if (required == 32400L) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, listOf(candidate))
         }
         if (choice.mode != RestWindowMode.CREW_30 && counter.minimumObservedCount < 3) {
             val restrictions = reductionRestrictions(counter) + if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25)
                 listOf(RestRestriction.BUS_REDUCED_25_HOUR_INTERPRETATION_OPEN) else emptyList()
-            add(32400, future, DailyRestKind.REDUCED, emptyList(), restrictions)
+            add(32400, future, 0, DailyRestKind.REDUCED, emptyList(), restrictions)
             usable.filterNot { it.interrupted }.forEach {
-                add(32400, available(it), DailyRestKind.REDUCED, listOf(it), restrictions)
+                // A reduced daily rest must remain continuous; ferry gaps cannot be joined here.
+                val actual = credit(it, start, cut)
+                val tail = it.range.end > cut || (it.range.end == cut && !it.actualEndProved)
+                add(32400, actual + if (tail) future else 0, actual, DailyRestKind.REDUCED, listOf(it), restrictions)
             }
         }
         if (choice.mode != RestWindowMode.CREW_30) for (first in usable) {
             check()
             if (credit(first, start, cut) < 10800 || first.range.end > cut) continue
             val firstLimits = if (first.interrupted) listOf(RestRestriction.FERRY_SPLIT_ALLOCATION_GUIDANCE_ONLY) else emptyList()
-            add(43200, 10800 + future, DailyRestKind.SPLIT_REGULAR, listOf(first), firstLimits)
+            add(43200, 10800 + future, 10800, DailyRestKind.SPLIT_REGULAR, listOf(first), firstLimits)
             for (second in usable) {
                 check()
                 if (first.range.end > second.range.start || first.id == second.id ||
-                    first.interruptions.size + second.interruptions.size > 2 ||
-                    first.interruptionSeconds + second.interruptionSeconds > 3600) continue
-                add(43200, 10800 + minOf(32400, available(second)), DailyRestKind.SPLIT_REGULAR, listOf(first, second), firstLimits)
+                    first.interruptions.size + interruptions(second).size > 2 ||
+                    first.interruptionSeconds + interruptionTime(second) > 3600) continue
+                add(43200, 10800 + minOf(32400, available(second)),
+                    10800 + minOf(32400, credit(second, start, cut)), DailyRestKind.SPLIT_REGULAR,
+                    listOf(first, second), firstLimits)
             }
         }
         return scores.minWith(compareBy<RestScore>({ it.deficit }, { it.eligibility != RestEligibility.PROVED }, { it.required },
@@ -133,10 +156,11 @@ internal object RestWindowEvaluator {
         val options = options(start, through, choice, counter, candidates, check)
         var score = potential(start, through, deadline, choice, counter, candidates, check)
         val regular = options.firstOrNull { it.eligibility == RestEligibility.PROVED && it.kind != DailyRestKind.REDUCED }
-        if (regular != null) score = RestScore(if (regular.kind == DailyRestKind.SPLIT_REGULAR) 43200 else
-            if (choice.mode == RestWindowMode.CREW_30) 32400 else 39600,
-            if (regular.kind == DailyRestKind.SPLIT_REGULAR) 43200 else if (choice.mode == RestWindowMode.CREW_30) 32400 else 39600,
-            regular.kind, regular.eligibility, regular.restrictions, regular.candidates)
+        if (regular != null) {
+            val required = if (regular.kind == DailyRestKind.SPLIT_REGULAR) 43200L else
+                if (regular.kind == DailyRestKind.CREW_NINE_HOURS) 32400L else 39600L
+            score = RestScore(required, required, required, regular.kind, regular.eligibility, regular.restrictions, regular.candidates)
+        }
         val restrictions = linkedSetOf<RestRestriction>()
         restrictions += choice.restrictions; restrictions += methodRestrictions
         if (!coverage.factualPrerequisitesCovered) restrictions += RestRestriction.ACTIVITY_GAP
@@ -167,24 +191,32 @@ internal object RestWindowEvaluator {
             score.kind == DailyRestKind.REDUCED || counter.minimumObservedCount >= 3 -> "R02"
             else -> "R01"
         }
+        var law = RestLawVersions.daily(lawId, choice.mode)
+        if (score.candidates.any { id -> candidates.any { it.id == id && it.interrupted } }) law = law.copy(
+            article = law.article + ", Art.9(1)", version = law.version + ";Art.9:" +
+                if (RestLawVersions.phase(range, RestLawVersions.ferryWeekly) == RestDatePhase.AFTER) "2020-08-20" else "2007-04-11",
+            sourceIds = frozen((law.sourceIds + "M3-GN6" + if (RestLawVersions.phase(range, RestLawVersions.ferryWeekly) == RestDatePhase.AFTER)
+                listOf("Q02") else emptyList()).distinct()))
         val id = InputRevision.hash("m3-rest-window") {
             text(DAILY_REST_INTERPRETATION); text(snapshot.profileId); instant(start); text(choice.mode.name)
             int(counter.minimumObservedCount); nullable(counter.maximumPossibleCount?.toString()); nullable(choice.serviceId)
+            text(anchor.candidateId); counter.reductions.forEach { text(it.id) }
+            (counter.restrictions + methodRestrictions + choice.restrictions).distinct().sortedBy { it.name }.forEach { text(it.name) }
         }
-        return DailyRestWindow(id, RestLawVersions.daily(lawId, choice.mode), anchor, start, choice.mode, deadline, observed,
-            counter, options, state, score.required, score.credit, score.deficit, coverage, frozen(restrictions),
-            frozen((choice.contextEvidence + options.flatMap { it.contextEvidence }).distinct()),
+        return DailyRestWindow(id, law, anchor, start, choice.mode, deadline, observed,
+            counter, options, state, score.required, score.actualCredit, score.capacity, score.candidates, score.kind,
+            score.deficit, coverage, frozen(restrictions),
+            frozen((choice.contextEvidence + options.flatMap { it.contextEvidence } +
+                candidates.filter { it.id in score.candidates }.flatMap { it.contextEvidence }).distinct()),
             budget.takeIf { !inRest && options.isEmpty() })
     }
 
     fun onset(window: DailyRestWindow, choice: RestModeChoice, candidates: List<RestCandidate>,
         check: () -> Unit): Pair<Instant, Instant>? {
         if (window.potentialDeficitSeconds <= 0 || !window.coverage.factualPrerequisitesCovered ||
-            window.coverage.excludedScope.isNotEmpty() || candidates.any { it.interrupted &&
-                it.range.overlaps(InputRange(window.referenceStart, minOf(window.deadline, window.observedThrough))) }) return null
+            window.coverage.excludedScope.isNotEmpty()) return null
         val through = minOf(window.observedThrough, window.deadline)
-        var lo = 0L
-        var hi = seconds(window.referenceStart, through)
+        var lo = 0L; var hi = seconds(window.referenceStart, through)
         while (lo < hi) {
             check()
             val mid = (lo + hi) / 2
@@ -193,7 +225,6 @@ internal object RestWindowEvaluator {
             else lo = mid + 1
         }
         val boundary = window.referenceStart.plusSeconds(maxOf(0, lo - 1))
-        val proof = minOf(through, boundary.plusSeconds(60))
-        return boundary to proof
+        return boundary to minOf(through, boundary.plusSeconds(60))
     }
 }
