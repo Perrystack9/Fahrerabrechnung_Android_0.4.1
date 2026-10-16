@@ -6,7 +6,7 @@ Lokale Android-App: eigene Fahrerkartendaten zuverlässig importieren, ihre Herk
 
 1. Zuerst nur diese Datei und Git prüfen: Branch, HEAD, Arbeitsbaum, aktuellen GitHub-main, relevante offene PRs und deren CI.
 2. Danach [aktuelle Regeln](docs/CURRENT_RULES.md), [technischen Status](WORK_STATUS.md) und [aktuelle Übergabe](docs/WORK_HANDOFF.md) lesen.
-3. Für den aktuellen M3-Schritt den [M3-Implementierungsbericht](docs/VIOLATION_ENGINE_M3_IMPLEMENTATION.md) öffnen. M3-Quellen/Abnahme sowie ältere M0–M2-Belege nur bei konkretem Bedarf.
+3. Für den aktuellen M4-Schritt den [M4-Arbeitsvertrag](docs/VIOLATION_ENGINE_M4_IMPLEMENTATION.md) öffnen. M3-Integrations-/Quellenbelege und ältere M0–M2-Dokumente nur bei konkretem Bedarf.
 
 Das sind **fünf Startdateien einschließlich WORK_START.md**. Keine pauschale Markdown-Volltextlektüre oder Rekonstruktion alter Chats, wenn das Repository ausreicht.
 
@@ -30,13 +30,13 @@ Zusätzliche volle Produkt-Main-CI [38559255131](https://github.com/Perrystack9/
 
 ## Nächste Arbeit und Übergabe
 
-**M2 technisch abgenommen und PR90 kontrolliert integriert; M3 ausdrücklich genehmigt.** Neue Basis **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, identischer Baum zum final grün geprüften und selbst gerätebestätigten40130/Room23-Stand. [M2-Integration, CI und Gerätebeleg](docs/M2_INTEGRATION_20261015.md). Die neue vollständige Produkt-main-CI38780974996/Versuch1 ist mit allen vier Jobs erfolgreich.
+**M3/40131/Room23 technisch abgenommen und PR91 kontrolliert integriert; M4 ausdrücklich genehmigt.** Neue Basis **`ba0cf1933f8d01590d8fdef32526f1715ec8d571`**, exakt identischer vollständiger Baum zum endgültigen CI-/Gerätepaket40131. Eigene Geräteantwort16.10.2026,09:55 Europe/Berlin positiv. [M3-Integration und Freigabe](docs/M3_INTEGRATION_20261016.md). Neue vollständige Main-CI312/Versuch1 mit allen vier Jobs erfolgreich.
 
-M3-Branch `feature/v1-m3-daily-rest-20261015`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`. [Arbeitsvertrag](docs/VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellen und offene Rechtsnachweise](docs/VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Prüfvertrag](docs/VIOLATION_ENGINE_M3_ACCEPTANCE.md). R01–R07/F01–F05 auf M1/M2, ohne neuen Parser. M2-main-CI vollständig erfolgreich; M3 ist im [Draft-PR91](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/91) implementiert, mit166 erfolgreichen isolierten Methoden und zehn vorbereiteten Androidmethoden. Ziel40131/Room23. Vollständige technische Endkopf-/CI-/Paketnachweise im PR91-Abnahmeprotokoll prüfen; eigene40131-Geräteabnahme und Merge bleiben gesonderte Gates. [Wiederaufnahme und Sicherungsgrenze](docs/M3_RECOVERY_20261016.md). Weitere bedeutende Zwischenstände früh auf GitHub sichern.
+M4-Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](docs/VIOLATION_ENGINE_M4_IMPLEMENTATION.md): W01–W14, Wochenruhe und global zugeordneter Ausgleich auf M1–M3. Quellen-/Referenzarbeit begonnen; noch kein fertiger M4-Motor oder Abnahmenachweis. Zwischenstände regelmäßig auf GitHub sichern. Finalen Prüfkandidaten erst nach abgeschlossener lokaler Arbeit veröffentlichen und während der vollständigen CI einfrieren.
 
-L02-Wochenzeit/Verlängerungszuordnung, L03-Konventionen, L09-Anrechnungen und übrige fallbezogene Fachgrenzen bleiben offen.7h ist keine erfüllte Tagesruhe; drei Tagesruhereduzierungen zwischen qualifizierenden Wochenruhen und zwei Tageslenkverlängerungen je Woche sind getrennte Zähler. Keine gesicherten Budgets aus bedingten Tatsachen/Zuordnungen. UTC rechnet; spätere historische Ortszeitanzeige M5/M6 ändert keine Rechtswerte.
+L02-Wochen-/Nachtzeit, L03-Konventionen, L04-Wochen-/Ausgleichszuordnung, L09-Anrechnungen und übrige fallbezogene Fachgrenzen bleiben offen. Keine gesicherten Budgets aus bedingten Tatsachen/Zuordnungen. Drei Tagesruhereduzierungen zwischen qualifizierenden Wochenruhen und zwei Tageslenkverlängerungen je Woche bleiben getrennt;23h sind kein Wochenreset. UTC rechnet; spätere historische Ortszeitanzeige M5/M6 ändert keine Rechtswerte.
 
-**Kein M3-Merge, M4–M7 oder Release ohne neue ausdrückliche Freigabe.** Alle80/A–H/E01–E12/P01–P05 sowie Sicherheits-/Herkunfts-/CI-/Gerätegates gelten weiter. Die unabhängige qualifizierte Fachprüfung und Beta5–10 Fahrer bleiben Releasegates.
+**Kein M4-Merge, M5–M7 oder Release ohne neue ausdrückliche Freigabe.** Alle80/A–H/E01–E12/P01–P05 sowie Sicherheits-/Herkunfts-/CI-/Gerätegates gelten weiter. Unabhängige qualifizierte Fachprüfung und Beta5–10 Fahrer bleiben Releasegates.
 
 Frühere automatische Workspace-Wartung entfernte die alte uncommittete Settings-Arbeit. M1 ist aus GitHub wiederhergestellt; der alte unvollständige Entwurf nicht. [Verlustgrenze](docs/WORK_HANDOFF.md#lokale-arbeit-und-workspace-wiederherstellung). Nicht rekonstruieren oder als vorhanden melden. Alle vorhandenen Dateien/Branches/Backups erhalten, kein Reset/Clean.
 

@@ -1,23 +1,24 @@
 # FahrerTagebuch - aktuelle Übergabe
 
-**M2 technisch abgenommen und PR90 kontrolliert integriert; M3 ausdrücklich genehmigt.** Zuerst WORK_START/fünf Startdateien; keine pauschale Volllektüre, Browser oder Unteragenten. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md).
+**M3 technisch abgenommen und PR91 kontrolliert integriert; M4 ausdrücklich genehmigt.** Zuerst WORK_START/fünf Startdateien; keine pauschale Volllektüre, Browser oder Unteragenten. [Status](../WORK_STATUS.md), [Regeln](CURRENT_RULES.md).
 
-## Integrierte Basis
+## Bestätigte integrierte Basis
 
-PR88/M0 und PR89/M1 sind unverändert erhalten. PR90-Endkopf `8fc3fd4d64876450373989952edcbc31feaed0f0`, volle CI38773986395/Versuch1 erfolgreich,609 Unit-Tests ohne Fehler/Skip und vollständige API36-SQLCipher-/Compose-Suiten. Tobi bestätigt40130/Room23 am15.10.2026 19:38 Europe/Berlin mit „Funktioniert alles wie es soll 👌🏻“ und erteilt danach technische M2-Abnahme sowie Merge-/M3-Freigabe. Keine weitergehenden Geräte- oder juristischen Nachweise daraus ableiten.
+PR88/M0, PR89/M1 und PR90/M2 sind erhalten. M3-Endkopf `7545eaef2ce078c6c96ead18a45e0e5fd499e7f7`, volle CI311/Versuch1 erfolgreich,691 Unit-Tests ohne Fehler/Skip und vollständige API36-SQLCipher-/Compose-Prüfung. Tobi bestätigt das40131/Room23-Paket am16.10.2026,09:55 Europe/Berlin positiv und erteilt danach im vierseitigen PDF-Auftrag technische M3-Abnahme und kontrollierte Merge-/M4-Entwicklungsfreigabe. Keine weitere Hardware-/juristische Abdeckung daraus ableiten.
 
-Tatsächlicher PR90-Merge **`c542b4c9cd371a6e3a9489678e752e07ca7e7360`**, vollständiger Baum `8fe032142f9987e8c46b818d802bdf97f25c9ca7`, exakt identisch mit dem finalen Prüf-/Gerätebaum. Neue vollständige Produkt-main-CI38780974996/Versuch1 am15.10.2026 18:19:46 UTC erfolgreich, alle vier Jobs; vor M3-Produktarbeit live kontrolliert. [Integrationsbeleg](M2_INTEGRATION_20261015.md).
+Tatsächlicher Merge **`ba0cf1933f8d01590d8fdef32526f1715ec8d571`**, vollständiger Baum `32f6da8ae5a8afcac58a2246d2ec8bdf02d7499c`, exakt identisch mit dem CI-/Gerätebaum. Neue vollständige Produkt-main-CI312/38888523631/Versuch1 mit allen vier Jobs erfolgreich. Erst danach M4-Branch angelegt. [M3-Integration und Freigabebeleg](M3_INTEGRATION_20261016.md).
 
-## M3-Auftrag und nächster Schritt
+## Aktueller M4-Auftrag
 
-Branch `feature/v1-m3-daily-rest-20261015`, [Draft-PR91](https://github.com/Perrystack9/Fahrerabrechnung_Android_0.4.1/pull/91), Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m3`. [Implementierung](VIOLATION_ENGINE_M3_IMPLEMENTATION.md), [Quellen/L-Gates](VIOLATION_ENGINE_M3_LEGAL_EVIDENCE.md), [Referenzen](VIOLATION_ENGINE_M3_REFERENCE_RESULTS.md), [Abnahmevertrag](VIOLATION_ENGINE_M3_ACCEPTANCE.md). R01–R07/F01–F05 auf M1/M2 implementiert, keine zweite Parserarchitektur, keine neue Migration.166 isolierte Domainmethoden erfolgreich;zehn neue SQLCipher-Androidmethoden. Gemeinsame M2/M3-Publikation nach finalem M1-CAS. Zieltestversion40131/Room23. **Exakte Kopf-/CI-/Paketbelege und noch offene technische Gates vor Fortsetzung im aktuellen PR91-Abnahmeprotokoll abgleichen.** Keine behauptete eigene40131-Geräteantwort.
+Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](VIOLATION_ENGINE_M4_IMPLEMENTATION.md). W01–W14 auf demselben M1-/M2-/M3-Snapshot: Wochenruhe, globale Pflicht-/Ausgleichszuordnung, internationale Vierwochenfälle und historische Bus-Zwölftageregel. Quellen-/Referenzabgleich begonnen, noch kein M4-Motor/PR/Abnahmenachweis.
 
-[Wiederaufnahme16.10.2026](M3_RECOVERY_20261016.md):veröffentlichter Checkpoint `a2324b7` wiederhergestellt; dessen nur lokale Folgeänderungen fehlten und wurden neu erarbeitet/neu geprüft. Die neue Arbeit ist wieder auf GitHub gesichert. Keine byteidentische Wiederherstellung dieser verlorenen Folgekopie behaupten.
-Drei Tagesreduzierungen zwischen qualifizierenden Wochenruhen nicht mit den zwei M2-Verlängerungen je Woche verwechseln.23h sind Tagesruhe, kein Wochenreset;7h-Konvention keine tägliche Ruhe. L02/L03/L09 und übrige fallbezogene Rechtsfragen bleiben offen; keine unbedingten Ergebnisse/Budgets aus bedingten Voraussetzungen. Eigene Crewaufzeichnung grundsätzlich nutzen, keine zweite Karte/Routinebestätigung. Fähre/Bus nur fallbezogener Kontext. UTC rechnet, Anzeigezone verändert nichts.
+Primärquellen/Fassungen, L02/L03/L04/L09 und übrige betroffene Nachweise konkret prüfen. LG58–LG80/LG101–LG108/LG114–LG116, DT37/DT38 und A07/A09/A19 zuordnen. Keine pauschale FIFO-/Greedyentscheidung, Zusatzruhe nicht automatisch Schuld, jede Zusatzminute nur einmal;23h keine Wochenruhe und getrennte Wochen-/Tageszähler. Bedingte Voraussetzungen erzeugen keine gesicherten Budgets oder Entwarnungen. UTC rechnet, Anzeigezone verändert nichts.
 
-M3 benötigt eigene vollständige unveränderte CI und erforderliches neues Gerätepaket mit verständlicher Anleitung direkt im Chat. **Kein M3-Merge/M4–M7/Release ohne gesonderte Freigabe.** Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.40128-Kryptografie abgeschlossen, Zertifikatsvertrauen NOT_EVALUATED.
+Regelmäßig ausdrücklich unfertige Zwischenstände auf GitHub sichern. Entwicklungsphase und Endprüfung trennen; eigenen PR erst zur vollständigen Prüfung vorbereiten, dann exakten Kopf einfrieren. Bei Fehler nur dessen nachgewiesene Ursache korrigieren und neuen festen Kopf vollständig prüfen. Keine vorhandene CI-/Sicherheits-/Migrations-/Gerätepflicht abschwächen.
 
-Alle vorhandenen M1-/M2-Checkouts, nativen/API-Commits, Buildbelege und Gerätepakete erhalten. Der frühere M2-Workspace-Rückfall verlor keine veröffentlichten GitHub-Arbeiten; unveröffentlichte Folgeänderungen wurden neu erstellt und anschließend unter8fc3fd4 mit eigener voller CI und eigenem Paket geprüft. Keine byteidentische Wiederherstellung der verlorenen Kopie behaupten.
+**M4-Merge, M5–M7 und Release bleiben gesondert gesperrt.** Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.40128-Kryptografie abgeschlossen, Zertifikatsvertrauen NOT_EVALUATED. Die bereitgestellten Gerätepakete sind gesichert; keine neue40132-Geräteantwort behaupten.
+
+Alle vorhandenen Arbeitsstände/Branches/Artefakte erhalten, kein Reset/Clean. Aktuelle lokale Arbeitskopie aus dem tatsächlichen integrierten GitHub-Stand wiederhergestellt. Ältere Verlustgrenzen bleiben im folgenden Abschnitt unverändert dokumentiert.
 
 ## Lokale Arbeit und Workspace-Wiederherstellung
 
