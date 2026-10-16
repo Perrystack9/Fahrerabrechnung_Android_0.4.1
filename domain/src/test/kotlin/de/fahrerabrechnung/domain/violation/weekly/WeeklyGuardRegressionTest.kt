@@ -25,6 +25,14 @@ class WeeklyGuardRegressionTest {
         assertTrue(r.allocations.all { it.debts.isEmpty() })
         assertTrue(r.issues.any { it.reason == "REDUCTION_ORIGIN_START_UNPROVED_NO_DEBT" })
     }
+    @Test fun AnotherRestMarkerAfterTwentyFourHoursDoesNotProveItsActualEndOrCreateDebt() {
+        val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).w(1).r(1440).r(1).snapshot(withEnd = false))
+        val rest = r.candidates.single()
+        assertEquals(86400L, rest.netRestSeconds)
+        assertFalse(rest.actualEndProved)
+        assertTrue(r.allocations.all { it.debts.isEmpty() })
+        assertTrue(r.deadlines.none { it.anchorCandidateId == rest.id })
+    }
     @Test fun SeparateProvedTransferBoundaryCanProveTheLegalStartWithoutEditingTheOriginalRest() {
         val f = RestFixture(t, prefix = false).r(1800).assertion(ContextKey.TRANSFER_REQUIRES_OTHER_WORK,
             ContextValue.Flag(true), ContextSubject(ContextSubjectKind.PROFILE, "P1"), t, t.plusSeconds(6 * 3600L))

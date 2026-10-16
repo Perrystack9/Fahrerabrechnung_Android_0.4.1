@@ -63,13 +63,8 @@ internal object WeeklyRules {
         }
         for (window in windows.filter { it.state == WeeklyWindowState.NORMAL_RULE_DEFICIT }) {
             val chosen = window.useIds.mapNotNull { useId -> path.uses.firstOrNull { it.id == useId } }
-            val minimumMissing = when {
-                window.requiredCount == 4 -> maxOf(0, 4 - chosen.size) * WeeklyTime.REDUCED +
-                    maxOf(0, 2 - window.regularCount) * (WeeklyTime.REGULAR - WeeklyTime.REDUCED)
-                chosen.isEmpty() -> WeeklyTime.REGULAR + WeeklyTime.REDUCED
-                chosen.size == 1 -> if (window.regularCount == 1) WeeklyTime.REDUCED else WeeklyTime.REGULAR
-                else -> (WeeklyTime.REGULAR - (chosen.maxOfOrNull { it.seconds } ?: 0)).coerceAtLeast(0)
-            }
+            val minimumMissing = minimumRestShortfall(chosen.map { it.seconds }, window.requiredCount,
+                window.requiredRegularCount)
             finding(window.law.id, window.id, window.range, window.range.end, minimumMissing,
                 chosen.map { it.candidateId }, window.restrictions)
         }
@@ -122,6 +117,19 @@ internal object WeeklyRules {
             buses.filter { bus -> bus.postRestComplete == true && path.uses.count { it.busPostAnchorId == bus.anchorCandidateId } != 2 }
                 .map { "bus-post-parts:${it.anchorCandidateId}" }
         return WeeklyEvaluation(allocation, frozen(deadlines), frozen(findings), weekConstraints, jointConstraints)
+    }
+
+    /** Lower-bound duration of the calendar projection, never an added compensation debt.
+     * Upgrade the longest existing reduced bases first; their missing minutes are not always 21h.
+     * Completed recorded rests remain unchanged. L02/L04 still govern any legal attribution.
+     */
+    internal fun minimumRestShortfall(baseSeconds: List<Long>, count: Int, regularCount: Int): Long {
+        require(regularCount in 0..count && baseSeconds.all { it >= WeeklyTime.REDUCED })
+        val regularMissing = (regularCount - baseSeconds.count { it >= WeeklyTime.REGULAR }).coerceAtLeast(0)
+        val upgrades = baseSeconds.filter { it < WeeklyTime.REGULAR }.sortedDescending().take(regularMissing)
+        val newCount = (count - baseSeconds.size).coerceAtLeast(0)
+        return upgrades.sumOf { WeeklyTime.REGULAR - it } + newCount * WeeklyTime.REDUCED +
+            (regularMissing - upgrades.size) * (WeeklyTime.REGULAR - WeeklyTime.REDUCED)
     }
 
     private fun windows(snapshot: ViolationInputSnapshot, path: WeeklyAssignmentDraft,

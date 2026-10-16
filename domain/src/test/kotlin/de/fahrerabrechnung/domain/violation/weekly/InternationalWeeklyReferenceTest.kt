@@ -7,6 +7,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class InternationalWeeklyReferenceTest {
+    @Test fun FourWeekRegularityShortfallUsesTheActualTwoLongestReducedBases() {
+        // 44:59 and 44:58 miss 45h by 1 and 2 minutes. Neither is a 24h base.
+        assertEquals(180L, WeeklyRules.minimumRestShortfall(listOf(2699L, 2698L, 1800L, 1440L).map { it * 60 }, 4, 2))
+    }
+    @Test fun MissingFourthRestAndMissingRegularityDoNotAssumeEveryReductionWasTwentyFourHours() {
+        // 45h,30h,40h: another 24h plus 5h to the longest reduced base = 29h lower bound.
+        assertEquals(29 * 3600L, WeeklyRules.minimumRestShortfall(listOf(45L, 30L, 40L).map { it * 3600 }, 4, 2))
+    }
+    @Test fun EmptyFourWeekProjectionNeedsTwoFortyFiveAndTwoTwentyFourHourBases() {
+        assertEquals(138 * 3600L, WeeklyRules.minimumRestShortfall(emptyList(), 4, 2))
+    }
+    @Test fun AlreadyPresentRegularBasesDoNotCreateAnotherRegularityShortfall() {
+        assertEquals(48 * 3600L, WeeklyRules.minimumRestShortfall(listOf(45L, 45L).map { it * 3600 }, 4, 2))
+        assertEquals(0L, WeeklyRules.minimumRestShortfall(listOf(45L, 45L, 24L, 24L).map { it * 3600 }, 4, 2))
+    }
     private fun at(text: String) = Instant.parse(text)
     private val from = at("2026-08-31T00:00:00Z")
     private fun standard(firstCountry: String? = "FR", secondCountry: String? = "BE") =
