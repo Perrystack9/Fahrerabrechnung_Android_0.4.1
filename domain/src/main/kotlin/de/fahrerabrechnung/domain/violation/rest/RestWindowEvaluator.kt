@@ -18,6 +18,10 @@ internal object RestWindowEvaluator {
     private fun reductionRestrictions(counter: DailyReductionCounter): List<RestRestriction> =
         if (counter.exact) emptyList() else frozen((counter.restrictions + RestRestriction.LEFT_REDUCTION_HISTORY_MISSING).distinct())
 
+    private fun crewNineRestrictions(counter: DailyReductionCounter): List<RestRestriction> =
+        if (counter.maximumPossibleCount?.let { it < 3 } == true) emptyList()
+        else listOf(RestRestriction.L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED)
+
     fun options(start: Instant, through: Instant, choice: RestModeChoice, counter: DailyReductionCounter,
         candidates: List<RestCandidate>, check: () -> Unit): List<DailyRestOption> {
         val usable = candidates.filter { it.range.start >= start && it.range.start < through &&
@@ -41,7 +45,7 @@ internal object RestWindowEvaluator {
             val amount = credit(candidate, start, through)
             if (amount >= 39600) add(DailyRestKind.REGULAR, listOf(candidate), false)
             if (!candidate.interrupted && amount >= 32400 && amount < 39600) {
-                if (choice.mode == RestWindowMode.CREW_30) add(DailyRestKind.CREW_NINE_HOURS, listOf(candidate), false)
+                if (choice.mode == RestWindowMode.CREW_30) add(DailyRestKind.CREW_NINE_HOURS, listOf(candidate), false, crewNineRestrictions(counter))
                 else if (counter.minimumObservedCount < 3) add(DailyRestKind.REDUCED, listOf(candidate), true,
                     reductionRestrictions(counter) +
                         (if (!candidate.actualEndProved && through < start.plusSeconds(choice.mode.seconds))
@@ -108,12 +112,14 @@ internal object RestWindowEvaluator {
             return actual + if (ferry && count <= 2 && time <= 3600) future else 0
         }
         add(if (choice.mode == RestWindowMode.CREW_30) 32400 else 39600, future, 0,
-            if (choice.mode == RestWindowMode.CREW_30) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, emptyList())
+            if (choice.mode == RestWindowMode.CREW_30) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, emptyList(),
+            if (choice.mode == RestWindowMode.CREW_30) crewNineRestrictions(counter) else emptyList())
         for (candidate in usable) {
             check()
             val required = if (choice.mode == RestWindowMode.CREW_30 && !candidate.interrupted) 32400L else 39600L
             add(required, available(candidate), credit(candidate, start, cut),
-                if (required == 32400L) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, listOf(candidate))
+                if (required == 32400L) DailyRestKind.CREW_NINE_HOURS else DailyRestKind.REGULAR, listOf(candidate),
+                if (required == 32400L) crewNineRestrictions(counter) else emptyList())
         }
         if (choice.mode != RestWindowMode.CREW_30 && counter.minimumObservedCount < 3) {
             val restrictions = reductionRestrictions(counter) + if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25)

@@ -125,4 +125,23 @@ class RestGuardRegressionTest {
         assertTrue(r.contextNeeds.none {it.reason.contains("CREW")})
     }
 
+    @Test fun AnUnresolvedFourthCrewReductionCannotGrantAnAssuredNineHourWindowOrBudget() {
+        val f=RestFixture()
+        repeat(3) { f.w(675,crew=true).d(270,crew=true).a(45,crew=true).d(270,crew=true).r(540) }
+        val fourth=f.cursor
+        f.w(60,crew=true).d(60,crew=true)
+        val open=DailyRestCalculator.calculate(f.snapshot())
+        val w=open.windows.single {it.referenceStart==fourth}
+        assertEquals(RestWindowMode.CREW_30,w.mode)
+        assertTrue(RestRestriction.L09_CREW_REDUCTION_ACCOUNTING_UNCONFIRMED in w.restrictions)
+        assertNull(w.provenSecondsUntilLatestRestStart)
+        f.w(1020,crew=true).r(540)
+        val nine=DailyRestCalculator.calculate(f.snapshot())
+        assertTrue(nine.windows.single {it.referenceStart==fourth}.options.all {it.eligibility==RestEligibility.CONDITIONAL})
+        f.r(120)
+        val eleven=DailyRestCalculator.calculate(f.snapshot())
+        assertTrue(eleven.windows.single {it.referenceStart==fourth}.options.any {
+            it.kind==DailyRestKind.REGULAR && it.eligibility==RestEligibility.PROVED })
+    }
+
 }
