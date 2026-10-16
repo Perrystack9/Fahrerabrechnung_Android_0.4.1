@@ -7,7 +7,7 @@ import java.time.Duration
 import java.time.Instant
 
 internal data class WeeklyEvaluation(val allocation: WeeklyAllocation, val deadlines: List<WeeklyDeadline>,
-    val findings: List<WeeklyRestFinding>, val satisfiesClosedConstraints: Boolean)
+    val findings: List<WeeklyRestFinding>, val weekConstraints: Set<String>, val jointConstraints: Set<String>)
 
 internal object WeeklyRules {
     fun evaluate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, path: WeeklyAssignmentDraft,
@@ -22,6 +22,8 @@ internal object WeeklyRules {
             check()
             if (first.kind != WeeklyRestKind.REDUCED || second.kind != WeeklyRestKind.REDUCED ||
                 second.assignedWeek != first.assignedWeek?.plusSeconds(WeeklyTime.WEEK)) return@mapNotNull null
+            if ((first.restrictions + second.restrictions).any { it in setOf(WeeklyRestriction.SCOPE_EXCLUDED,
+                    WeeklyRestriction.SCOPE_UNDETERMINED) }) return@mapNotNull null
             val prerequisites = WeeklyContexts.international(snapshot, first, second)
             if (prerequisites.eligibility == RestEligibility.REJECTED) return@mapNotNull null
             val next = path.uses.filter { it.kind == WeeklyRestKind.REGULAR && it.range.start >= second.range.end }
@@ -36,10 +38,10 @@ internal object WeeklyRules {
             InternationalWeeklyPair(first.id, second.id, frozen(debts.map { it.id }), next?.id, compensated,
                 prerequisites.eligibility, frozen((prerequisites.restrictions + first.restrictions + second.restrictions +
                     WeeklyRestriction.L02_UTC_WEEK_PROJECTION_ONLY + WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING).distinct()),
-                prerequisites.evidence, prerequisites.needs)
+                prerequisites.evidence, prerequisites.needs, prerequisites.locationEvidence)
         }
         val physicalById = path.physical.associateBy { it.id }
-        val chronological = path.uses.distinctBy { it.candidateId }.sortedBy { it.range.start }
+        val chronological = timingUses(path)
         val buses = mutableListOf<BusWeeklyDerogation>()
         for ((index, use) in chronological.withIndex()) {
             check()
@@ -92,7 +94,8 @@ internal object WeeklyRules {
         for (pair in pairs.filter { it.compensationBeforeRegular == false }) {
             val next = path.uses.firstOrNull { it.id == pair.nextRegularUseId } ?: continue
             val amount = path.debts.filter { it.id in pair.debtIds }.sumOf { it.seconds }
-            finding("W08", pair.firstUseId + pair.secondUseId, next.range, next.range.start, amount,
+            val origins = path.uses.filter { it.id in listOf(pair.firstUseId, pair.secondUseId) }.map { it.candidateId }
+            finding("W08", origins.joinToString("/"), next.range, next.range.start, amount,
                 path.uses.filter { it.id in listOf(pair.firstUseId, pair.secondUseId, pair.nextRegularUseId) }.map { it.candidateId },
                 pair.restrictions + WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING)
         }
@@ -111,14 +114,14 @@ internal object WeeklyRules {
         val credit = DailyRestAttribution(java.util.Collections.unmodifiableSet(LinkedHashSet(path.physical.map { it.id })), frozenMap(path.daily))
         val allocation = WeeklyAllocation(id, frozen(path.uses), frozen(path.debts), frozen(path.payments),
             frozen(windows), frozen(pairs), frozen(buses),
-            listOf(WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING), credit)
-        // A complete witness is selected by satisfying the constraints, never by counting/minimising offences.
-        val witness = windows.none { it.state == WeeklyWindowState.NORMAL_RULE_DEFICIT } &&
-            deadlines.none { it.lateBySeconds > 0 && it.restrictions.isEmpty() } &&
-            pairs.none { it.compensationBeforeRegular == false } &&
-            path.debts.none { it.due <= (observed ?: Instant.MIN) && path.payments.none { p -> p.debtId == it.id && p.onTime } } &&
-            buses.none { it.postRestComplete == false }
-        return WeeklyEvaluation(allocation, frozen(deadlines), frozen(findings), witness)
+            listOf(WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING), credit,
+            frozen(deadlines.map { it.copy(restrictions = frozen((it.restrictions +
+                WeeklyRestriction.ALTERNATIVE_ASSIGNMENT_UNRESOLVED).distinct())) }), frozen(findings))
+        val weekConstraints = windows.filter { it.state == WeeklyWindowState.NORMAL_RULE_DEFICIT }.map { it.id }.toSet()
+        val jointConstraints = findings.filter { it.law.id !in setOf("W01", "W07") }.map { it.id }.toSet() +
+            buses.filter { bus -> bus.postRestComplete == true && path.uses.count { it.busPostAnchorId == bus.anchorCandidateId } != 2 }
+                .map { "bus-post-parts:${it.anchorCandidateId}" }
+        return WeeklyEvaluation(allocation, frozen(deadlines), frozen(findings), weekConstraints, jointConstraints)
     }
 
     private fun windows(snapshot: ViolationInputSnapshot, path: WeeklyAssignmentDraft,
@@ -146,6 +149,8 @@ internal object WeeklyRules {
                 restrictions += WeeklyTime.restrictions(coverage)
                 restrictions += WeeklyTime.phaseRestrictions(InputRange(range.start, until))
                 restrictions += chosen.flatMap { it.restrictions }
+                if (path.physical.any { it.range.overlaps(range) && WeeklyTime.weeks(it.range).size > 2 })
+                    restrictions += WeeklyRestriction.L04_LONG_REST_PARTITION_UNCONFIRMED
                 if (first > range.start) restrictions += WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING
                 if (exception && !ordinary) {
                     restrictions += pairIds.flatMap { it.restrictions }
@@ -154,6 +159,10 @@ internal object WeeklyRules {
                 val pending = path.physical.any { !it.actualEndProved && it.range.start < range.end && it.range.end == observed }
                 val state = when {
                     !coverage.factualPrerequisitesCovered || coverage.excludedScope.isNotEmpty() -> WeeklyWindowState.INDETERMINATE
+                    chosen.any { use -> use.restrictions.any { it in setOf(WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED,
+                        WeeklyRestriction.SCOPE_UNDETERMINED, WeeklyRestriction.SCOPE_EXCLUDED) } } -> WeeklyWindowState.INDETERMINATE
+                    !ordinary && exception && (pairIds.any { it.eligibility != RestEligibility.PROVED } ||
+                        bus.any { it.eligibility != RestEligibility.PROVED }) -> WeeklyWindowState.INDETERMINATE
                     ordinary || exception -> WeeklyWindowState.FULFILLED_PROJECTION
                     observed < range.end || pending -> WeeklyWindowState.OPEN
                     else -> WeeklyWindowState.NORMAL_RULE_DEFICIT
@@ -171,7 +180,7 @@ internal object WeeklyRules {
         buses: List<BusWeeklyDerogation>, check: () -> Unit): List<WeeklyDeadline> {
         val observed = snapshot.latestClosedEnd ?: return emptyList()
         val physical = path.physical.associateBy { it.id }
-        val chronological = path.uses.distinctBy { it.candidateId }.sortedBy { it.range.start }
+        val chronological = timingUses(path)
         return frozen(chronological.mapIndexedNotNull { index, anchor ->
             check()
             if (!anchor.actualEndProved) return@mapIndexedNotNull null
@@ -189,7 +198,7 @@ internal object WeeklyRules {
             restrictions += next?.restrictions.orEmpty()
             restrictions += WeeklyTime.restrictions(coverage)
             restrictions += bus.flatMap { it.restrictions }
-            if (bus.any { it.postRestComplete != true }) restrictions += WeeklyRestriction.BUS_POST_REST_PARTITION_UNCONFIRMED
+            if (bus.isNotEmpty()) restrictions += WeeklyRestriction.BUS_POST_REST_PARTITION_UNCONFIRMED
             if (bus.size > 1) restrictions += WeeklyRestriction.ALTERNATIVE_ASSIGNMENT_UNRESOLVED
             if (path.physical.any { !it.actualEndProved && it.range.start <= deadline && it.range.end >= end })
                 restrictions += WeeklyRestriction.OPEN_REST_END
@@ -199,4 +208,16 @@ internal object WeeklyRules {
                 limit, late, coverage, frozen(restrictions))
         })
     }
+
+    private data class TimingUse(val candidateId: String, val range: InputRange, val kind: WeeklyRestKind,
+        val actualEndProved: Boolean, val restrictions: List<WeeklyRestriction>)
+
+    /** Compound allocation parts do not create intermediate observed weekly-rest ends. */
+    private fun timingUses(path: WeeklyAssignmentDraft): List<TimingUse> = path.uses.groupBy { it.candidateId }
+        .values.map { parts ->
+            val first = parts.minBy { it.range.start }; val last = parts.maxBy { it.range.start }
+            TimingUse(first.candidateId, InputRange(first.range.start, last.range.end), last.kind,
+                path.physical.first { it.id == first.candidateId }.actualEndProved,
+                frozen(parts.flatMap { it.restrictions }.distinct()))
+        }.sortedBy { it.range.start }
 }

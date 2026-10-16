@@ -59,7 +59,8 @@ internal class RestFixture(val start: Instant = Instant.parse("2026-09-07T00:00:
         context += ContextAssertion(key, value, subject, from, until, ContextOrigin.USER_CONTEXT,
             "synthetic-M3-reference", start)
     }
-    fun snapshot(withEnd: Boolean = true, duplicate: Boolean = false, conflictingCrew: Boolean = false, contextTransform: (InputContext) -> InputContext = { it }) =
+    fun snapshot(withEnd: Boolean = true, duplicate: Boolean = false, conflictingCrew: Boolean = false,
+        reviewed: List<ReviewedScopeAdjustment> = emptyList(), contextTransform: (InputContext) -> InputContext = { it }) =
         recorded.snapshot(extraIdenticalSource = secondApplication || duplicate, withEnd = withEnd,
-            contextAdditions = context, pointsExtra = points, conflictingCrewSource = conflictingCrew, contextTransform = contextTransform)
+            contextAdditions = context, pointsExtra = points, conflictingCrewSource = conflictingCrew, reviewed = reviewed, contextTransform = contextTransform)
 }

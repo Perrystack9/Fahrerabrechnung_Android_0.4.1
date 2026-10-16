@@ -26,8 +26,13 @@ data class WeeklyRestUse(
     val id: String, val candidateId: String, val kind: WeeklyRestKind,
     val base: List<RestSlice>, val assignedWeek: Instant?, val extra: Boolean,
     val actualEndProved: Boolean, val restrictions: List<WeeklyRestriction>,
+    val busPostAnchorId: String? = null, val basePartIndex: Int = 0,
 ) {
-    init { require(base.isNotEmpty()); require(extra == (assignedWeek == null)) }
+    init {
+        require(base.isNotEmpty()); require(extra == (assignedWeek == null))
+        val amount = base.sumOf { it.seconds }
+        require(if (kind == WeeklyRestKind.REGULAR) amount >= 162000 else amount in 86400 until 162000)
+    }
     val range: InputRange get() = InputRange(base.first().range.start, base.last().range.end)
     val seconds: Long get() = base.sumOf { it.seconds }
 }
@@ -39,7 +44,7 @@ data class WeeklyCompensationDebt(
     val due: Instant, val law: RuleLaw, val restrictions: List<WeeklyRestriction>,
     val afterBusDerogation: Boolean = false,
 ) {
-    init { require(seconds in 1 until 162000); require(due > originRange.start) }
+    init { require(seconds in 1..75600); require(due > originRange.start) }
 }
 
 data class CompensationReservation(
@@ -67,6 +72,7 @@ data class InternationalWeeklyPair(
     val nextRegularUseId: String?, val compensationBeforeRegular: Boolean?,
     val eligibility: RestEligibility, val restrictions: List<WeeklyRestriction>,
     val contextEvidence: List<String>, val needs: List<ContextNeed>,
+    val locationEvidence: List<InputPoint> = emptyList(),
 )
 
 data class BusWeeklyDerogation(
@@ -88,7 +94,12 @@ data class WeeklyAllocation(
     val reservations: List<CompensationReservation>, val windows: List<WeeklyCalendarWindow>,
     val internationalPairs: List<InternationalWeeklyPair>, val buses: List<BusWeeklyDerogation>,
     val restrictions: List<WeeklyRestriction>, val dailyCredit: DailyRestAttribution,
-)
+    val deadlines: List<WeeklyDeadline>, val findings: List<WeeklyRestFinding>,
+) {
+    /** Per correlated attribution only. Historical debt/payment evidence is never deleted. */
+    val openDebts: List<WeeklyCompensationDebt> get() = frozen(debts.filter { debt -> reservations.none { it.debtId == debt.id } })
+    val fulfilledDebts: List<WeeklyCompensationDebt> get() = frozen(debts.filter { debt -> reservations.any { it.debtId == debt.id } })
+}
 
 data class WeeklyDeadline(
     val id: String, val anchorCandidateId: String, val anchorActualEnd: Instant,

@@ -4,6 +4,8 @@ import de.fahrerabrechnung.domain.violation.driving.DrivingCalculation
 import de.fahrerabrechnung.domain.violation.driving.DrivingCalculator
 import de.fahrerabrechnung.domain.violation.rest.DailyRestCalculation
 import de.fahrerabrechnung.domain.violation.rest.DailyRestCalculator
+import de.fahrerabrechnung.domain.violation.weekly.WeeklyRestCalculation
+import de.fahrerabrechnung.domain.violation.weekly.WeeklyRestCalculator
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +22,8 @@ import kotlinx.coroutines.withContext
 sealed interface DrivingCheckState {
     data object Preparing : DrivingCheckState
     data object NoProfile : DrivingCheckState
-    data class Ready(val calculation: DrivingCalculation, val dailyRest: DailyRestCalculation) : DrivingCheckState
+    data class Ready(val calculation: DrivingCalculation, val dailyRest: DailyRestCalculation,
+        val weeklyRest: WeeklyRestCalculation) : DrivingCheckState
     data class Failed(val reason: String = "TIME_CALCULATION_FAILED") : DrivingCheckState
 }
 
@@ -42,7 +45,9 @@ class DrivingCheckRepository @Inject constructor(
                         val driving = DrivingCalculator.calculate(state.snapshot, checkCancellation = { context.ensureActive() })
                         val rest = DailyRestCalculator.calculate(state.snapshot, driving,
                             checkCancellation = { context.ensureActive() })
-                        DrivingCheckState.Ready(driving, rest)
+                        val weekly = WeeklyRestCalculator.calculate(state.snapshot, driving, rest,
+                            checkCancellation = { context.ensureActive() })
+                        DrivingCheckState.Ready(driving, weekly.dailyRest, weekly)
                     }
                     currentCoroutineContext().ensureActive()
                     // A newer outer commit may win while the arithmetic runs. Never expose the old result.

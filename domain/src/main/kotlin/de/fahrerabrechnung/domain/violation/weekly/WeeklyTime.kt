@@ -52,7 +52,7 @@ internal object WeeklyTime {
     }
     fun coverage(snapshot: ViolationInputSnapshot, range: InputRange, id: String): RuleInputCoverage =
         InputCoverage.forRule(snapshot, range, RuleInputRequirement(id,
-            setOf(InputDependency.ACTIVITY, InputDependency.SCOPE), ScopeArticle.DAILY_REST_8))
+            setOf(InputDependency.ACTIVITY, InputDependency.SCOPE), ScopeArticle.WEEKLY_REST_8))
     fun restrictions(coverage: RuleInputCoverage): List<WeeklyRestriction> = buildList {
         if (coverage.gaps.any { it.dependency == InputDependency.ACTIVITY }) add(WeeklyRestriction.ACTIVITY_GAP)
         if (coverage.gaps.any { it.dependency == InputDependency.SCOPE }) add(WeeklyRestriction.SCOPE_UNDETERMINED)

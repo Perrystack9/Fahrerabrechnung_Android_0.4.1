@@ -2,6 +2,7 @@ package de.fahrerabrechnung.domain.violation.weekly
 
 import de.fahrerabrechnung.domain.violation.input.*
 import de.fahrerabrechnung.domain.violation.rest.*
+import de.fahrerabrechnung.domain.violation.driving.DrivingCalculation
 import java.time.Instant
 
 internal class WeeklySearchLimit : RuntimeException()
@@ -18,7 +19,7 @@ internal data class WeeklyAssignmentDraft(
 
 /** Joint chronological enumeration; a physical interval is consumed once, including ferry alternatives. */
 internal object WeeklyAssignments {
-    fun enumerate(snapshot: ViolationInputSnapshot, candidates: List<RestCandidate>, budget: WeeklySearchBudget,
+    fun enumerate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, candidates: List<RestCandidate>, budget: WeeklySearchBudget,
         accept: (WeeklyAssignmentDraft) -> Unit) {
         val natural = candidates.filterNot { it.interrupted }.sortedBy { it.range.start }
         fun visit(index: Int, path: WeeklyAssignmentDraft) {
@@ -44,6 +45,8 @@ internal object WeeklyAssignments {
                     val qualification = kind?.let { k -> rest.weekly.firstOrNull { it.kind == k && it.eligibility != RestEligibility.REJECTED } }
                     val baseRange = InputRange(choice.base.first().range.start, choice.base.last().range.end)
                     val restrictions = linkedSetOf<WeeklyRestriction>()
+                    val originScope = WeeklyTime.restrictions(WeeklyTime.coverage(snapshot, rest.range, "W01–W14"))
+                    if (qualification != null) restrictions += originScope
                     if (qualification?.eligibility == RestEligibility.CONDITIONAL || rest.eligibility == RestEligibility.CONDITIONAL)
                         restrictions += WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED
                     if (!rest.actualEndProved) restrictions += WeeklyRestriction.OPEN_REST_END
@@ -54,28 +57,78 @@ internal object WeeklyAssignments {
                     // Calendar role is independent of the actual rest/end marker and the timing anchor.
                     // Counting an ordinary regular rest creates no debt and consumes no other rest.
                     // Its absent calendar role cannot improve any minimum-rest constraint.
-                    val roles: List<Instant?> = if (kind == WeeklyRestKind.REGULAR && weeks.isNotEmpty()) weeks.take(2)
-                        else listOf(null) + weeks.take(2)
+                    val roles: List<Instant?> = if (kind == WeeklyRestKind.REGULAR && weeks.isNotEmpty()) weeks
+                        else listOf(null) + weeks
                     for (week in roles) {
                         budget.step()
-                        val use = if (qualification == null || kind == null) null else WeeklyRestUse(
+                        val use = if (qualification == null) null else WeeklyRestUse(
                             InputRevision.hash("m4-weekly-use") {
                                 text(snapshot.profileId); text(rest.id); text(kind.name); nullable(week?.toString())
                                 choice.base.forEach { instant(it.range.start); instant(it.range.end) }
                             }, rest.id, kind, frozen(choice.base), week, week == null, rest.actualEndProved, frozen(restrictions))
                         val debt = if (use?.kind == WeeklyRestKind.REDUCED && week != null &&
                             rest.actualEndProved) debt(snapshot, use, rest, week) else null
-                        val daily = if (choice.reservations.isEmpty()) path.daily else {
+                        val daily = if (choice.reservations.isEmpty() && (rest.weekly.isEmpty() || originScope.isEmpty())) path.daily else {
                             // A daily-only base loses the compensation credit. For a weekly package
                             // Art.8(3)/Q08-II-6 permit the daily rest to extend into the whole packet.
-                            val weekly = if (use == null || qualification == null) emptyList() else listOf(qualification)
+                            val scopeLimits = originScope.map { if (it == WeeklyRestriction.SCOPE_EXCLUDED)
+                                RestRestriction.SCOPE_EXCLUDED else RestRestriction.SCOPE_UNDETERMINED }
+                            val weekly = if (use == null || qualification == null) emptyList() else listOf(qualification.let {
+                                if (originScope.isEmpty()) it else it.copy(eligibility = RestEligibility.CONDITIONAL,
+                                    restrictions = frozen((it.restrictions + scopeLimits).distinct())) })
                             path.daily + (rest.id to DailyRestAllocation(
                                 if (use == null) frozen(choice.base) else rest.rest,
-                                frozen(weekly), listOf(RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED)))
+                                frozen(weekly), frozen((scopeLimits + if (choice.reservations.isNotEmpty())
+                                    listOf(RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED) else emptyList()).distinct())))
                         }
                         visit(nextIndex, WeeklyAssignmentDraft(path.physical + rest,
                             path.uses + listOfNotNull(use), path.debts + listOfNotNull(debt),
                             path.payments + choice.reservations, daily))
+                    }
+                    // Specific Art.8(6a)(b) projection, not a general division of every long rest.
+                    val previous = path.uses.lastOrNull()
+                    val anchor = previous?.takeIf { it.kind == WeeklyRestKind.REGULAR && it.actualEndProved }
+                        ?.let { p -> path.physical.lastOrNull { it.id == p.candidateId } }
+                    if (anchor != null && !rest.interrupted && amount >= 69 * 3600L &&
+                        WeeklyContexts.bus(snapshot, driving, anchor, rest.range.start, rest, budget::step).isNotEmpty()) {
+                        val cut = baseRange.start.plusSeconds(WeeklyTime.REGULAR)
+                        fun slice(range: InputRange): List<RestSlice> = frozen(choice.base.mapNotNull { source ->
+                            val a = maxOf(source.range.start, range.start); val b = minOf(source.range.end, range.end)
+                            if (a < b) source.copy(range = InputRange(a, b)) else null
+                        })
+                        val firstPart = slice(InputRange(baseRange.start, cut))
+                        val secondPart = slice(InputRange(cut, baseRange.end))
+                        val secondKind = if (secondPart.sumOf { it.seconds } >= WeeklyTime.REGULAR)
+                            WeeklyRestKind.REGULAR else WeeklyRestKind.REDUCED
+                        val limits = frozen((restrictions + WeeklyRestriction.BUS_POST_REST_PARTITION_UNCONFIRMED +
+                            WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING).distinct())
+                        for (firstWeek in WeeklyTime.weeks(InputRange(baseRange.start, cut)))
+                            for (secondWeek in WeeklyTime.weeks(InputRange(cut, baseRange.end))) {
+                                budget.step()
+                                fun part(indexPart: Int, kindPart: WeeklyRestKind, slices: List<RestSlice>, weekPart: Instant) =
+                                    WeeklyRestUse(InputRevision.hash("m4-bus-post-rest-use") {
+                                        text(rest.id); text(anchor.id); int(indexPart); text(kindPart.name); instant(weekPart)
+                                        slices.forEach { instant(it.range.start); instant(it.range.end) }
+                                    }, rest.id, kindPart, slices, weekPart, false,
+                                        rest.actualEndProved && indexPart == 1, limits, anchor.id, indexPart)
+                                val firstUse = part(0, WeeklyRestKind.REGULAR, firstPart, firstWeek)
+                                val secondUse = part(1, secondKind, secondPart, secondWeek)
+                                val debt = if (secondKind == WeeklyRestKind.REDUCED && rest.actualEndProved) {
+                                    val origin = InputRevision.hash("m4-bus-debt-origin") { text(snapshot.profileId); text(rest.id); text(anchor.id) }
+                                    val deficit = WeeklyTime.REGULAR - secondUse.seconds
+                                    val due = WeeklyTime.due(WeeklyTime.week(rest.range.start))
+                                    WeeklyCompensationDebt(InputRevision.hash("m4-bus-debt-variant") { text(origin); instant(secondWeek); long(deficit) },
+                                        origin, rest.id, secondUse.range, secondWeek, deficit, due,
+                                        WeeklyTime.law("W11", rest.range.start), frozen((limits + WeeklyRestriction.L02_UTC_WEEK_PROJECTION_ONLY).distinct()), true)
+                                } else null
+                                val daily = path.daily + (rest.id to DailyRestAllocation(rest.rest,
+                                    rest.weekly.filter { it.kind == WeeklyRestKind.REGULAR }.map { q ->
+                                        if (originScope.isEmpty()) q else q.copy(eligibility = RestEligibility.CONDITIONAL) },
+                                    frozen((listOf(RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED) +
+                                        if (originScope.isNotEmpty()) listOf(RestRestriction.SCOPE_UNDETERMINED) else emptyList()).distinct())))
+                                visit(nextIndex, WeeklyAssignmentDraft(path.physical + rest, path.uses + listOf(firstUse, secondUse),
+                                    path.debts + listOfNotNull(debt), path.payments + choice.reservations, daily))
+                            }
                     }
                 }
             }

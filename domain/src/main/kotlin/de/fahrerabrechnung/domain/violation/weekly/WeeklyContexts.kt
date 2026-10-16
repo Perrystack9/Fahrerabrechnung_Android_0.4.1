@@ -6,7 +6,8 @@ import de.fahrerabrechnung.domain.violation.rest.*
 import java.time.*
 
 internal data class WeeklyPrerequisite(val eligibility: RestEligibility,
-    val restrictions: List<WeeklyRestriction>, val evidence: List<String>, val needs: List<ContextNeed>)
+    val restrictions: List<WeeklyRestriction>, val evidence: List<String>, val needs: List<ContextNeed>,
+    val locationEvidence: List<InputPoint>)
 
 internal object WeeklyContexts {
     fun international(snapshot: ViolationInputSnapshot, first: WeeklyRestUse, second: WeeklyRestUse): WeeklyPrerequisite {
@@ -14,6 +15,7 @@ internal object WeeklyContexts {
         val restrictions = linkedSetOf<WeeklyRestriction>()
         val evidence = linkedSetOf<String>()
         val needs = mutableListOf<ContextNeed>()
+        val locations = mutableListOf<InputPoint>()
         var rejected = false
         when (RestLawVersions.phase(range, RestLawVersions.ferryWeekly)) {
             RestDatePhase.BEFORE -> rejected = true
@@ -34,22 +36,31 @@ internal object WeeklyContexts {
             val subject = ContextSubject(ContextSubjectKind.REST, "rest-${at.epochSecond}")
             val values = listOf(ContextKey.EMPLOYER_COUNTRY, ContextKey.RESIDENCE_COUNTRY, ContextKey.REST_START_COUNTRY)
                 .associateWith { key -> snapshot.context.resolveAt(key, at, if (key == ContextKey.REST_START_COUNTRY) subject else null) }
+            val points = RecordedRestCountry.points(snapshot, at)
+            locations += points; evidence += points.map(RecordedRestCountry::evidence)
+            val recorded = RecordedRestCountry.countries(points)
+            val declared = RecordedRestCountry.canonical(values.getValue(ContextKey.REST_START_COUNTRY).text)
+            val countries = (recorded + listOfNotNull(declared)).toSet()
+            if (countries.size > 1) {
+                restrictions += WeeklyRestriction.CONTEXT_CONFLICT
+                needs += ContextNeed(ContextKey.REST_START_COUNTRY, subject, null, "RECORDED_REST_START_COUNTRY_CONFLICT", at)
+            }
             values.forEach { (key, value) ->
                 evidence += value.evidence.map { it.semanticId }
                 if (value.conflict) restrictions += WeeklyRestriction.CONTEXT_CONFLICT
-                if (value.text == null) {
+                if (value.text == null && (key != ContextKey.REST_START_COUNTRY || recorded.size != 1)) {
                     restrictions += WeeklyRestriction.CONTEXT_PREREQUISITE_UNCONFIRMED
                     needs += ContextNeed(key, if (key == ContextKey.REST_START_COUNTRY) subject else null, null,
                         "CONCRETE_INTERNATIONAL_WEEKLY_START", at)
                 }
             }
-            val country = values.getValue(ContextKey.REST_START_COUNTRY).text
-            if (country != null && (country == values.getValue(ContextKey.EMPLOYER_COUNTRY).text ||
-                    country == values.getValue(ContextKey.RESIDENCE_COUNTRY).text)) rejected = true
+            val country = countries.singleOrNull()
+            if (country != null && (country == RecordedRestCountry.canonical(values.getValue(ContextKey.EMPLOYER_COUNTRY).text) ||
+                    country == RecordedRestCountry.canonical(values.getValue(ContextKey.RESIDENCE_COUNTRY).text))) rejected = true
         }
         return WeeklyPrerequisite(if (rejected) RestEligibility.REJECTED else if (restrictions.isEmpty())
             RestEligibility.PROVED else RestEligibility.CONDITIONAL, frozen(restrictions), frozen(evidence),
-            frozen(needs.distinctBy { it.id }))
+            frozen(needs.distinctBy { it.id }), frozen(locations.distinct()))
     }
 
     fun bus(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, anchor: RestCandidate,
@@ -58,6 +69,8 @@ internal object WeeklyContexts {
         if (until <= start.plusSeconds(WeeklyTime.SIX_DAYS) ||
             anchor.effectiveWeekly.none { it.kind == WeeklyRestKind.REGULAR && it.eligibility != RestEligibility.REJECTED }) return emptyList()
         val range = InputRange(start, until)
+        val scope = WeeklyTime.coverage(snapshot, range, "W10–W13")
+        if (scope.excludedScope.isNotEmpty() || scope.gaps.any { it.dependency == InputDependency.SCOPE }) return emptyList()
         if (snapshot.context.resolve(ContextKey.TRANSPORT_KIND, range).text != "PASSENGERS" ||
             snapshot.context.resolve(ContextKey.PASSENGER_SERVICE, range).text != "OCCASIONAL" ||
             RestLawVersions.phase(range, WeeklyTime.busStart) == RestDatePhase.BEFORE) return emptyList()
