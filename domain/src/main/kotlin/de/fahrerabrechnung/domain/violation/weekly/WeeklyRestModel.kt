@@ -135,7 +135,9 @@ data class WeeklyRestCalculation(
     val allocations: List<WeeklyAllocation>, val deadlines: List<WeeklyDeadline>,
     val findings: List<WeeklyRestFinding>, val contextNeeds: List<ContextNeed>,
     val issues: List<WeeklyRestIssue>, val alternativesComplete: Boolean,
-    val dailyRest: DailyRestCalculation, val sourceSnapshot: ViolationInputSnapshot,
+    val dailyRest: DailyRestCalculation,
+    /** Key = allocation.dailyCredit.revision. Every result uses the same unchanged M1 snapshot. */
+    val dailyAttributionResults: Map<String, DailyRestCalculation>, val sourceSnapshot: ViolationInputSnapshot,
 ) {
     val interpretation: String get() = WEEKLY_REST_INTERPRETATION
     val establishesLegalAllClear: Boolean get() = false

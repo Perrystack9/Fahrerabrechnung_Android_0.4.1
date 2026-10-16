@@ -33,6 +33,14 @@ class WeeklyGuardRegressionTest {
     @Test fun RecordedStartInEmployerCountryRulesExceptionOutWithoutOverridingItByAMissingContext() {
         assertTrue(WeeklyRestCalculator.calculate(countries(second = 0x0d).snapshot()).allocations.flatMap { it.internationalPairs }.isEmpty())
     }
+    @Test fun ConflictingRecordedCountryPointsProduceOneConcreteQuestionAndKeepBothPoints() {
+        val f = countries().countryPoint("2026-09-19T00:00:00Z", 0x0d)
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertEquals(1, r.contextNeeds.filter { it.key == ContextKey.REST_START_COUNTRY &&
+            it.at == at("2026-09-19T00:00:00Z") }.size)
+        assertTrue(r.allocations.flatMap { it.internationalPairs }.all { it.eligibility == RestEligibility.CONDITIONAL })
+        assertTrue(r.allocations.flatMap { it.internationalPairs }.all { it.locationEvidence.size == 3 })
+    }
     @Test fun AnEarlierCountryPointIsNotExtendedAcrossTheUnknownLocationUntilRestStart() {
         val f = WeeklyFixture(at("2026-08-31T00:00:00Z")).countries().r("2026-09-05T00:00:00Z", 2700)
             .r("2026-09-12T00:00:00Z", 1440).r("2026-09-19T00:00:00Z", 1440)
@@ -68,6 +76,38 @@ class WeeklyGuardRegressionTest {
         assertTrue(r.allocations.flatMap { it.uses }.all { WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED in it.restrictions })
         assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
     }
+    @Test fun MissingRegularFerryScheduleCreatesOnlyTheConcreteWeeklyNeed() {
+        val f = RestFixture(t, prefix = false).r(1350).w(60).r(1350).ferryMarker(t)
+            .ferryContext(t, facility = "CABIN")
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.contextNeeds.any { it.key == ContextKey.FERRY_SCHEDULED_MINUTES })
+        assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
+    }
+    @Test fun ARejectedRegularFerryKindDoesNotProveThatNoReducedWeeklyAttributionCouldExist() {
+        val f = RestFixture().w(5 * 1440).r(1350).w(60).r(1350)
+        val start = t.plusSeconds(5 * 86400)
+        f.ferryMarker(start).ferryContext(start, facility = "BUNK", scheduledMinutes = 479)
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.issues.any { it.reason == "FERRY_WEEKLY_KIND_ALLOCATION_REQUIRES_L04" })
+        assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
+    }
+    @Test fun MultipleWeekPhysicalRestIsNotArbitrarilyLimitedToItsFirstTwoWeeks() {
+        val r = WeeklyRestCalculator.calculate(WeeklyFixture().r("2026-09-07T00:00:00Z", 22 * 1440).snapshot())
+        assertTrue(r.issues.any { it.reason == "LONG_REST_PARTITION_REQUIRES_L04" })
+        assertEquals(4, r.allocations.flatMap { it.uses }.map { it.assignedWeek }.distinct().size)
+        assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
+    }
+    @Test fun DT38MultipleDebtsKeepTheirOwnWholePaymentAndOpenOriginInEachLedger() {
+        val f = WeeklyFixture(at("2026-08-31T00:00:00Z")).r("2026-09-05T00:00:00Z", 2700)
+            .r("2026-09-12T00:00:00Z", 1440).r("2026-09-19T00:00:00Z", 2700)
+            .r("2026-09-26T00:00:00Z", 1440).r("2026-09-30T00:00:00Z", 1920)
+            .until("2026-10-02T00:00:00Z")
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.alternativesComplete)
+        assertTrue(r.allocations.any { it.debts.size == 2 && it.openDebts.size == 1 && it.fulfilledDebts.size == 1 })
+        assertTrue(r.allocations.all { ledger -> ledger.openDebts.none { it.id in ledger.fulfilledDebts.map { d -> d.id } } })
+        assertTrue(r.dailyAttributionResults.values.all { it.sourceSnapshot == r.sourceSnapshot })
+    }
     @Test fun FerrySixtyOneMinutesCannotCreateACombinedWeeklyRest() {
         val r = WeeklyRestCalculator.calculate(ferry(gap = 61).snapshot())
         assertTrue(r.allocations.all { it.uses.isEmpty() })
@@ -95,6 +135,14 @@ class WeeklyGuardRegressionTest {
         assertFalse(r.alternativesComplete)
         assertTrue(r.allocations.flatMap { it.deadlines }.all { it.provenSecondsRemaining == null })
         assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
+    }
+    @Test fun ALongRecordedChronologyUsesBoundedIteratorFramesInsteadOfTheJvmCallStack() {
+        val f = RestFixture(prefix = false)
+        repeat(1200) { f.w(1).r(1) }
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.alternativesComplete)
+        assertEquals(1200, r.candidates.size)
+        assertTrue(r.allocations.all { it.uses.isEmpty() && it.debts.isEmpty() })
     }
     @Test fun PublishedListsAndMapsCannotLoseOriginsThroughCallerMutation() {
         val r = WeeklyRestCalculator.calculate(countries().snapshot())

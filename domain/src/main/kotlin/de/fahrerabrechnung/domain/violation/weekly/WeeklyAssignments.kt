@@ -22,9 +22,8 @@ internal object WeeklyAssignments {
     fun enumerate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation, candidates: List<RestCandidate>, budget: WeeklySearchBudget,
         accept: (WeeklyAssignmentDraft) -> Unit) {
         val natural = candidates.filterNot { it.interrupted }.sortedBy { it.range.start }
-        fun visit(index: Int, path: WeeklyAssignmentDraft) {
+        fun children(index: Int, path: WeeklyAssignmentDraft): Sequence<Pair<Int, WeeklyAssignmentDraft>> = sequence {
             budget.step()
-            if (index == natural.size) { accept(path); return }
             val first = natural[index]
             val options = candidates.filter { it.range.start == first.range.start &&
                 (it.id == first.id || it.interrupted && it.eligibility != RestEligibility.REJECTED) }
@@ -81,7 +80,7 @@ internal object WeeklyAssignments {
                                 frozen(weekly), frozen((scopeLimits + if (choice.reservations.isNotEmpty())
                                     listOf(RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED) else emptyList()).distinct())))
                         }
-                        visit(nextIndex, WeeklyAssignmentDraft(path.physical + rest,
+                        yield(nextIndex to WeeklyAssignmentDraft(path.physical + rest,
                             path.uses + listOfNotNull(use), path.debts + listOfNotNull(debt),
                             path.payments + choice.reservations, daily))
                     }
@@ -126,14 +125,24 @@ internal object WeeklyAssignments {
                                         if (originScope.isEmpty()) q else q.copy(eligibility = RestEligibility.CONDITIONAL) },
                                     frozen((listOf(RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED) +
                                         if (originScope.isNotEmpty()) listOf(RestRestriction.SCOPE_UNDETERMINED) else emptyList()).distinct())))
-                                visit(nextIndex, WeeklyAssignmentDraft(path.physical + rest, path.uses + listOf(firstUse, secondUse),
+                                yield(nextIndex to WeeklyAssignmentDraft(path.physical + rest, path.uses + listOf(firstUse, secondUse),
                                     path.debts + listOfNotNull(debt), path.payments + choice.reservations, daily))
                             }
                     }
                 }
             }
         }
-        visit(0, WeeklyAssignmentDraft(emptyList(), emptyList(), emptyList(), emptyList(), emptyMap()))
+        // A long import must hit an explicit proof bound, never the JVM call-stack limit.
+        // Lazy frames also avoid materialising a factorial compensation frontier in memory.
+        val stack = java.util.ArrayDeque<Iterator<Pair<Int, WeeklyAssignmentDraft>>>()
+        stack.addLast(sequenceOf(0 to WeeklyAssignmentDraft(emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())).iterator())
+        while (stack.isNotEmpty()) {
+            budget.step()
+            val frame = stack.peekLast()
+            if (!frame.hasNext()) { stack.removeLast(); continue }
+            val (index, path) = frame.next()
+            if (index == natural.size) accept(path) else stack.addLast(children(index, path).iterator())
+        }
     }
 
     private fun debt(snapshot: ViolationInputSnapshot, use: WeeklyRestUse, rest: RestCandidate, week: Instant): WeeklyCompensationDebt {

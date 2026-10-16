@@ -22,6 +22,10 @@ object WeeklyRestCalculator {
         val issues = mutableListOf<WeeklyRestIssue>()
         if (dailyResult.candidates.any { it.netRestSeconds >= WeeklyTime.REDUCED && WeeklyTime.weeks(it.range).size > 2 })
             issues += WeeklyRestIssue(setOf("W03", "W09"), "LONG_REST_PARTITION_REQUIRES_L04")
+        if (dailyResult.candidates.any { it.interrupted && it.netRestSeconds >= WeeklyTime.REGULAR &&
+                it.weekly.any { q -> q.kind == WeeklyRestKind.REDUCED && q.eligibility != RestEligibility.REJECTED } &&
+                it.weekly.none { q -> q.kind == WeeklyRestKind.REGULAR && q.eligibility != RestEligibility.REJECTED } })
+            issues += WeeklyRestIssue(setOf("W03", "W09", "F03", "F04"), "FERRY_WEEKLY_KIND_ALLOCATION_REQUIRES_L04")
         var complete = true
         try {
             WeeklyAssignments.enumerate(snapshot, drivingResult, dailyResult.candidates, budget) { path ->
@@ -34,27 +38,38 @@ object WeeklyRestCalculator {
             complete = false
             issues += WeeklyRestIssue(setOf("W01–W14"), "ALLOCATION_SEARCH_LIMIT_NO_VERDICT")
         }
-        // Solve week roles, compensation placement and timing TOGETHER. No priority of a calendar
-        // rule over a timing/compensation rule. A fixed failure shared by ALL possibilities stays
-        // documented but cannot erase unrelated later obligations. No violation-count objective.
-        val jointWitnesses = witnesses(evaluated.values.toList()) { value ->
-            value.weekConstraints.map { "week:$it" }.toSet() + value.jointConstraints
-        }
-        val retained = if (!complete || jointWitnesses.isEmpty()) evaluated.values.toList() else jointWitnesses
-        val globalWitness = jointWitnesses.any { it.weekConstraints.isEmpty() && it.jointConstraints.isEmpty() }
-        if (complete && retained.isNotEmpty() && !globalWitness)
-            issues += WeeklyRestIssue(setOf("W01", "W04", "W07", "W08", "W09", "W11"), "NO_GLOBAL_ASSIGNMENT_WITNESS")
-        val attributionVariants = retained.map { it.allocation.dailyCredit }.distinctBy { it.revision }
-        val dailyVariants = mutableListOf<DailyRestCalculation>()
+        val attributionVariants = evaluated.values.map { it.allocation.dailyCredit }.distinctBy { it.revision }
+        val dailyByAttribution = linkedMapOf<String, DailyRestCalculation>()
         if (attributionVariants.size > maxDailyAttributions) {
             complete = false
             issues += WeeklyRestIssue(setOf("W09", "R01–R07"), "DAILY_ATTRIBUTION_SEARCH_LIMIT_NO_VERDICT")
-        } else for (attribution in attributionVariants) {
+        } else if (complete) for (attribution in attributionVariants) {
             checkCancellation()
-            dailyVariants += if (attribution.allocations.isEmpty() && attribution.candidateIds == dailyResult.candidates.map { it.id }.toSet())
+            val result = if (attribution.allocations.isEmpty() && attribution.candidateIds == dailyResult.candidates.map { it.id }.toSet())
                 dailyResult else DailyRestCalculator.calculate(snapshot, drivingResult,
                     checkCancellation = checkCancellation, attribution = attribution)
+            dailyByAttribution[attribution.revision] = result
+            if (!result.alternativesComplete) {
+                complete = false
+                issues += WeeklyRestIssue(setOf("W09", "R01–R07"), "CORRELATED_DAILY_SEARCH_INCOMPLETE_NO_VERDICT")
+            }
         }
+        fun constraints(value: WeeklyEvaluation): Set<String> {
+            val dailyConstraints = dailyByAttribution[value.allocation.dailyCredit.revision]?.findings.orEmpty()
+                .filter { it.presentInEveryRetainedPath && it.quantityIsExact && it.restrictions.all { restriction ->
+                    restriction == RestRestriction.L04_COMPENSATION_ASSIGNMENT_UNCONFIRMED } }
+                .map { "daily:${it.id}" }
+            return value.weekConstraints.map { "week:$it" }.toSet() + value.jointConstraints + dailyConstraints
+        }
+        // Solve week roles, compensation placement and timing TOGETHER. No priority of a calendar
+        // rule over a timing/compensation rule. A fixed failure shared by ALL possibilities stays
+        // documented but cannot erase unrelated later obligations. No violation-count objective.
+        val jointWitnesses = witnesses(evaluated.values.toList(), ::constraints)
+        val retained = if (!complete || jointWitnesses.isEmpty()) evaluated.values.toList() else jointWitnesses
+        val globalWitness = jointWitnesses.any { constraints(it).isEmpty() }
+        if (complete && retained.isNotEmpty() && !globalWitness)
+            issues += WeeklyRestIssue(setOf("W01", "W04", "W07", "W08", "W09", "W11"), "NO_GLOBAL_ASSIGNMENT_WITNESS")
+        val dailyVariants = retained.mapNotNull { dailyByAttribution[it.allocation.dailyCredit.revision] }.distinctBy { it.revision }
         val combinedDaily = DailyRestAttributions.combine(dailyResult, dailyVariants, complete)
         val allocations = retained.map { it.allocation.copy(restrictions = frozen((it.allocation.restrictions +
             if (!complete) listOf(WeeklyRestriction.COMPUTATION_LIMIT_REACHED) else if (!globalWitness)
@@ -80,7 +95,10 @@ object WeeklyRestCalculator {
                     listOf(WeeklyRestriction.ALTERNATIVE_ASSIGNMENT_UNRESOLVED) else emptyList()).distinct()))
         }
         val needs = retained.flatMap { result -> result.allocation.internationalPairs.flatMap { it.needs } +
-            result.allocation.buses.flatMap { it.needs } } + combinedDaily.contextNeeds
+            result.allocation.buses.flatMap { it.needs } + result.allocation.uses.filter { use ->
+                WeeklyRestriction.SCOPE_EXCLUDED !in use.restrictions && WeeklyRestriction.SCOPE_UNDETERMINED !in use.restrictions
+            }.flatMap { use -> dailyResult.candidates.first { it.id == use.candidateId }.weekly
+                .filter { it.kind == use.kind }.flatMap { it.needs } } } + combinedDaily.contextNeeds
         if (dailyResult.candidates.none { it.weekly.any { q -> q.eligibility != RestEligibility.REJECTED } })
             issues += WeeklyRestIssue(setOf("W02", "W14"), "NO_PROVED_PREVIOUS_WEEKLY_REST")
         snapshot.issues.forEach { issues += WeeklyRestIssue(setOf("W01–W14"), "INPUT_${it.code.name}", it.range) }
@@ -95,7 +113,7 @@ object WeeklyRestCalculator {
             frozen(allocations), frozen(deadlines.sortedWith(compareBy({ it.anchorActualEnd }, { it.id }))),
             frozen(findings.sortedWith(compareBy({ it.range.start }, { it.id }))),
             frozen(needs.distinctBy { it.id }.sortedBy { it.id }), frozen(issues.distinct()), complete,
-            combinedDaily, snapshot)
+            combinedDaily, frozenMap(dailyByAttribution), snapshot)
     }
 
     private fun witnesses(values: List<WeeklyEvaluation>, constraints: (WeeklyEvaluation) -> Set<String>): List<WeeklyEvaluation> {

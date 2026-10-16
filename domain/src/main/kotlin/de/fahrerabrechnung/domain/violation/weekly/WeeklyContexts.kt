@@ -39,16 +39,18 @@ internal object WeeklyContexts {
             val points = RecordedRestCountry.points(snapshot, at)
             locations += points; evidence += points.map(RecordedRestCountry::evidence)
             val recorded = RecordedRestCountry.countries(points)
-            val declared = RecordedRestCountry.canonical(values.getValue(ContextKey.REST_START_COUNTRY).text)
-            val countries = (recorded + listOfNotNull(declared)).toSet()
-            if (countries.size > 1) {
+            val declared = values.getValue(ContextKey.REST_START_COUNTRY).evidence.mapNotNull {
+                RecordedRestCountry.canonical((it.value as? ContextValue.Text)?.value) }.toSet()
+            val countries = (recorded + declared).toSet()
+            val countryConflict = countries.size > 1 || values.getValue(ContextKey.REST_START_COUNTRY).conflict
+            if (countryConflict) {
                 restrictions += WeeklyRestriction.CONTEXT_CONFLICT
                 needs += ContextNeed(ContextKey.REST_START_COUNTRY, subject, null, "RECORDED_REST_START_COUNTRY_CONFLICT", at)
             }
             values.forEach { (key, value) ->
                 evidence += value.evidence.map { it.semanticId }
                 if (value.conflict) restrictions += WeeklyRestriction.CONTEXT_CONFLICT
-                if (value.text == null && (key != ContextKey.REST_START_COUNTRY || recorded.size != 1)) {
+                if (value.text == null && (key != ContextKey.REST_START_COUNTRY || recorded.isEmpty() && !countryConflict)) {
                     restrictions += WeeklyRestriction.CONTEXT_PREREQUISITE_UNCONFIRMED
                     needs += ContextNeed(key, if (key == ContextKey.REST_START_COUNTRY) subject else null, null,
                         "CONCRETE_INTERNATIONAL_WEEKLY_START", at)

@@ -78,6 +78,12 @@ class WeeklyRestReferenceTest {
         val r = calculate(f)
         assertTrue(r.allocations.any { ledger -> listOf(monday, monday.plusSeconds(604800)).all { week ->
             ledger.windows.any { it.range.start == week && it.requiredCount == 2 && it.state == WeeklyWindowState.FULFILLED_PROJECTION } } })
+        // Independently enumerated truth table for {36/37} x {37/38} x {38/39}:
+        // both closed pairs need two rests; two different rests may both belong to week38.
+        val w36 = at("2026-08-31T00:00:00Z"); val w37 = monday
+        val w38 = at("2026-09-14T00:00:00Z"); val w39 = at("2026-09-21T00:00:00Z")
+        assertEquals(setOf(listOf(w36, w38, w38), listOf(w37, w38, w38), listOf(w37, w38, w39)),
+            r.allocations.map { it.uses.map { use -> use.assignedWeek } }.toSet())
         assertTrue(r.findings.none { it.law.id == "W01" && it.normalRuleDeficitIsProved })
     }
     @Test fun LG101TwentyThreeHoursIsADailyRestButNotAWeeklyAnchorOrDebt() {
@@ -219,7 +225,7 @@ class WeeklyRestReferenceTest {
         val r = calculate(f)
         val latest = r.candidates.maxBy { it.range.end }
         val next = r.deadlines.single { it.anchorCandidateId == latest.id }
-        assertEquals(518400, next.provenSecondsRemaining)
+        assertEquals(518400L, next.provenSecondsRemaining)
         assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
     }
     @Test fun ProvenanceSnapshotIsRetainedWithoutSourceOrSchemaMutation() {

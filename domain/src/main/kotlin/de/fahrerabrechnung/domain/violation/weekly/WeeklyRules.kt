@@ -146,6 +146,8 @@ internal object WeeklyRules {
                 val ordinary = chosen.size >= count && regular >= if (count == 2) 1 else 2
                 val exception = count == 2 && (pairIds.isNotEmpty() || bus.isNotEmpty())
                 val restrictions = linkedSetOf(WeeklyRestriction.L02_UTC_WEEK_PROJECTION_ONLY)
+                val unresolvedFerryKind = unresolvedFerryRests(path).any { it.range.overlaps(range) }
+                if (unresolvedFerryKind) restrictions += WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED
                 restrictions += WeeklyTime.restrictions(coverage)
                 restrictions += WeeklyTime.phaseRestrictions(InputRange(range.start, until))
                 restrictions += chosen.flatMap { it.restrictions }
@@ -159,6 +161,7 @@ internal object WeeklyRules {
                 val pending = path.physical.any { !it.actualEndProved && it.range.start < range.end && it.range.end == observed }
                 val state = when {
                     !coverage.factualPrerequisitesCovered || coverage.excludedScope.isNotEmpty() -> WeeklyWindowState.INDETERMINATE
+                    unresolvedFerryKind -> WeeklyWindowState.INDETERMINATE
                     chosen.any { use -> use.restrictions.any { it in setOf(WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED,
                         WeeklyRestriction.SCOPE_UNDETERMINED, WeeklyRestriction.SCOPE_EXCLUDED) } } -> WeeklyWindowState.INDETERMINATE
                     !ordinary && exception && (pairIds.any { it.eligibility != RestEligibility.PROVED } ||
@@ -197,6 +200,8 @@ internal object WeeklyRules {
             restrictions += anchor.restrictions
             restrictions += next?.restrictions.orEmpty()
             restrictions += WeeklyTime.restrictions(coverage)
+            if (unresolvedFerryRests(path).any { it.range.overlaps(coverageRange) })
+                restrictions += WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED
             restrictions += bus.flatMap { it.restrictions }
             if (bus.isNotEmpty()) restrictions += WeeklyRestriction.BUS_POST_REST_PARTITION_UNCONFIRMED
             if (bus.size > 1) restrictions += WeeklyRestriction.ALTERNATIVE_ASSIGNMENT_UNRESOLVED
@@ -220,4 +225,10 @@ internal object WeeklyRules {
                 path.physical.first { it.id == first.candidateId }.actualEndProved,
                 frozen(parts.flatMap { it.restrictions }.distinct()))
         }.sortedBy { it.range.start }
+
+    /** Do not turn an unresolved regular/reduced ferry attribution into a proved absence of rest. */
+    private fun unresolvedFerryRests(path: WeeklyAssignmentDraft): List<RestCandidate> = path.physical.filter { rest ->
+        rest.interrupted && rest.weekly.any { it.eligibility != RestEligibility.REJECTED } &&
+            path.uses.none { it.candidateId == rest.id } && path.payments.none { it.donorCandidateId == rest.id }
+    }
 }
