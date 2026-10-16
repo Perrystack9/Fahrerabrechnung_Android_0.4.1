@@ -1,6 +1,6 @@
 # M4 – Wochenruhe, Ausgleich und Sonderregeln
 
-**M4-Prüfkandidat in Fertigstellung, noch keine M4-Abnahme.** Ausdrückliche Freigabe im vierseitigen PDF-Auftrag vom16.10.2026, SHA256 `3d582e399156a9d41db3ca02cafbe384c397674670357642c8957570a0a76b35`. [M3-Integration und erfülltes Eingangsgate](M3_INTEGRATION_20261016.md): Merge `ba0cf1933f8d01590d8fdef32526f1715ec8d571`, volle Main-CI312/Versuch1 mit vier erfolgreichen Jobs.
+**Technischer M4-Prüfkandidat vorbereitet; lokale Endgates erfolgreich, noch keine M4-Abnahme.** Ausdrückliche Freigabe im vierseitigen PDF-Auftrag vom16.10.2026, SHA256 `3d582e399156a9d41db3ca02cafbe384c397674670357642c8957570a0a76b35`. [M3-Integration und erfülltes Eingangsgate](M3_INTEGRATION_20261016.md): Merge `ba0cf1933f8d01590d8fdef32526f1715ec8d571`, volle Main-CI312/Versuch1 mit vier erfolgreichen Jobs.
 
 Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. PD01–PD80/A–H/E01–E12/P01–P05 und spätere ausdrücklich dokumentierte Präzisierungen bleiben verbindlich. Kein M4-Merge, M5–M7 oder Release genehmigt.
 
@@ -50,7 +50,7 @@ Vor der finalen CI: sämtliche geplanten Änderungen abschließen, exakten Kopf/
 
 ## Technische Abnahme und Testpaket
 
-Version **40132 / Room23**, unveränderter Compilerexport23 SHA256 `f55ad0fbe684753dfc47d4067e7002072064f8d95d70134bf4095ffbf14e5dc8`. Keine Änderungen an Fahrerkartenparsern, Originaldaten, SQLCipher/Keystore/Signaturfunktionen, Hardware, CI/Sicherheitsgates oder Schemaexporten1–23. Die endgültigen Ist-Ergebnisse stehen im [M4-Testnachweis](VIOLATION_ENGINE_M4_TEST_EVIDENCE.md).
+Version **40132 / Room23**, unveränderter Compilerexport23 SHA256 `f55ad0fbe684753dfc47d4067e7002072064f8d95d70134bf4095ffbf14e5dc8`. Keine Änderungen an Fahrerkartenparsern, Originaldaten, SQLCipher/Keystore/Signaturfunktionen, Hardware, CI/Sicherheitsgates oder Schemaexporten1–23. 801 lokale Unit-Tests ohne Fehler/Skip und alle sieben Gradle-Endgates sowie zusätzliche Signatur-/Updatepaar-/Schema-/Android-Testkompilierprüfungen erfolgreich. Die Ist-Ergebnisse stehen im [M4-Testnachweis](VIOLATION_ENGINE_M4_TEST_EVIDENCE.md).
 
 Nach allen lokalen Korrekturen wird ein fester Entwicklungsstand im eigenen M4-PR vollständig geprüft. Dessen Beschreibung dokumentiert den exakten Produktkopf/Baum, CI-Lauf/Versuch und vier Jobresultate, die Paket-/APK-Prüfsummen und verbleibende Geräte-/Fachgates. Nach Beginn dieser Prüfung keine neuen Quellcommits. Erfolgreiche normale CI bleibt ohne Artefaktupload; ein anschließend separat gebautes Testpaket muss denselben unveränderten Quellbaum verwenden und Signatur/Version nachweisen.
 

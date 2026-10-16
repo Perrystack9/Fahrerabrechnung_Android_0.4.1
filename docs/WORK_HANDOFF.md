@@ -10,7 +10,7 @@ Tatsächlicher Merge **`ba0cf1933f8d01590d8fdef32526f1715ec8d571`**, vollständi
 
 ## Aktueller M4-Auftrag
 
-Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](VIOLATION_ENGINE_M4_IMPLEMENTATION.md). W01–W14 auf demselben M1-/M2-/M3-Snapshot: Wochenruhe, globale Pflicht-/Ausgleichszuordnung, internationale Vierwochenfälle und historische Bus-Zwölftageregel. Quellenabgleich und M4-Implementierung mit282 erfolgreichen Domain-Tests, darunter110 M4-Referenzmethoden ohne Fehler/Skip. Ruhebeginn-/End- und RED-Budgetguards ergänzt, numerische Mengenuntergrenzen korrigiert. Vollständige lokale Gates, GitHub-CI und eigene40132-Geräteprüfung noch nachzuweisen; kein M4-Abnahmenachweis.
+Branch `feature/v1-m4-weekly-rest-20261016`, Checkout `/workspace/scratch/8d9b62deaae5/FahrerTagebuch-m4`. [Arbeitsvertrag](VIOLATION_ENGINE_M4_IMPLEMENTATION.md). W01–W14 auf demselben M1-/M2-/M3-Snapshot: Wochenruhe, globale Pflicht-/Ausgleichszuordnung, internationale Vierwochenfälle und historische Bus-Zwölftageregel. M4-Prüfkandidat mit801 erfolgreichen lokalen Unit-Tests, darunter282 Domain-/110 neue M4-Referenzmethoden ohne Fehler/Skip. Ruhebeginn-/End- und RED-Budgetguards ergänzt, numerische Mengenuntergrenzen korrigiert. Alle sieben lokalen Gradle-Gates, APK/Signatur/Updatepaar40121→40132, Schemaexporte und beide vollständigen Android-Testkompilierungen erfolgreich. [Prüfbeleg](VIOLATION_ENGINE_M4_TEST_EVIDENCE.md). Endgültiger GitHub-Kopf/Baum, volle CI und Paket-/APK-Prüfsummen stehen in der M4-PR-Beschreibung. Zuerst deren aktuellen Status prüfen, während eines laufenden finalen CI-Laufs keine Commits veröffentlichen. Eigene40132-Gerätebestätigung und M4-Abnahme stehen aus.
 
 Primärquellen/Fassungen, L02/L03/L04/L09 und übrige betroffene Nachweise konkret prüfen. LG58–LG80/LG101–LG108/LG114–LG116, DT37/DT38 und A07/A09/A19 zuordnen. Keine pauschale FIFO-/Greedyentscheidung, Zusatzruhe nicht automatisch Schuld, jede Zusatzminute nur einmal;23h keine Wochenruhe und getrennte Wochen-/Tageszähler. Bedingte Voraussetzungen erzeugen keine gesicherten Budgets oder Entwarnungen. UTC rechnet, Anzeigezone verändert nichts.
 
@@ -19,6 +19,8 @@ Regelmäßig ausdrücklich unfertige Zwischenstände auf GitHub sichern. Entwick
 **M4-Merge, M5–M7 und Release bleiben gesondert gesperrt.** Unabhängige qualifizierte Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.40128-Kryptografie abgeschlossen, Zertifikatsvertrauen NOT_EVALUATED. Die bereitgestellten Gerätepakete sind gesichert; keine neue40132-Geräteantwort behaupten.
 
 Alle vorhandenen Arbeitsstände/Branches/Artefakte erhalten, kein Reset/Clean. Aktuelle lokale Arbeitskopie aus dem tatsächlichen integrierten GitHub-Stand wiederhergestellt. Ältere Verlustgrenzen bleiben im folgenden Abschnitt unverändert dokumentiert.
+
+Die GitHub-Sicherungen erfolgen als geleaste Fast-forwards mit verifiziert identischem vollständigem Git-Baum. Lokale und API-erzeugte Commit-Metadaten können unterschiedliche Commit-IDs ergeben; maßgeblich sind Remote-Kopf und Baumgleichheit. Lokale Branches bleiben erhalten, kein Reset/Rewrite/Force-Push.
 
 ## Lokale Arbeit und Workspace-Wiederherstellung
 

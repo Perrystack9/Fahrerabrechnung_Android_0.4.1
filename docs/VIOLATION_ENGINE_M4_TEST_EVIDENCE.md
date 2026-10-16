@@ -29,18 +29,35 @@ Die bisherigen Domain-/Daten-/Krypto-/Parser-/Migrations-/Compose-Suiten bleiben
 
 ## Ausgeführte lokale Entwicklungsprüfungen
 
-Aktueller tatsächlicher Domainlauf nach der Wiederaufnahme: **282 Tests,0 Fehler/0 Skip**. M4-Klassen:29 Wochenruhe-,18 Ausgleichs-,16 internationale-,20 Bus- und27 Guardmethoden, zusammen **110 neue M4-Domainmethoden**. Die zusätzliche Android-Testkompilierung läuft noch;13 neue SQLCipher-/Integrationsmethoden sind vorhanden. Aus Kompilierung niemals tatsächlich ausgeführte Instrumentierung ableiten.
+Abschließender lokaler Lauf auf dem unveränderten Produktquellstand: **801 tatsächliche XML-Testausführungen /801 verschiedene Methoden,0 Fehler/0 Fehlerereignisse/0 Skip**. Domain282, Daten513, Feature5, Core1. Darin110 neue M4-Domainmethoden:29 Wochenruhe-,18 Ausgleichs-,16 internationale-,20 Bus- und27 Guardmethoden. Gegenüber dem historischen98-M4-/789-Gesamtstand wurden zwölf gezielte Referenzen ergänzt.
 
-Die früheren270 Domain-/789 Root-Tests sind historische Zwischenstände am gesicherten GitHub-Kopf46132ea. Der damalige Workspace einschließlich Buildumgebung/Prüflogs war bei Wiederaufnahme nicht mehr vorhanden. Die letzte nur lokale Ruhebeginnkorrektur wurde neu ausgearbeitet und geprüft, nicht als Original rekonstruiert. Der neue vollständige Rootlauf und sämtliche sieben Gradle-Gates werden auf dem abschließenden Quellstand erneut ausgeführt.
+| Tatsächlich ausgeführtes lokales Gate | Ergebnis | Laufzeit Sekunden |
+|---|---|---:|
+| `./gradlew help --stacktrace` | exit0 |24.42|
+| `./gradlew build --dry-run --stacktrace` | exit0 |25.79|
+| `./gradlew test --stacktrace` | exit0,801/801 ohne Fehler/Skip |79.85|
+| `./gradlew lint --stacktrace` | exit0 |324.05|
+| `./gradlew assembleDebug --stacktrace` | exit0 |147.08|
+| `./gradlew assembleInternal --stacktrace` | exit0 |359.90|
+| `./gradlew :app:assembleDeviceTest --stacktrace` | exit0 |90.75|
+| `bash scripts/build_device_test_update.sh` | exit0,40121/Schema18→40132/Room23 |225.00|
+| `bash scripts/verify_room_schemas.sh` | exit0,Exporte1–23 unverändert |6.79|
+| `./gradlew :data:compileDebugAndroidTestKotlin :app:compileDebugAndroidTestKotlin --stacktrace` | exit0,beide vollständigen Testsätze kompiliert |30.61|
+
+APK-Paketkennung `de.fahrerabrechnung.app.devicetest`, Version40132, minSdk26/targetSdk36/compileSdk37. Bestehendes öffentliches Testzertifikat SHA256 `9ffc4c280b390a1699567f5cc381dfd7a0e221ef9766af6fe937f6500ee9ad58`, APK-Signatur tatsächlich gültig. Die sieben Pflichtaufrufe und die zusätzlichen Gates besitzen keine Testfilter, Quarantäne oder geänderten Sicherheitsanforderungen. Neuer unabhängiger Routing-/Schemaguardlauf mit allen zehn Python-Regressionsprüfungen und Shellsyntaxprüfung erfolgreich.42 relative Markdown-Dateilinks geprüft, kein fehlendes Ziel. Der Vergleich mit M3 bestätigt unveränderte CI/Skripte/Wrapper, Parser, Kryptografie und Schemaexporte; Produktentscheidungen und gesetzliche Regelmatrix unverändert.
+
+13 neue SQLCipher-/M4-Androidmethoden sind tatsächlich vollständig kompiliert. Daraus **keine bereits ausgeführte Emulatorprüfung ableiten**: deren autoritativer Ist-Nachweis gehört zum nachfolgenden vollständigen GitHub-CI-Lauf am eingefrorenen PR-Kopf. Exakter SHA/Baum, Lauf/Versuch, vier Jobresultate und endgültiges Paket werden in der M4-PR-Beschreibung dokumentiert. Während dieses Laufs keine Quellcommits nachschieben.
+
+Die früheren270 Domain-/789 Root-Tests sind historische Zwischenstände am gesicherten GitHub-Kopf46132ea. Der damalige Workspace einschließlich Buildumgebung/Prüflogs war bei Wiederaufnahme nicht mehr vorhanden. Die letzte nur lokale Ruhebeginnkorrektur wurde neu ausgearbeitet und geprüft, nicht als Original rekonstruiert. Alle oben genannten Endprüfungen wurden neu durchgeführt.
 
 Konkrete lokale Einrichtungsfehler nach Wiederherstellung: Ein erster Neuaufbau endete ohne Testresultat; die Ursache ist im verbliebenen Log nicht belegt. Der nächste Versuch scheiterte vor den Tests an noch nicht akzeptierten offiziellen SDK-Lizenzen. Diese wurden mit dem offiziellen SDK-Manager angenommen und Plattform37.0/Build-Tools36.0.0 ordnungsgemäß installiert. Der erste lokale Endgate-Anlauf scheiterte bei Build-Abhängigkeiten, weil das vorhandene System-Java17 lediglich eine Laufzeit ohne `javac` war. Ein vollständiges Temurin17.0.20.1+1 wurde gegen die amtliche SHA256 geprüft und eingerichtet; der anschließende Domainlauf ist erfolgreich. Keine Produkt-/CI-/Sicherheitsvorgabe wurde dafür geändert; noch kein M4-GitHub-CI-Lauf abgebrochen.
 
 Entwicklungsfehler wurden konkret behoben: neue Fixture-Endzeit nach84h korrigiert; variantenbezogene2460min nicht aus einem ungekennzeichneten Gesamtminimum ablesen; Bus-Anrechnungsgrenze nicht als physisches Ende/künstliche45h-RED-Ruhe modellieren; erforderliche Wochenartikel statt Tagesartikel prüfen; keine doppelte Länder-Kontextfrage. Eine neue nullable-Long-Erwartung wurde auf den korrekten Long-Literaltyp berichtigt, die Zahl blieb518400. Ein Gradle-JDK-Transformcache wurde mit Werkzeugdiagnose erhalten/quarantänisiert und regulär neu erzeugt. Keine Gate-/Sicherheitsabschwächung.
 
-## Noch erforderliche technische und fachliche Nachweise
+## Verbindliche Abnahmegates und Nachweisorte
 
 - Exakter fester M4-PR-Kopf mit allen vier erfolgreichen CI-Jobs einschließlich ungekürzter API36-SQLCipher-/Compose-Suiten; keine neue Quelländerung während dieses finalen Laufs.
-- Alle sieben unveränderten Gradle-Aufrufe, APK-/Signatur-/Updatepaarprüfung gegen bestätigte40121/Schema18-Basis, unveränderte Compiler-Schemaexporte1–23 und Android-Testkompilierung.
+- Lokale Vorprüfung aller sieben Gradle-Aufrufe, APK-/Signatur-/Updatepaarprüfung, unveränderte Compiler-Schemaexporte1–23 und Android-Testkompilierung oben erfolgreich nachgewiesen. Die GitHub-CI führt dieselben vorgeschriebenen Gates erneut aus.
 - Eigenes40132/Room23-Gerätepaket und Tobis gesonderte tatsächliche Antwort. Die40131-Bestätigung gilt ausschließlich für M3.
 - L02/L03/L04/L09 und weitere fallbezogene Fachpunkte gemäß M4-Fachbeleg; insbesondere Fachfreigabe der endgültigen gemeinsamen Pflicht-/Ausgleichszuordnung. Numerische Quellen-/Testarbeit ersetzt keine unabhängige Rechtsprüfung.
 - A09-Anzeigen/Audit und endgültige Oberfläche gehören zu den gesonderten Folgemeilensteinen; hier werden die vollständigen korrelierten Ergebnis-/Herkunftsobjekte und deterministische Neubewertung geprüft. Keine M5-/M6-Oberfläche vorweggenommen. Fachgesamtprüfung und Beta5–10 Fahrer bleiben Releasegates.
