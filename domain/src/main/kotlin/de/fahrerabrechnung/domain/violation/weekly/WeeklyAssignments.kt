@@ -44,6 +44,9 @@ internal object WeeklyAssignments {
                     val qualification = kind?.let { k -> rest.weekly.firstOrNull { it.kind == k && it.eligibility != RestEligibility.REJECTED } }
                     val baseRange = InputRange(choice.base.first().range.start, choice.base.last().range.end)
                     val restrictions = linkedSetOf<WeeklyRestriction>()
+                    // A possible 24h weekly role is still subject to Art.8(6)/L04, including extras.
+                    // It must not certify a new six-day budget merely because its duration fits.
+                    if (kind == WeeklyRestKind.REDUCED) restrictions += WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING
                     val originScope = WeeklyTime.restrictions(WeeklyTime.coverage(snapshot, rest.range, "W01–W14"))
                     if (qualification != null) restrictions += originScope
                     if (qualification?.eligibility == RestEligibility.CONDITIONAL || rest.eligibility == RestEligibility.CONDITIONAL)

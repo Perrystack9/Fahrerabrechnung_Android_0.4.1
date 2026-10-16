@@ -20,6 +20,15 @@ class WeeklyGuardRegressionTest {
         assertTrue(r.allocations.flatMap { it.debts }.any { it.seconds == 21 * 3600L })
         assertTrue(r.allocations.flatMap { it.debts }.all { WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING !in it.restrictions })
     }
+    @Test fun AReducedWeeklyRoleOrAnExtraTwentyFourHoursCannotCertifyANewSixDayBudgetBeforeL04Review() {
+        val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).w(1).r(1440).snapshot())
+        assertTrue(r.allocations.flatMap { it.uses }.any { it.extra })
+        assertTrue(r.allocations.flatMap { it.uses }.any { !it.extra })
+        assertTrue(r.allocations.flatMap { it.uses }.all { WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING in it.restrictions })
+        assertFalse(r.deadlines.isEmpty())
+        assertTrue(r.deadlines.all { it.provenSecondsRemaining == null })
+        assertTrue(r.dailyRest.finalCounters.all { it.provenRemaining == null })
+    }
     @Test fun UnknownTimeBeforeVisibleRestIsNotAnActualRestStart() {
         val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).u(60).r(1440).snapshot())
         assertTrue(r.allocations.all { it.debts.isEmpty() })
