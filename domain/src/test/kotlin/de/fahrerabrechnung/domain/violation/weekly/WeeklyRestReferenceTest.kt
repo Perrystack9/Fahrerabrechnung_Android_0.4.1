@@ -17,6 +17,12 @@ class WeeklyRestReferenceTest {
     private fun pair(r: WeeklyRestCalculation, start: Instant = monday) = r.allocations.flatMap { it.windows }
         .filter { it.range.start == start && it.requiredCount == 2 }
 
+    @Test fun TwoWeekMinimumProjectionSeparatesOneMissingBaseFromActualRegularityMinutes() {
+        // One 44h base: at least one new24h base plus1h to45h, not a blanket45h shortfall.
+        assertEquals(25 * 3600L, WeeklyRules.minimumRestShortfall(listOf(44 * 3600L), 2, 1))
+        assertEquals(69 * 3600L, WeeklyRules.minimumRestShortfall(emptyList(), 2, 1))
+    }
+
     @Test fun LG58TwoRegularRestsMeetTheClosedTwoWeekProjection() {
         val r = calculate(WeeklyFixture().r("2026-09-12T03:00:00Z", 2700)
             .r("2026-09-19T03:00:00Z", 2700).until("2026-09-21T00:00:00Z"))
