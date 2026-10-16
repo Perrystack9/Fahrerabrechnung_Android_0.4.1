@@ -1,5 +1,6 @@
 package de.fahrerabrechnung.domain.violation.weekly
 
+import de.fahrerabrechnung.domain.model.ActivityType
 import de.fahrerabrechnung.domain.violation.driving.RuleLaw
 import de.fahrerabrechnung.domain.violation.input.*
 import de.fahrerabrechnung.domain.violation.rest.*
@@ -19,6 +20,13 @@ internal object WeeklyTime {
     fun week(at: Instant): Instant = at.atOffset(ZoneOffset.UTC).toLocalDate()
         .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay().toInstant(ZoneOffset.UTC)
     fun due(assignedWeek: Instant): Instant = assignedWeek.plusSeconds(4 * WEEK)
+    /** A first visible/carry-forward rest minute is not evidence of its actual beginning. */
+    fun provedStart(snapshot: ViolationInputSnapshot, rest: RestCandidate): Boolean =
+        snapshot.intervals.any { it.range.end == rest.range.start &&
+            it.meaning.quality == InputQuality.KNOWN && it.meaning.activity != ActivityType.PAUSE_RUHE } ||
+        snapshot.context.assertions.any { it.key == ContextKey.TRANSFER_REQUIRES_OTHER_WORK &&
+            it.until == rest.range.start && it.value == ContextValue.Flag(true) &&
+            snapshot.context.resolve(it.key, InputRange(it.from, rest.range.start)).flag == true }
     fun weeks(range: InputRange): List<Instant> {
         val first = week(range.start)
         val last = week(range.end.minusNanos(1))

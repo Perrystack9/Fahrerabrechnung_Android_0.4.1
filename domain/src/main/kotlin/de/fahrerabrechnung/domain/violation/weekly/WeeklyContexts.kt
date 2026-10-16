@@ -11,6 +11,10 @@ internal data class WeeklyPrerequisite(val eligibility: RestEligibility,
 
 internal object WeeklyContexts {
     fun international(snapshot: ViolationInputSnapshot, first: WeeklyRestUse, second: WeeklyRestUse): WeeklyPrerequisite {
+        if (listOf(first, second).any { WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING in it.restrictions })
+            return WeeklyPrerequisite(RestEligibility.CONDITIONAL,
+                listOf(WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING,
+                    WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED), emptyList(), emptyList(), emptyList())
         val range = InputRange(first.range.start, second.range.end)
         val restrictions = linkedSetOf<WeeklyRestriction>()
         val evidence = linkedSetOf<String>()
@@ -153,6 +157,8 @@ internal object WeeklyContexts {
             val postRegular = if (net != null && net >= 90 * 3600L) 2 else if (net != null && net >= 45 * 3600L) 1 else 0
             val postReduced = net?.takeIf { it in 69 * 3600L until 90 * 3600L }?.minus(45 * 3600L)
             val postComplete = net?.let { it >= 69 * 3600L && next.actualEndProved }
+            if (next != null && net != null && net < 90 * 3600L && !WeeklyTime.provedStart(snapshot, next))
+                restrictions += WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING
             val common = restrictions.toList()
             BusWeeklyDerogation(anchor.id, subject?.id, range,
                 if (common.isEmpty()) RestEligibility.PROVED else RestEligibility.CONDITIONAL, frozen(common),

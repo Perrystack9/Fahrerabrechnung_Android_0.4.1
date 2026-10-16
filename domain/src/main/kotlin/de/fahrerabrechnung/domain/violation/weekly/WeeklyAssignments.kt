@@ -49,6 +49,11 @@ internal object WeeklyAssignments {
                     if (qualification?.eligibility == RestEligibility.CONDITIONAL || rest.eligibility == RestEligibility.CONDITIONAL)
                         restrictions += WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED
                     if (!rest.actualEndProved) restrictions += WeeklyRestriction.OPEN_REST_END
+                    val startProved = WeeklyTime.provedStart(snapshot, rest)
+                    if (kind == WeeklyRestKind.REDUCED && !startProved) {
+                        restrictions += WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING
+                        restrictions += WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED
+                    }
                     restrictions += WeeklyTime.phaseRestrictions(baseRange)
                     if (choice.reservations.isNotEmpty()) restrictions += WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING
                     val weeks = if (qualification == null) emptyList() else WeeklyTime.weeks(baseRange)
@@ -66,7 +71,7 @@ internal object WeeklyAssignments {
                                 choice.base.forEach { instant(it.range.start); instant(it.range.end) }
                             }, rest.id, kind, frozen(choice.base), week, week == null, rest.actualEndProved, frozen(restrictions))
                         val debt = if (use?.kind == WeeklyRestKind.REDUCED && week != null &&
-                            rest.actualEndProved) debt(snapshot, use, rest, week) else null
+                            rest.actualEndProved && startProved) debt(snapshot, use, rest, week) else null
                         val daily = if (choice.reservations.isEmpty() && (rest.weekly.isEmpty() || originScope.isEmpty())) path.daily else {
                             // A daily-only base loses the compensation credit. For a weekly package
                             // Art.8(3)/Q08-II-6 permit the daily rest to extend into the whole packet.
@@ -100,7 +105,9 @@ internal object WeeklyAssignments {
                         val secondKind = if (secondPart.sumOf { it.seconds } >= WeeklyTime.REGULAR)
                             WeeklyRestKind.REGULAR else WeeklyRestKind.REDUCED
                         val limits = frozen((restrictions + WeeklyRestriction.BUS_POST_REST_PARTITION_UNCONFIRMED +
-                            WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING).distinct())
+                            WeeklyRestriction.L04_ASSIGNMENT_REVIEW_OUTSTANDING + if (!startProved)
+                            listOf(WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING,
+                                WeeklyRestriction.REST_PREREQUISITE_UNCONFIRMED) else emptyList()).distinct())
                         for (firstWeek in WeeklyTime.weeks(InputRange(baseRange.start, cut)))
                             for (secondWeek in WeeklyTime.weeks(InputRange(cut, baseRange.end))) {
                                 budget.step()
@@ -112,7 +119,7 @@ internal object WeeklyAssignments {
                                         rest.actualEndProved && indexPart == 1, limits, anchor.id, indexPart)
                                 val firstUse = part(0, WeeklyRestKind.REGULAR, firstPart, firstWeek)
                                 val secondUse = part(1, secondKind, secondPart, secondWeek)
-                                val debt = if (secondKind == WeeklyRestKind.REDUCED && rest.actualEndProved) {
+                                val debt = if (secondKind == WeeklyRestKind.REDUCED && rest.actualEndProved && startProved) {
                                     val origin = InputRevision.hash("m4-bus-debt-origin") { text(snapshot.profileId); text(rest.id); text(anchor.id) }
                                     val deficit = WeeklyTime.REGULAR - secondUse.seconds
                                     val due = WeeklyTime.due(WeeklyTime.week(rest.range.start))

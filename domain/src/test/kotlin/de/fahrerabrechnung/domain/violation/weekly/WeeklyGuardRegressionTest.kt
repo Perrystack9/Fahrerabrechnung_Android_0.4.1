@@ -9,6 +9,40 @@ import org.junit.Test
 class WeeklyGuardRegressionTest {
     private fun at(text: String) = Instant.parse(text)
     private val t = at("2026-09-07T00:00:00Z")
+    @Test fun LeftTruncatedTwentyFourHoursDoNotInventAReducedWeeklyRestDebt() {
+        val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).r(1440).snapshot())
+        assertTrue(r.allocations.all { it.debts.isEmpty() })
+        assertTrue(r.allocations.flatMap { it.uses }.all { WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING in it.restrictions })
+        assertTrue(r.issues.any { it.reason == "REDUCTION_ORIGIN_START_UNPROVED_NO_DEBT" })
+    }
+    @Test fun KnownWorkBeforeClosedTwentyFourHoursPreservesTheTwentyOneHourDebtVariant() {
+        val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).w(1).r(1440).snapshot())
+        assertTrue(r.allocations.flatMap { it.debts }.any { it.seconds == 21 * 3600L })
+        assertTrue(r.allocations.flatMap { it.debts }.all { WeeklyRestriction.LEFT_WEEKLY_HISTORY_MISSING !in it.restrictions })
+    }
+    @Test fun UnknownTimeBeforeVisibleRestIsNotAnActualRestStart() {
+        val r = WeeklyRestCalculator.calculate(RestFixture(t, prefix = false).u(60).r(1440).snapshot())
+        assertTrue(r.allocations.all { it.debts.isEmpty() })
+        assertTrue(r.issues.any { it.reason == "REDUCTION_ORIGIN_START_UNPROVED_NO_DEBT" })
+    }
+    @Test fun SeparateProvedTransferBoundaryCanProveTheLegalStartWithoutEditingTheOriginalRest() {
+        val f = RestFixture(t, prefix = false).r(1800).assertion(ContextKey.TRANSFER_REQUIRES_OTHER_WORK,
+            ContextValue.Flag(true), ContextSubject(ContextSubjectKind.PROFILE, "P1"), t, t.plusSeconds(6 * 3600L))
+        val input = f.snapshot()
+        val r = WeeklyRestCalculator.calculate(input)
+        assertSame(input, r.sourceSnapshot)
+        assertEquals(1800 * 60L, input.intervals.filter { it.meaning.activity ==
+            de.fahrerabrechnung.domain.model.ActivityType.PAUSE_RUHE }.sumOf { it.range.end.epochSecond - it.range.start.epochSecond })
+        assertTrue(r.allocations.flatMap { it.debts }.any { it.seconds == 21 * 3600L })
+    }
+    @Test fun ContradictoryTransferContextCannotProveAMissingPhysicalRestStart() {
+        val f = RestFixture(t, prefix = false).r(1800)
+        for (value in listOf(true, false)) f.assertion(ContextKey.TRANSFER_REQUIRES_OTHER_WORK,
+            ContextValue.Flag(value), ContextSubject(ContextSubjectKind.PROFILE, "P1"), t, t.plusSeconds(6 * 3600L))
+        val r = WeeklyRestCalculator.calculate(f.snapshot())
+        assertTrue(r.allocations.all { it.debts.isEmpty() })
+        assertTrue(r.findings.none { it.normalRuleDeficitIsProved })
+    }
     private fun countries(first: Int = 0x11, second: Int = 0x06) = WeeklyFixture(at("2026-08-31T00:00:00Z")).countries()
         .r("2026-09-05T00:00:00Z", 2700).r("2026-09-12T00:00:00Z", 1440)
         .r("2026-09-19T00:00:00Z", 1440)

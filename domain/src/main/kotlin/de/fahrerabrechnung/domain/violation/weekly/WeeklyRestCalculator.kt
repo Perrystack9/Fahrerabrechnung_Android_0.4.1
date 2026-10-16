@@ -20,6 +20,9 @@ object WeeklyRestCalculator {
         val budget = WeeklySearchBudget(maxSearchStates, checkCancellation)
         val evaluated = linkedMapOf<String, WeeklyEvaluation>()
         val issues = mutableListOf<WeeklyRestIssue>()
+        if (dailyResult.candidates.any { it.netRestSeconds in WeeklyTime.REDUCED until WeeklyTime.REGULAR &&
+                !WeeklyTime.provedStart(snapshot, it) })
+            issues += WeeklyRestIssue(setOf("W04", "W09"), "REDUCTION_ORIGIN_START_UNPROVED_NO_DEBT")
         if (dailyResult.candidates.any { it.netRestSeconds >= WeeklyTime.REDUCED && WeeklyTime.weeks(it.range).size > 2 })
             issues += WeeklyRestIssue(setOf("W03", "W09"), "LONG_REST_PARTITION_REQUIRES_L04")
         if (dailyResult.candidates.any { it.interrupted && it.netRestSeconds >= WeeklyTime.REGULAR &&
