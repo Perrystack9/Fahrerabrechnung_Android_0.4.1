@@ -1,6 +1,6 @@
 # M3 – Tägliche Ruhezeiten und Sonderfälle
 
-**Arbeitsstand, noch keine Abnahme.** Ausdrücklicher Auftrag15.10.2026 nach technischer M2-Abnahme. Basis und Integrationsgate: [M2-Abschluss](M2_INTEGRATION_20261015.md). Keine Freigabe für M3-Merge, M4–M7 oder Release. PD01–PD80/A–H/E01–E12/P01–P05 unverändert.
+**Historischer Entwicklungsbericht; M3 ist inzwischen technisch abgenommen und kontrolliert integriert.** Aktueller [Abnahme-/Integrationsbeleg](M3_INTEGRATION_20261016.md). Die folgenden Entwicklungsstände bleiben als solche erhalten. Ausdrücklicher Auftrag15.10.2026 nach technischer M2-Abnahme. Basis und Integrationsgate: [M2-Abschluss](M2_INTEGRATION_20261015.md). Keine Freigabe für M3-Merge, M4–M7 oder Release. PD01–PD80/A–H/E01–E12/P01–P05 unverändert.
 
 ## Technischer Vertrag
 

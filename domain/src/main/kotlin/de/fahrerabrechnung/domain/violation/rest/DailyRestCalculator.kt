@@ -24,12 +24,14 @@ object DailyRestCalculator {
     }
 
     fun calculate(snapshot: ViolationInputSnapshot, driving: DrivingCalculation? = null,
-        maxPathEvaluations: Int = 20000, checkCancellation: () -> Unit = {}): DailyRestCalculation {
+        maxPathEvaluations: Int = 20000, checkCancellation: () -> Unit = {},
+        attribution: DailyRestAttribution? = null): DailyRestCalculation {
         val drivingResult = driving ?: DrivingCalculator.calculate(snapshot, checkCancellation = checkCancellation)
         require(maxPathEvaluations > 0)
         require(drivingResult.inputRevision == snapshot.revision && drivingResult.sourceSnapshot == snapshot)
         require(snapshot.intervals.zipWithNext().all { (a, b) -> a.range.end <= b.range.start })
-        val candidates = RestCandidates.build(snapshot, checkCancellation)
+        val physicalCandidates = RestCandidates.build(snapshot, checkCancellation)
+        val candidates = attribution?.apply(physicalCandidates) ?: physicalCandidates
         val byId = candidates.associateBy { it.id }
         val anchors = linkedSetOf<RestAnchor>()
         val windows = linkedMapOf<String, DailyRestWindow>()
@@ -49,7 +51,7 @@ object DailyRestCalculator {
         }
         fun terminal(path: Path) { finals += path.counter; terminalFindings += path.mustFindings }
         val initial = candidates.filter { it.actualEndProved && it.eligibility != RestEligibility.REJECTED &&
-            it.netRestSeconds >= if (it.interrupted) 39600 else 32400 }
+            it.dailyRestSeconds >= if (it.interrupted) 39600 else 32400 }
         val firstEnd = initial.minOfOrNull { it.range.end }
         if (firstEnd == null || observed == null) {
             issues += DailyRestIssue(setOf("R01", "R04"), "NO_PROVED_PREVIOUS_DAILY_OR_WEEKLY_REST_END")
@@ -120,7 +122,7 @@ object DailyRestCalculator {
                             val last = byId.getValue(option.candidates.last())
                             val counter = nextCounter(path, window, option, last)
                             val uses = if (choice.mode == RestWindowMode.OCCASIONAL_BUS_25 && choice.serviceId != null &&
-                                last.restSecondsThrough(path.start.plusSeconds(86400)) <
+                                last.dailyRestSecondsThrough(path.start.plusSeconds(86400)) <
                                     (if (option.kind == DailyRestKind.SPLIT_REGULAR) 32400 else 39600))
                                 path.serviceUses + (choice.serviceId to ((path.serviceUses[choice.serviceId] ?: 0) + 1)) else path.serviceUses
                             if (option.actualEnd == null) {
@@ -137,7 +139,7 @@ object DailyRestCalculator {
                     } else {
                         val minimum = if (choice.mode == RestWindowMode.CREW_30 || path.counter.minimumObservedCount < 3) 32400 else 39600
                         val crossing = candidates.filter { it.range.start < window.deadline && it.range.end > window.deadline &&
-                            it.eligibility != RestEligibility.REJECTED && it.netRestSeconds >= if (it.interrupted) 39600 else minimum }
+                            it.eligibility != RestEligibility.REJECTED && it.dailyRestSeconds >= if (it.interrupted) 39600 else minimum }
                         val firstLateEnd = crossing.filter { it.actualEndProved }.minOfOrNull { it.range.end }
                         if (firstLateEnd != null) for (rest in crossing.filter { it.actualEndProved && it.range.end == firstLateEnd }) {
                             val restrictions = frozen((rest.restrictions + RestRestriction.Q07_SUCCESSIVE_WINDOW_INTERPRETATION_OPEN).distinct())
@@ -177,6 +179,7 @@ object DailyRestCalculator {
         snapshot.issues.forEach { issues += DailyRestIssue(setOf("R01–R07", "F01–F05"), "INPUT_" + it.code.name, it.range) }
         val revision = InputRevision.hash("m3-daily-rest-calculation") {
             text(DAILY_REST_INTERPRETATION); text(snapshot.revision); text(drivingResult.revision); int(maxPathEvaluations)
+            nullable(attribution?.revision)
         }
         checkCancellation()
         return DailyRestCalculation(snapshot.profileId, snapshot.revision, snapshot.dataRevision, snapshot.provenanceRevision,
@@ -235,9 +238,10 @@ object DailyRestCalculator {
 
     private fun afterWeekly(rest: RestCandidate, anchor: RestAnchor, counter: DailyReductionCounter): DailyReductionCounter {
         if (!rest.actualEndProved) return counter
-        if (rest.weekly.any { it.kind == WeeklyRestKind.REGULAR && it.eligibility == RestEligibility.PROVED })
+        if (rest.effectiveWeekly.any { it.kind == WeeklyRestKind.REGULAR && it.eligibility == RestEligibility.PROVED } ||
+            rest.allocation?.reducedWeeklyResetProved == true)
             return DailyReductionCounter(anchor, 0, 0, emptyList(), emptyList())
-        if (rest.weekly.any { it.eligibility != RestEligibility.REJECTED }) {
+        if (rest.effectiveWeekly.any { it.eligibility != RestEligibility.REJECTED }) {
             // M4 must resolve reduced/additional/compensation assignments jointly. Never invent a debt here.
             return DailyReductionCounter(anchor, 0, counter.maximumPossibleCount, counter.reductions,
                 frozen((counter.restrictions + RestRestriction.WEEKLY_ASSIGNMENT_REQUIRES_M4).distinct()))
@@ -247,7 +251,7 @@ object DailyRestCalculator {
 
     private fun resumeAfterUncertainEnd(path: Path, after: Instant, candidates: List<RestCandidate>,
         enqueue: (Path) -> Unit, anchors: MutableSet<RestAnchor>): Boolean {
-        val next = candidates.filter { it.range.start >= after && it.actualEndProved && it.netRestSeconds >= 39600 &&
+        val next = candidates.filter { it.range.start >= after && it.actualEndProved && it.dailyRestSeconds >= 39600 &&
             it.eligibility == RestEligibility.PROVED }.minByOrNull { it.range.end } ?: return false
         val anchor = RestAnchor(next.id, next.range, RestAnchorMethod.ACTUAL_REST_END, null, emptyList())
         anchors += anchor
