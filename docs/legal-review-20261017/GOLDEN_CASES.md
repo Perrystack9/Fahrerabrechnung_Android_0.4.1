@@ -10,7 +10,7 @@ Zeiten sind UTC, Intervalle links eingeschlossen/rechts ausgeschlossen. **Festes
 
 Norm: Art.4(i)/(k),6(1), technische UTC-Woche R06; R10 PDF34/37. Beziehung: LG22, bestehende M2-Tests zu Montag und Zwischenwochenruhe.
 
-Eingang: vollständig bekannter Tageslenkabschnitt mit D13.09.2026 10:00–14:30, R14:30–15:15, D15:15–19:45 = genau9h; R19:45 bis zum jeweils genannten Neustart. Keine weitere Fahrt davor/dazwischen. Neubeginn D für genau1min:
+Eingang: vollständig bekannter Tageslenkabschnitt mit D 13.09.2026 10:00–14:30, R 14:30–15:15, D 15:15–19:45 = genau9h; R 19:45 bis zum jeweils genannten Neustart. Keine weitere Fahrt davor/dazwischen. Neubeginn D für genau1min:
 
 | Variante | Erste positive Zusatzfahrt | Berliner historische Anzeige (CEST) | UTC-Woche / Berliner Wochenhypothese |
 |---|---|---|---|
@@ -25,7 +25,7 @@ Ist: DrivingCalculator/LG22 verwendet erste positive Zusatzfahrt, trägt L02-Woc
 
 ## LR02 – Winterzeitwechsel, gleiche tatsächliche Ruhe (L02)
 
-Episode: W25.10.2026 00:00–00:30Z; R00:30–11:30Z; W11:30–12:00Z. Tatsächliche Grenzen belegt. Berlin: Ruhebeginn02:30CEST, Ende12:30CET.
+Episode: W 25.10.2026 00:00–00:30Z; R 00:30–11:30Z; W 11:30–12:00Z. Tatsächliche Grenzen belegt. Berlin: Ruhebeginn02:30CEST, Ende12:30CET.
 
 Soll: UTC-Differenz660min=11h; bloße Subtraktion der lokalen Ziffern ergäbe fälschlich10h. Dauer und rechnerischer11h-Status bleiben bei Anzeige UTC/Berlin identisch; Sommer-/Wintermarkierung ist Darstellung. Keine Aussage zu einem nicht mitgelieferten früheren24h-Anker.
 
@@ -59,7 +59,7 @@ Ist: bestehende LG28-Tests prüfen419/420/539 getrennt; M2-Konvention und M3-Ruh
 
 ## LR05 – verspätete vollständige tägliche Ruhe (L03)
 
-Voranker07.09.2026 00:00Z. W00:00–16:00; R16:00–08.09.03:00; W03:00–04:00. Keine Lücke. Reduzierung wäre noch verfügbar.
+Voranker07.09.2026 00:00Z. W 00:00–16:00; R 16:00–08.09.03:00; W 03:00–04:00. Keine Lücke. Reduzierung wäre noch verfügbar.
 
 Soll: im ersten24h-Fenster bis08.09.00:00 liegen8h Ruhe; Defizit1h gegenüber9h. Insgesamt11h R enden tatsächlich erst nach27h; Guidance7 setzt folgenden Bezug auf08.09.03:00. Alte Nichterfüllung wird nicht rückwirkend geheilt. Falls keine Reduzierung mehr zulässig war, anderes Mindest-Soll gesondert11h/3h Defizit.
 
@@ -67,7 +67,7 @@ Ist: LG46 belegt diese27h-/1h-Trennung; LG47 getrennte unzureichende Folgefenste
 
 ## LR06 – drei übergreifende Ruheblöcke, acht Rollenpfade (L04)
 
-Bekannte physische R-Blöcke, jeweils45h: A06.09.2026 23:00–08.09.20:00; B13.09.23:00–15.09.20:00; C20.09.23:00–22.09.20:00. Andere Zeiten sind nicht Teil dieses Rollentests. Bedingtes UTC-Kalenderraster: A kann W36/37, B W37/38, C W38/39 zugeordnet werden.
+Bekannte physische R-Blöcke, jeweils45h: A 06.09.2026 23:00–08.09.20:00; B13.09.23:00–15.09.20:00; C20.09.23:00–22.09.20:00. Andere Zeiten sind nicht Teil dieses Rollentests. Bedingtes UTC-Kalenderraster: A kann W36/37, B W37/38, C W38/39 zugeordnet werden.
 
 Soll unter allein diesen drei Grundblöcken:2×2×2=8 Rollenpfade. Für die zwei geschlossenen Prüffenster W37+38 und W38+39 genügen genau die drei Pfade (36,38,38), (37,38,38), (37,38,39). Eine einzelne Ruhe zählt je Pfad nur einer Woche. Zwei Ruheperioden derselben Woche können im relevanten Zweiwochenpaar zusammen beitragen. Für andere Randpaare fehlen hier Daten; daraus keine globale Entwarnung.
 
@@ -88,11 +88,11 @@ Ist: CompensationAllocator prüft unterschiedliche Lagen und hält L04; vorhande
 
 ## LR08 – zwei Schulden, jede Minute nur einmal (L04)
 
-Vorab belegtes gewöhnliches Ledger:31h reduzierte Wochenruhe27.08.2026 00:00–28.08.07:00 (W35,14h Schuld, Frist21.09.00:00Z); reguläre45h04.09.00:00–05.09.21:00 dazwischen;24h10.09.00:00–11.09.00:00 (W37,21h Schuld, Frist05.10.00:00Z). Die beiden Reduzierungen sind nicht die internationale Doppelreduzierung unmittelbar aufeinanderfolgender Wochen. Rollen und weitere Mindestpflichten für diesen Rechenvektor extern als gegeben vorausgesetzt.
+Vorab belegtes gewöhnliches Ledger:31h reduzierte Wochenruhe27.08.2026 00:00–28.08.07:00 (W35,14h Schuld, Frist21.09.00:00Z); reguläre45h03.09.07:00–05.09.04:00 dazwischen;24h10.09.00:00–11.09.00:00 (W37,21h Schuld, Frist05.10.00:00Z). Die beiden Reduzierungen sind nicht die internationale Doppelreduzierung unmittelbar aufeinanderfolgender Wochen. Rollen und weitere Mindestpflichten für diesen Rechenvektor extern als gegeben vorausgesetzt.
 
-Rückzahlungsruhe A19.09.00:00–20.09.08:00=32h. Mit11h Grundruhe bleiben21h:14h oder21h passen,35h zusammen nicht. Beispiel A1: Grund00:00–11:00 am19.; Schuld21h19.11:00–20.08:00. Beispiel A2: Grund19.00:00–11:00; Schuld14h19.11:00–20.01:00, danach7h unreserviert.
+Rückzahlungsruhe A 19.09.00:00–20.09.08:00=32h. Mit11h Grundruhe bleiben21h:14h oder21h passen,35h zusammen nicht. Beispiel A1: Grund00:00–11:00 am19.; Schuld21h19.11:00–20.08:00. Beispiel A2: Grund19.00:00–11:00; Schuld14h19.11:00–20.01:00, danach7h unreserviert.
 
-Variante B R19.09.00:00–20.09.22:00=46h.11h Grund +14h+21h=46h. Zwei disjunkte Reihenfolgen nach Grundende19.11:00:14h bis20.01:00,21h bis20.22:00; oder21h bis20.08:00,14h bis20.22:00. Beide vor beiden oben genannten Fristen. Es entsteht keine gesetzliche FIFO-Pflicht allein aus der Chronologie der Schuld.
+Variante B R 19.09.00:00–20.09.22:00=46h.11h Grund +14h+21h=46h. Zwei disjunkte Reihenfolgen nach Grundende19.11:00:14h bis20.01:00,21h bis20.22:00; oder21h bis20.08:00,14h bis20.22:00. Beide vor beiden oben genannten Fristen. Es entsteht keine gesetzliche FIFO-Pflicht allein aus der Chronologie der Schuld.
 
 Soll: keine Doppelverwendung, kein Aufteilen einer Schuld in Stücke.30h Gesamt minus21h Ausgleich sind nur9h, nicht pauschal11h täglicher Grundrest. Rechtliche Tageskredit-/Wochenrollen bleiben gemeinsame L04-Frage.
 
@@ -116,9 +116,9 @@ Ist: LG69/LG114 behandeln Zusatzruhen und mögliche Pflichtrollen; L04-Rollenres
 
 ## LR10 – 23h und ein unbekannter linker24h-Rand (L04/L08)
 
-Variante A: W06.09.2026 23:00–07.09.00:00; R07.09.00:00–23:00; W23:00–08.09.00:00. Grenzen belegt. Soll:23h kann tägliche Ruhe sein, ist keine≥24h-Wochenruhe und erzeugt keinen22h-Ausgleich. Wochenruhefrist/Zähler nicht automatisch zurücksetzen; fortbestehende Fristverletzung nicht täglich identisch neu erzeugen.
+Variante A: W 06.09.2026 23:00–07.09.00:00; R 07.09.00:00–23:00; W 23:00–08.09.00:00. Grenzen belegt. Soll:23h kann tägliche Ruhe sein, ist keine≥24h-Wochenruhe und erzeugt keinen22h-Ausgleich. Wochenruhefrist/Zähler nicht automatisch zurücksetzen; fortbestehende Fristverletzung nicht täglich identisch neu erzeugen.
 
-Variante B: U bis07.09.00:00, sichtbarer R07.09.00:00–08.09.00:00, danach W00:00–01:00. Soll: mindestens24h sichtbar, tatsächlicher Beginn unbekannt, tatsächliche Gesamtruhe könnte≥45h sein. **Keine sichere21h-Schuld**, keine unbedingte reduzierte Wochenrolle.
+Variante B: U bis07.09.00:00, sichtbarer R 07.09.00:00–08.09.00:00, danach W 00:00–01:00. Soll: mindestens24h sichtbar, tatsächlicher Beginn unbekannt, tatsächliche Gesamtruhe könnte≥45h sein. **Keine sichere21h-Schuld**, keine unbedingte reduzierte Wochenrolle.
 
 Ist: LG101–LG103 sowie WeeklyGuardRegressionTest zum offenen linken Rand enthalten entsprechende Guards. Reines erneut auftretendes Ruhesymbol/Mitternacht ist kein Endbeleg. Keine neue Testausführung.
 
@@ -146,13 +146,13 @@ Variante A Nachruhe19.09.00:00–22.09.18:00=90h. Arithmetisch zwei45h-Grundperi
 
 Soll: Fristursprung ist Art.8(6a)(b) folgend das Ende des Ausnahmezeitraums. Ob exakt diese interne Teilung eines ununterbrochenen physischen69-/90h-Blocks alle rechtlichen Rollen trägt, bleibt L04. Nicht künstlich zwei aufgezeichnete physische Enden behaupten.
 
-Nachtvariante: belegte Fahrt18.09.22:00–19.09.01:00=180min, danach volle45min Pause. Bei einschlägiger rechtlicher Nachtzeit und ohne Crew genau3h noch keine Überschreitung; Fahrt bis01:01 ergibt1min. Die Annahme, dass UTC-Uhr zugleich die gesetzliche Nachtuhr sei, ist gerade **nicht** bestätigt. Tageslenk-/90h-/Wochenrollen zusätzlich prüfen.
+Nachtvariante als eigener Fahrtausschnitt vor der Nachruhe: belegte Fahrt17.09.22:00–18.09.01:00=180min, danach volle45min Pause. Bei einschlägiger rechtlicher Nachtzeit und ohne Crew genau3h noch keine Überschreitung; Fahrt bis01:01 ergibt1min. Die Annahme, dass UTC-Uhr zugleich die gesetzliche Nachtuhr sei, ist gerade **nicht** bestätigt. Tageslenk-/90h-/Wochenrollen zusätzlich prüfen.
 
 Ist: BusWeeklyReferenceTest LG76–LG80; Nachtbezug L02, Langruhenteilung L04, Crewpausen L09 bleiben getrennt. Kein neu ausgeführtes Ergebnis.
 
 ## LR13 – tatsächliche15+30 gegenüber kurzer automatischer Bereitschaft (L09)
 
-Episode07.09.2026: D00:00–02:00=120min; A02:00–02:15=15; D02:15–04:45=150; A04:45–05:15=30; D05:15–05:16=1. Crew/Beifahrerslot nur für die betreffenden A-Intervalle auf eigener Karte belegt; keine Hilfsarbeit ist ein gesondert erforderlicher rechtlicher Umstand, keine neue Routinefrage.
+Episode07.09.2026: D 00:00–02:00=120min; A 02:00–02:15=15; D 02:15–04:45=150; A 04:45–05:15=30; D 05:15–05:16=1. Crew/Beifahrerslot nur für die betreffenden A-Intervalle auf eigener Karte belegt; keine Hilfsarbeit ist ein gesondert erforderlicher rechtlicher Umstand, keine neue Routinefrage.
 
 Soll: mit qualifizierender15+30-Unterbrechung hat letzte Fahrt1min im neuen Abschnitt; ohne qualifizierende A-Anrechnung kumuliert271min, rechnerisch1min über270. Automatische kurze A-Abschnitte beweisen die qualifizierende Pause noch nicht abschließend. Kein gesichertes Budget oder Verstoß nur durch Wahl der ungünstigen/günstigen Auslegung.
 
@@ -191,7 +191,7 @@ Belegter Beginn/Ende, Fahrtkontext und zulässiger Schlafplatz vorausgesetzt. Ep
 
 Soll: physisch25h, Netto-Ruhe24h, zwei Unterbrechungen gesamt60min. Nicht25h Ruhe buchen. Grenzvariante Unterbrechung2 bis19:01, letzter R-Block19:01–08.09.01:01: weiterhin24h netto, aber61min Unterbrechung, Art.9-Summenvoraussetzung nicht erfüllt.
 
-45h-Netto-Variante: mittlerer R-Block12:30–08.09.15:30=27h, Unterbrechung2 am08.09.15:30–16:00, Schluss-R16:00–22:00=6h; physisch46h, netto45h. Für regelmäßige Wochenruhe zusätzlich **planmäßige** Reise≥8h und Schlafkabine belegen. Eine tatsächliche Karte mit EF0522 allein ersetzt diese Fakten nicht. Vor20.08.2020 keine heutige Wochenruhe-Ausnahme anwenden.
+45h-Netto-Variante: mittlerer R-Block12:30–08.09.15:30=27h, Unterbrechung2 am08.09.15:30–16:00, Schluss-R 16:00–22:00=6h; physisch46h, netto45h. Für regelmäßige Wochenruhe zusätzlich **planmäßige** Reise≥8h und Schlafkabine belegen. Eine tatsächliche Karte mit EF0522 allein ersetzt diese Fakten nicht. Vor20.08.2020 keine heutige Wochenruhe-Ausnahme anwenden.
 
 Ist: RestCandidatesTest LG81/LG85/LG87/LG109 und M4-Weiterverwendung prüfen Netto-/Voraussetzungsgrenzen; fehlende Fakten bedingt. Keine sichere Ausgleichsreservierung über die Unterbrechung. Gemeinsame Ausgleichs-/Wochen-/Tagesrolle weiterhin L04, kein pauschales Gesamt-OK.
 
@@ -199,11 +199,11 @@ Ist: RestCandidatesTest LG81/LG85/LG87/LG109 und M4-Weiterverwendung prüfen Net
 
 Qualifizierter einzelner6×24h-Dienst, eine25h-Nutzung noch verfügbar, aktueller Rechtsstand und übrige Sicherheitsvoraussetzungen gegeben; Vorruheende07.09.2026 00:00.
 
-D00:00–03:30; R03:30–04:15; D04:15–07:45; W07:45–14:00; R14:00–08.09.01:00. Fahrt7h, Tagesruhe11h bis25h-Grenze. Im gewöhnlichen24h-Fenster liegen10h Ruhe.
+D 00:00–03:30; R 03:30–04:15; D 04:15–07:45; W 07:45–14:00; R 14:00–08.09.01:00. Fahrt7h, Tagesruhe11h bis25h-Grenze. Im gewöhnlichen24h-Fenster liegen10h Ruhe.
 
 Soll: bei belegter25h-Ausnahme11h regelmäßig. Ohne diese Ausnahme sind10h im24h-Fenster **noch eine mögliche zulässige Reduzierung**, nicht automatisch1h Verstoß. Falls bereits drei Reduzierungen verbraucht, anderes gewöhnliches Mindest-Soll. Variante7h01: D zusätzlich07:45–07:46, W erst07:46–14:00;25h-Privileg fällt weg, gewöhnliche Ruheprüfung weiterhin separat. Bei8×24h qualifizierten Diensten maximal zwei Nutzungen, keine Wochenzählung daraus.
 
-Pausenvariante am07.09.: D00–02; R02–02:30; D02:30–05:00; R05:00–05:15; D05:15–05:16. Fahrtmenge270min vor letztem D. Unter belegtem Gelegenheitsbusrecht ab22.05.2024 qualifiziert30+15; unter gewöhnlicher15+30-Regel allein nicht. Identische Variante mit Datum21.05.2024 nicht durch späteren Import privilegieren.
+Pausenvariante am07.09.: D00–02; R02–02:30; D 02:30–05:00; R 05:00–05:15; D 05:15–05:16. Fahrtmenge270min vor letztem D. Unter belegtem Gelegenheitsbusrecht ab22.05.2024 qualifiziert30+15; unter gewöhnlicher15+30-Regel allein nicht. Identische Variante mit Datum21.05.2024 nicht durch späteren Import privilegieren.
 
 Ist: M2 LG30–LG36 und M3 RestSpecialReferenceTest LG50/LG51 sowie historische Phasengrenze; Rechtszeit und tatsächliche Dienstdauer/Nutzung bleiben Voraussetzung. Keine neue Dienstverwaltungsfunktion oder Laufzeitprüfung.
 
@@ -225,7 +225,7 @@ Ist: ScopeGuard/ScopeContextAcceptanceTest erhalten diese Minimalgrenzen. Keine 
 
 ## LR19 – +90min und möglicher Art.12-Fall (L06)
 
-Vorab nur **rechnerisch zulässige normale10h-Grenze** für diesen Vektor angenommen; deren Wochenzuordnung bleibt separat L02.07.09.2026: D00–04:30; R04:30–05:15; D05:15–09:45; R09:45–10:30; D10:30–11:30; R11:30–12:00; D12:00–13:30. Summe690min,90min über600.30min unmittelbar vor Zusatzfahrt vorhanden, übrige4h30-Pause nicht verletzt.
+Vorab nur **rechnerisch zulässige normale10h-Grenze** für diesen Vektor angenommen; deren Wochenzuordnung bleibt separat L02.07.09.2026: D00–04:30; R 04:30–05:15; D 05:15–09:45; R 09:45–10:30; D 10:30–11:30; R 11:30–12:00; D 12:00–13:30. Summe690min,90min über600.30min unmittelbar vor Zusatzfahrt vorhanden, übrige4h30-Pause nicht verletzt.
 
 Soll: zahlenmäßig passende besondere2h-Konstellation; tatsächliche außergewöhnliche Umstände, Sicherheitslage, Rückkehrziel, dortige regelmäßige Wochenruhe und Dokumentation nicht belegt. Deshalb weder automatische Rechtfertigung noch abschließend gesicherte Rechtswidrigkeit, weder tatsächliche90min-Art.12-Schuld noch automatische Standort-/Begründungsfrage. Fehlende30min würde eine Voraussetzung dieser besonderen2h-Variante ausschließen, aber nicht jeden allgemeinen Art.12-Sachverhalt abschließend entscheiden.90h/144h werden durch besondere Rückkehrabsätze nicht erweitert.
 

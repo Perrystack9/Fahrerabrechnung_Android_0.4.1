@@ -1,13 +1,23 @@
-# L01–L09 – erneute Quellenprüfung vom 17.10.2026
+# L01–L09 – Abschlussvorlage vom 17.10.2026
 
-**Arbeitsstand, noch kein Abschlussbericht und keine Rechtsfreigabe.** Ausdrücklicher Docs-Auftrag vom17.10.2026; keine Änderung von Produktcode, Tests oder bestehenden Testnachweisen. PD01–PD80/A–H/E01–E12/P01–P05 bleiben unverändert.
+**Ergebnis:** Die freigegebene Quellen- und Dokumentationsarbeit ist als prüfbarer Vorschlag abgeschlossen. Einzelne Normmengen und Abgrenzungen sind besser belegt; eine unabhängige juristische Gesamtfreigabe liegt weiterhin nicht vor. Kein Merge, keine Produktänderung, kein M5–M7/Release.
 
-Isolierte Basis: main `ba0cf1933f8d01590d8fdef32526f1715ec8d571`, Baum `32f6da8ae5a8afcac58a2246d2ec8bdf02d7499c`. Vergleichsstand M4: PR92, Kopf `424bd300921f4f6d2cd818b64e3d005812a1a50d`, Baum `7dd5e7e0b14fc23c9f13b8e9b87f31a7974712d2`. Beide live erneut unverändert; PR92 Draft/offen/ungemergt. Dieser unabhängige Docs-Branch enthält keine M4-Produktänderungen.
+**UTC ist entschieden:** Die technische Woche bleibt verbindlich Montag00:00UTC bis zum folgenden Montag00:00UTC, vom Projektleiter am17.10.2026 nochmals ausdrücklich bestätigt. Dazu ist keine weitere Produktentscheidung nötig. Rechtsquellenstatus und historische Ortszeitanzeige werden getrennt dokumentiert.
 
-Die automatische Workspace-Wartung entfernte die früheren Checkouts. Die vorige Sitzung hatte zuletzt einen sauberen Quellstand dokumentiert. Neuer sauberer main-Checkout und separater unveränderter M4-Lesecheckout aus GitHub; frühere lokale Prüfprotokolle werden nicht als wiederhergestellt behauptet. Keine Stashes oder ungesicherten Quelländerungen vor der Branchanlage vorgefunden; kein Reset/Clean/Force-Push.
+Die wesentlichen Restnachweise betreffen die rechtliche Einordnung des festen UTC-Rasters/Verlängerungsinstants/Nachtfensters (L02), den gemeinsamen gesetzlichen Zuordnungszeugen für Wochenrollen und Ausgleich (L04) sowie kurze automatische Crew-Bereitschaft und den Crew-Reduzierungszähler (L09). Konkrete Fälle und benötigte externe Antworten sind festgelegt. Die anderen Gates sind fallbezogen eingegrenzt; historische, nationale und tatsächliche Nachweise bleiben dort offen, wo sie fehlen. Keine frühere Produktentscheidung wird neu verhandelt.
 
-Priorität A: L02 Rechtszeit, L04 globale Wochen-/Ausgleichszuordnung, L09 Crew/Fähre/Bus. Danach L03/L06/L07 und L01/L05/L08. Jede Teilfrage erhält Norm/Fassung, festen Fall, Gegenhinweis, Status, Ausgabeeinschränkung und verbleibenden unabhängigen Nachweis. Erfolgreiche Quellenabrufe sind keine abgeschlossene Auslegung; HTTP-Fehler und fehlende Volltexte bleiben getrennt ausgewiesen.
+20 neue dokumentierte Referenzvektoren LR01–LR20 trennen unabhängige Rechnung, lesenden Ist-Abgleich und noch offenes rechtliches Gesamt-Soll. Keine neue Laufzeitprüfung behauptet. Nachweislich zu präzisieren sind zwei M2-Quellenverweise; die TRACE-Passage mit lokaler Woche ist tatsächlich vorhanden. Aus Quellenfragen wird kein ungeprüfter Runtime-Bug abgeleitet.
 
-Erste bestätigte Abgrenzungen: Art.4(i)561 definiert die Wochengrenzen ohne ausdrückliche Zeitzone; AnnexIC2016/799 definiert eine UTC-Woche für Kontrollgeräteberechnungen. TRACE-II nennt einen Mitternachtsansatz für Verlängerungen, ist ein Auftragnehmer-Leitfaden. Kommissions-Q&A PartII Fragen13/14 unterscheiden die Anerkennung45min zusammenhängender Crew-Bereitschaft von der grundsätzlichen Zulässigkeit geteilter Pausen. Daraus wird noch keine Schließung L02/L09 abgeleitet.
+| Abgabe | Inhalt |
+|---|---|
+| [Quellenregister](SOURCE_REGISTER.md) | Normrang, Sprache, Datum, genaue Lektüre, Bytes/SHA und fehlgeschlagene Abrufe |
+| [Teilmatrix L01–L09](LEGAL_MATRIX.md) | konkrete Norm, Status, Gegenhinweis, Ergebnisgrenze und nächster Fachnachweis |
+| [Goldenfälle](GOLDEN_CASES.md) | vollständige Befundepisoden, Vorbedingungen, Soll/Ist-Grenzen und unabhängige Rechnung |
+| [Repo-Abweichungen](REPO_DEVIATIONS.md) | präzise Dokumentationsfehler, Fachrisiken, unveränderte Code-Guards und Basis-Hashes |
+| [Übernahmevorschlag](M4_DOCUMENTATION_PROPOSAL.md) | ausschließlich vorgeschlagene spätere Ergänzungen; keine vorhandenen Testbelege geändert |
 
-Geplante Abgabe: Quellenregister mit Abrufstatus/Hashes, L01–L09-Teilmatrix, unabhängige Zeitachsen/Goldenfälle, Abweichungsbericht und ausschließlich vorgeschlagene Ergänzungen für die noch ungemergten M4-Dokumente. Keine neue Android-CI oder Geräteprüfung. Kein M4-Merge, M5–M7 oder Release; nach Abschluss neue ausdrückliche Nutzerentscheidung abwarten.
+**Technische Erhaltung:** main ba0cf193 und M4-HEAD424bd300 (PR92 Draft/offen/ungemergt) sind unverändert. Neue Dateien ausschließlich auf docs/legal-review-l01-l09-20261017, von main abgezweigt. Frühere entfernte lokale Protokolle/Settings-Sicherung sind nicht rekonstruiert. PD01–PD80/A–H/E01–E12/P01–P05, Sicherheits-/Herkunfts-/CI-/Gerätegates bleiben bestehen.
+
+**Prüfungen dieser Abgabe:** Dokumentationsrechnung, UTF-8-/Markdown-/Link-/Umfangskontrolle, git diff --check und Tree-Gleichheit vor GitHub-Sicherung. Kein manueller Android-CI-/Build-/Gerätelauf; automatisch ausgelöste Docs-PR-Prüfung mit tatsächlichem Ergebnis im PR-Text.
+
+**Empfehlung:** Diesen Dokumentationsvorschlag prüfen und die konkret beschriebenen offenen Orakel durch qualifizierte, vom Implementierungsweg unabhängige Fachprüfung beantworten lassen. Jede daraus folgende Code-/Teständerung, ein Dokumentationsmerge, M4-Merge oder späterer Meilenstein benötigt die jeweilige neue ausdrückliche Freigabe. **Nach Bericht Stopp**, keine automatische Beauftragung/Weitergabe.
